@@ -1,39 +1,66 @@
 import { Link } from "react-router-dom";
 import { Bus, Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin } from "lucide-react";
-
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-
   const footerLinks = {
-    company: [
-      { name: "Über uns", path: "/about" },
-      { name: "Karriere", path: "/careers" },
-      { name: "Presse", path: "/press" },
-      { name: "Partner werden", path: "/partners" },
-    ],
-    service: [
-      { name: "Hilfe & FAQ", path: "/service" },
-      { name: "Gepäckregeln", path: "/service#luggage" },
-      { name: "Stornierung", path: "/service#cancellation" },
-      { name: "Barrierefreiheit", path: "/accessibility" },
-    ],
-    legal: [
-      { name: "Impressum", path: "/imprint" },
-      { name: "Datenschutz", path: "/privacy" },
-      { name: "AGB", path: "/terms" },
-      { name: "Cookie-Einstellungen", path: "/cookies" },
-    ],
+    company: [{
+      name: "Über uns",
+      path: "/about"
+    }, {
+      name: "Karriere",
+      path: "/careers"
+    }, {
+      name: "Presse",
+      path: "/press"
+    }, {
+      name: "Partner werden",
+      path: "/partners"
+    }],
+    service: [{
+      name: "Hilfe & FAQ",
+      path: "/service"
+    }, {
+      name: "Gepäckregeln",
+      path: "/service#luggage"
+    }, {
+      name: "Stornierung",
+      path: "/service#cancellation"
+    }, {
+      name: "Barrierefreiheit",
+      path: "/accessibility"
+    }],
+    legal: [{
+      name: "Impressum",
+      path: "/imprint"
+    }, {
+      name: "Datenschutz",
+      path: "/privacy"
+    }, {
+      name: "AGB",
+      path: "/terms"
+    }, {
+      name: "Cookie-Einstellungen",
+      path: "/cookies"
+    }]
   };
-
-  const socialLinks = [
-    { icon: Facebook, url: "#", label: "Facebook" },
-    { icon: Twitter, url: "#", label: "Twitter" },
-    { icon: Instagram, url: "#", label: "Instagram" },
-    { icon: Youtube, url: "#", label: "Youtube" },
-  ];
-
-  return (
-    <footer className="bg-secondary text-secondary-foreground">
+  const socialLinks = [{
+    icon: Facebook,
+    url: "#",
+    label: "Facebook"
+  }, {
+    icon: Twitter,
+    url: "#",
+    label: "Twitter"
+  }, {
+    icon: Instagram,
+    url: "#",
+    label: "Instagram"
+  }, {
+    icon: Youtube,
+    url: "#",
+    label: "Youtube"
+  }];
+  return <footer className="bg-secondary text-secondary-foreground">
       {/* Main Footer */}
       <div className="container mx-auto px-4 py-12 lg:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
@@ -44,7 +71,21 @@ const Footer = () => {
                 <Bus className="w-6 h-6 text-primary-foreground" />
               </div>
               <span className="text-xl font-bold">
-                Green<span className="text-primary">Bus</span>
+                
+
+
+
+
+
+
+
+
+
+
+
+
+
+Metropol Tours <span className="text-primary">Bus</span>
               </span>
             </Link>
             <p className="text-muted-foreground text-sm mb-6 max-w-sm">
@@ -71,48 +112,33 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold text-primary-foreground mb-4">Unternehmen</h4>
             <ul className="space-y-3">
-              {footerLinks.company.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    to={link.path}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                  >
+              {footerLinks.company.map(link => <li key={link.name}>
+                  <Link to={link.path} className="text-sm text-muted-foreground hover:text-primary transition-colors">
                     {link.name}
                   </Link>
-                </li>
-              ))}
+                </li>)}
             </ul>
           </div>
 
           <div>
             <h4 className="font-semibold text-primary-foreground mb-4">Service</h4>
             <ul className="space-y-3">
-              {footerLinks.service.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    to={link.path}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                  >
+              {footerLinks.service.map(link => <li key={link.name}>
+                  <Link to={link.path} className="text-sm text-muted-foreground hover:text-primary transition-colors">
                     {link.name}
                   </Link>
-                </li>
-              ))}
+                </li>)}
             </ul>
           </div>
 
           <div>
             <h4 className="font-semibold text-primary-foreground mb-4">Rechtliches</h4>
             <ul className="space-y-3">
-              {footerLinks.legal.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    to={link.path}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                  >
+              {footerLinks.legal.map(link => <li key={link.name}>
+                  <Link to={link.path} className="text-sm text-muted-foreground hover:text-primary transition-colors">
                     {link.name}
                   </Link>
-                </li>
-              ))}
+                </li>)}
             </ul>
           </div>
         </div>
@@ -126,22 +152,13 @@ const Footer = () => {
               © {currentYear} METROPOL TOURS. Alle Rechte vorbehalten.
             </p>
             <div className="flex items-center gap-4">
-              {socialLinks.map((social) => (
-                <a
-                  key={social.label}
-                  href={social.url}
-                  aria-label={social.label}
-                  className="w-10 h-10 rounded-full bg-muted-foreground/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-                >
+              {socialLinks.map(social => <a key={social.label} href={social.url} aria-label={social.label} className="w-10 h-10 rounded-full bg-muted-foreground/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all duration-300">
                   <social.icon className="w-5 h-5" />
-                </a>
-              ))}
+                </a>)}
             </div>
           </div>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
-
 export default Footer;
