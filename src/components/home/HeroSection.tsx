@@ -17,7 +17,7 @@ const HeroSection = () => {
         <div className="max-w-4xl mx-auto text-center mb-10 animate-fade-in">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground mb-6 leading-tight">
             Entdecke Europa mit{" "}
-            <span className="text-primary">GreenBus</span>
+            <span className="text-primary">METROPOL TOURS</span>
           </h1>
           <p className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto">
             Günstige Fernbusse zu über 2.500 Zielen. Reise nachhaltig, bequem 

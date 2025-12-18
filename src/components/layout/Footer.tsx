@@ -52,9 +52,9 @@ const Footer = () => {
               Günstige Preise, moderne Busse und erstklassiger Service.
             </p>
             <div className="flex flex-col gap-3 text-sm text-muted-foreground">
-              <a href="mailto:info@greenbus.de" className="flex items-center gap-2 hover:text-primary transition-colors">
+              <a href="mailto:info@metropol-tours.de" className="flex items-center gap-2 hover:text-primary transition-colors">
                 <Mail className="w-4 h-4" />
-                info@greenbus.de
+                info@metropol-tours.de
               </a>
               <a href="tel:+4930123456789" className="flex items-center gap-2 hover:text-primary transition-colors">
                 <Phone className="w-4 h-4" />
@@ -123,7 +123,7 @@ const Footer = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              © {currentYear} GreenBus. Alle Rechte vorbehalten.
+              © {currentYear} METROPOL TOURS. Alle Rechte vorbehalten.
             </p>
             <div className="flex items-center gap-4">
               {socialLinks.map((social) => (

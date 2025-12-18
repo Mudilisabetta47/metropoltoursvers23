@@ -7,7 +7,7 @@ const testimonials = [
     name: "Anna Müller",
     location: "Berlin",
     rating: 5,
-    text: "Fantastischer Service! Die Busse sind super sauber, das WLAN funktioniert einwandfrei und die Preise sind unschlagbar. Ich buche nur noch bei GreenBus.",
+    text: "Fantastischer Service! Die Busse sind super sauber, das WLAN funktioniert einwandfrei und die Preise sind unschlagbar. Ich buche nur noch bei METROPOL TOURS.",
     avatar: "AM",
   },
   {
@@ -23,7 +23,7 @@ const testimonials = [
     name: "Lisa Weber",
     location: "Hamburg",
     rating: 5,
-    text: "Ich reise regelmäßig zwischen Hamburg und Berlin. GreenBus bietet die beste Kombination aus Preis und Komfort. Die Sitze sind wirklich bequem!",
+    text: "Ich reise regelmäßig zwischen Hamburg und Berlin. METROPOL TOURS bietet die beste Kombination aus Preis und Komfort. Die Sitze sind wirklich bequem!",
     avatar: "LW",
   },
   {
@@ -74,7 +74,7 @@ const TestimonialsSection = () => {
             Das sagen unsere <span className="text-primary">Kunden</span>
           </h2>
           <p className="text-muted-foreground text-lg">
-            Über 2 Millionen zufriedene Reisende vertrauen GreenBus.
+            Über 2 Millionen zufriedene Reisende vertrauen METROPOL TOURS.
           </p>
         </div>
 

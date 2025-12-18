@@ -40,7 +40,7 @@ const handler = async (req: Request): Promise<Response> => {
       : "";
 
     const emailResponse = await resend.emails.send({
-      from: "GreenBus <onboarding@resend.dev>",
+      from: "METROPOL TOURS <onboarding@resend.dev>",
       to: [booking.email],
       subject: `Buchungsbestätigung ${booking.bookingNumber} - ${booking.from} → ${booking.to}`,
       html: `
@@ -51,17 +51,17 @@ const handler = async (req: Request): Promise<Response> => {
           <style>
             body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: white; padding: 30px; text-align: center; border-radius: 12px 12px 0 0; }
+            .header { background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%); color: white; padding: 30px; text-align: center; border-radius: 12px 12px 0 0; }
             .header h1 { margin: 0; font-size: 24px; }
             .content { background: #f9fafb; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px; }
             .booking-box { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
             .route { display: flex; align-items: center; justify-content: center; gap: 15px; font-size: 20px; font-weight: bold; margin: 15px 0; }
-            .arrow { color: #22c55e; }
+            .arrow { color: #1e40af; }
             .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6; }
             .detail-row:last-child { border-bottom: none; }
             .label { color: #6b7280; }
             .value { font-weight: 600; }
-            .total { background: #22c55e; color: white; padding: 15px; border-radius: 8px; text-align: center; font-size: 18px; margin-top: 20px; }
+            .total { background: #1e40af; color: white; padding: 15px; border-radius: 8px; text-align: center; font-size: 18px; margin-top: 20px; }
             .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 14px; }
           </style>
         </head>
@@ -69,7 +69,7 @@ const handler = async (req: Request): Promise<Response> => {
           <div class="container">
             <div class="header">
               <h1>🚌 Buchung bestätigt!</h1>
-              <p style="margin: 10px 0 0 0; opacity: 0.9;">Vielen Dank für Ihre Buchung bei GreenBus</p>
+              <p style="margin: 10px 0 0 0; opacity: 0.9;">Vielen Dank für Ihre Buchung bei METROPOL TOURS</p>
             </div>
             <div class="content">
               <p>Hallo ${booking.firstName} ${booking.lastName},</p>
@@ -77,7 +77,7 @@ const handler = async (req: Request): Promise<Response> => {
               
               <div class="booking-box">
                 <div style="text-align: center; margin-bottom: 15px;">
-                  <span style="background: #22c55e; color: white; padding: 5px 15px; border-radius: 20px; font-size: 14px;">
+                  <span style="background: #1e40af; color: white; padding: 5px 15px; border-radius: 20px; font-size: 14px;">
                     Buchungsnummer: ${booking.bookingNumber}
                   </span>
                 </div>
@@ -113,11 +113,11 @@ const handler = async (req: Request): Promise<Response> => {
               
               <p style="margin-top: 20px;">Bitte zeigen Sie diese Bestätigung oder Ihre Buchungsnummer beim Einsteigen vor.</p>
               <p>Wir wünschen Ihnen eine angenehme Reise!</p>
-              <p>Ihr GreenBus Team</p>
+              <p>Ihr METROPOL TOURS Team</p>
             </div>
             <div class="footer">
-              <p>Bei Fragen kontaktieren Sie uns unter support@greenbus.de</p>
-              <p>© 2024 GreenBus - Nachhaltig reisen</p>
+              <p>Bei Fragen kontaktieren Sie uns unter support@metropol-tours.de</p>
+              <p>© 2024 METROPOL TOURS - Komfortabel reisen</p>
             </div>
           </div>
         </body>

@@ -65,7 +65,7 @@ const CTASection = () => {
                     
                     {/* App Header */}
                     <div className="bg-primary px-4 pb-6 pt-4">
-                      <div className="text-primary-foreground text-sm font-semibold mb-2">GreenBus</div>
+                      <div className="text-primary-foreground text-sm font-semibold mb-2">METROPOL TOURS</div>
                       <div className="bg-primary-foreground/20 rounded-lg p-3">
                         <div className="flex items-center gap-2 mb-2">
                           <div className="w-2 h-2 rounded-full bg-primary-foreground" />
