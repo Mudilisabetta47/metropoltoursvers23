@@ -244,7 +244,7 @@ const BookingsPage = () => {
                           </div>
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <Bus className="w-4 h-4" />
-                            <span>GreenBus • Direktverbindung</span>
+                            <span>METROPOL TOURS • Direktverbindung</span>
                           </div>
                         </div>
                         {booking.status === "upcoming" && (

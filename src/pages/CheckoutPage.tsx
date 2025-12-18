@@ -66,7 +66,7 @@ const CheckoutPage = () => {
     arrivalTime: addHours(new Date(), 6),
     duration: "6h 00min",
     price: 24.99,
-    operator: "GreenBus",
+    operator: "METROPOL TOURS",
   };
 
   const basePrice = trip.price * passengers;

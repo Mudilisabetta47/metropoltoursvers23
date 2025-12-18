@@ -52,7 +52,7 @@ const generateTrips = (from: string, to: string, date: Date): Trip[] => {
       duration: `${tripVariant.durationHours}h ${tripVariant.durationMins}min`,
       price: tripVariant.basePrice + (Math.random() * 10 - 5),
       originalPrice: Math.random() > 0.6 ? tripVariant.basePrice + 15 : undefined,
-      operator: "GreenBus",
+      operator: "METROPOL TOURS",
       amenities: ["wifi", "power", "coffee"],
       seatsLeft: Math.floor(Math.random() * 15) + 1,
     };

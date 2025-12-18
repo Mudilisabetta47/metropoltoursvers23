@@ -69,7 +69,7 @@ const ServicePage = () => {
               Service & Informationen
             </h1>
             <p className="text-lg text-primary-foreground/80 max-w-2xl mx-auto">
-              Alles was Sie für Ihre Reise mit GreenBus wissen müssen – von Komfort über Gepäck bis hin zu häufigen Fragen.
+              Alles was Sie für Ihre Reise mit METROPOL TOURS wissen müssen – von Komfort über Gepäck bis hin zu häufigen Fragen.
             </p>
           </div>
         </section>
