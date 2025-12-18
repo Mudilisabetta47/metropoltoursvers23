@@ -11,6 +11,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 type CheckoutStep = "details" | "extras" | "payment" | "confirmation";
 
@@ -54,6 +55,8 @@ const CheckoutPage = () => {
 
   const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal" | "sofort">("card");
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [bookingNumber, setBookingNumber] = useState("");
 
   // Mock trip data
   const trip = {
@@ -79,7 +82,39 @@ const CheckoutPage = () => {
 
   const currentStepIndex = steps.findIndex(s => s.key === currentStep);
 
-  const handleNextStep = () => {
+  const sendBookingConfirmation = async (generatedBookingNumber: string) => {
+    const selectedExtras = extras.filter(e => e.selected).map(e => e.name);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('send-booking-confirmation', {
+        body: {
+          email: passengerInfo[0].email,
+          firstName: passengerInfo[0].firstName,
+          lastName: passengerInfo[0].lastName,
+          bookingNumber: generatedBookingNumber,
+          from: trip.from,
+          to: trip.to,
+          departureDate: format(trip.departureTime, "dd.MM.yyyy", { locale: de }),
+          departureTime: format(trip.departureTime, "HH:mm"),
+          arrivalTime: format(trip.arrivalTime, "HH:mm"),
+          passengers,
+          totalPrice,
+          extras: selectedExtras,
+        },
+      });
+
+      if (error) {
+        console.error("Error sending confirmation email:", error);
+        toast.error("Buchung erfolgreich, aber E-Mail konnte nicht gesendet werden.");
+      } else {
+        console.log("Confirmation email sent:", data);
+      }
+    } catch (error) {
+      console.error("Error invoking email function:", error);
+    }
+  };
+
+  const handleNextStep = async () => {
     if (currentStep === "details") {
       const isValid = passengerInfo.every(p => p.firstName && p.lastName && p.email);
       if (!isValid) {
@@ -94,6 +129,14 @@ const CheckoutPage = () => {
         toast.error("Bitte akzeptieren Sie die AGB.");
         return;
       }
+      
+      setIsProcessing(true);
+      const generatedBookingNumber = `GB-${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
+      setBookingNumber(generatedBookingNumber);
+      
+      await sendBookingConfirmation(generatedBookingNumber);
+      
+      setIsProcessing(false);
       setCurrentStep("confirmation");
       toast.success("Buchung erfolgreich abgeschlossen!");
     }
@@ -352,7 +395,7 @@ const CheckoutPage = () => {
                     <div className="grid sm:grid-cols-2 gap-4 text-sm">
                       <div>
                         <span className="text-muted-foreground">Buchungsnummer:</span>
-                        <span className="font-semibold text-foreground ml-2">GB-{Math.random().toString(36).substr(2, 8).toUpperCase()}</span>
+                        <span className="font-semibold text-foreground ml-2">{bookingNumber}</span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Datum:</span>
@@ -394,9 +437,9 @@ const CheckoutPage = () => {
                       Zur Suche
                     </Button>
                   )}
-                  <Button variant="accent" size="lg" onClick={handleNextStep}>
-                    {currentStep === "payment" ? "Jetzt buchen" : "Weiter"}
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                  <Button variant="accent" size="lg" onClick={handleNextStep} disabled={isProcessing}>
+                    {isProcessing ? "Wird verarbeitet..." : currentStep === "payment" ? "Jetzt buchen" : "Weiter"}
+                    {!isProcessing && <ArrowRight className="w-4 h-4 ml-2" />}
                   </Button>
                 </div>
               )}
