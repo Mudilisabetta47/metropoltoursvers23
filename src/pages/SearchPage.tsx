@@ -1,106 +1,168 @@
-import { useState, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { format, addHours, addMinutes } from "date-fns";
+import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { ArrowRight, Clock, Bus, Filter, SortAsc, Wifi, Plug, Coffee, ChevronDown } from "lucide-react";
+import { ArrowRight, Clock, Bus, Filter, Wifi, Plug, Coffee } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SearchForm from "@/components/booking/SearchForm";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Trip {
   id: string;
-  from: string;
-  to: string;
-  departureTime: Date;
-  arrivalTime: Date;
-  duration: string;
-  price: number;
-  originalPrice?: number;
-  operator: string;
-  amenities: string[];
-  seatsLeft: number;
+  departure_date: string;
+  departure_time: string;
+  arrival_time: string;
+  base_price: number;
+  bus_id: string;
+  route_id: string;
+  route: {
+    name: string;
+  };
+  bus: {
+    name: string;
+    amenities: string[] | null;
+    total_seats: number;
+  };
 }
 
-// Generate mock trips
-const generateTrips = (from: string, to: string, date: Date): Trip[] => {
-  const baseTrips = [
-    { durationHours: 5, durationMins: 30, basePrice: 24.99 },
-    { durationHours: 6, durationMins: 0, basePrice: 19.99 },
-    { durationHours: 5, durationMins: 45, basePrice: 29.99 },
-    { durationHours: 6, durationMins: 15, basePrice: 22.99 },
-    { durationHours: 5, durationMins: 15, basePrice: 34.99 },
-    { durationHours: 7, durationMins: 0, basePrice: 17.99 },
-  ];
-
-  const departureTimes = [6, 8, 10, 12, 14, 16, 18, 20];
-
-  return departureTimes.flatMap((hour, idx) => {
-    const tripVariant = baseTrips[idx % baseTrips.length];
-    const departure = new Date(date);
-    departure.setHours(hour, Math.random() > 0.5 ? 0 : 30, 0, 0);
-    
-    const arrival = addMinutes(addHours(departure, tripVariant.durationHours), tripVariant.durationMins);
-    
-    return {
-      id: `trip-${idx}`,
-      from: from || "Berlin",
-      to: to || "München",
-      departureTime: departure,
-      arrivalTime: arrival,
-      duration: `${tripVariant.durationHours}h ${tripVariant.durationMins}min`,
-      price: tripVariant.basePrice + (Math.random() * 10 - 5),
-      originalPrice: Math.random() > 0.6 ? tripVariant.basePrice + 15 : undefined,
-      operator: "METROPOL TOURS",
-      amenities: ["wifi", "power", "coffee"],
-      seatsLeft: Math.floor(Math.random() * 15) + 1,
-    };
-  });
-};
+interface Stop {
+  id: string;
+  name: string;
+  city: string;
+  stop_order: number;
+  price_from_start: number;
+}
 
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   
-  const from = searchParams.get("from") || "Berlin";
-  const to = searchParams.get("to") || "München";
+  const fromStopId = searchParams.get("fromStopId") || "";
+  const toStopId = searchParams.get("toStopId") || "";
+  const from = searchParams.get("from") || "";
+  const to = searchParams.get("to") || "";
   const dateStr = searchParams.get("date");
   const passengers = parseInt(searchParams.get("passengers") || "1");
   
   const searchDate = dateStr ? new Date(dateStr) : new Date();
   
-  const [sortBy, setSortBy] = useState<"price" | "departure" | "duration">("departure");
+  const [sortBy, setSortBy] = useState<"price" | "departure">("departure");
   const [filterPrice, setFilterPrice] = useState<number | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [originStop, setOriginStop] = useState<Stop | null>(null);
+  const [destinationStop, setDestinationStop] = useState<Stop | null>(null);
+  const [tripPrices, setTripPrices] = useState<Record<string, number>>({});
+  const [isLoading, setIsLoading] = useState(true);
 
-  const trips = useMemo(() => generateTrips(from, to, searchDate), [from, to, searchDate]);
+  useEffect(() => {
+    if (fromStopId && toStopId && dateStr) {
+      loadTripsAndStops();
+    }
+  }, [fromStopId, toStopId, dateStr]);
 
-  const sortedTrips = useMemo(() => {
-    let result = [...trips];
-    
+  const loadTripsAndStops = async () => {
+    setIsLoading(true);
+    try {
+      // Load stops info
+      const { data: stopsData, error: stopsError } = await supabase
+        .from('stops')
+        .select('*')
+        .in('id', [fromStopId, toStopId]);
+
+      if (stopsError) throw stopsError;
+
+      const origin = stopsData?.find(s => s.id === fromStopId);
+      const destination = stopsData?.find(s => s.id === toStopId);
+      setOriginStop(origin || null);
+      setDestinationStop(destination || null);
+
+      if (!origin || !destination) {
+        setTrips([]);
+        setIsLoading(false);
+        return;
+      }
+
+      // Load trips for the date
+      const { data: tripsData, error: tripsError } = await supabase
+        .from('trips')
+        .select(`
+          *,
+          route:routes(*),
+          bus:buses(*)
+        `)
+        .eq('route_id', origin.route_id)
+        .eq('departure_date', dateStr)
+        .eq('is_active', true)
+        .order('departure_time');
+
+      if (tripsError) throw tripsError;
+
+      setTrips(tripsData || []);
+
+      // Calculate prices for each trip using the database function
+      const prices: Record<string, number> = {};
+      for (const trip of tripsData || []) {
+        const { data: priceData, error: priceError } = await supabase
+          .rpc('calculate_trip_price', {
+            p_trip_id: trip.id,
+            p_origin_stop_id: fromStopId,
+            p_destination_stop_id: toStopId
+          });
+
+        if (!priceError && priceData !== null) {
+          prices[trip.id] = priceData;
+        } else {
+          // Fallback to simple calculation
+          prices[trip.id] = destination.price_from_start - origin.price_from_start;
+        }
+      }
+      setTripPrices(prices);
+
+    } catch (error) {
+      console.error('Error loading trips:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const sortedTrips = [...trips].sort((a, b) => {
+    if (sortBy === "price") {
+      return (tripPrices[a.id] || 0) - (tripPrices[b.id] || 0);
+    }
+    return a.departure_time.localeCompare(b.departure_time);
+  }).filter(trip => {
     if (filterPrice) {
-      result = result.filter(trip => trip.price <= filterPrice);
+      return (tripPrices[trip.id] || 0) <= filterPrice;
     }
-    
-    switch (sortBy) {
-      case "price":
-        return result.sort((a, b) => a.price - b.price);
-      case "duration":
-        return result.sort((a, b) => a.duration.localeCompare(b.duration));
-      default:
-        return result.sort((a, b) => a.departureTime.getTime() - b.departureTime.getTime());
-    }
-  }, [trips, sortBy, filterPrice]);
+    return true;
+  });
 
   const handleBookTrip = (tripId: string) => {
-    navigate(`/checkout?tripId=${tripId}&passengers=${passengers}`);
+    navigate(`/checkout?tripId=${tripId}&fromStopId=${fromStopId}&toStopId=${toStopId}&passengers=${passengers}`);
   };
 
   const amenityIcons: Record<string, React.ReactNode> = {
     wifi: <Wifi className="w-4 h-4" />,
     power: <Plug className="w-4 h-4" />,
     coffee: <Coffee className="w-4 h-4" />,
+  };
+
+  const formatTime = (time: string) => {
+    return time.substring(0, 5); // HH:mm
+  };
+
+  const calculateDuration = (departure: string, arrival: string) => {
+    const [dh, dm] = departure.split(':').map(Number);
+    const [ah, am] = arrival.split(':').map(Number);
+    let totalMins = (ah * 60 + am) - (dh * 60 + dm);
+    if (totalMins < 0) totalMins += 24 * 60; // Next day arrival
+    const hours = Math.floor(totalMins / 60);
+    const mins = totalMins % 60;
+    return `${hours}h ${mins.toString().padStart(2, '0')}min`;
   };
 
   return (
@@ -111,7 +173,13 @@ const SearchPage = () => {
         {/* Search Form */}
         <div className="bg-primary py-6">
           <div className="container mx-auto px-4">
-            <SearchForm variant="compact" />
+            <SearchForm 
+              variant="compact" 
+              initialFrom={from}
+              initialTo={to}
+              initialDate={searchDate}
+              initialPassengers={passengers}
+            />
           </div>
         </div>
 
@@ -140,7 +208,7 @@ const SearchPage = () => {
               
               <div className="hidden lg:flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Sortieren:</span>
-                {(["departure", "price", "duration"] as const).map((sort) => (
+                {(["departure", "price"] as const).map((sort) => (
                   <Button
                     key={sort}
                     variant={sortBy === sort ? "default" : "ghost"}
@@ -149,7 +217,6 @@ const SearchPage = () => {
                   >
                     {sort === "departure" && "Abfahrt"}
                     {sort === "price" && "Preis"}
-                    {sort === "duration" && "Dauer"}
                   </Button>
                 ))}
               </div>
@@ -165,7 +232,7 @@ const SearchPage = () => {
               <div className="mb-4">
                 <label className="text-sm font-medium text-foreground mb-2 block">Sortieren nach</label>
                 <div className="flex gap-2">
-                  {(["departure", "price", "duration"] as const).map((sort) => (
+                  {(["departure", "price"] as const).map((sort) => (
                     <Button
                       key={sort}
                       variant={sortBy === sort ? "default" : "outline"}
@@ -174,7 +241,6 @@ const SearchPage = () => {
                     >
                       {sort === "departure" && "Abfahrt"}
                       {sort === "price" && "Preis"}
-                      {sort === "duration" && "Dauer"}
                     </Button>
                   ))}
                 </div>
@@ -182,7 +248,7 @@ const SearchPage = () => {
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">Max. Preis</label>
                 <div className="flex gap-2">
-                  {[null, 20, 30, 40].map((price) => (
+                  {[null, 30, 50, 80].map((price) => (
                     <Button
                       key={price ?? "all"}
                       variant={filterPrice === price ? "default" : "outline"}
@@ -197,97 +263,101 @@ const SearchPage = () => {
             </div>
           </div>
 
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex items-center justify-center py-16">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          )}
+
           {/* Trip List */}
-          <div className="space-y-4">
-            {sortedTrips.map((trip) => (
-              <div
-                key={trip.id}
-                className="bg-card rounded-xl shadow-card p-4 lg:p-6 hover:shadow-elevated transition-all duration-300"
-              >
-                <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                  {/* Time & Route */}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-3">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-foreground">
-                          {format(trip.departureTime, "HH:mm")}
+          {!isLoading && (
+            <div className="space-y-4">
+              {sortedTrips.map((trip) => {
+                const price = tripPrices[trip.id] || 0;
+                const amenities = trip.bus?.amenities || [];
+                
+                return (
+                  <div
+                    key={trip.id}
+                    className="bg-card rounded-xl shadow-card p-4 lg:p-6 hover:shadow-elevated transition-all duration-300"
+                  >
+                    <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                      {/* Time & Route */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-4 mb-3">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-foreground">
+                              {formatTime(trip.departure_time)}
+                            </div>
+                            <div className="text-sm text-muted-foreground">{originStop?.name || from}</div>
+                          </div>
+                          
+                          <div className="flex-1 flex items-center gap-2">
+                            <div className="h-px bg-border flex-1" />
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
+                              <Clock className="w-3 h-3" />
+                              {calculateDuration(trip.departure_time, trip.arrival_time)}
+                            </div>
+                            <div className="h-px bg-border flex-1" />
+                          </div>
+                          
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-foreground">
+                              {formatTime(trip.arrival_time)}
+                            </div>
+                            <div className="text-sm text-muted-foreground">{destinationStop?.name || to}</div>
+                          </div>
                         </div>
-                        <div className="text-sm text-muted-foreground">{trip.from}</div>
-                      </div>
-                      
-                      <div className="flex-1 flex items-center gap-2">
-                        <div className="h-px bg-border flex-1" />
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
-                          <Clock className="w-3 h-3" />
-                          {trip.duration}
-                        </div>
-                        <div className="h-px bg-border flex-1" />
-                      </div>
-                      
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-foreground">
-                          {format(trip.arrivalTime, "HH:mm")}
-                        </div>
-                        <div className="text-sm text-muted-foreground">{trip.to}</div>
-                      </div>
-                    </div>
 
-                    {/* Amenities */}
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Bus className="w-4 h-4 text-primary" />
-                        <span>{trip.operator}</span>
+                        {/* Amenities */}
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Bus className="w-4 h-4 text-primary" />
+                            <span>METROPOL TOURS</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {amenities.map((amenity) => (
+                              <span
+                                key={amenity}
+                                className="text-muted-foreground"
+                                title={amenity}
+                              >
+                                {amenityIcons[amenity]}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {trip.amenities.map((amenity) => (
-                          <span
-                            key={amenity}
-                            className="text-muted-foreground"
-                            title={amenity}
-                          >
-                            {amenityIcons[amenity]}
-                          </span>
-                        ))}
+
+                      {/* Price & CTA */}
+                      <div className="flex items-center justify-between lg:flex-col lg:items-end gap-2">
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-primary">
+                            €{price.toFixed(2)}
+                          </div>
+                          <div className="text-xs text-muted-foreground">pro Person</div>
+                        </div>
+                        <Button
+                          variant="accent"
+                          onClick={() => handleBookTrip(trip.id)}
+                        >
+                          Auswählen
+                          <ArrowRight className="w-4 h-4" />
+                        </Button>
                       </div>
-                      {trip.seatsLeft <= 5 && (
-                        <span className="text-sm text-destructive font-medium">
-                          Nur noch {trip.seatsLeft} Plätze!
-                        </span>
-                      )}
                     </div>
                   </div>
+                );
+              })}
+            </div>
+          )}
 
-                  {/* Price & CTA */}
-                  <div className="flex items-center justify-between lg:flex-col lg:items-end gap-2">
-                    <div className="text-right">
-                      {trip.originalPrice && (
-                        <div className="text-sm text-muted-foreground line-through">
-                          €{trip.originalPrice.toFixed(2)}
-                        </div>
-                      )}
-                      <div className="text-2xl font-bold text-primary">
-                        €{trip.price.toFixed(2)}
-                      </div>
-                      <div className="text-xs text-muted-foreground">pro Person</div>
-                    </div>
-                    <Button
-                      variant="accent"
-                      onClick={() => handleBookTrip(trip.id)}
-                    >
-                      Auswählen
-                      <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {sortedTrips.length === 0 && (
+          {!isLoading && sortedTrips.length === 0 && (
             <div className="text-center py-16">
               <Bus className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-foreground mb-2">Keine Verbindungen gefunden</h3>
-              <p className="text-muted-foreground">Bitte versuchen Sie ein anderes Datum oder ändern Sie Ihre Filter.</p>
+              <p className="text-muted-foreground">Bitte versuchen Sie ein anderes Datum oder ändern Sie Ihre Suche.</p>
             </div>
           )}
         </div>
