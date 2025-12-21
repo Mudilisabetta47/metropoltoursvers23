@@ -1,10 +1,16 @@
-import { useState, useEffect } from 'react';
-import { Seat, SeatWithStatus, SeatDisplayStatus, Stop } from '@/types/database';
+import React, { useState, useEffect } from 'react';
+import { Seat, SeatWithStatus, SeatDisplayStatus } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
 import { getSessionId } from '@/hooks/useSessionId';
 import { cn } from '@/lib/utils';
-import { User, Wifi, Plug, Wind } from 'lucide-react';
+import { User, Wifi, Plug, Wind, DoorOpen, Bath } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface SeatMapProps {
   tripId: string;
@@ -16,6 +22,12 @@ interface SeatMapProps {
   selectedSeats: string[];
   onSeatSelect: (seatId: string, seatNumber: string) => void;
   maxSeats?: number;
+  stops?: { id: string; name: string; stop_order: number }[];
+}
+
+interface SeatBookingInfo {
+  originName: string;
+  destinationName: string;
 }
 
 export default function SeatMap({
@@ -27,9 +39,11 @@ export default function SeatMap({
   destinationStopOrder,
   selectedSeats,
   onSeatSelect,
-  maxSeats = 1
+  maxSeats = 1,
+  stops = []
 }: SeatMapProps) {
   const [seats, setSeats] = useState<SeatWithStatus[]>([]);
+  const [seatBookingInfo, setSeatBookingInfo] = useState<Record<string, SeatBookingInfo>>({});
   const [isLoading, setIsLoading] = useState(true);
   const sessionId = getSessionId();
 
@@ -80,8 +94,8 @@ export default function SeatMap({
         .from('bookings')
         .select(`
           seat_id,
-          origin_stop:origin_stop_id(stop_order),
-          destination_stop:destination_stop_id(stop_order)
+          origin_stop:origin_stop_id(stop_order, name),
+          destination_stop:destination_stop_id(stop_order, name)
         `)
         .eq('trip_id', tripId)
         .in('status', ['pending', 'confirmed']);
@@ -94,13 +108,16 @@ export default function SeatMap({
         .select(`
           seat_id,
           session_id,
-          origin_stop:origin_stop_id(stop_order),
-          destination_stop:destination_stop_id(stop_order)
+          origin_stop:origin_stop_id(stop_order, name),
+          destination_stop:destination_stop_id(stop_order, name)
         `)
         .eq('trip_id', tripId)
         .gt('expires_at', new Date().toISOString());
 
       if (holdsError) throw holdsError;
+
+      // Build booking info map for tooltips
+      const bookingInfoMap: Record<string, SeatBookingInfo> = {};
 
       // Determine seat status for each seat
       const seatsWithStatus: SeatWithStatus[] = (allSeats || []).map((seat: Seat) => {
@@ -113,7 +130,7 @@ export default function SeatMap({
         }
 
         // Check for overlapping bookings
-        const hasOverlappingBooking = bookings?.some((booking: any) => {
+        const overlappingBooking = bookings?.find((booking: any) => {
           if (booking.seat_id !== seat.id) return false;
           const bookingOrigin = booking.origin_stop?.stop_order || 0;
           const bookingDest = booking.destination_stop?.stop_order || 0;
@@ -121,13 +138,17 @@ export default function SeatMap({
           return !(bookingDest <= originStopOrder || bookingOrigin >= destinationStopOrder);
         });
 
-        if (hasOverlappingBooking) {
+        if (overlappingBooking) {
           status = 'booked';
           isSelectable = false;
+          bookingInfoMap[seat.id] = {
+            originName: (overlappingBooking as any).origin_stop?.name || 'Unbekannt',
+            destinationName: (overlappingBooking as any).destination_stop?.name || 'Unbekannt'
+          };
         }
 
         // Check for overlapping holds (except our own session)
-        const hasOverlappingHold = holds?.some((hold: any) => {
+        const overlappingHold = holds?.find((hold: any) => {
           if (hold.seat_id !== seat.id) return false;
           if (hold.session_id === sessionId) return false; // Our own hold
           const holdOrigin = hold.origin_stop?.stop_order || 0;
@@ -135,9 +156,13 @@ export default function SeatMap({
           return !(holdDest <= originStopOrder || holdOrigin >= destinationStopOrder);
         });
 
-        if (hasOverlappingHold && status !== 'booked') {
+        if (overlappingHold && status !== 'booked') {
           status = 'reserved';
           isSelectable = false;
+          bookingInfoMap[seat.id] = {
+            originName: (overlappingHold as any).origin_stop?.name || 'Unbekannt',
+            destinationName: (overlappingHold as any).destination_stop?.name || 'Unbekannt'
+          };
         }
 
         return {
@@ -147,6 +172,7 @@ export default function SeatMap({
         };
       });
 
+      setSeatBookingInfo(bookingInfoMap);
       setSeats(seatsWithStatus);
     } catch (error) {
       console.error('Error loading seats:', error);
@@ -217,6 +243,7 @@ export default function SeatMap({
   });
 
   const rows = Object.keys(seatsByRow).map(Number).sort((a, b) => a - b);
+  const totalRows = rows.length;
 
   if (isLoading) {
     return (
@@ -227,130 +254,239 @@ export default function SeatMap({
   }
 
   return (
-    <div className="bg-card rounded-xl p-4 lg:p-6 shadow-card">
-      <h3 className="text-lg font-semibold text-foreground mb-4">Sitzplatz wählen</h3>
-      
-      {/* Legend */}
-      <div className="flex flex-wrap gap-4 mb-6 text-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded bg-muted border border-border" />
-          <span className="text-muted-foreground">Frei</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded bg-primary border border-primary" />
-          <span className="text-muted-foreground">Ausgewählt</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded bg-amber-500/20 border border-amber-500" />
-          <span className="text-muted-foreground">Reserviert</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded bg-destructive/20 border border-destructive" />
-          <span className="text-muted-foreground">Belegt</span>
-        </div>
-      </div>
-
-      {/* Bus layout */}
-      <div className="relative bg-muted/50 rounded-xl p-4 overflow-x-auto">
-        {/* Driver area */}
-        <div className="flex items-center justify-center mb-6 pb-4 border-b border-border">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center">
-              <User className="w-5 h-5 text-secondary-foreground" />
-            </div>
-            <span className="text-sm font-medium">Fahrer</span>
+    <TooltipProvider delayDuration={100}>
+      <div className="bg-card rounded-xl p-3 sm:p-4 lg:p-6 shadow-card">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Sitzplatz wählen</h3>
+        
+        {/* Legend - responsive layout */}
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-4 mb-4 sm:mb-6 text-xs sm:text-sm">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-muted border-2 border-border" />
+            <span className="text-muted-foreground">Frei</span>
           </div>
-          <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Wifi className="w-4 h-4" />
-              <span>WiFi</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Plug className="w-4 h-4" />
-              <span>Steckdose</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Wind className="w-4 h-4" />
-              <span>Klima</span>
-            </div>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-primary border-2 border-primary" />
+            <span className="text-muted-foreground">Ausgewählt</span>
+          </div>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-amber-500/20 border-2 border-amber-500" />
+            <span className="text-muted-foreground">Reserviert</span>
+          </div>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-destructive/20 border-2 border-destructive" />
+            <span className="text-muted-foreground">Belegt</span>
           </div>
         </div>
 
-        {/* Seat rows */}
-        <div className="space-y-2">
-          {rows.map(rowNum => {
-            const rowSeats = seatsByRow[rowNum].sort((a, b) => a.column_number - b.column_number);
-            const leftSeats = rowSeats.filter(s => s.column_number <= 2);
-            const rightSeats = rowSeats.filter(s => s.column_number > 2);
+        {/* Bus layout container - scrollable on mobile */}
+        <div className="relative bg-gradient-to-b from-muted/30 to-muted/60 rounded-2xl border-2 border-border overflow-hidden">
+          {/* Bus exterior styling */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-border to-transparent" />
+            <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-l from-border to-transparent" />
+          </div>
 
-            return (
-              <div key={rowNum} className="flex items-center justify-center gap-8">
-                {/* Left side seats */}
-                <div className="flex gap-2">
-                  {leftSeats.map(seat => (
-                    <SeatButton
-                      key={seat.id}
-                      seat={seat}
-                      onClick={() => handleSeatClick(seat)}
-                    />
-                  ))}
+          {/* Scrollable seat area */}
+          <div className="overflow-x-auto">
+            <div className="min-w-[280px] p-3 sm:p-4">
+              {/* Driver/Front area */}
+              <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-dashed border-border/60">
+                <div className="flex items-center gap-2">
+                  <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg bg-secondary flex items-center justify-center shadow-sm">
+                    <User className="w-4 h-4 sm:w-5 sm:h-5 text-secondary-foreground" />
+                  </div>
+                  <div className="hidden sm:block">
+                    <span className="text-xs font-medium text-muted-foreground">Fahrer</span>
+                  </div>
                 </div>
-
-                {/* Aisle */}
-                <div className="w-8 flex items-center justify-center">
-                  <span className="text-xs text-muted-foreground">{rowNum}</span>
-                </div>
-
-                {/* Right side seats */}
-                <div className="flex gap-2">
-                  {rightSeats.map(seat => (
-                    <SeatButton
-                      key={seat.id}
-                      seat={seat}
-                      onClick={() => handleSeatClick(seat)}
-                    />
-                  ))}
+                
+                {/* Amenities */}
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-secondary/50 flex items-center justify-center">
+                        <Wifi className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Kostenloses WLAN</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-secondary/50 flex items-center justify-center">
+                        <Plug className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Steckdose am Platz</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-secondary/50 flex items-center justify-center">
+                        <Wind className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Klimaanlage</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
-            );
-          })}
-        </div>
 
-        {/* WC area at the back */}
-        <div className="flex items-center justify-center mt-6 pt-4 border-t border-border">
-          <div className="px-4 py-2 bg-secondary/50 rounded-lg text-xs text-muted-foreground">
-            WC / Notausgang
+              {/* Direction indicator */}
+              <div className="flex justify-center mb-3">
+                <div className="text-[10px] sm:text-xs text-muted-foreground/60 uppercase tracking-wider font-medium">
+                  ← Fenster | Gang | Fenster →
+                </div>
+              </div>
+
+              {/* Seat rows */}
+              <div className="space-y-1.5 sm:space-y-2">
+                {rows.map((rowNum, rowIndex) => {
+                  const rowSeats = seatsByRow[rowNum].sort((a, b) => a.column_number - b.column_number);
+                  const leftSeats = rowSeats.filter(s => s.column_number <= 2);
+                  const rightSeats = rowSeats.filter(s => s.column_number > 2);
+
+                  return (
+                    <div key={rowNum} className="flex items-center justify-center gap-3 sm:gap-6">
+                      {/* Left side seats (window + aisle) */}
+                      <div className="flex gap-1 sm:gap-1.5">
+                        {[1, 2].map(col => {
+                          const seat = leftSeats.find(s => s.column_number === col);
+                          return seat ? (
+                            <SeatButton
+                              key={seat.id}
+                              seat={seat}
+                              onClick={() => handleSeatClick(seat)}
+                              bookingInfo={seatBookingInfo[seat.id]}
+                            />
+                          ) : (
+                            <div key={col} className="w-8 h-8 sm:w-10 sm:h-10" />
+                          );
+                        })}
+                      </div>
+
+                      {/* Aisle with row number */}
+                      <div className="w-6 sm:w-8 flex items-center justify-center">
+                        <span className="text-[10px] sm:text-xs font-medium text-muted-foreground/70 bg-muted/50 rounded px-1.5 py-0.5">
+                          {rowNum}
+                        </span>
+                      </div>
+
+                      {/* Right side seats (aisle + window) */}
+                      <div className="flex gap-1 sm:gap-1.5">
+                        {[3, 4].map(col => {
+                          const seat = rightSeats.find(s => s.column_number === col);
+                          return seat ? (
+                            <SeatButton
+                              key={seat.id}
+                              seat={seat}
+                              onClick={() => handleSeatClick(seat)}
+                              bookingInfo={seatBookingInfo[seat.id]}
+                            />
+                          ) : (
+                            <div key={col} className="w-8 h-8 sm:w-10 sm:h-10" />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* WC/Emergency exit area at the back */}
+              <div className="flex items-center justify-center gap-4 mt-4 pt-3 border-t-2 border-dashed border-border/60">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary/50 rounded-lg cursor-default">
+                      <Bath className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground font-medium">WC</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Bordtoilette</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary/50 rounded-lg cursor-default">
+                      <DoorOpen className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground font-medium">Notausgang</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Notausgang</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <p className="mt-4 text-sm text-muted-foreground">
-        Reservierung gilt für 10 Minuten. Preis kann bei hoher Auslastung steigen.
-      </p>
-    </div>
+        {/* Info text */}
+        <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground">
+          Reservierung gilt für 10 Minuten. Preis kann bei hoher Auslastung steigen.
+        </p>
+      </div>
+    </TooltipProvider>
   );
 }
 
-function SeatButton({ seat, onClick }: { seat: SeatWithStatus; onClick: () => void }) {
+interface SeatButtonProps {
+  seat: SeatWithStatus;
+  onClick: () => void;
+  bookingInfo?: SeatBookingInfo;
+}
+
+function SeatButton({ seat, onClick, bookingInfo }: SeatButtonProps) {
   const statusStyles: Record<SeatDisplayStatus, string> = {
-    available: 'bg-muted border-border hover:border-primary hover:bg-primary/10 cursor-pointer',
-    selected: 'bg-primary border-primary text-primary-foreground cursor-pointer',
-    reserved: 'bg-amber-500/20 border-amber-500 cursor-not-allowed',
-    booked: 'bg-destructive/20 border-destructive cursor-not-allowed'
+    available: 'bg-muted border-border hover:border-primary hover:bg-primary/10 hover:scale-105 cursor-pointer shadow-sm',
+    selected: 'bg-primary border-primary text-primary-foreground cursor-pointer shadow-md ring-2 ring-primary/30 scale-105',
+    reserved: 'bg-amber-500/20 border-amber-500/70 text-amber-700 dark:text-amber-400 cursor-not-allowed',
+    booked: 'bg-destructive/20 border-destructive/70 text-destructive cursor-not-allowed'
+  };
+
+  const getTooltipContent = () => {
+    if (seat.status === 'booked' && bookingInfo) {
+      return `Belegt für ${bookingInfo.originName} → ${bookingInfo.destinationName}`;
+    }
+    if (seat.status === 'reserved' && bookingInfo) {
+      return `Reserviert für ${bookingInfo.originName} → ${bookingInfo.destinationName}`;
+    }
+    if (seat.status === 'reserved') {
+      return 'Von anderem Nutzer reserviert';
+    }
+    if (seat.status === 'booked') {
+      return 'Bereits gebucht';
+    }
+    if (seat.status === 'selected') {
+      return `Sitz ${seat.seat_number} (ausgewählt) - Klicken zum Abwählen`;
+    }
+    return `Sitz ${seat.seat_number} - Klicken zum Auswählen`;
   };
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={!seat.isSelectable && seat.status !== 'selected'}
-      className={cn(
-        'w-10 h-10 rounded-lg border-2 flex items-center justify-center text-xs font-medium transition-all',
-        statusStyles[seat.status]
-      )}
-      title={seat.status === 'booked' ? 'Bereits gebucht' : seat.status === 'reserved' ? 'Von anderem Nutzer reserviert' : `Sitz ${seat.seat_number}`}
-    >
-      {seat.seat_number}
-    </button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onClick={onClick}
+          disabled={!seat.isSelectable && seat.status !== 'selected'}
+          className={cn(
+            'w-8 h-8 sm:w-10 sm:h-10 rounded-lg border-2 flex items-center justify-center',
+            'text-[10px] sm:text-xs font-semibold transition-all duration-150',
+            statusStyles[seat.status]
+          )}
+          aria-label={getTooltipContent()}
+        >
+          {seat.seat_number}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-[200px] text-center">
+        <p className="text-xs">{getTooltipContent()}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }
