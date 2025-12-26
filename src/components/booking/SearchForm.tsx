@@ -111,25 +111,29 @@ const SearchForm = ({
   // Filter stops based on search and exclude already selected stops
   const getAvailableFromStops = () => {
     return stops.filter(stop => {
-      const matchesSearch = stop.name.toLowerCase().includes(fromSearch.toLowerCase()) ||
+      // If search is empty, show all valid stops
+      const matchesSearch = fromSearch.trim() === '' || 
+                           stop.name.toLowerCase().includes(fromSearch.toLowerCase()) ||
                            stop.city.toLowerCase().includes(fromSearch.toLowerCase());
       // Can't select the same stop as destination
       const notDestination = !toStop || stop.id !== toStop.id;
-      // Can only select stops that come before the destination
-      const isBeforeDestination = !toStop || stop.stop_order < toStop.stop_order;
-      return matchesSearch && notDestination && isBeforeDestination;
+      // Can only select stops that come before the destination (if destination is selected)
+      const isValidOrder = !toStop || stop.stop_order < toStop.stop_order;
+      return matchesSearch && notDestination && isValidOrder;
     });
   };
 
   const getAvailableToStops = () => {
     return stops.filter(stop => {
-      const matchesSearch = stop.name.toLowerCase().includes(toSearch.toLowerCase()) ||
+      // If search is empty, show all valid stops
+      const matchesSearch = toSearch.trim() === '' || 
+                           stop.name.toLowerCase().includes(toSearch.toLowerCase()) ||
                            stop.city.toLowerCase().includes(toSearch.toLowerCase());
       // Can't select the same stop as origin
       const notOrigin = !fromStop || stop.id !== fromStop.id;
-      // Can only select stops that come after the origin
-      const isAfterOrigin = !fromStop || stop.stop_order > fromStop.stop_order;
-      return matchesSearch && notOrigin && isAfterOrigin;
+      // Can only select stops that come after the origin (if origin is selected)
+      const isValidOrder = !fromStop || stop.stop_order > fromStop.stop_order;
+      return matchesSearch && notOrigin && isValidOrder;
     });
   };
 
