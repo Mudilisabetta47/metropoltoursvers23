@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { ArrowRight, ArrowLeft, Bus, Clock, User, Mail, Phone, CreditCard, Check, Briefcase, PawPrint, Shield, AlertCircle } from "lucide-react";
+import { ArrowRight, ArrowLeft, Bus, Clock, User, Mail, Phone, CreditCard, Check, Briefcase, PawPrint, Shield, AlertCircle, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getSessionId } from "@/hooks/useSessionId";
+import { useTicketDownload } from "@/hooks/useTicketDownload";
 
 type CheckoutStep = "seats" | "details" | "extras" | "payment" | "confirmation";
 
@@ -59,6 +60,7 @@ const CheckoutPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { downloadTicket, isDownloading } = useTicketDownload();
   
   const tripId = searchParams.get("tripId") || "";
   const fromStopId = searchParams.get("fromStopId") || "";
@@ -93,6 +95,7 @@ const CheckoutPage = () => {
   const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal" | "sofort">("card");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [bookingIds, setBookingIds] = useState<string[]>([]);
   const [bookingNumbers, setBookingNumbers] = useState<string[]>([]);
 
   useEffect(() => {
@@ -225,6 +228,7 @@ const CheckoutPage = () => {
     setIsProcessing(true);
     const sessionId = getSessionId();
     const generatedNumbers: string[] = [];
+    const generatedIds: string[] = [];
 
     try {
       for (let i = 0; i < passengerInfo.length; i++) {
@@ -243,7 +247,7 @@ const CheckoutPage = () => {
           price: e.price
         }));
 
-        const { error: bookingError } = await supabase
+        const { data: bookingData, error: bookingError } = await supabase
           .from('bookings')
           .insert({
             ticket_number: ticketNumber,
@@ -259,11 +263,14 @@ const CheckoutPage = () => {
             price_paid: price + extras.filter(e => e.selected).reduce((sum, e) => sum + e.price, 0),
             status: 'confirmed',
             extras: selectedExtras
-          });
+          })
+          .select('id')
+          .single();
 
         if (bookingError) throw bookingError;
 
         generatedNumbers.push(ticketNumber);
+        generatedIds.push(bookingData.id);
 
         // Delete the seat hold
         await supabase
@@ -275,6 +282,7 @@ const CheckoutPage = () => {
       }
 
       setBookingNumbers(generatedNumbers);
+      setBookingIds(generatedIds);
 
       // Send confirmation email
       try {
@@ -641,10 +649,28 @@ const CheckoutPage = () => {
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    {bookingIds.map((id, index) => (
+                      <Button 
+                        key={id} 
+                        variant="accent"
+                        onClick={() => downloadTicket(id)}
+                        disabled={isDownloading}
+                      >
+                        {isDownloading ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Download className="w-4 h-4 mr-2" />
+                        )}
+                        Ticket {index + 1} herunterladen
+                      </Button>
+                    ))}
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center mt-4">
                     <Button variant="outline" onClick={() => navigate("/bookings")}>
                       Meine Buchungen
                     </Button>
-                    <Button onClick={() => navigate("/")}>
+                    <Button variant="ghost" onClick={() => navigate("/")}>
                       Zurück zur Startseite
                     </Button>
                   </div>
