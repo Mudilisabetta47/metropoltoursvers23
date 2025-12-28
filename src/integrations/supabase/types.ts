@@ -693,30 +693,24 @@ export type Database = {
       get_bookings_for_agent: {
         Args: { p_limit?: number; p_offset?: number; p_status?: string }
         Returns: {
-          booked_by_agent_id: string | null
-          created_at: string | null
-          destination_stop_id: string | null
-          extras: Json | null
-          id: string | null
-          origin_stop_id: string | null
-          passenger_email: string | null
-          passenger_first_name: string | null
-          passenger_last_name: string | null
-          passenger_phone: string | null
-          price_paid: number | null
-          seat_id: string | null
-          status: Database["public"]["Enums"]["booking_status"] | null
-          ticket_number: string | null
-          trip_id: string | null
-          updated_at: string | null
-          user_id: string | null
+          booked_by_agent_id: string
+          created_at: string
+          destination_stop_id: string
+          extras: Json
+          id: string
+          origin_stop_id: string
+          passenger_email: string
+          passenger_first_name: string
+          passenger_last_name: string
+          passenger_phone: string
+          price_paid: number
+          seat_id: string
+          status: string
+          ticket_number: string
+          trip_id: string
+          updated_at: string
+          user_id: string
         }[]
-        SetofOptions: {
-          from: "*"
-          to: "bookings_agent_view"
-          isOneToOne: false
-          isSetofReturn: true
-        }
       }
       has_role: {
         Args: {
