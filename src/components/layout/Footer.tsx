@@ -70,22 +70,7 @@ const Footer = () => {
               <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
                 <Bus className="w-6 h-6 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold">
-                
-
-
-
-
-
-
-
-
-
-
-
-
-
-Metropol Tours <span className="text-primary">Bus</span>
+              <span className="text-xl font-bold">Metropol Bus<span className="text-primary">Bus</span>
               </span>
             </Link>
             <p className="text-muted-foreground text-sm mb-6 max-w-sm">
