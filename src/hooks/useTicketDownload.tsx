@@ -2,15 +2,29 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+interface DownloadOptions {
+  bookingId?: string;
+  ticketNumber?: string;
+  email?: string;
+}
+
 export const useTicketDownload = () => {
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const downloadTicket = async (bookingId: string) => {
+  const downloadTicket = async (options: string | DownloadOptions) => {
     setIsDownloading(true);
     
     try {
+      // Support both old API (bookingId string) and new API (options object)
+      let body: DownloadOptions;
+      if (typeof options === 'string') {
+        body = { bookingId: options };
+      } else {
+        body = options;
+      }
+
       const { data, error } = await supabase.functions.invoke('generate-ticket-pdf', {
-        body: { bookingId },
+        body,
       });
 
       if (error) throw error;
@@ -43,9 +57,17 @@ export const useTicketDownload = () => {
       }
 
       toast.success('Ticket erfolgreich generiert!');
-    } catch (error) {
+      return true;
+    } catch (error: any) {
       console.error('Error downloading ticket:', error);
-      toast.error('Fehler beim Generieren des Tickets');
+      if (error.message?.includes('401') || error.message?.includes('403')) {
+        toast.error('Zugriff verweigert. Bitte überprüfen Sie Ihre Angaben.');
+      } else if (error.message?.includes('429')) {
+        toast.error('Zu viele Anfragen. Bitte warten Sie einen Moment.');
+      } else {
+        toast.error('Fehler beim Generieren des Tickets');
+      }
+      return false;
     } finally {
       setIsDownloading(false);
     }
