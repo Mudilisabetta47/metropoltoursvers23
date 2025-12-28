@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: string | null
+          record_id: string | null
+          record_identifier: string | null
+          table_name: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          record_id?: string | null
+          record_identifier?: string | null
+          table_name: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          record_id?: string | null
+          record_identifier?: string | null
+          table_name?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           booked_by_agent_id: string | null
@@ -488,7 +527,128 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      bookings_agent_view: {
+        Row: {
+          booked_by_agent_id: string | null
+          created_at: string | null
+          destination_stop_id: string | null
+          extras: Json | null
+          id: string | null
+          origin_stop_id: string | null
+          passenger_email: string | null
+          passenger_first_name: string | null
+          passenger_last_name: string | null
+          passenger_phone: string | null
+          price_paid: number | null
+          seat_id: string | null
+          status: Database["public"]["Enums"]["booking_status"] | null
+          ticket_number: string | null
+          trip_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          booked_by_agent_id?: string | null
+          created_at?: string | null
+          destination_stop_id?: string | null
+          extras?: Json | null
+          id?: string | null
+          origin_stop_id?: string | null
+          passenger_email?: never
+          passenger_first_name?: never
+          passenger_last_name?: never
+          passenger_phone?: never
+          price_paid?: number | null
+          seat_id?: string | null
+          status?: Database["public"]["Enums"]["booking_status"] | null
+          ticket_number?: string | null
+          trip_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          booked_by_agent_id?: string | null
+          created_at?: string | null
+          destination_stop_id?: string | null
+          extras?: Json | null
+          id?: string | null
+          origin_stop_id?: string | null
+          passenger_email?: never
+          passenger_first_name?: never
+          passenger_last_name?: never
+          passenger_phone?: never
+          price_paid?: number | null
+          seat_id?: string | null
+          status?: Database["public"]["Enums"]["booking_status"] | null
+          ticket_number?: string | null
+          trip_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_destination_stop_id_fkey"
+            columns: ["destination_stop_id"]
+            isOneToOne: false
+            referencedRelation: "stops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_origin_stop_id_fkey"
+            columns: ["origin_stop_id"]
+            isOneToOne: false
+            referencedRelation: "stops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_seat_id_fkey"
+            columns: ["seat_id"]
+            isOneToOne: false
+            referencedRelation: "seats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles_agent_view: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          first_name: string | null
+          id: string | null
+          last_name: string | null
+          phone: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: never
+          first_name?: never
+          id?: string | null
+          last_name?: never
+          phone?: never
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: never
+          first_name?: never
+          id?: string | null
+          last_name?: never
+          phone?: never
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_trip_price: {
@@ -510,12 +670,103 @@ export type Database = {
       }
       cleanup_expired_holds: { Args: never; Returns: number }
       generate_ticket_number: { Args: never; Returns: string }
+      get_audit_logs: {
+        Args: {
+          p_action?: string
+          p_limit?: number
+          p_offset?: number
+          p_table_name?: string
+          p_user_id?: string
+        }
+        Returns: {
+          action: string
+          created_at: string
+          details: Json
+          id: string
+          record_id: string
+          record_identifier: string
+          table_name: string
+          user_email: string
+          user_id: string
+        }[]
+      }
+      get_bookings_for_agent: {
+        Args: { p_limit?: number; p_offset?: number; p_status?: string }
+        Returns: {
+          booked_by_agent_id: string | null
+          created_at: string | null
+          destination_stop_id: string | null
+          extras: Json | null
+          id: string | null
+          origin_stop_id: string | null
+          passenger_email: string | null
+          passenger_first_name: string | null
+          passenger_last_name: string | null
+          passenger_phone: string | null
+          price_paid: number | null
+          seat_id: string | null
+          status: Database["public"]["Enums"]["booking_status"] | null
+          ticket_number: string | null
+          trip_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "bookings_agent_view"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      log_pii_access: {
+        Args: {
+          p_action: string
+          p_details?: Json
+          p_record_id?: string
+          p_record_identifier?: string
+          p_table_name: string
+        }
+        Returns: string
+      }
+      mask_email: { Args: { email: string }; Returns: string }
+      mask_name: { Args: { name: string }; Returns: string }
+      mask_phone: { Args: { phone: string }; Returns: string }
+      reveal_booking_pii: {
+        Args: { p_booking_id: string }
+        Returns: {
+          created_at: string
+          destination_stop_id: string
+          id: string
+          origin_stop_id: string
+          passenger_email: string
+          passenger_first_name: string
+          passenger_last_name: string
+          passenger_phone: string
+          price_paid: number
+          seat_id: string
+          status: string
+          ticket_number: string
+          trip_id: string
+        }[]
+      }
+      reveal_profile_pii: {
+        Args: { p_profile_id: string }
+        Returns: {
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone: string
+          user_id: string
+        }[]
       }
     }
     Enums: {
