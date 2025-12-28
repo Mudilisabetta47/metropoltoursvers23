@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Bus, Calendar, MapPin, Clock, ArrowRight, Download, X, ChevronDown, Search, Loader2 } from "lucide-react";
+import { Bus, Calendar, MapPin, Clock, ArrowRight, Download, X, ChevronDown, Search, Loader2, Ticket, Mail } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,6 +42,13 @@ const BookingsPage = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  
+  // Guest lookup state
+  const [guestLookupMode, setGuestLookupMode] = useState(false);
+  const [ticketNumber, setTicketNumber] = useState("");
+  const [lookupEmail, setLookupEmail] = useState("");
+  const [isLookingUp, setIsLookingUp] = useState(false);
+  const [guestBooking, setGuestBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -80,6 +88,45 @@ const BookingsPage = () => {
     }
   };
 
+  const handleGuestLookup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!ticketNumber.trim() || !lookupEmail.trim()) {
+      toast.error('Bitte füllen Sie alle Felder aus.');
+      return;
+    }
+    
+    setIsLookingUp(true);
+    setGuestBooking(null);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('lookup-booking', {
+        body: { 
+          ticketNumber: ticketNumber.trim().toUpperCase(),
+          email: lookupEmail.trim().toLowerCase()
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.success && data?.booking) {
+        setGuestBooking(data.booking);
+        toast.success('Buchung gefunden!');
+      } else {
+        toast.error(data?.error || 'Buchung nicht gefunden. Bitte überprüfen Sie Ihre Angaben.');
+      }
+    } catch (error: any) {
+      console.error('Error looking up booking:', error);
+      if (error.message?.includes('429')) {
+        toast.error('Zu viele Anfragen. Bitte warten Sie einen Moment.');
+      } else {
+        toast.error('Buchung nicht gefunden. Bitte überprüfen Sie Ihre Angaben.');
+      }
+    } finally {
+      setIsLookingUp(false);
+    }
+  };
+
   const handleDownloadTicket = async (bookingId: string) => {
     setDownloadingId(bookingId);
     await downloadTicket(bookingId);
@@ -96,7 +143,11 @@ const BookingsPage = () => {
       if (error) throw error;
       
       toast.success('Buchung wurde storniert.');
-      loadBookings();
+      if (user) {
+        loadBookings();
+      } else if (guestBooking && guestBooking.id === bookingId) {
+        setGuestBooking({ ...guestBooking, status: 'cancelled' });
+      }
     } catch (error) {
       console.error('Error cancelling booking:', error);
       toast.error('Fehler beim Stornieren der Buchung');
@@ -114,7 +165,6 @@ const BookingsPage = () => {
   });
 
   const getDisplayStatus = (status: string) => {
-    const departureDate = new Date();
     if (status === 'confirmed') {
       return { label: "Bestätigt", className: "bg-primary/10 text-primary" };
     }
@@ -141,6 +191,132 @@ const BookingsPage = () => {
     return `${hours}h ${minutes}min`;
   };
 
+  // Render a single booking card
+  const renderBookingCard = (booking: Booking) => {
+    const statusConfig = getDisplayStatus(booking.status);
+    const departureDate = new Date(booking.trip.departure_date);
+    const duration = calculateDuration(booking.trip.departure_time, booking.trip.arrival_time);
+
+    return (
+      <div key={booking.id} className="bg-card rounded-xl shadow-card overflow-hidden">
+        {/* Main Row */}
+        <div className="p-4 lg:p-6">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+            {/* Date & Status */}
+            <div className="flex items-center gap-4 lg:w-48">
+              <div className="w-14 h-14 bg-primary/10 rounded-xl flex flex-col items-center justify-center">
+                <span className="text-lg font-bold text-primary">
+                  {format(departureDate, "dd")}
+                </span>
+                <span className="text-xs text-primary uppercase">
+                  {format(departureDate, "MMM", { locale: de })}
+                </span>
+              </div>
+              <div>
+                <div className={cn(
+                  "px-2 py-0.5 rounded-full text-xs font-medium inline-block mb-1",
+                  statusConfig.className
+                )}>
+                  {statusConfig.label}
+                </div>
+                <div className="text-xs text-muted-foreground font-mono">{booking.ticket_number}</div>
+              </div>
+            </div>
+
+            {/* Route */}
+            <div className="flex-1">
+              <div className="flex items-center gap-4">
+                <div className="text-center">
+                  <div className="text-xl font-bold text-foreground">{formatTime(booking.trip.departure_time)}</div>
+                  <div className="text-sm text-muted-foreground">{booking.origin_stop.city}</div>
+                </div>
+                <div className="flex-1 flex items-center gap-2">
+                  <div className="h-px bg-border flex-1" />
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
+                    <Clock className="w-3 h-3" />
+                    {duration}
+                  </div>
+                  <div className="h-px bg-border flex-1" />
+                </div>
+                <div className="text-center">
+                  <div className="text-xl font-bold text-foreground">{formatTime(booking.trip.arrival_time)}</div>
+                  <div className="text-sm text-muted-foreground">{booking.destination_stop.city}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Price & Actions */}
+            <div className="flex items-center justify-between lg:justify-end gap-4">
+              <div className="text-right">
+                <div className="text-xl font-bold text-primary">€{booking.price_paid.toFixed(2)}</div>
+                <div className="text-xs text-muted-foreground">Sitz {booking.seat.seat_number}</div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setExpandedBooking(expandedBooking === booking.id ? null : booking.id)}
+              >
+                <ChevronDown className={cn(
+                  "w-5 h-5 transition-transform",
+                  expandedBooking === booking.id && "rotate-180"
+                )} />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Expanded Details */}
+        <div className={cn(
+          "overflow-hidden transition-all duration-300",
+          expandedBooking === booking.id ? "max-h-64" : "max-h-0"
+        )}>
+          <div className="px-4 lg:px-6 pb-4 lg:pb-6 pt-2 border-t border-border">
+            <div className="flex flex-col sm:flex-row gap-4 justify-between">
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Calendar className="w-4 h-4" />
+                  <span>{format(departureDate, "EEEE, dd. MMMM yyyy", { locale: de })}</span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="w-4 h-4" />
+                  <span>{booking.origin_stop.name} → {booking.destination_stop.name}</span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Bus className="w-4 h-4" />
+                  <span>{booking.trip.route.name} • Sitzplatz {booking.seat.seat_number}</span>
+                </div>
+              </div>
+              {booking.status === "confirmed" && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCancelBooking(booking.id)}
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Stornieren
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleDownloadTicket(booking.id)}
+                    disabled={downloadingId === booking.id}
+                  >
+                    {downloadingId === booking.id ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4 mr-2" />
+                    )}
+                    Ticket
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-muted/30">
@@ -153,6 +329,7 @@ const BookingsPage = () => {
     );
   }
 
+  // Guest user view with booking lookup
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col bg-muted/30">
@@ -161,19 +338,95 @@ const BookingsPage = () => {
           <section className="bg-primary py-12 lg:py-16">
             <div className="container mx-auto px-4">
               <h1 className="text-3xl lg:text-4xl font-bold text-primary-foreground mb-2">
-                Meine Buchungen
+                Buchung abrufen
               </h1>
+              <p className="text-primary-foreground/80">
+                Geben Sie Ihre Ticketnummer und E-Mail-Adresse ein, um Ihre Buchung anzuzeigen.
+              </p>
             </div>
           </section>
-          <div className="container mx-auto px-4 py-16 text-center">
-            <Bus className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-2">Bitte anmelden</h3>
-            <p className="text-muted-foreground mb-6">
-              Melden Sie sich an, um Ihre Buchungen zu sehen.
-            </p>
-            <Button asChild>
-              <Link to="/auth">Jetzt anmelden</Link>
-            </Button>
+          
+          <div className="container mx-auto px-4 py-8">
+            <div className="max-w-md mx-auto">
+              {/* Guest lookup form */}
+              <div className="bg-card rounded-xl shadow-card p-6 mb-6">
+                <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <Ticket className="w-5 h-5 text-primary" />
+                  Buchung suchen
+                </h2>
+                
+                <form onSubmit={handleGuestLookup} className="space-y-4">
+                  <div>
+                    <Label htmlFor="ticketNumber">Ticketnummer *</Label>
+                    <Input
+                      id="ticketNumber"
+                      value={ticketNumber}
+                      onChange={(e) => setTicketNumber(e.target.value.toUpperCase())}
+                      placeholder="TKT-2025-123456"
+                      className="mt-1 font-mono"
+                      maxLength={16}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Format: TKT-JJJJ-XXXXXX
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="lookupEmail">E-Mail-Adresse *</Label>
+                    <div className="relative mt-1">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="lookupEmail"
+                        type="email"
+                        value={lookupEmail}
+                        onChange={(e) => setLookupEmail(e.target.value)}
+                        placeholder="ihre@email.de"
+                        className="pl-10"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Die E-Mail-Adresse, die bei der Buchung angegeben wurde.
+                    </p>
+                  </div>
+                  
+                  <Button 
+                    type="submit" 
+                    className="w-full"
+                    disabled={isLookingUp}
+                  >
+                    {isLookingUp ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Suche läuft...
+                      </>
+                    ) : (
+                      <>
+                        <Search className="w-4 h-4 mr-2" />
+                        Buchung suchen
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </div>
+              
+              {/* Guest booking result */}
+              {guestBooking && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground">Ihre Buchung</h3>
+                  {renderBookingCard(guestBooking)}
+                </div>
+              )}
+              
+              {/* Login prompt */}
+              <div className="text-center mt-8 p-6 bg-muted/50 rounded-xl">
+                <p className="text-muted-foreground mb-4">
+                  Sie haben ein Konto? Melden Sie sich an, um alle Ihre Buchungen zu sehen.
+                </p>
+                <Button variant="outline" asChild>
+                  <Link to="/auth">Jetzt anmelden</Link>
+                </Button>
+              </div>
+            </div>
           </div>
         </main>
         <Footer />
@@ -230,133 +483,7 @@ const BookingsPage = () => {
           {/* Bookings List */}
           {filteredBookings.length > 0 ? (
             <div className="space-y-4">
-              {filteredBookings.map((booking) => {
-                const statusConfig = getDisplayStatus(booking.status);
-                const departureDate = new Date(booking.trip.departure_date);
-                const duration = calculateDuration(booking.trip.departure_time, booking.trip.arrival_time);
-
-                return (
-                  <div
-                    key={booking.id}
-                    className="bg-card rounded-xl shadow-card overflow-hidden"
-                  >
-                    {/* Main Row */}
-                    <div className="p-4 lg:p-6">
-                      <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                        {/* Date & Status */}
-                        <div className="flex items-center gap-4 lg:w-48">
-                          <div className="w-14 h-14 bg-primary/10 rounded-xl flex flex-col items-center justify-center">
-                            <span className="text-lg font-bold text-primary">
-                              {format(departureDate, "dd")}
-                            </span>
-                            <span className="text-xs text-primary uppercase">
-                              {format(departureDate, "MMM", { locale: de })}
-                            </span>
-                          </div>
-                          <div>
-                            <div className={cn(
-                              "px-2 py-0.5 rounded-full text-xs font-medium inline-block mb-1",
-                              statusConfig.className
-                            )}>
-                              {statusConfig.label}
-                            </div>
-                            <div className="text-xs text-muted-foreground font-mono">{booking.ticket_number}</div>
-                          </div>
-                        </div>
-
-                        {/* Route */}
-                        <div className="flex-1">
-                          <div className="flex items-center gap-4">
-                            <div className="text-center">
-                              <div className="text-xl font-bold text-foreground">{formatTime(booking.trip.departure_time)}</div>
-                              <div className="text-sm text-muted-foreground">{booking.origin_stop.city}</div>
-                            </div>
-                            <div className="flex-1 flex items-center gap-2">
-                              <div className="h-px bg-border flex-1" />
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
-                                <Clock className="w-3 h-3" />
-                                {duration}
-                              </div>
-                              <div className="h-px bg-border flex-1" />
-                            </div>
-                            <div className="text-center">
-                              <div className="text-xl font-bold text-foreground">{formatTime(booking.trip.arrival_time)}</div>
-                              <div className="text-sm text-muted-foreground">{booking.destination_stop.city}</div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Price & Actions */}
-                        <div className="flex items-center justify-between lg:justify-end gap-4">
-                          <div className="text-right">
-                            <div className="text-xl font-bold text-primary">€{booking.price_paid.toFixed(2)}</div>
-                            <div className="text-xs text-muted-foreground">Sitz {booking.seat.seat_number}</div>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setExpandedBooking(expandedBooking === booking.id ? null : booking.id)}
-                          >
-                            <ChevronDown className={cn(
-                              "w-5 h-5 transition-transform",
-                              expandedBooking === booking.id && "rotate-180"
-                            )} />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Expanded Details */}
-                    <div className={cn(
-                      "overflow-hidden transition-all duration-300",
-                      expandedBooking === booking.id ? "max-h-64" : "max-h-0"
-                    )}>
-                      <div className="px-4 lg:px-6 pb-4 lg:pb-6 pt-2 border-t border-border">
-                        <div className="flex flex-col sm:flex-row gap-4 justify-between">
-                          <div className="space-y-2 text-sm">
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              <Calendar className="w-4 h-4" />
-                              <span>{format(departureDate, "EEEE, dd. MMMM yyyy", { locale: de })}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              <MapPin className="w-4 h-4" />
-                              <span>{booking.origin_stop.name} → {booking.destination_stop.name}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              <Bus className="w-4 h-4" />
-                              <span>{booking.trip.route.name} • Sitzplatz {booking.seat.seat_number}</span>
-                            </div>
-                          </div>
-                          {booking.status === "confirmed" && (
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleCancelBooking(booking.id)}
-                              >
-                                <X className="w-4 h-4 mr-2" />
-                                Stornieren
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={() => handleDownloadTicket(booking.id)}
-                                disabled={downloadingId === booking.id}
-                              >
-                                {downloadingId === booking.id ? (
-                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                ) : (
-                                  <Download className="w-4 h-4 mr-2" />
-                                )}
-                                Ticket
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {filteredBookings.map((booking) => renderBookingCard(booking))}
             </div>
           ) : (
             <div className="text-center py-16 bg-card rounded-xl shadow-card">
