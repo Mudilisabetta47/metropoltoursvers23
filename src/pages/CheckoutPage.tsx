@@ -284,27 +284,15 @@ const CheckoutPage = () => {
       setBookingNumbers(generatedNumbers);
       setBookingIds(generatedIds);
 
-      // Send confirmation email
-      try {
-        await supabase.functions.invoke('send-booking-confirmation', {
-          body: {
-            email: passengerInfo[0].email,
-            firstName: passengerInfo[0].firstName,
-            lastName: passengerInfo[0].lastName,
-            bookingNumber: generatedNumbers[0],
-            from: originStop?.name || '',
-            to: destinationStop?.name || '',
-            departureDate: trip ? format(new Date(trip.departure_date), "dd.MM.yyyy", { locale: de }) : '',
-            departureTime: trip?.departure_time?.substring(0, 5) || '',
-            arrivalTime: trip?.arrival_time?.substring(0, 5) || '',
-            passengers,
-            totalPrice,
-            extras: extras.filter(e => e.selected).map(e => e.name),
-            seatNumbers: passengerInfo.map(p => p.seatNumber).join(', ')
-          },
-        });
-      } catch (emailError) {
-        console.error("Error sending confirmation email:", emailError);
+      // Send confirmation emails for each booking
+      for (const bookingId of generatedIds) {
+        try {
+          await supabase.functions.invoke('send-booking-confirmation', {
+            body: { bookingId },
+          });
+        } catch (emailError) {
+          console.error("Error sending confirmation email:", emailError);
+        }
       }
 
       setCurrentStep("confirmation");
