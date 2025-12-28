@@ -127,9 +127,14 @@ const BookingsPage = () => {
     }
   };
 
-  const handleDownloadTicket = async (bookingId: string) => {
+  const handleDownloadTicket = async (bookingId: string, ticketNum?: string, email?: string) => {
     setDownloadingId(bookingId);
-    await downloadTicket(bookingId);
+    // Use guest flow if ticketNumber and email are provided, otherwise use authenticated flow
+    if (ticketNum && email) {
+      await downloadTicket({ ticketNumber: ticketNum, email });
+    } else {
+      await downloadTicket(bookingId);
+    }
     setDownloadingId(null);
   };
 
@@ -192,7 +197,7 @@ const BookingsPage = () => {
   };
 
   // Render a single booking card
-  const renderBookingCard = (booking: Booking) => {
+  const renderBookingCard = (booking: Booking, isGuest: boolean = false) => {
     const statusConfig = getDisplayStatus(booking.status);
     const departureDate = new Date(booking.trip.departure_date);
     const duration = calculateDuration(booking.trip.departure_time, booking.trip.arrival_time);
@@ -288,17 +293,22 @@ const BookingsPage = () => {
               </div>
               {booking.status === "confirmed" && (
                 <div className="flex gap-2">
+                  {!isGuest && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleCancelBooking(booking.id)}
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Stornieren
+                    </Button>
+                  )}
                   <Button
-                    variant="outline"
                     size="sm"
-                    onClick={() => handleCancelBooking(booking.id)}
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    Stornieren
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => handleDownloadTicket(booking.id)}
+                    onClick={() => isGuest 
+                      ? handleDownloadTicket(booking.id, booking.ticket_number, lookupEmail)
+                      : handleDownloadTicket(booking.id)
+                    }
                     disabled={downloadingId === booking.id}
                   >
                     {downloadingId === booking.id ? (
@@ -413,7 +423,7 @@ const BookingsPage = () => {
               {guestBooking && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-foreground">Ihre Buchung</h3>
-                  {renderBookingCard(guestBooking)}
+                  {renderBookingCard(guestBooking, true)}
                 </div>
               )}
               

@@ -7,8 +7,66 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface TicketRequest {
-  bookingId: string;
+// Rate limiting store
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 10; // Max 10 ticket downloads per minute per IP
+
+function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
+  const now = Date.now();
+  const record = rateLimitStore.get(ip);
+  
+  if (!record || now > record.resetAt) {
+    rateLimitStore.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true };
+  }
+  
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+    return { allowed: false, retryAfter: Math.ceil((record.resetAt - now) / 1000) };
+  }
+  
+  record.count++;
+  return { allowed: true };
+}
+
+// Input validation
+function validateInput(data: any): { valid: boolean; error?: string; mode: 'authenticated' | 'guest' } {
+  // Mode 1: Authenticated with bookingId
+  if (data.bookingId) {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(data.bookingId)) {
+      return { valid: false, error: 'Invalid booking ID format', mode: 'authenticated' };
+    }
+    return { valid: true, mode: 'authenticated' };
+  }
+  
+  // Mode 2: Guest with ticket number + email
+  if (data.ticketNumber && data.email) {
+    const ticketRegex = /^TKT-\d{4}-\d{6}$/;
+    if (!ticketRegex.test(data.ticketNumber.toUpperCase())) {
+      return { valid: false, error: 'Invalid ticket number format', mode: 'guest' };
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
+      return { valid: false, error: 'Invalid email format', mode: 'guest' };
+    }
+    
+    return { valid: true, mode: 'guest' };
+  }
+  
+  return { valid: false, error: 'Missing required fields', mode: 'authenticated' };
+}
+
+// HTML escape function
+function escapeHtml(str: string): string {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -17,50 +75,164 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    const { bookingId }: TicketRequest = await req.json();
-
-    if (!bookingId) {
+    // Rate limiting
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+                     req.headers.get('cf-connecting-ip') || 
+                     'unknown';
+    
+    const rateLimitResult = checkRateLimit(clientIp);
+    if (!rateLimitResult.allowed) {
       return new Response(
-        JSON.stringify({ error: "Booking ID is required" }),
+        JSON.stringify({ error: 'Too many requests. Please try again later.' }),
+        { 
+          status: 429, 
+          headers: { 
+            "Content-Type": "application/json",
+            "Retry-After": String(rateLimitResult.retryAfter || 60),
+            ...corsHeaders 
+          } 
+        }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    
+    const requestData = await req.json();
+    
+    // Validate input
+    const validation = validateInput(requestData);
+    if (!validation.valid) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid request' }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Fetch booking with all related data
-    const { data: booking, error: bookingError } = await supabase
-      .from("bookings")
-      .select(`
-        *,
-        trip:trips(
-          departure_date,
-          departure_time,
-          arrival_time,
-          route:routes(name)
-        ),
-        origin_stop:stops!bookings_origin_stop_id_fkey(name, city),
-        destination_stop:stops!bookings_destination_stop_id_fkey(name, city),
-        seat:seats(seat_number)
-      `)
-      .eq("id", bookingId)
-      .single();
+    let booking: any = null;
+    let isAuthorized = false;
 
-    if (bookingError || !booking) {
-      console.error("Booking fetch error:", bookingError);
-      return new Response(
-        JSON.stringify({ error: "Booking not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (validation.mode === 'authenticated') {
+      // Authenticated mode: Verify JWT and check ownership
+      const authHeader = req.headers.get('Authorization');
+      
+      if (!authHeader) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Create client with user's JWT
+      const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } }
+      });
+
+      // Verify user
+      const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
+      if (authError || !user) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized' }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Fetch booking using service role
+      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+      const { data: bookingData, error: bookingError } = await supabaseAdmin
+        .from("bookings")
+        .select(`
+          *,
+          trip:trips(
+            departure_date,
+            departure_time,
+            arrival_time,
+            route:routes(name)
+          ),
+          origin_stop:stops!bookings_origin_stop_id_fkey(name, city),
+          destination_stop:stops!bookings_destination_stop_id_fkey(name, city),
+          seat:seats(seat_number)
+        `)
+        .eq("id", requestData.bookingId)
+        .single();
+
+      if (bookingError || !bookingData) {
+        return new Response(
+          JSON.stringify({ error: 'Ticket not found' }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      booking = bookingData;
+
+      // Check ownership or role
+      if (booking.user_id === user.id) {
+        isAuthorized = true;
+      } else {
+        // Check if user is agent/admin
+        const { data: roles } = await supabaseAdmin
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
+        
+        isAuthorized = roles?.some(r => ['agent', 'admin'].includes(r.role)) || false;
+      }
+
+      if (!isAuthorized) {
+        return new Response(
+          JSON.stringify({ error: 'Access denied' }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+    } else {
+      // Guest mode: Verify ticket number + email
+      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+      
+      const ticketNumber = requestData.ticketNumber.toUpperCase().trim();
+      const email = requestData.email.toLowerCase().trim();
+
+      const { data: bookingData, error: bookingError } = await supabaseAdmin
+        .from("bookings")
+        .select(`
+          *,
+          trip:trips(
+            departure_date,
+            departure_time,
+            arrival_time,
+            route:routes(name)
+          ),
+          origin_stop:stops!bookings_origin_stop_id_fkey(name, city),
+          destination_stop:stops!bookings_destination_stop_id_fkey(name, city),
+          seat:seats(seat_number)
+        `)
+        .eq("ticket_number", ticketNumber)
+        .single();
+
+      if (bookingError || !bookingData) {
+        return new Response(
+          JSON.stringify({ error: 'Ticket not found. Please verify your details.' }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Verify email matches
+      if (bookingData.passenger_email.toLowerCase() !== email) {
+        return new Response(
+          JSON.stringify({ error: 'Ticket not found. Please verify your details.' }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      booking = bookingData;
+      isAuthorized = true;
     }
 
-    // Generate QR Code as base64
+    // Generate QR Code as base64 (minimal data)
     const qrData = JSON.stringify({
-      ticketNumber: booking.ticket_number,
-      bookingId: booking.id,
-      passenger: `${booking.passenger_first_name} ${booking.passenger_last_name}`,
+      t: booking.ticket_number,
+      s: booking.seat.seat_number,
     });
     
     const qrCodeDataUrl = await QRCode.toDataURL(qrData, {
@@ -80,10 +252,21 @@ const handler = async (req: Request): Promise<Response> => {
 
     const formatTime = (time: string) => time.slice(0, 5);
 
-    // Parse extras
+    // Escape user-provided data
+    const safeFirstName = escapeHtml(booking.passenger_first_name);
+    const safeLastName = escapeHtml(booking.passenger_last_name);
+    const safeOriginCity = escapeHtml(booking.origin_stop.city);
+    const safeDestCity = escapeHtml(booking.destination_stop.city);
+    const safeOriginStop = escapeHtml(booking.origin_stop.name);
+    const safeDestStop = escapeHtml(booking.destination_stop.name);
+    const safeSeatNumber = escapeHtml(booking.seat.seat_number);
+    const safeRouteName = escapeHtml(booking.trip.route.name);
+    const safeTicketNumber = escapeHtml(booking.ticket_number);
+
+    // Parse extras safely
     const extras = booking.extras || [];
     const extrasHtml = extras.length > 0
-      ? extras.map((e: any) => `<div style="display: inline-block; background: #e8f5e9; padding: 4px 12px; border-radius: 12px; margin: 2px; font-size: 12px;">${e.name}</div>`).join("")
+      ? extras.map((e: any) => `<div style="display: inline-block; background: #e8f5e9; padding: 4px 12px; border-radius: 12px; margin: 2px; font-size: 12px;">${escapeHtml(e.name || '')}</div>`).join("")
       : '<span style="color: #666;">Keine</span>';
 
     // Generate HTML ticket
@@ -270,22 +453,22 @@ const handler = async (req: Request): Promise<Response> => {
 <body>
   <div class="ticket">
     <div class="header">
-      <h1>🚌 CroatiaGo</h1>
+      <h1>🚌 METROPOL TOURS</h1>
       <div class="subtitle">Elektronisches Ticket</div>
-      <div class="ticket-number">${booking.ticket_number}</div>
+      <div class="ticket-number">${safeTicketNumber}</div>
     </div>
     
     <div class="content">
       <div class="route-section">
         <div class="location">
-          <div class="city">${booking.origin_stop.city}</div>
-          <div class="stop">${booking.origin_stop.name}</div>
+          <div class="city">${safeOriginCity}</div>
+          <div class="stop">${safeOriginStop}</div>
           <div class="time">${formatTime(booking.trip.departure_time)}</div>
         </div>
         <div class="arrow">→</div>
         <div class="location">
-          <div class="city">${booking.destination_stop.city}</div>
-          <div class="stop">${booking.destination_stop.name}</div>
+          <div class="city">${safeDestCity}</div>
+          <div class="stop">${safeDestStop}</div>
           <div class="time">${formatTime(booking.trip.arrival_time)}</div>
         </div>
       </div>
@@ -293,7 +476,7 @@ const handler = async (req: Request): Promise<Response> => {
       <div class="info-grid">
         <div class="info-item">
           <div class="label">Fahrgast</div>
-          <div class="value">${booking.passenger_first_name} ${booking.passenger_last_name}</div>
+          <div class="value">${safeFirstName} ${safeLastName}</div>
         </div>
         <div class="info-item">
           <div class="label">Datum</div>
@@ -301,11 +484,11 @@ const handler = async (req: Request): Promise<Response> => {
         </div>
         <div class="info-item">
           <div class="label">Sitzplatz</div>
-          <div class="value">${booking.seat.seat_number}</div>
+          <div class="value">${safeSeatNumber}</div>
         </div>
         <div class="info-item">
           <div class="label">Route</div>
-          <div class="value">${booking.trip.route.name}</div>
+          <div class="value">${safeRouteName}</div>
         </div>
       </div>
       
@@ -328,28 +511,20 @@ const handler = async (req: Request): Promise<Response> => {
     </div>
     
     <div class="footer">
-      <p>Buchungsdatum: ${new Date(booking.created_at).toLocaleDateString("de-DE")} | Buchungs-ID: ${booking.id.slice(0, 8)}</p>
+      <p>Buchungsdatum: ${new Date(booking.created_at).toLocaleDateString("de-DE")}</p>
       <p style="margin-top: 8px;">Bitte erscheinen Sie mindestens 15 Minuten vor Abfahrt am Abfahrtsort.</p>
     </div>
   </div>
 </body>
 </html>`;
 
-    console.log("Ticket PDF generated successfully for booking:", bookingId);
+    console.log("Ticket PDF generated for:", safeTicketNumber);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         ticketHtml,
         ticketNumber: booking.ticket_number,
-        booking: {
-          id: booking.id,
-          passengerName: `${booking.passenger_first_name} ${booking.passenger_last_name}`,
-          origin: booking.origin_stop.city,
-          destination: booking.destination_stop.city,
-          date: formattedDate,
-          seatNumber: booking.seat.seat_number,
-        }
       }),
       { 
         status: 200, 
@@ -359,7 +534,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error generating ticket:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: 'An error occurred. Please try again.' }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
