@@ -113,6 +113,7 @@ const PackageToursSection = () => {
                 <Button
                   variant="outline"
                   className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                  onClick={() => navigate(`/pauschalreisen/${tour.destination.toLowerCase()}`)}
                 >
                   Mehr erfahren
                   <ArrowRight className="w-4 h-4 ml-2" />
