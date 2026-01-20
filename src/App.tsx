@@ -13,6 +13,7 @@ import AuthPage from "./pages/AuthPage";
 import ImprintPage from "./pages/ImprintPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
+import PackageTourDetailPage from "./pages/PackageTourDetailPage";
 import NotFound from "./pages/NotFound";
 import CookieBanner from "./components/CookieBanner";
 
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/imprint" element={<ImprintPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
+            <Route path="/pauschalreisen/:tourId" element={<PackageTourDetailPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
