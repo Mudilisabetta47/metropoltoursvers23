@@ -1,6 +1,9 @@
 import { MapPin, Calendar, Palmtree, Star, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import tourCroatia from "@/assets/tour-croatia.jpg";
+import tourSlovenia from "@/assets/tour-slovenia.jpg";
+import tourBosnia from "@/assets/tour-bosnia.jpg";
 
 const packageTours = [
   {
@@ -8,7 +11,7 @@ const packageTours = [
     location: "Dalmatinische Küste",
     duration: "7 Tage",
     price: "ab 299€",
-    image: "https://images.unsplash.com/photo-1555990538-1e6c89d6a4c7?w=400&h=300&fit=crop",
+    image: tourCroatia,
     highlights: ["Strand", "Altstadt", "Meeresfrüchte"],
   },
   {
@@ -16,7 +19,7 @@ const packageTours = [
     location: "Bled & Ljubljana",
     duration: "5 Tage",
     price: "ab 249€",
-    image: "https://images.unsplash.com/photo-1586976053146-6c82d6a77e35?w=400&h=300&fit=crop",
+    image: tourSlovenia,
     highlights: ["Bergsee", "Natur", "Kulinarik"],
   },
   {
@@ -24,7 +27,7 @@ const packageTours = [
     location: "Sarajevo & Mostar",
     duration: "4 Tage",
     price: "ab 199€",
-    image: "https://images.unsplash.com/photo-1590850558561-f2e6fa23fb7f?w=400&h=300&fit=crop",
+    image: tourBosnia,
     highlights: ["Kultur", "Geschichte", "Gastfreundschaft"],
   },
 ];
