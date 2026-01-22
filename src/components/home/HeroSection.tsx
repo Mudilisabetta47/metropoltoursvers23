@@ -80,15 +80,49 @@ const HeroSection = () => {
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 py-32 lg:py-40">
+        {/* Weekend Discount Banner */}
+        <div className="flex justify-center mb-6 animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent/90 text-accent-foreground text-sm font-semibold shadow-lg backdrop-blur-sm animate-pulse">
+            <span className="text-lg">🎉</span>
+            <span>WOCHENEND-SPARAKTION: Bis zu 25% auf alle Pauschalreisen!</span>
+            <span className="text-lg">🎉</span>
+          </div>
+        </div>
+
         <div className="max-w-4xl mx-auto text-center mb-10 animate-fade-in">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground mb-6 leading-tight">
             Entdecke Europa mit{" "}
             <span className="text-primary">METROPOL TOURS</span>
           </h1>
-          <p className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto">
-            Günstige Fernbusse zu über 2.500 Zielen. Reise nachhaltig, bequem 
-            und erschwinglich durch ganz Europa.
+          <p className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto mb-4">
+            Traumhafte Pauschalreisen zu den schönsten Zielen am Balkan – 
+            Bus, Hotel & Ausflüge inklusive. Entspannt buchen, unvergesslich erleben.
           </p>
+          
+          {/* Package Deal Highlight */}
+          <div className="flex flex-wrap justify-center gap-4 mt-6">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20">
+              <span className="text-2xl">✈️</span>
+              <div className="text-left">
+                <div className="text-xs text-primary-foreground/60">All-Inclusive</div>
+                <div className="text-sm font-semibold text-primary-foreground">Pauschalreisen</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20">
+              <span className="text-2xl">🏨</span>
+              <div className="text-left">
+                <div className="text-xs text-primary-foreground/60">Inklusive</div>
+                <div className="text-sm font-semibold text-primary-foreground">Hotel & Transfer</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-accent/80 backdrop-blur-sm border border-accent">
+              <span className="text-2xl">💰</span>
+              <div className="text-left">
+                <div className="text-xs text-accent-foreground/80">Wochenende</div>
+                <div className="text-sm font-bold text-accent-foreground">Bis -25% Rabatt</div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Search Form */}
