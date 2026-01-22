@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import SearchPage from "./pages/SearchPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import ServicePage from "./pages/ServicePage";
+import BusinessServicesPage from "./pages/BusinessServicesPage";
 import BookingsPage from "./pages/BookingsPage";
 import AuthPage from "./pages/AuthPage";
 import ImprintPage from "./pages/ImprintPage";
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/search" element={<SearchPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/service" element={<ServicePage />} />
+            <Route path="/business" element={<BusinessServicesPage />} />
             <Route path="/bookings" element={<BookingsPage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/imprint" element={<ImprintPage />} />
