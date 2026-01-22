@@ -208,6 +208,63 @@ export type Database = {
         }
         Relationships: []
       }
+      package_tour_inquiries: {
+        Row: {
+          created_at: string
+          departure_date: string
+          destination: string
+          email: string
+          first_name: string
+          id: string
+          inquiry_number: string
+          last_name: string
+          message: string | null
+          participants: number
+          phone: string | null
+          status: string
+          total_price: number
+          tour_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          departure_date: string
+          destination: string
+          email: string
+          first_name: string
+          id?: string
+          inquiry_number: string
+          last_name: string
+          message?: string | null
+          participants?: number
+          phone?: string | null
+          status?: string
+          total_price: number
+          tour_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          departure_date?: string
+          destination?: string
+          email?: string
+          first_name?: string
+          id?: string
+          inquiry_number?: string
+          last_name?: string
+          message?: string | null
+          participants?: number
+          phone?: string | null
+          status?: string
+          total_price?: number
+          tour_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       price_tiers: {
         Row: {
           created_at: string
@@ -669,6 +726,7 @@ export type Database = {
         Returns: boolean
       }
       cleanup_expired_holds: { Args: never; Returns: number }
+      generate_inquiry_number: { Args: never; Returns: string }
       generate_ticket_number: { Args: never; Returns: string }
       get_audit_logs: {
         Args: {
