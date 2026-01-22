@@ -40,7 +40,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
-type TabType = 'overview' | 'routes' | 'stops' | 'buses' | 'trips' | 'inquiries';
+type TabType = 'overview' | 'routes' | 'stops' | 'buses' | 'trips' | 'bookings' | 'inquiries';
 
 interface RouteData {
   id: string;
@@ -80,6 +80,31 @@ interface TripData {
   is_active: boolean;
 }
 
+interface BookingData {
+  id: string;
+  ticket_number: string;
+  user_id: string | null;
+  trip_id: string;
+  origin_stop_id: string;
+  destination_stop_id: string;
+  seat_id: string;
+  passenger_first_name: string;
+  passenger_last_name: string;
+  passenger_email: string;
+  passenger_phone: string | null;
+  price_paid: number;
+  status: string;
+  booked_by_agent_id: string | null;
+  extras: unknown;
+  created_at: string;
+  updated_at: string;
+}
+
+interface SeatData {
+  id: string;
+  seat_number: string;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type DialogData = any;
 
@@ -96,7 +121,15 @@ const AdminDashboard = () => {
   const [stops, setStops] = useState<StopData[]>([]);
   const [buses, setBuses] = useState<BusData[]>([]);
   const [trips, setTrips] = useState<TripData[]>([]);
+  const [bookings, setBookings] = useState<BookingData[]>([]);
+  const [seats, setSeats] = useState<SeatData[]>([]);
   const [bookingsCount, setBookingsCount] = useState(0);
+  
+  // Bookings pagination and filters
+  const [bookingsPage, setBookingsPage] = useState(1);
+  const [bookingsStatusFilter, setBookingsStatusFilter] = useState<string>('all');
+  const [bookingsSearch, setBookingsSearch] = useState('');
+  const BOOKINGS_PER_PAGE = 15;
   
   // Dialog states
   const [editDialog, setEditDialog] = useState<{
@@ -115,12 +148,13 @@ const AdminDashboard = () => {
   const fetchAllData = async () => {
     setIsLoading(true);
     try {
-      const [routesRes, stopsRes, busesRes, tripsRes, , bookingsRes] = await Promise.all([
+      const [routesRes, stopsRes, busesRes, tripsRes, seatsRes, bookingsRes, bookingsCountRes] = await Promise.all([
         supabase.from('routes').select('*').order('name'),
         supabase.from('stops').select('*').order('route_id, stop_order'),
         supabase.from('buses').select('*').order('name'),
         supabase.from('trips').select('*').order('departure_date', { ascending: false }),
-        supabase.from('package_tour_inquiries' as never).select('id', { count: 'exact', head: true }),
+        supabase.from('seats').select('id, seat_number'),
+        supabase.from('bookings').select('*').order('created_at', { ascending: false }).limit(500),
         supabase.from('bookings').select('id', { count: 'exact', head: true })
       ]);
 
@@ -128,8 +162,9 @@ const AdminDashboard = () => {
       if (stopsRes.data) setStops(stopsRes.data);
       if (busesRes.data) setBuses(busesRes.data);
       if (tripsRes.data) setTrips(tripsRes.data);
-      setBookingsCount(bookingsRes.count || 0);
-      setBookingsCount(bookingsRes.count || 0);
+      if (seatsRes.data) setSeats(seatsRes.data);
+      if (bookingsRes.data) setBookings(bookingsRes.data as unknown as BookingData[]);
+      setBookingsCount(bookingsCountRes.count || 0);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({ title: "Fehler beim Laden", variant: "destructive" });
@@ -223,8 +258,78 @@ const AdminDashboard = () => {
     { id: 'stops' as TabType, label: 'Haltestellen', icon: MapPin },
     { id: 'buses' as TabType, label: 'Busse', icon: Bus },
     { id: 'trips' as TabType, label: 'Fahrten', icon: Calendar },
+    { id: 'bookings' as TabType, label: 'Buchungen', icon: Users },
     { id: 'inquiries' as TabType, label: 'Anfragen', icon: FileText },
   ];
+  
+  // Helper functions for bookings
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return <Badge className="bg-emerald-600">Bestätigt</Badge>;
+      case 'pending':
+        return <Badge className="bg-amber-600">Ausstehend</Badge>;
+      case 'cancelled':
+        return <Badge className="bg-red-600">Storniert</Badge>;
+      case 'completed':
+        return <Badge className="bg-blue-600">Abgeschlossen</Badge>;
+      default:
+        return <Badge className="bg-zinc-600">{status}</Badge>;
+    }
+  };
+  
+  const getRouteForTrip = (tripId: string) => {
+    const trip = trips.find(t => t.id === tripId);
+    return trip ? routes.find(r => r.id === trip.route_id) : null;
+  };
+  
+  const getTripInfo = (tripId: string) => {
+    return trips.find(t => t.id === tripId);
+  };
+  
+  const getStopName = (stopId: string) => {
+    const stop = stops.find(s => s.id === stopId);
+    return stop ? `${stop.city} - ${stop.name}` : '-';
+  };
+  
+  const getSeatNumber = (seatId: string) => {
+    const seat = seats.find(s => s.id === seatId);
+    return seat?.seat_number || '-';
+  };
+  
+  // Filter and paginate bookings
+  const filteredBookings = bookings.filter(booking => {
+    const matchesStatus = bookingsStatusFilter === 'all' || booking.status === bookingsStatusFilter;
+    const matchesSearch = bookingsSearch === '' || 
+      booking.ticket_number.toLowerCase().includes(bookingsSearch.toLowerCase()) ||
+      booking.passenger_first_name.toLowerCase().includes(bookingsSearch.toLowerCase()) ||
+      booking.passenger_last_name.toLowerCase().includes(bookingsSearch.toLowerCase()) ||
+      booking.passenger_email.toLowerCase().includes(bookingsSearch.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
+  
+  const totalBookingsPages = Math.ceil(filteredBookings.length / BOOKINGS_PER_PAGE);
+  const paginatedBookings = filteredBookings.slice(
+    (bookingsPage - 1) * BOOKINGS_PER_PAGE,
+    bookingsPage * BOOKINGS_PER_PAGE
+  );
+  
+  const handleBookingStatusChange = async (bookingId: string, newStatus: 'pending' | 'confirmed' | 'cancelled' | 'completed') => {
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status: newStatus })
+        .eq('id', bookingId);
+      
+      if (error) throw error;
+      
+      toast({ title: `Buchungsstatus auf "${newStatus}" geändert` });
+      fetchAllData();
+    } catch (error) {
+      console.error('Error updating booking status:', error);
+      toast({ title: "Fehler beim Aktualisieren", variant: "destructive" });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex">
@@ -642,6 +747,221 @@ const AdminDashboard = () => {
                   </TableBody>
                 </Table>
               </Card>
+            </div>
+          )}
+
+          {/* Bookings Tab */}
+          {activeTab === 'bookings' && (
+            <div className="space-y-4">
+              {/* Filters */}
+              <div className="flex flex-wrap gap-4 items-center">
+                <div className="flex-1 min-w-64">
+                  <Input
+                    placeholder="Suche nach Ticketnummer, Name oder E-Mail..."
+                    value={bookingsSearch}
+                    onChange={(e) => {
+                      setBookingsSearch(e.target.value);
+                      setBookingsPage(1);
+                    }}
+                    className="bg-zinc-800 border-zinc-700 text-white"
+                  />
+                </div>
+                <Select 
+                  value={bookingsStatusFilter} 
+                  onValueChange={(value) => {
+                    setBookingsStatusFilter(value);
+                    setBookingsPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-48 bg-zinc-800 border-zinc-700 text-white">
+                    <SelectValue placeholder="Status filtern" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                    <SelectItem value="all" className="text-white">Alle Status</SelectItem>
+                    <SelectItem value="confirmed" className="text-white">Bestätigt</SelectItem>
+                    <SelectItem value="pending" className="text-white">Ausstehend</SelectItem>
+                    <SelectItem value="cancelled" className="text-white">Storniert</SelectItem>
+                    <SelectItem value="completed" className="text-white">Abgeschlossen</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="text-sm text-zinc-400">
+                  {filteredBookings.length} Buchung(en)
+                </div>
+              </div>
+
+              {/* Bookings Table */}
+              <Card className="bg-zinc-900 border-zinc-800">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-zinc-800">
+                      <TableHead className="text-zinc-400">Ticket-Nr.</TableHead>
+                      <TableHead className="text-zinc-400">Passagier</TableHead>
+                      <TableHead className="text-zinc-400">E-Mail</TableHead>
+                      <TableHead className="text-zinc-400">Route</TableHead>
+                      <TableHead className="text-zinc-400">Strecke</TableHead>
+                      <TableHead className="text-zinc-400">Datum</TableHead>
+                      <TableHead className="text-zinc-400">Sitz</TableHead>
+                      <TableHead className="text-zinc-400">Preis</TableHead>
+                      <TableHead className="text-zinc-400">Status</TableHead>
+                      <TableHead className="text-zinc-400 text-right">Aktionen</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedBookings.length === 0 ? (
+                      <TableRow className="border-zinc-800">
+                        <TableCell colSpan={10} className="text-center text-zinc-500 py-8">
+                          Keine Buchungen gefunden
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      paginatedBookings.map((booking) => {
+                        const trip = getTripInfo(booking.trip_id);
+                        const route = getRouteForTrip(booking.trip_id);
+                        return (
+                          <TableRow key={booking.id} className="border-zinc-800">
+                            <TableCell className="font-mono text-emerald-400 font-medium">
+                              {booking.ticket_number}
+                            </TableCell>
+                            <TableCell className="text-white">
+                              {booking.passenger_first_name} {booking.passenger_last_name}
+                            </TableCell>
+                            <TableCell className="text-zinc-400 text-sm">
+                              {booking.passenger_email}
+                            </TableCell>
+                            <TableCell className="text-zinc-300">
+                              {route?.name || '-'}
+                            </TableCell>
+                            <TableCell className="text-zinc-400 text-xs">
+                              <div>{getStopName(booking.origin_stop_id)}</div>
+                              <div className="text-zinc-500">→ {getStopName(booking.destination_stop_id)}</div>
+                            </TableCell>
+                            <TableCell className="text-zinc-300">
+                              {trip ? format(new Date(trip.departure_date), 'dd.MM.yyyy', { locale: de }) : '-'}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="border-zinc-600 text-zinc-300">
+                                {getSeatNumber(booking.seat_id)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-emerald-400 font-medium">
+                              {booking.price_paid}€
+                            </TableCell>
+                            <TableCell>
+                              {getStatusBadge(booking.status)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Select 
+                                value={booking.status}
+                                onValueChange={(value: 'pending' | 'confirmed' | 'cancelled' | 'completed') => 
+                                  handleBookingStatusChange(booking.id, value)
+                                }
+                              >
+                                <SelectTrigger className="w-32 bg-zinc-800 border-zinc-700 text-white text-xs h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-zinc-800 border-zinc-700">
+                                  <SelectItem value="confirmed" className="text-white">Bestätigt</SelectItem>
+                                  <SelectItem value="pending" className="text-white">Ausstehend</SelectItem>
+                                  <SelectItem value="cancelled" className="text-white">Storniert</SelectItem>
+                                  <SelectItem value="completed" className="text-white">Abgeschlossen</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </Card>
+
+              {/* Pagination */}
+              {totalBookingsPages > 1 && (
+                <div className="flex items-center justify-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setBookingsPage(p => Math.max(1, p - 1))}
+                    disabled={bookingsPage === 1}
+                    className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                  >
+                    Zurück
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(totalBookingsPages, 7) }, (_, i) => {
+                      let pageNum;
+                      if (totalBookingsPages <= 7) {
+                        pageNum = i + 1;
+                      } else if (bookingsPage <= 4) {
+                        pageNum = i + 1;
+                      } else if (bookingsPage >= totalBookingsPages - 3) {
+                        pageNum = totalBookingsPages - 6 + i;
+                      } else {
+                        pageNum = bookingsPage - 3 + i;
+                      }
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={pageNum === bookingsPage ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setBookingsPage(pageNum)}
+                          className={pageNum === bookingsPage 
+                            ? "bg-emerald-600 hover:bg-emerald-700" 
+                            : "border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                          }
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setBookingsPage(p => Math.min(totalBookingsPages, p + 1))}
+                    disabled={bookingsPage === totalBookingsPages}
+                    className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                  >
+                    Weiter
+                  </Button>
+                </div>
+              )}
+
+              {/* Booking Statistics */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                <Card className="bg-zinc-900 border-zinc-800">
+                  <CardContent className="pt-4">
+                    <div className="text-2xl font-bold text-white">
+                      {bookings.filter(b => b.status === 'confirmed').length}
+                    </div>
+                    <div className="text-xs text-zinc-500">Bestätigt</div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-zinc-900 border-zinc-800">
+                  <CardContent className="pt-4">
+                    <div className="text-2xl font-bold text-amber-400">
+                      {bookings.filter(b => b.status === 'pending').length}
+                    </div>
+                    <div className="text-xs text-zinc-500">Ausstehend</div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-zinc-900 border-zinc-800">
+                  <CardContent className="pt-4">
+                    <div className="text-2xl font-bold text-red-400">
+                      {bookings.filter(b => b.status === 'cancelled').length}
+                    </div>
+                    <div className="text-xs text-zinc-500">Storniert</div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-zinc-900 border-zinc-800">
+                  <CardContent className="pt-4">
+                    <div className="text-2xl font-bold text-emerald-400">
+                      {bookings.reduce((sum, b) => b.status !== 'cancelled' ? sum + Number(b.price_paid) : sum, 0).toFixed(2)}€
+                    </div>
+                    <div className="text-xs text-zinc-500">Gesamtumsatz</div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           )}
         </div>
