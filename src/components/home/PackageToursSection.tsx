@@ -1,4 +1,4 @@
-import { MapPin, Calendar, Palmtree, Star, ArrowRight, Plane, PlaneLanding } from "lucide-react";
+import { MapPin, Calendar, Palmtree, Star, ArrowRight, CircleArrowRight, CircleArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import tourCroatia from "@/assets/tour-croatia.jpg";
@@ -165,13 +165,13 @@ const PackageToursSection = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1">
-                      <Plane className="w-3 h-3 text-primary" />
-                      <span className="font-medium">{tour.anreise}</span>
+                      <CircleArrowRight className="w-3 h-3 text-primary" />
+                      <span className="font-medium">Hin: {tour.anreise}</span>
                     </div>
                     <span>–</span>
                     <div className="flex items-center gap-1">
-                      <PlaneLanding className="w-3 h-3 text-primary" />
-                      <span className="font-medium">{tour.abreise}</span>
+                      <CircleArrowLeft className="w-3 h-3 text-primary" />
+                      <span className="font-medium">Rück: {tour.abreise}</span>
                     </div>
                   </div>
                 </div>
