@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { 
   MapPin, Calendar, Users, Star, Check, 
   ChevronLeft, Phone, Mail, ArrowRight, X,
-  Palmtree, Hotel, Bus, Camera, Ticket, Plane, PlaneLanding
+  Palmtree, Hotel, Bus, Camera, Ticket, CircleArrowRight, CircleArrowLeft
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -514,13 +514,13 @@ const PackageTourDetailPage = () => {
                   <p className="font-semibold">{tour.duration}</p>
                 </Card>
                 <Card className="text-center p-4">
-                  <Plane className="w-6 h-6 mx-auto mb-2 text-primary" />
-                  <p className="text-sm text-muted-foreground">Anreise</p>
+                  <CircleArrowRight className="w-6 h-6 mx-auto mb-2 text-primary" />
+                  <p className="text-sm text-muted-foreground">Hinfahrt</p>
                   <p className="font-semibold">{tour.departureDate}</p>
                 </Card>
                 <Card className="text-center p-4">
-                  <PlaneLanding className="w-6 h-6 mx-auto mb-2 text-primary" />
-                  <p className="text-sm text-muted-foreground">Abreise</p>
+                  <CircleArrowLeft className="w-6 h-6 mx-auto mb-2 text-primary" />
+                  <p className="text-sm text-muted-foreground">Rückfahrt</p>
                   <p className="font-semibold">{tour.returnDate}</p>
                 </Card>
                 <Card className="text-center p-4">
