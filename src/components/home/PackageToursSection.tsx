@@ -1,4 +1,4 @@
-import { MapPin, Calendar, Palmtree, Star, ArrowRight } from "lucide-react";
+import { MapPin, Calendar, Palmtree, Star, ArrowRight, Plane, PlaneLanding } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import tourCroatia from "@/assets/tour-croatia.jpg";
@@ -18,6 +18,8 @@ const packageTours = [
     price: "ab 299€",
     image: tourCroatia,
     highlights: ["Strand", "Altstadt", "Meeresfrüchte"],
+    anreise: "15.06.2025",
+    abreise: "21.06.2025",
   },
   {
     destination: "Montenegro",
@@ -26,6 +28,8 @@ const packageTours = [
     price: "ab 279€",
     image: tourMontenegro,
     highlights: ["Bucht", "Strände", "Berge"],
+    anreise: "22.06.2025",
+    abreise: "27.06.2025",
   },
   {
     destination: "Slowenien",
@@ -34,6 +38,8 @@ const packageTours = [
     price: "ab 249€",
     image: tourSlovenia,
     highlights: ["Bergsee", "Natur", "Kulinarik"],
+    anreise: "22.05.2025",
+    abreise: "26.05.2025",
   },
   {
     destination: "Albanien",
@@ -42,6 +48,8 @@ const packageTours = [
     price: "ab 349€",
     image: tourAlbanien,
     highlights: ["Strände", "Unberührt", "Preiswert"],
+    anreise: "01.07.2025",
+    abreise: "08.07.2025",
   },
   {
     destination: "Serbien",
@@ -50,6 +58,8 @@ const packageTours = [
     price: "ab 189€",
     image: tourSerbien,
     highlights: ["Nachtleben", "Festung", "Donau"],
+    anreise: "10.05.2025",
+    abreise: "13.05.2025",
   },
   {
     destination: "Bosnien",
@@ -58,6 +68,8 @@ const packageTours = [
     price: "ab 199€",
     image: tourBosnia,
     highlights: ["Kultur", "Geschichte", "Gastfreundschaft"],
+    anreise: "08.05.2025",
+    abreise: "11.05.2025",
   },
   {
     destination: "Nordmazedonien",
@@ -66,6 +78,8 @@ const packageTours = [
     price: "ab 229€",
     image: tourNordmazedonien,
     highlights: ["UNESCO-See", "Kirchen", "Basar"],
+    anreise: "29.05.2025",
+    abreise: "02.06.2025",
   },
   {
     destination: "Kosovo",
@@ -74,6 +88,8 @@ const packageTours = [
     price: "ab 159€",
     image: tourKosovo,
     highlights: ["Geschichte", "Moscheen", "Gastfreundschaft"],
+    anreise: "03.05.2025",
+    abreise: "05.05.2025",
   },
 ];
 
@@ -136,14 +152,27 @@ const PackageToursSection = () => {
 
               {/* Content */}
               <div className="p-4">
-                <div className="flex items-center gap-2 text-muted-foreground text-xs mb-3">
-                  <Calendar className="w-3 h-3" />
-                  <span>{tour.duration}</span>
-                  <span className="mx-1">•</span>
-                  <div className="flex items-center gap-0.5">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-2.5 h-2.5 fill-primary text-primary" />
-                    ))}
+                <div className="flex flex-col gap-1.5 text-muted-foreground text-xs mb-3">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-3 h-3" />
+                    <span>{tour.duration}</span>
+                    <span className="mx-1">•</span>
+                    <div className="flex items-center gap-0.5">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="w-2.5 h-2.5 fill-primary text-primary" />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1">
+                      <Plane className="w-3 h-3 text-primary" />
+                      <span className="font-medium">{tour.anreise}</span>
+                    </div>
+                    <span>–</span>
+                    <div className="flex items-center gap-1">
+                      <PlaneLanding className="w-3 h-3 text-primary" />
+                      <span className="font-medium">{tour.abreise}</span>
+                    </div>
                   </div>
                 </div>
 
