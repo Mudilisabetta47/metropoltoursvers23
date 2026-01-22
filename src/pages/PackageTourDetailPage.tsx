@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
-  MapPin, Calendar, Clock, Users, Star, Check, 
+  MapPin, Calendar, Users, Star, Check, 
   ChevronLeft, Phone, Mail, ArrowRight, X,
-  Palmtree, Hotel, Bus, Camera, Ticket
+  Palmtree, Hotel, Bus, Camera, Ticket, Plane, PlaneLanding
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +40,7 @@ const packageToursData: Record<string, {
   itinerary: { day: number; title: string; description: string }[];
   hotelInfo: { name: string; stars: number; features: string[] };
   departureDate: string;
+  returnDate: string;
   maxParticipants: number;
 }> = {
   kroatien: {
@@ -81,6 +82,7 @@ const packageToursData: Record<string, {
       features: ["Pool", "Meerblick", "Klimaanlage", "WLAN", "Restaurant", "Bar"]
     },
     departureDate: "15.06.2025",
+    returnDate: "21.06.2025",
     maxParticipants: 45
   },
   montenegro: {
@@ -120,6 +122,7 @@ const packageToursData: Record<string, {
       features: ["Strandnähe", "Pool", "WLAN", "Restaurant", "Klimaanlage"]
     },
     departureDate: "22.06.2025",
+    returnDate: "27.06.2025",
     maxParticipants: 42
   },
   slowenien: {
@@ -158,6 +161,7 @@ const packageToursData: Record<string, {
       features: ["Seeblick", "Restaurant", "WLAN", "Parkplatz"]
     },
     departureDate: "22.05.2025",
+    returnDate: "26.05.2025",
     maxParticipants: 40
   },
   albanien: {
@@ -199,6 +203,7 @@ const packageToursData: Record<string, {
       features: ["Meerblick", "Pool", "Strand", "WLAN", "Restaurant"]
     },
     departureDate: "01.07.2025",
+    returnDate: "08.07.2025",
     maxParticipants: 44
   },
   serbien: {
@@ -235,6 +240,7 @@ const packageToursData: Record<string, {
       features: ["Zentrale Lage", "Restaurant", "WLAN", "Bar", "Historisches Gebäude"]
     },
     departureDate: "10.05.2025",
+    returnDate: "13.05.2025",
     maxParticipants: 45
   },
   bosnien: {
@@ -271,6 +277,7 @@ const packageToursData: Record<string, {
       features: ["Zentrale Lage", "Restaurant", "WLAN", "Bar"]
     },
     departureDate: "08.05.2025",
+    returnDate: "11.05.2025",
     maxParticipants: 42
   },
   nordmazedonien: {
@@ -309,6 +316,7 @@ const packageToursData: Record<string, {
       features: ["Seeblick", "Restaurant", "WLAN", "Garten"]
     },
     departureDate: "29.05.2025",
+    returnDate: "02.06.2025",
     maxParticipants: 40
   },
   kosovo: {
@@ -344,6 +352,7 @@ const packageToursData: Record<string, {
       features: ["Zentrale Lage", "Restaurant", "WLAN", "Terrasse"]
     },
     departureDate: "03.05.2025",
+    returnDate: "05.05.2025",
     maxParticipants: 44
   }
 };
@@ -498,16 +507,21 @@ const PackageTourDetailPage = () => {
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
               {/* Quick Info */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <Card className="text-center p-4">
                   <Calendar className="w-6 h-6 mx-auto mb-2 text-primary" />
                   <p className="text-sm text-muted-foreground">Dauer</p>
                   <p className="font-semibold">{tour.duration}</p>
                 </Card>
                 <Card className="text-center p-4">
-                  <Clock className="w-6 h-6 mx-auto mb-2 text-primary" />
-                  <p className="text-sm text-muted-foreground">Abreise</p>
+                  <Plane className="w-6 h-6 mx-auto mb-2 text-primary" />
+                  <p className="text-sm text-muted-foreground">Anreise</p>
                   <p className="font-semibold">{tour.departureDate}</p>
+                </Card>
+                <Card className="text-center p-4">
+                  <PlaneLanding className="w-6 h-6 mx-auto mb-2 text-primary" />
+                  <p className="text-sm text-muted-foreground">Abreise</p>
+                  <p className="font-semibold">{tour.returnDate}</p>
                 </Card>
                 <Card className="text-center p-4">
                   <Users className="w-6 h-6 mx-auto mb-2 text-primary" />
