@@ -15,6 +15,7 @@ import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
 import PackageTourDetailPage from "./pages/PackageTourDetailPage";
 import AdminInquiriesPage from "./pages/AdminInquiriesPage";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 import CookieBanner from "./components/CookieBanner";
 
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/pauschalreisen/:tourId" element={<PackageTourDetailPage />} />
             <Route path="/admin/inquiries" element={<AdminInquiriesPage />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
