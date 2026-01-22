@@ -14,7 +14,8 @@ const Header = () => {
   const navLinks = [
     { name: "Startseite", path: "/" },
     { name: "Fahrten suchen", path: "/search" },
-    { name: "Service", path: "/service" },
+    { name: "Reisen mit Komfort", path: "/service" },
+    { name: "Services", path: "/business" },
     { name: "Meine Buchungen", path: "/bookings" }
   ];
 
