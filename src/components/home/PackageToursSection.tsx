@@ -4,6 +4,11 @@ import { useNavigate } from "react-router-dom";
 import tourCroatia from "@/assets/tour-croatia.jpg";
 import tourSlovenia from "@/assets/tour-slovenia.jpg";
 import tourBosnia from "@/assets/tour-bosnia.jpg";
+import tourMontenegro from "@/assets/tour-montenegro.jpg";
+import tourSerbien from "@/assets/tour-serbien.jpg";
+import tourNordmazedonien from "@/assets/tour-nordmazedonien.jpg";
+import tourAlbanien from "@/assets/tour-albanien.jpg";
+import tourKosovo from "@/assets/tour-kosovo.jpg";
 
 const packageTours = [
   {
@@ -15,6 +20,14 @@ const packageTours = [
     highlights: ["Strand", "Altstadt", "Meeresfrüchte"],
   },
   {
+    destination: "Montenegro",
+    location: "Kotor & Budva",
+    duration: "6 Tage",
+    price: "ab 279€",
+    image: tourMontenegro,
+    highlights: ["Bucht", "Strände", "Berge"],
+  },
+  {
     destination: "Slowenien",
     location: "Bled & Ljubljana",
     duration: "5 Tage",
@@ -23,12 +36,44 @@ const packageTours = [
     highlights: ["Bergsee", "Natur", "Kulinarik"],
   },
   {
+    destination: "Albanien",
+    location: "Albanische Riviera",
+    duration: "8 Tage",
+    price: "ab 349€",
+    image: tourAlbanien,
+    highlights: ["Strände", "Unberührt", "Preiswert"],
+  },
+  {
+    destination: "Serbien",
+    location: "Belgrad & Novi Sad",
+    duration: "4 Tage",
+    price: "ab 189€",
+    image: tourSerbien,
+    highlights: ["Nachtleben", "Festung", "Donau"],
+  },
+  {
     destination: "Bosnien",
     location: "Sarajevo & Mostar",
     duration: "4 Tage",
     price: "ab 199€",
     image: tourBosnia,
     highlights: ["Kultur", "Geschichte", "Gastfreundschaft"],
+  },
+  {
+    destination: "Nordmazedonien",
+    location: "Ohrid & Skopje",
+    duration: "5 Tage",
+    price: "ab 229€",
+    image: tourNordmazedonien,
+    highlights: ["UNESCO-See", "Kirchen", "Basar"],
+  },
+  {
+    destination: "Kosovo",
+    location: "Prizren & Pristina",
+    duration: "3 Tage",
+    price: "ab 159€",
+    image: tourKosovo,
+    highlights: ["Geschichte", "Moscheen", "Gastfreundschaft"],
   },
 ];
 
@@ -61,15 +106,15 @@ const PackageToursSection = () => {
         </div>
 
         {/* Tour Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {packageTours.map((tour, index) => (
             <div
               key={tour.destination}
               className="group bg-card rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-              style={{ animationDelay: `${index * 100}ms` }}
+              style={{ animationDelay: `${index * 50}ms` }}
             >
               {/* Image */}
-              <div className="relative h-48 overflow-hidden">
+              <div className="relative h-40 overflow-hidden">
                 <img
                   src={tour.image}
                   alt={tour.destination}
@@ -77,36 +122,36 @@ const PackageToursSection = () => {
                   loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-xl font-bold text-white">{tour.destination}</h3>
-                  <div className="flex items-center gap-1 text-white/80 text-sm">
+                <div className="absolute bottom-3 left-3 right-3">
+                  <h3 className="text-lg font-bold text-white">{tour.destination}</h3>
+                  <div className="flex items-center gap-1 text-white/80 text-xs">
                     <MapPin className="w-3 h-3" />
                     {tour.location}
                   </div>
                 </div>
-                <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-semibold">
+                <div className="absolute top-3 right-3 bg-primary text-primary-foreground px-2 py-0.5 rounded-full text-xs font-semibold">
                   {tour.price}
                 </div>
               </div>
 
               {/* Content */}
-              <div className="p-5">
-                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-4">
-                  <Calendar className="w-4 h-4" />
+              <div className="p-4">
+                <div className="flex items-center gap-2 text-muted-foreground text-xs mb-3">
+                  <Calendar className="w-3 h-3" />
                   <span>{tour.duration}</span>
-                  <span className="mx-2">•</span>
-                  <div className="flex items-center gap-1">
+                  <span className="mx-1">•</span>
+                  <div className="flex items-center gap-0.5">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-3 h-3 fill-primary text-primary" />
+                      <Star key={i} className="w-2.5 h-2.5 fill-primary text-primary" />
                     ))}
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mb-4">
+                <div className="flex flex-wrap gap-1 mb-3">
                   {tour.highlights.map((highlight) => (
                     <span
                       key={highlight}
-                      className="px-2 py-1 bg-muted rounded-md text-xs text-muted-foreground"
+                      className="px-2 py-0.5 bg-muted rounded-md text-[10px] text-muted-foreground"
                     >
                       {highlight}
                     </span>
@@ -115,11 +160,12 @@ const PackageToursSection = () => {
 
                 <Button
                   variant="outline"
-                  className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                  size="sm"
+                  className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors text-xs"
                   onClick={() => navigate(`/pauschalreisen/${tour.destination.toLowerCase()}`)}
                 >
                   Mehr erfahren
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  <ArrowRight className="w-3 h-3 ml-1" />
                 </Button>
               </div>
             </div>

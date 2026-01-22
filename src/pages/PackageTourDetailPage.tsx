@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   MapPin, Calendar, Clock, Users, Star, Check, 
-  ChevronLeft, Phone, Mail, ArrowRight,
-  Palmtree, Hotel, Bus, Camera
+  ChevronLeft, Phone, Mail, ArrowRight, X,
+  Palmtree, Hotel, Bus, Camera, Ticket
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,16 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import tourCroatia from "@/assets/tour-croatia.jpg";
+import tourSlovenia from "@/assets/tour-slovenia.jpg";
+import tourBosnia from "@/assets/tour-bosnia.jpg";
+import tourMontenegro from "@/assets/tour-montenegro.jpg";
+import tourSerbien from "@/assets/tour-serbien.jpg";
+import tourNordmazedonien from "@/assets/tour-nordmazedonien.jpg";
+import tourAlbanien from "@/assets/tour-albanien.jpg";
+import tourKosovo from "@/assets/tour-kosovo.jpg";
 
 const packageToursData: Record<string, {
   destination: string;
@@ -37,13 +47,8 @@ const packageToursData: Record<string, {
     location: "Dalmatinische Küste",
     duration: "7 Tage",
     price: 299,
-    image: "https://images.unsplash.com/photo-1555990538-1e6c89d6a4c7?w=1200&h=600&fit=crop",
-    gallery: [
-      "https://images.unsplash.com/photo-1555990538-1e6c89d6a4c7?w=600&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=600&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1534695215921-52f8a19e7909?w=600&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=600&h=400&fit=crop",
-    ],
+    image: tourCroatia,
+    gallery: [tourCroatia, tourCroatia, tourCroatia, tourCroatia],
     highlights: ["Strand", "Altstadt Dubrovnik", "Meeresfrüchte", "Inselhopping"],
     description: "Erleben Sie die atemberaubende Schönheit der dalmatinischen Küste auf dieser 7-tägigen Traumreise. Von den historischen Mauern Dubrovniks bis zu den kristallklaren Gewässern der Adria – diese Reise bietet unvergessliche Momente. Genießen Sie frische Meeresfrüchte in malerischen Hafenstädtchen und entspannen Sie an den schönsten Stränden Kroatiens.",
     included: [
@@ -78,18 +83,52 @@ const packageToursData: Record<string, {
     departureDate: "15.06.2025",
     maxParticipants: 45
   },
+  montenegro: {
+    destination: "Montenegro",
+    location: "Kotor & Budva",
+    duration: "6 Tage",
+    price: 279,
+    image: tourMontenegro,
+    gallery: [tourMontenegro, tourMontenegro, tourMontenegro, tourMontenegro],
+    highlights: ["Bucht von Kotor", "Budva Altstadt", "Strände", "Berge"],
+    description: "Entdecken Sie das Juwel der Adria auf dieser 6-tägigen Reise durch Montenegro. Die atemberaubende Bucht von Kotor, UNESCO-Weltkulturerbe, wird Sie verzaubern. Genießen Sie traumhafte Strände in Budva und erleben Sie die Gastfreundschaft dieses kleinen, aber beeindruckenden Landes.",
+    included: [
+      "Busfahrt im modernen Reisebus",
+      "5 Übernachtungen im 4-Sterne-Hotel",
+      "Halbpension (Frühstück & Abendessen)",
+      "Stadtführung Kotor",
+      "Ausflug nach Budva",
+      "Bootsfahrt in der Bucht",
+      "Deutschsprachige Reiseleitung"
+    ],
+    notIncluded: [
+      "Reiseversicherung",
+      "Persönliche Ausgaben",
+      "Getränke zu den Mahlzeiten"
+    ],
+    itinerary: [
+      { day: 1, title: "Anreise nach Budva", description: "Abfahrt am frühen Morgen. Fahrt entlang der Küste. Ankunft in Budva am Nachmittag." },
+      { day: 2, title: "Budva Erkundung", description: "Stadtführung durch die Altstadt. Nachmittag am Strand." },
+      { day: 3, title: "Kotor & Perast", description: "Ausflug zur Bucht von Kotor. Bootsfahrt zur Insel Gospa od Škrpjela." },
+      { day: 4, title: "Cetinje & Lovćen", description: "Fahrt in die alte Königsstadt Cetinje. Panoramafahrt zum Lovćen-Nationalpark." },
+      { day: 5, title: "Freier Tag", description: "Tag zur freien Verfügung am Strand oder optionaler Ausflug nach Dubrovnik." },
+      { day: 6, title: "Heimreise", description: "Frühstück und gemütliche Rückfahrt." }
+    ],
+    hotelInfo: {
+      name: "Hotel Bracera Budva",
+      stars: 4,
+      features: ["Strandnähe", "Pool", "WLAN", "Restaurant", "Klimaanlage"]
+    },
+    departureDate: "22.06.2025",
+    maxParticipants: 42
+  },
   slowenien: {
     destination: "Slowenien",
     location: "Bled & Ljubljana",
     duration: "5 Tage",
     price: 249,
-    image: "https://images.unsplash.com/photo-1586976053146-6c82d6a77e35?w=1200&h=600&fit=crop",
-    gallery: [
-      "https://images.unsplash.com/photo-1586976053146-6c82d6a77e35?w=600&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1570831739435-6601aa3fa4fb?w=600&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1568315827888-90e7d7b81e9f?w=600&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1587974928442-77dc3e0dba72?w=600&h=400&fit=crop",
-    ],
+    image: tourSlovenia,
+    gallery: [tourSlovenia, tourSlovenia, tourSlovenia, tourSlovenia],
     highlights: ["Bleder See", "Vintgar-Klamm", "Ljubljana", "Kulinarik"],
     description: "Entdecken Sie das grüne Herz Europas auf dieser 5-tägigen Reise durch Slowenien. Der märchenhafte Bleder See mit seiner Inselkirche, die lebendige Hauptstadt Ljubljana und die spektakuläre Vintgar-Klamm erwarten Sie. Genießen Sie slowenische Spezialitäten und die herzliche Gastfreundschaft dieses kleinen, aber vielfältigen Landes.",
     included: [
@@ -121,18 +160,90 @@ const packageToursData: Record<string, {
     departureDate: "22.05.2025",
     maxParticipants: 40
   },
+  albanien: {
+    destination: "Albanien",
+    location: "Albanische Riviera",
+    duration: "8 Tage",
+    price: 349,
+    image: tourAlbanien,
+    gallery: [tourAlbanien, tourAlbanien, tourAlbanien, tourAlbanien],
+    highlights: ["Traumstrände", "Unberührte Natur", "Preiswert", "Gastfreundschaft"],
+    description: "Entdecken Sie Europas letztes Geheimnis: die albanische Riviera. Traumhafte Strände, unberührte Natur und authentische Gastfreundschaft erwarten Sie. Von der Küstenstadt Saranda bis zum malerischen Ksamil erleben Sie 8 Tage pures Mittelmeerfeeling zu unschlagbaren Preisen.",
+    included: [
+      "Busfahrt im modernen Reisebus",
+      "7 Übernachtungen im 4-Sterne-Hotel",
+      "Halbpension (Frühstück & Abendessen)",
+      "Stadtführung Saranda",
+      "Ausflug nach Butrint (UNESCO)",
+      "Bootsfahrt Ksamil-Inseln",
+      "Deutschsprachige Reiseleitung"
+    ],
+    notIncluded: [
+      "Reiseversicherung",
+      "Persönliche Ausgaben",
+      "Getränke zu den Mahlzeiten"
+    ],
+    itinerary: [
+      { day: 1, title: "Anreise", description: "Abfahrt und Fahrt durch den Balkan. Zwischenstopp in Nordmazedonien." },
+      { day: 2, title: "Weiterfahrt nach Saranda", description: "Fahrt entlang des Ohridsees nach Albanien. Ankunft in Saranda am Nachmittag." },
+      { day: 3, title: "Ksamil & Strände", description: "Ausflug zu den berühmten Ksamil-Inseln. Schwimmen im kristallklaren Wasser." },
+      { day: 4, title: "Butrint Nationalpark", description: "Besichtigung der UNESCO-Welterbestätte Butrint. Antike Ruinen am Meer." },
+      { day: 5, title: "Blaues Auge", description: "Ausflug zur Karstquelle 'Blaues Auge'. Naturwunder inmitten von Wald." },
+      { day: 6, title: "Freier Tag", description: "Tag zur freien Verfügung am Strand." },
+      { day: 7, title: "Gjirokastër", description: "Ausflug zur Steinstadt Gjirokastër. UNESCO-Weltkulturerbe." },
+      { day: 8, title: "Heimreise", description: "Frühstück und Rückfahrt mit Erinnerungen an unberührte Strände." }
+    ],
+    hotelInfo: {
+      name: "Hotel Brilant Saranda",
+      stars: 4,
+      features: ["Meerblick", "Pool", "Strand", "WLAN", "Restaurant"]
+    },
+    departureDate: "01.07.2025",
+    maxParticipants: 44
+  },
+  serbien: {
+    destination: "Serbien",
+    location: "Belgrad & Novi Sad",
+    duration: "4 Tage",
+    price: 189,
+    image: tourSerbien,
+    gallery: [tourSerbien, tourSerbien, tourSerbien, tourSerbien],
+    highlights: ["Nachtleben", "Kalemegdan", "Donau", "Kulinarik"],
+    description: "Erleben Sie die pulsierende Metropole Belgrad und das charmante Novi Sad auf dieser 4-tägigen Städtereise. Die Festung Kalemegdan, die lebendige Knez Mihailova Straße und das legendäre Nachtleben machen Serbien zu einem unvergesslichen Erlebnis.",
+    included: [
+      "Busfahrt im modernen Reisebus",
+      "3 Übernachtungen im 4-Sterne-Hotel",
+      "Frühstück",
+      "Stadtführung Belgrad",
+      "Ausflug nach Novi Sad",
+      "Deutschsprachige Reiseleitung"
+    ],
+    notIncluded: [
+      "Reiseversicherung",
+      "Persönliche Ausgaben",
+      "Mittag- und Abendessen"
+    ],
+    itinerary: [
+      { day: 1, title: "Anreise nach Belgrad", description: "Anreise und Check-in im Hotel. Abends erste Erkundung der Stadt." },
+      { day: 2, title: "Belgrad Stadtbesichtigung", description: "Geführte Tour durch Belgrad: Kalemegdan, Knez Mihailova, Skadarlija." },
+      { day: 3, title: "Novi Sad Ausflug", description: "Tagesausflug nach Novi Sad. Petrovaradin-Festung und Altstadt." },
+      { day: 4, title: "Heimreise", description: "Frühstück und gemütliche Rückfahrt." }
+    ],
+    hotelInfo: {
+      name: "Hotel Moskva Belgrad",
+      stars: 4,
+      features: ["Zentrale Lage", "Restaurant", "WLAN", "Bar", "Historisches Gebäude"]
+    },
+    departureDate: "10.05.2025",
+    maxParticipants: 45
+  },
   bosnien: {
     destination: "Bosnien",
     location: "Sarajevo & Mostar",
     duration: "4 Tage",
     price: 199,
-    image: "https://images.unsplash.com/photo-1590850558561-f2e6fa23fb7f?w=1200&h=600&fit=crop",
-    gallery: [
-      "https://images.unsplash.com/photo-1590850558561-f2e6fa23fb7f?w=600&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1555990538-1e6c89d6a4c7?w=600&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1568315827888-90e7d7b81e9f?w=600&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1587974928442-77dc3e0dba72?w=600&h=400&fit=crop",
-    ],
+    image: tourBosnia,
+    gallery: [tourBosnia, tourBosnia, tourBosnia, tourBosnia],
     highlights: ["Alte Brücke Mostar", "Baščaršija", "Geschichte", "Ćevapi"],
     description: "Tauchen Sie ein in die faszinierende Geschichte und Kultur Bosniens. Von der berühmten Alten Brücke in Mostar bis zu den historischen Gassen Sarajevos – diese Reise zeigt Ihnen die Schönheit und Resilienz dieses besonderen Landes. Probieren Sie traditionelle Ćevapi und erleben Sie die legendäre Gastfreundschaft des Balkans.",
     included: [
@@ -161,6 +272,79 @@ const packageToursData: Record<string, {
     },
     departureDate: "08.05.2025",
     maxParticipants: 42
+  },
+  nordmazedonien: {
+    destination: "Nordmazedonien",
+    location: "Ohrid & Skopje",
+    duration: "5 Tage",
+    price: 229,
+    image: tourNordmazedonien,
+    gallery: [tourNordmazedonien, tourNordmazedonien, tourNordmazedonien, tourNordmazedonien],
+    highlights: ["Ohridsee", "UNESCO-Kirchen", "Skopje Basar", "Kulinarik"],
+    description: "Entdecken Sie die kulturellen Schätze Nordmazedoniens. Der Ohridsee, eines der ältesten Seen der Welt, beeindruckt mit türkisblauem Wasser und historischen Kirchen. In Skopje erleben Sie eine einzigartige Mischung aus Geschichte und modernem Kitsch.",
+    included: [
+      "Busfahrt im modernen Reisebus",
+      "4 Übernachtungen im 3-Sterne-Hotel",
+      "Halbpension (Frühstück & Abendessen)",
+      "Stadtführung Ohrid",
+      "Stadtführung Skopje",
+      "Bootsfahrt auf dem Ohridsee",
+      "Deutschsprachige Reiseleitung"
+    ],
+    notIncluded: [
+      "Reiseversicherung",
+      "Persönliche Ausgaben",
+      "Getränke zu den Mahlzeiten"
+    ],
+    itinerary: [
+      { day: 1, title: "Anreise nach Ohrid", description: "Anreise durch Serbien und Kosovo. Ankunft in Ohrid am Abend." },
+      { day: 2, title: "Ohrid Erkundung", description: "Stadtführung durch die Altstadt. Besuch der Kirche Sv. Jovan Kaneo." },
+      { day: 3, title: "Bootsfahrt & Kloster", description: "Bootsfahrt auf dem Ohridsee. Besuch des Klosters Sv. Naum." },
+      { day: 4, title: "Skopje Ausflug", description: "Ganztagesausflug nach Skopje. Besichtigung der Altstadt und des Basars." },
+      { day: 5, title: "Heimreise", description: "Frühstück und Rückfahrt." }
+    ],
+    hotelInfo: {
+      name: "Hotel Metropol Ohrid",
+      stars: 3,
+      features: ["Seeblick", "Restaurant", "WLAN", "Garten"]
+    },
+    departureDate: "29.05.2025",
+    maxParticipants: 40
+  },
+  kosovo: {
+    destination: "Kosovo",
+    location: "Prizren & Pristina",
+    duration: "3 Tage",
+    price: 159,
+    image: tourKosovo,
+    gallery: [tourKosovo, tourKosovo, tourKosovo, tourKosovo],
+    highlights: ["Prizren Altstadt", "Moscheen", "Gastfreundschaft", "Geschichte"],
+    description: "Entdecken Sie das jüngste Land Europas auf dieser 3-tägigen Kurzreise. Prizren, die heimliche Kulturhauptstadt, verzaubert mit osmanischer Architektur. Pristina überrascht mit Lebendigkeit und Aufbruchsstimmung.",
+    included: [
+      "Busfahrt im modernen Reisebus",
+      "2 Übernachtungen im 3-Sterne-Hotel",
+      "Frühstück",
+      "Stadtführung Prizren",
+      "Ausflug nach Pristina",
+      "Deutschsprachige Reiseleitung"
+    ],
+    notIncluded: [
+      "Reiseversicherung",
+      "Persönliche Ausgaben",
+      "Mittag- und Abendessen"
+    ],
+    itinerary: [
+      { day: 1, title: "Anreise nach Prizren", description: "Anreise und Check-in. Abends Bummel durch die Altstadt." },
+      { day: 2, title: "Prizren & Pristina", description: "Vormittags Stadtführung Prizren. Nachmittags Ausflug nach Pristina." },
+      { day: 3, title: "Heimreise", description: "Frühstück und Rückfahrt." }
+    ],
+    hotelInfo: {
+      name: "Hotel Theranda Prizren",
+      stars: 3,
+      features: ["Zentrale Lage", "Restaurant", "WLAN", "Terrasse"]
+    },
+    departureDate: "03.05.2025",
+    maxParticipants: 44
   }
 };
 
@@ -168,6 +352,7 @@ const PackageTourDetailPage = () => {
   const { tourId } = useParams<{ tourId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   
   const tour = tourId ? packageToursData[tourId.toLowerCase()] : null;
   
@@ -181,6 +366,7 @@ const PackageTourDetailPage = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [inquiryNumber, setInquiryNumber] = useState<string | null>(null);
 
   if (!tour) {
     return (
@@ -204,23 +390,59 @@ const PackageTourDetailPage = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    toast({
-      title: "Anfrage gesendet!",
-      description: "Wir werden uns innerhalb von 24 Stunden bei Ihnen melden.",
-    });
-    
-    setFormData({
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      participants: 1,
-      message: ""
-    });
-    setIsSubmitting(false);
+    try {
+      // Generate inquiry number
+      const { data: generatedNumber, error: numberError } = await supabase
+        .rpc('generate_inquiry_number' as never);
+
+      if (numberError) throw numberError;
+
+      // Save inquiry to database
+      const { error: insertError } = await supabase
+        .from('package_tour_inquiries' as never)
+        .insert({
+          inquiry_number: generatedNumber,
+          tour_id: tourId?.toLowerCase() || '',
+          destination: tour.destination,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          email: formData.email,
+          phone: formData.phone || null,
+          participants: formData.participants,
+          message: formData.message || null,
+          total_price: tour.price * formData.participants,
+          departure_date: tour.departureDate,
+          user_id: user?.id || null,
+          status: 'pending'
+        } as never);
+
+      if (insertError) throw insertError;
+
+      setInquiryNumber(generatedNumber as string);
+      
+      toast({
+        title: "Anfrage erfolgreich gesendet!",
+        description: `Ihre Anfragenummer: ${generatedNumber}. Wir melden uns innerhalb von 24 Stunden.`,
+      });
+      
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        participants: 1,
+        message: ""
+      });
+    } catch (error) {
+      console.error('Error submitting inquiry:', error);
+      toast({
+        title: "Fehler beim Senden",
+        description: "Bitte versuchen Sie es erneut oder kontaktieren Sie uns telefonisch.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const totalPrice = tour.price * formData.participants;
@@ -410,13 +632,16 @@ const PackageTourDetailPage = () => {
                 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Nicht enthalten</CardTitle>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <X className="w-5 h-5 text-destructive" />
+                      Nicht enthalten
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-2">
                       {tour.notIncluded.map((item) => (
-                        <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
-                          <span className="w-4 h-4 shrink-0">•</span>
+                        <li key={item} className="flex items-start gap-2 text-sm">
+                          <X className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
                           <span>{item}</span>
                         </li>
                       ))}
@@ -456,140 +681,161 @@ const PackageTourDetailPage = () => {
             {/* Sidebar - Booking Form */}
             <div className="lg:col-span-1">
               <div className="sticky top-24">
-                <Card className="border-2 border-primary/20">
-                  <CardHeader className="bg-primary/5">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">Jetzt anfragen</CardTitle>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-primary">ab {tour.price}€</p>
-                        <p className="text-xs text-muted-foreground">pro Person</p>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="firstName">Vorname</Label>
-                          <Input
-                            id="firstName"
-                            value={formData.firstName}
-                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                            required
-                          />
+                {inquiryNumber ? (
+                  <Card className="border-primary">
+                    <CardHeader className="bg-primary/5">
+                      <CardTitle className="flex items-center gap-2 text-primary">
+                        <Ticket className="w-5 h-5" />
+                        Anfrage erfolgreich!
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                      <div className="text-center space-y-4">
+                        <div className="p-4 bg-muted rounded-lg">
+                          <p className="text-sm text-muted-foreground mb-1">Ihre Anfragenummer</p>
+                          <p className="text-2xl font-bold text-primary">{inquiryNumber}</p>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="lastName">Nachname</Label>
-                          <Input
-                            id="lastName"
-                            value={formData.lastName}
-                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                            required
-                          />
-                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Wir haben Ihre Anfrage erhalten und werden uns innerhalb von 24 Stunden bei Ihnen melden.
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={() => setInquiryNumber(null)}
+                        >
+                          Neue Anfrage stellen
+                        </Button>
                       </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="email">E-Mail</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Reise anfragen</CardTitle>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-bold text-primary">{tour.price}€</span>
+                        <span className="text-muted-foreground">pro Person</span>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label htmlFor="firstName">Vorname *</Label>
+                            <Input
+                              id="firstName"
+                              value={formData.firstName}
+                              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="lastName">Nachname *</Label>
+                            <Input
+                              id="lastName"
+                              value={formData.lastName}
+                              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="email">E-Mail *</Label>
                           <Input
                             id="email"
                             type="email"
-                            className="pl-10"
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             required
                           />
                         </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Telefon</Label>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+
+                        <div>
+                          <Label htmlFor="phone">Telefon</Label>
                           <Input
                             id="phone"
                             type="tel"
-                            className="pl-10"
                             value={formData.phone}
                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                            required
                           />
                         </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="participants">Anzahl Personen</Label>
-                        <div className="relative">
-                          <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+
+                        <div>
+                          <Label htmlFor="participants">Anzahl Teilnehmer *</Label>
                           <Input
                             id="participants"
                             type="number"
-                            min={1}
-                            max={10}
-                            className="pl-10"
+                            min="1"
+                            max={tour.maxParticipants}
                             value={formData.participants}
                             onChange={(e) => setFormData({ ...formData, participants: parseInt(e.target.value) || 1 })}
                             required
                           />
                         </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="message">Nachricht (optional)</Label>
-                        <Textarea
-                          id="message"
-                          placeholder="Besondere Wünsche oder Fragen..."
-                          value={formData.message}
-                          onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                          rows={3}
-                        />
-                      </div>
-                      
-                      <Separator />
-                      
-                      <div className="flex justify-between items-center text-lg font-semibold">
-                        <span>Geschätzter Preis:</span>
-                        <span className="text-primary">{totalPrice}€</span>
-                      </div>
-                      
-                      <Button
-                        type="submit"
-                        className="w-full"
-                        size="lg"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? (
-                          "Wird gesendet..."
-                        ) : (
-                          <>
-                            Unverbindlich anfragen
-                            <ArrowRight className="w-4 h-4 ml-2" />
-                          </>
-                        )}
-                      </Button>
-                      
-                      <p className="text-xs text-muted-foreground text-center">
-                        Kostenlose und unverbindliche Anfrage. Wir melden uns innerhalb von 24 Stunden.
-                      </p>
-                    </form>
-                  </CardContent>
-                </Card>
-                
-                {/* Contact Card */}
-                <Card className="mt-4">
+
+                        <div>
+                          <Label htmlFor="message">Nachricht (optional)</Label>
+                          <Textarea
+                            id="message"
+                            placeholder="Ihre Fragen oder Wünsche..."
+                            value={formData.message}
+                            onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                            rows={3}
+                          />
+                        </div>
+
+                        <Separator />
+
+                        <div className="flex justify-between items-center py-2">
+                          <span className="text-muted-foreground">Gesamtpreis:</span>
+                          <span className="text-2xl font-bold text-primary">{totalPrice}€</span>
+                        </div>
+
+                        <Button 
+                          type="submit" 
+                          className="w-full" 
+                          size="lg"
+                          disabled={isSubmitting}
+                        >
+                          {isSubmitting ? (
+                            <>Wird gesendet...</>
+                          ) : (
+                            <>
+                              Unverbindlich anfragen
+                              <ArrowRight className="w-4 h-4 ml-2" />
+                            </>
+                          )}
+                        </Button>
+
+                        <p className="text-xs text-muted-foreground text-center">
+                          Unverbindliche Anfrage – Sie erhalten ein detailliertes Angebot per E-Mail
+                        </p>
+                      </form>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Contact Info */}
+                <Card className="mt-6">
                   <CardContent className="pt-6">
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Fragen? Rufen Sie uns an:
-                    </p>
-                    <a
-                      href="tel:+436601234567"
-                      className="flex items-center gap-2 text-primary font-semibold hover:underline"
-                    >
-                      <Phone className="w-4 h-4" />
-                      +43 660 123 4567
-                    </a>
+                    <h4 className="font-semibold mb-4">Fragen zur Reise?</h4>
+                    <div className="space-y-3">
+                      <a 
+                        href="tel:+4912345678"
+                        className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
+                      >
+                        <Phone className="w-4 h-4" />
+                        +49 123 456 78
+                      </a>
+                      <a 
+                        href="mailto:info@metropol-tours.de"
+                        className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
+                      >
+                        <Mail className="w-4 h-4" />
+                        info@metropol-tours.de
+                      </a>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -597,7 +843,7 @@ const PackageTourDetailPage = () => {
           </div>
         </div>
       </main>
-      
+
       <Footer />
     </div>
   );
