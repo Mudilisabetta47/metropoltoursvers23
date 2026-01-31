@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, addDays } from "date-fns";
+import { Wifi, Snowflake, Armchair, Plug, Coffee, Shield } from "lucide-react";
 import SearchForm from "@/components/booking/SearchForm";
 import heroBus from "@/assets/hero-bus.jpg";
 import { supabase } from "@/integrations/supabase/client";
@@ -123,6 +124,26 @@ const HeroSection = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Comfort Features Icons */}
+        <div className="flex flex-wrap justify-center gap-4 md:gap-6 mb-8 animate-fade-in" style={{ animationDelay: "150ms" }}>
+          {[
+            { icon: Wifi, label: "Gratis WLAN" },
+            { icon: Snowflake, label: "Klimaanlage" },
+            { icon: Armchair, label: "Komfortsitze" },
+            { icon: Plug, label: "Steckdosen" },
+            { icon: Coffee, label: "Bordservice" },
+            { icon: Shield, label: "Sicherheit" },
+          ].map((feature) => (
+            <div
+              key={feature.label}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20"
+            >
+              <feature.icon className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium text-primary-foreground">{feature.label}</span>
+            </div>
+          ))}
         </div>
 
         {/* Search Form */}
