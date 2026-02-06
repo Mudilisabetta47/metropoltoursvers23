@@ -175,6 +175,86 @@ export type Database = {
         }
         Relationships: []
       }
+      cms_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          parent_id: string | null
+          slug: string
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          parent_id?: string | null
+          slug: string
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          parent_id?: string | null
+          slug?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cms_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "cms_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cms_content: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          metadata: Json | null
+          section_key: string
+          subtitle: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          section_key: string
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          section_key?: string
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cookie_consents: {
         Row: {
           analytics: boolean
@@ -262,6 +342,75 @@ export type Database = {
           tour_id?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      package_tours: {
+        Row: {
+          country: string
+          created_at: string
+          current_participants: number | null
+          departure_date: string
+          description: string | null
+          destination: string
+          discount_percent: number | null
+          duration_days: number
+          highlights: string[] | null
+          id: string
+          image_url: string | null
+          included_services: string[] | null
+          is_active: boolean | null
+          is_featured: boolean | null
+          itinerary: Json | null
+          location: string
+          max_participants: number | null
+          price_from: number
+          return_date: string
+          updated_at: string
+        }
+        Insert: {
+          country?: string
+          created_at?: string
+          current_participants?: number | null
+          departure_date: string
+          description?: string | null
+          destination: string
+          discount_percent?: number | null
+          duration_days?: number
+          highlights?: string[] | null
+          id?: string
+          image_url?: string | null
+          included_services?: string[] | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          itinerary?: Json | null
+          location: string
+          max_participants?: number | null
+          price_from: number
+          return_date: string
+          updated_at?: string
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          current_participants?: number | null
+          departure_date?: string
+          description?: string | null
+          destination?: string
+          discount_percent?: number | null
+          duration_days?: number
+          highlights?: string[] | null
+          id?: string
+          image_url?: string | null
+          included_services?: string[] | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          itinerary?: Json | null
+          location?: string
+          max_participants?: number | null
+          price_from?: number
+          return_date?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -468,6 +617,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      service_types: {
+        Row: {
+          created_at: string
+          description: string | null
+          features: string[] | null
+          highlight: string | null
+          icon: string
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          features?: string[] | null
+          highlight?: string | null
+          icon: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          features?: string[] | null
+          highlight?: string | null
+          icon?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       stops: {
         Row: {
