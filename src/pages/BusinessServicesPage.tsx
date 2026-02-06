@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { 
-  Train, School, Users, MapPin, Trophy, Plane, PartyPopper,
-  Phone, Mail, Send, CheckCircle, ArrowRight, Building2
+  School, Users, MapPin, Trophy, Plane, PartyPopper,
+  Phone, Mail, Send, CheckCircle, ArrowRight, Building2, Loader2
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -19,120 +19,67 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useServiceTypes } from "@/hooks/useCMS";
 
-interface ServiceItem {
-  id: string;
-  icon: React.ElementType;
-  title: string;
-  subtitle: string;
-  description: string;
-  features: string[];
-  image?: string;
-}
+const iconMap: Record<string, React.ElementType> = {
+  School,
+  Users,
+  MapPin,
+  Trophy,
+  Plane,
+  PartyPopper,
+};
 
-const services: ServiceItem[] = [
-  {
-    id: "sev",
-    icon: Train,
-    title: "Schienenersatzverkehr",
-    subtitle: "Kooperation mit der Deutschen Bahn",
-    description: "Als zuverlässiger Partner der Deutschen Bahn bieten wir professionellen Schienenersatzverkehr bei Bauarbeiten, Streckensperrungen oder Störungen. Unsere moderne Flotte und erfahrenen Fahrer gewährleisten einen reibungslosen Ablauf.",
-    features: [
-      "24/7 Einsatzbereitschaft",
-      "Schnelle Mobilisierung",
-      "Koordination mit DB-Fahrplänen",
-      "Barrierefreie Fahrzeuge verfügbar",
-      "Erfahrenes Dispositionsteam"
-    ]
-  },
-  {
-    id: "school",
-    icon: School,
-    title: "Schullandheim & Klassenfahrten",
-    subtitle: "Sichere Fahrten für unsere Jüngsten",
-    description: "Vertrauen Sie uns Ihre Schüler an! Wir transportieren Schulklassen sicher und zuverlässig zu Schullandheimen, Ausflügen und Klassenfahrten. Unsere Fahrer sind im Umgang mit Kindern erfahren.",
-    features: [
-      "Erfahrene, kinderfreundliche Fahrer",
-      "Höchste Sicherheitsstandards",
-      "Flexible Routenplanung",
-      "Begleitung durch Lehrkräfte",
-      "Attraktive Gruppenpreise"
-    ]
-  },
-  {
-    id: "private",
-    icon: Users,
-    title: "Privatfahrten",
-    subtitle: "Individuelle Reisen nach Ihren Wünschen",
-    description: "Ob Familienausflug, Geburtstagsfeier oder Jubiläumsreise – wir gestalten Ihre private Fahrt genau nach Ihren Vorstellungen. Komfort und Flexibilität stehen bei uns an erster Stelle.",
-    features: [
-      "Individuelle Routenplanung",
-      "Verschiedene Busgrößen (8-50+ Plätze)",
-      "Catering auf Wunsch",
-      "Flexible Abfahrtszeiten",
-      "Deutschlandweit & international"
-    ]
-  },
-  {
-    id: "shuttle",
-    icon: MapPin,
-    title: "Shuttle-Service",
-    subtitle: "Zuverlässiger Transfer für Ihr Unternehmen",
-    description: "Regelmäßiger Mitarbeitertransfer, Werksverkehr oder Messeservice – unser Shuttle-Service bietet zuverlässige Transportlösungen für Unternehmen jeder Größe.",
-    features: [
-      "Festpreise für Regelmäßigkeit",
-      "Pünktliche Abholung garantiert",
-      "GPS-Tracking in Echtzeit",
-      "Flexible Vertragsmodelle",
-      "Klimatisierte Komfortbusse"
-    ]
-  },
-  {
-    id: "clubs",
-    icon: Trophy,
-    title: "Vereinsfahrten",
-    subtitle: "Für Sportvereine & Verbände",
-    description: "Ob Fußballmannschaft, Musikverein oder Wandergruppe – wir bringen Ihren Verein sicher und komfortabel ans Ziel. Profitieren Sie von unseren attraktiven Vereinskonditionen.",
-    features: [
-      "Spezielle Vereinsrabatte",
-      "Gepäckraum für Ausrüstung",
-      "Flexible Wartezeiten",
-      "Fanartikel-Transport möglich",
-      "Langstrecken bis 2.000 km"
-    ]
-  },
-  {
-    id: "airport",
-    icon: Plane,
-    title: "Flughafentransfer",
-    subtitle: "Stressfrei zum Terminal",
-    description: "Beginnen Sie Ihre Reise entspannt! Unser Flughafentransfer bringt Gruppen und Einzelpersonen pünktlich und komfortabel zu allen deutschen Flughäfen.",
-    features: [
-      "Transfer zu allen deutschen Flughäfen",
-      "Frühbucher-Rabatte",
-      "Gepäckservice inklusive",
-      "Flugtracking bei Verspätungen",
-      "24/7 Buchung möglich"
-    ]
-  },
-  {
-    id: "events",
-    icon: PartyPopper,
-    title: "Eventfahrten",
-    subtitle: "Konzerte, Messen & Veranstaltungen",
-    description: "Große Events erfordern professionelle Logistik. Wir transportieren Ihre Gäste sicher zu Konzerten, Messen, Firmenevents und anderen Großveranstaltungen.",
-    features: [
-      "Shuttle-Service zu Venues",
-      "VIP-Busse verfügbar",
-      "Koordination mit Veranstaltern",
-      "Mehrere Zustiegspunkte möglich",
-      "Rücktransport garantiert"
-    ]
-  }
-];
+// Fallback static features for each service type
+const serviceFeaturesMap: Record<string, string[]> = {
+  schulfahrten: [
+    "Erfahrene, kinderfreundliche Fahrer",
+    "Höchste Sicherheitsstandards",
+    "Flexible Routenplanung",
+    "Begleitung durch Lehrkräfte",
+    "Attraktive Gruppenpreise"
+  ],
+  privatfahrten: [
+    "Individuelle Routenplanung",
+    "Verschiedene Busgrößen (8-50+ Plätze)",
+    "Catering auf Wunsch",
+    "Flexible Abfahrtszeiten",
+    "Deutschlandweit & international"
+  ],
+  "shuttle-service": [
+    "Festpreise für Regelmäßigkeit",
+    "Pünktliche Abholung garantiert",
+    "GPS-Tracking in Echtzeit",
+    "Flexible Vertragsmodelle",
+    "Klimatisierte Komfortbusse"
+  ],
+  vereinsfahrten: [
+    "Spezielle Vereinsrabatte",
+    "Gepäckraum für Ausrüstung",
+    "Flexible Wartezeiten",
+    "Fanartikel-Transport möglich",
+    "Langstrecken bis 2.000 km"
+  ],
+  flughafentransfer: [
+    "Transfer zu allen deutschen Flughäfen",
+    "Frühbucher-Rabatte",
+    "Gepäckservice inklusive",
+    "Flugtracking bei Verspätungen",
+    "24/7 Buchung möglich"
+  ],
+  eventfahrten: [
+    "Shuttle-Service zu Venues",
+    "VIP-Busse verfügbar",
+    "Koordination mit Veranstaltern",
+    "Mehrere Zustiegspunkte möglich",
+    "Rücktransport garantiert"
+  ]
+};
 
 const BusinessServicesPage = () => {
   const { toast } = useToast();
+  const { services, isLoading } = useServiceTypes();
+  
   const [formData, setFormData] = useState({
     service: "",
     company: "",
@@ -151,16 +98,15 @@ const BusinessServicesPage = () => {
     setIsSubmitting(true);
 
     try {
-      // Generate a simple inquiry number
       const inquiryNumber = `SRV-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+      const selectedService = services.find(s => s.slug === formData.service);
       
-      // Store inquiry in database
       const { error } = await supabase
         .from('package_tour_inquiries')
         .insert({
           inquiry_number: inquiryNumber,
           tour_id: formData.service,
-          destination: services.find(s => s.id === formData.service)?.title || formData.service,
+          destination: selectedService?.name || formData.service,
           first_name: formData.name.split(' ')[0],
           last_name: formData.name.split(' ').slice(1).join(' ') || '-',
           email: formData.email,
@@ -213,7 +159,7 @@ const BusinessServicesPage = () => {
                 Professionelle Bus-Services für jeden Anlass
               </h1>
               <p className="text-xl text-white/80 mb-8 leading-relaxed">
-                Von Schienenersatzverkehr bis Eventfahrten – METROPOL TOURS ist Ihr zuverlässiger Partner für individuelle Transportlösungen. Über 20 Jahre Erfahrung im Personentransport.
+                Von Schulfahrten bis Eventfahrten – METROPOL TOURS ist Ihr zuverlässiger Partner für individuelle Transportlösungen. Über 20 Jahre Erfahrung im Personentransport.
               </p>
               <div className="flex flex-wrap gap-4">
                 <a 
@@ -224,11 +170,11 @@ const BusinessServicesPage = () => {
                   <ArrowRight className="w-5 h-5" />
                 </a>
                 <a 
-                  href="tel:+4969123456789" 
+                  href="tel:+4940123456789" 
                   className="inline-flex items-center gap-2 bg-white/20 text-white font-semibold px-6 py-3 rounded-xl hover:bg-white/30 transition-colors"
                 >
                   <Phone className="w-5 h-5" />
-                  +49 69 123 456 789
+                  +49 40 123 456 789
                 </a>
               </div>
             </div>
@@ -240,65 +186,82 @@ const BusinessServicesPage = () => {
           <div className="container mx-auto px-4">
             <div className="text-center max-w-2xl mx-auto mb-16">
               <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-                Unsere Services
+                Unsere Reisearten
               </h2>
               <p className="text-lg text-muted-foreground">
                 Maßgeschneiderte Transportlösungen für Unternehmen, Vereine, Schulen und Privatpersonen
               </p>
             </div>
 
-            <div className="space-y-8">
-              {services.map((service, index) => (
-                <Card 
-                  key={service.id} 
-                  className="overflow-hidden hover:shadow-xl transition-shadow duration-300"
-                >
-                  <CardContent className="p-0">
-                    <div className={`flex flex-col ${index % 2 === 1 ? 'lg:flex-row-reverse' : 'lg:flex-row'}`}>
-                      {/* Icon/Visual Side */}
-                      <div className="lg:w-1/3 bg-gradient-to-br from-primary/10 to-primary/5 p-8 lg:p-12 flex items-center justify-center">
-                        <div className="text-center">
-                          <div className="w-24 h-24 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                            <service.icon className="w-12 h-12 text-primary" />
-                          </div>
-                          <h3 className="text-2xl font-bold text-foreground mb-2">
-                            {service.title}
-                          </h3>
-                          <p className="text-primary font-medium">
-                            {service.subtitle}
-                          </p>
-                        </div>
-                      </div>
+            {isLoading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="space-y-8">
+                {services.map((service, index) => {
+                  const IconComponent = iconMap[service.icon] || Users;
+                  const features = service.features?.length > 0 
+                    ? service.features 
+                    : serviceFeaturesMap[service.slug] || [];
 
-                      {/* Content Side */}
-                      <div className="lg:w-2/3 p-8 lg:p-12">
-                        <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
-                          {service.description}
-                        </p>
-                        
-                        <div className="grid sm:grid-cols-2 gap-3 mb-6">
-                          {service.features.map((feature) => (
-                            <div key={feature} className="flex items-center gap-2">
-                              <CheckCircle className="w-5 h-5 text-primary shrink-0" />
-                              <span className="text-foreground">{feature}</span>
+                  return (
+                    <Card 
+                      key={service.id} 
+                      className="overflow-hidden hover:shadow-xl transition-shadow duration-300"
+                    >
+                      <CardContent className="p-0">
+                        <div className={`flex flex-col ${index % 2 === 1 ? 'lg:flex-row-reverse' : 'lg:flex-row'}`}>
+                          {/* Icon/Visual Side */}
+                          <div className="lg:w-1/3 bg-gradient-to-br from-primary/10 to-primary/5 p-8 lg:p-12 flex items-center justify-center">
+                            <div className="text-center">
+                              <div className="w-24 h-24 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <IconComponent className="w-12 h-12 text-primary" />
+                              </div>
+                              <h3 className="text-2xl font-bold text-foreground mb-2">
+                                {service.name}
+                              </h3>
+                              {service.highlight && (
+                                <p className="text-primary font-medium">
+                                  {service.highlight}
+                                </p>
+                              )}
                             </div>
-                          ))}
-                        </div>
+                          </div>
 
-                        <a 
-                          href={`#anfrage`}
-                          onClick={() => setFormData(prev => ({ ...prev, service: service.id }))}
-                          className="inline-flex items-center gap-2 text-primary font-semibold hover:underline"
-                        >
-                          Angebot anfordern
-                          <ArrowRight className="w-4 h-4" />
-                        </a>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                          {/* Content Side */}
+                          <div className="lg:w-2/3 p-8 lg:p-12">
+                            <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
+                              {service.description}
+                            </p>
+                            
+                            {features.length > 0 && (
+                              <div className="grid sm:grid-cols-2 gap-3 mb-6">
+                                {features.map((feature) => (
+                                  <div key={feature} className="flex items-center gap-2">
+                                    <CheckCircle className="w-5 h-5 text-primary shrink-0" />
+                                    <span className="text-foreground">{feature}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            <a 
+                              href="#anfrage"
+                              onClick={() => setFormData(prev => ({ ...prev, service: service.slug }))}
+                              className="inline-flex items-center gap-2 text-primary font-semibold hover:underline"
+                            >
+                              Angebot anfordern
+                              <ArrowRight className="w-4 h-4" />
+                            </a>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
 
@@ -371,8 +334,8 @@ const BusinessServicesPage = () => {
                             </SelectTrigger>
                             <SelectContent>
                               {services.map((service) => (
-                                <SelectItem key={service.id} value={service.id}>
-                                  {service.title}
+                                <SelectItem key={service.slug} value={service.slug}>
+                                  {service.name}
                                 </SelectItem>
                               ))}
                               <SelectItem value="other">Sonstiges</SelectItem>
@@ -429,20 +392,20 @@ const BusinessServicesPage = () => {
                         </div>
 
                         <div>
-                          <Label htmlFor="participants">Anzahl Personen (ca.)</Label>
+                          <Label htmlFor="participants">Teilnehmeranzahl</Label>
                           <Input
                             id="participants"
                             type="number"
+                            min="1"
                             value={formData.participants}
                             onChange={(e) => setFormData(prev => ({ ...prev, participants: e.target.value }))}
-                            placeholder="z.B. 30"
-                            min="1"
+                            placeholder="ca. Personenanzahl"
                             className="mt-2"
                           />
                         </div>
 
                         <div>
-                          <Label htmlFor="date">Gewünschtes Datum</Label>
+                          <Label htmlFor="date">Wunschtermin</Label>
                           <Input
                             id="date"
                             type="date"
@@ -458,64 +421,66 @@ const BusinessServicesPage = () => {
                             id="message"
                             value={formData.message}
                             onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
-                            placeholder="Beschreiben Sie Ihr Anliegen: Start- und Zielort, besondere Wünsche, etc."
+                            placeholder="Beschreiben Sie Ihre Anforderungen..."
                             required
-                            rows={5}
-                            className="mt-2"
+                            className="mt-2 min-h-[120px]"
                           />
                         </div>
                       </div>
 
-                      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between pt-4">
-                        <p className="text-sm text-muted-foreground">
-                          * Pflichtfelder
-                        </p>
-                        <Button type="submit" size="lg" disabled={isSubmitting}>
-                          {isSubmitting ? (
-                            <>Wird gesendet...</>
-                          ) : (
-                            <>
-                              <Send className="w-4 h-4 mr-2" />
-                              Anfrage absenden
-                            </>
-                          )}
-                        </Button>
-                      </div>
+                      <Button 
+                        type="submit" 
+                        size="lg" 
+                        className="w-full md:w-auto"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                            Wird gesendet...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-5 h-5 mr-2" />
+                            Anfrage absenden
+                          </>
+                        )}
+                      </Button>
                     </form>
                   </CardContent>
                 </Card>
               )}
 
-              {/* Direct Contact */}
-              <div className="mt-12 grid sm:grid-cols-2 gap-6">
-                <Card>
-                  <CardContent className="p-6 flex items-center gap-4">
+              {/* Contact Alternatives */}
+              <div className="mt-12 grid md:grid-cols-2 gap-6">
+                <Card className="p-6">
+                  <div className="flex items-start gap-4">
                     <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
                       <Phone className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                      <div className="font-semibold text-foreground">Telefonische Beratung</div>
-                      <a href="tel:+4969123456789" className="text-primary hover:underline">
-                        +49 69 123 456 789
+                      <h4 className="font-semibold text-foreground mb-1">Telefonisch</h4>
+                      <p className="text-muted-foreground text-sm mb-2">Mo-Fr 8-20 Uhr, Sa-So 9-18 Uhr</p>
+                      <a href="tel:+4940123456789" className="text-primary font-medium hover:underline">
+                        +49 40 123 456 789
                       </a>
-                      <div className="text-sm text-muted-foreground">Mo-Fr 08:00-18:00 Uhr</div>
                     </div>
-                  </CardContent>
+                  </div>
                 </Card>
 
-                <Card>
-                  <CardContent className="p-6 flex items-center gap-4">
+                <Card className="p-6">
+                  <div className="flex items-start gap-4">
                     <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
                       <Mail className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                      <div className="font-semibold text-foreground">E-Mail Anfrage</div>
-                      <a href="mailto:service@metropol-tours.de" className="text-primary hover:underline">
-                        service@metropol-tours.de
+                      <h4 className="font-semibold text-foreground mb-1">Per E-Mail</h4>
+                      <p className="text-muted-foreground text-sm mb-2">Antwort innerhalb von 24 Stunden</p>
+                      <a href="mailto:business@metropol-tours.de" className="text-primary font-medium hover:underline">
+                        business@metropol-tours.de
                       </a>
-                      <div className="text-sm text-muted-foreground">Antwort innerhalb 24h</div>
                     </div>
-                  </CardContent>
+                  </div>
                 </Card>
               </div>
             </div>

@@ -16,8 +16,8 @@ const Footer = () => {
       { name: "Städtereisen", path: "/service" },
     ],
     services: [
-      { name: "Schienenersatzverkehr", path: "/business" },
       { name: "Schulfahrten", path: "/business" },
+      { name: "Privatfahrten", path: "/business" },
       { name: "Shuttle-Service", path: "/business" },
       { name: "Flughafentransfer", path: "/business" },
       { name: "Eventfahrten", path: "/business" },

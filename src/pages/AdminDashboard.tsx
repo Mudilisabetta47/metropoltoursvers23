@@ -40,7 +40,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
-type TabType = 'overview' | 'routes' | 'stops' | 'buses' | 'trips' | 'bookings' | 'inquiries';
+type TabType = 'overview' | 'routes' | 'stops' | 'buses' | 'trips' | 'bookings' | 'inquiries' | 'cms';
 
 interface RouteData {
   id: string;
@@ -260,6 +260,7 @@ const AdminDashboard = () => {
     { id: 'trips' as TabType, label: 'Fahrten', icon: Calendar },
     { id: 'bookings' as TabType, label: 'Buchungen', icon: Users },
     { id: 'inquiries' as TabType, label: 'Anfragen', icon: FileText },
+    { id: 'cms' as TabType, label: 'CMS / Inhalte', icon: LayoutDashboard },
   ];
   
   // Helper functions for bookings
@@ -351,7 +352,11 @@ const AdminDashboard = () => {
           {menuItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => item.id === 'inquiries' ? navigate('/admin/inquiries') : setActiveTab(item.id)}
+              onClick={() => {
+                if (item.id === 'inquiries') navigate('/admin/inquiries');
+                else if (item.id === 'cms') navigate('/admin/cms');
+                else setActiveTab(item.id);
+              }}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors mb-1 ${
                 activeTab === item.id 
                   ? 'bg-emerald-600/20 text-emerald-400' 
