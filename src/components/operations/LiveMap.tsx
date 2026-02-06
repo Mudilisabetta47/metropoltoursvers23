@@ -126,7 +126,7 @@ const LiveMap = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<Record<string, mapboxgl.Marker>>({});
-  const { vehicles, isLoading } = useVehiclePositions();
+  const { vehicles } = useVehiclePositions();
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<VehiclePosition | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);

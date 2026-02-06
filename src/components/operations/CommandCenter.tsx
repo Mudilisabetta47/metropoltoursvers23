@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useCommandActions } from "@/hooks/useOperations";
 import { 
   Zap, Ban, Clock, UserCheck, Send, RefreshCw,
-  AlertTriangle, CheckCircle, Loader2
+  CheckCircle, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -124,7 +124,7 @@ const CommandCenter = () => {
         setActiveCommand(null);
         setFormData({});
       }
-    } catch (err) {
+    } catch {
       toast({
         title: "Fehler",
         description: "Ein unerwarteter Fehler ist aufgetreten",
