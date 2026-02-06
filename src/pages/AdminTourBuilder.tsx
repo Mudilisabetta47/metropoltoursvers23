@@ -44,6 +44,7 @@ const AdminTourBuilder = () => {
     isSaving,
     fetchTour,
     saveTour,
+    createTour,
     publishTour,
     updateTourField,
     // Tariffs
@@ -87,6 +88,7 @@ const AdminTourBuilder = () => {
 
   const [activeTab, setActiveTab] = useState('basics');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   // Load tour if editing
   useEffect(() => {
@@ -94,6 +96,37 @@ const AdminTourBuilder = () => {
       fetchTour();
     }
   }, [tourId, fetchTour]);
+
+  // Create new tour on first save if no tourId
+  const handleCreateNewTour = async () => {
+    if (tourId || !currentTour) return;
+    
+    setIsCreating(true);
+    try {
+      const result = await createTour({
+        destination: currentTour.destination || 'Neue Reise',
+        location: currentTour.location || '',
+        country: currentTour.country || 'Europa',
+        duration_days: currentTour.duration_days || 7,
+        price_from: currentTour.price_from || 299,
+        departure_date: currentTour.departure_date || new Date().toISOString().split('T')[0],
+        return_date: currentTour.return_date || new Date().toISOString().split('T')[0],
+      });
+      
+      if (result.error) {
+        toast({ 
+          title: "Fehler beim Erstellen", 
+          description: (result.error as Error).message,
+          variant: "destructive" 
+        });
+      } else if (result.data) {
+        toast({ title: "Reise erstellt!" });
+        navigate(`/admin/tour-builder/${result.data.id}`, { replace: true });
+      }
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   // Access control
   if (authLoading) {
@@ -124,6 +157,12 @@ const AdminTourBuilder = () => {
   }
 
   const handleSave = async () => {
+    // If no tourId, create a new tour first
+    if (!tourId) {
+      await handleCreateNewTour();
+      return;
+    }
+    
     const result = await saveTour({});
     if (result.error) {
       toast({ 
@@ -244,15 +283,15 @@ const AdminTourBuilder = () => {
               variant="outline"
               size="sm"
               onClick={handleSave}
-              disabled={isSaving}
+              disabled={isSaving || isCreating}
               className="border-zinc-700"
             >
-              {isSaving ? (
+              {(isSaving || isCreating) ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
                 <Save className="w-4 h-4 mr-2" />
               )}
-              Speichern
+              {!tourId ? 'Reise erstellen' : 'Speichern'}
             </Button>
             
             <Button

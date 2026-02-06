@@ -176,25 +176,6 @@ const AdminCMS = () => {
     }
   };
 
-  const newTourTemplate: Partial<PackageTour> = {
-    destination: '',
-    location: '',
-    country: 'Europa',
-    duration_days: 7,
-    price_from: 299,
-    image_url: '',
-    highlights: [],
-    description: '',
-    itinerary: [],
-    included_services: [],
-    departure_date: format(new Date(), 'yyyy-MM-dd'),
-    return_date: format(new Date(), 'yyyy-MM-dd'),
-    max_participants: 45,
-    current_participants: 0,
-    is_featured: false,
-    is_active: true,
-    discount_percent: 0
-  };
 
   const newServiceTemplate: Partial<ServiceType> = {
     name: '',
@@ -406,11 +387,11 @@ const AdminCMS = () => {
                     Aktualisieren
                   </Button>
                   <Button 
-                    onClick={() => setTourDialog({ open: true, tour: newTourTemplate, isNew: true })}
+                    onClick={() => navigate('/admin/tour-builder')}
                     className="bg-emerald-600 hover:bg-emerald-700"
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    Neue Reise
+                    Neue Reise (Builder)
                   </Button>
                 </div>
               </div>
@@ -465,8 +446,18 @@ const AdminCMS = () => {
                             <Button 
                               variant="ghost" 
                               size="sm"
+                              onClick={() => navigate(`/admin/tour-builder/${tour.id}`)}
+                              className="text-emerald-400 hover:text-emerald-300"
+                              title="Im Builder bearbeiten"
+                            >
+                              <Settings className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
                               onClick={() => setTourDialog({ open: true, tour, isNew: false })}
                               className="text-zinc-400 hover:text-white"
+                              title="Schnellbearbeitung"
                             >
                               <Pencil className="w-4 h-4" />
                             </Button>
@@ -475,6 +466,7 @@ const AdminCMS = () => {
                               size="sm"
                               onClick={() => handleDeleteTour(tour.id)}
                               className="text-red-400 hover:text-red-300"
+                              title="Löschen"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>

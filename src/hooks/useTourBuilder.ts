@@ -217,7 +217,45 @@ export const DEFAULT_TARIFFS: Omit<TourTariff, 'id' | 'tour_id'>[] = [
 // Hook for managing a single tour with all related data
 export function useTourBuilder(tourId?: string) {
   const { toast } = useToast();
-  const [tour, setTour] = useState<ExtendedPackageTour | null>(null);
+  
+  // Initialize with empty tour template for new tours
+  const emptyTour: ExtendedPackageTour = {
+    id: '',
+    destination: '',
+    location: '',
+    country: 'Europa',
+    duration_days: 7,
+    price_from: 299,
+    image_url: null,
+    hero_image_url: null,
+    gallery_images: [],
+    highlights: [],
+    description: null,
+    short_description: null,
+    itinerary: [],
+    included_services: [],
+    departure_date: new Date().toISOString().split('T')[0],
+    return_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    max_participants: 45,
+    current_participants: 0,
+    is_featured: false,
+    is_active: false,
+    discount_percent: 0,
+    slug: null,
+    meta_title: null,
+    meta_description: null,
+    category: 'Strandurlaub',
+    tags: [],
+    insurance_info: null,
+    documents_required: null,
+    min_participants: 1,
+    published_at: null,
+    publish_status: 'draft',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const [tour, setTour] = useState<ExtendedPackageTour | null>(tourId ? null : emptyTour);
   const [tariffs, setTariffs] = useState<TourTariff[]>([]);
   const [dates, setDates] = useState<TourDate[]>([]);
   const [routes, setRoutes] = useState<TourRoute[]>([]);
@@ -631,18 +669,71 @@ export function useTourBuilder(tourId?: string) {
     }
   };
 
-  // Validation for publishing
-  const validationErrors: ValidationError[] = [];
+  // Dynamic validation for publishing
+  const computeValidationErrors = (): ValidationError[] => {
+    const errors: ValidationError[] = [];
+    
+    // Basics tab
+    if (!tour?.destination) {
+      errors.push({ tab: 'basics', field: 'destination', message: 'Reiseziel fehlt', severity: 'error' });
+    }
+    if (!tour?.location) {
+      errors.push({ tab: 'basics', field: 'location', message: 'Region/Ort fehlt', severity: 'error' });
+    }
+    if (!tour?.hero_image_url && !tour?.image_url) {
+      errors.push({ tab: 'basics', field: 'hero_image_url', message: 'Hero-Bild fehlt', severity: 'error' });
+    }
+    if (!tour?.short_description) {
+      errors.push({ tab: 'basics', field: 'short_description', message: 'Kurzbeschreibung fehlt', severity: 'warning' });
+    }
+    if ((tour?.highlights || []).length === 0) {
+      errors.push({ tab: 'basics', field: 'highlights', message: 'Highlights empfohlen', severity: 'warning' });
+    }
+    
+    // Inclusions tab
+    if (inclusions.filter(i => i.category === 'included').length === 0) {
+      errors.push({ tab: 'inclusions', field: 'inclusions', message: 'Keine inklusiven Leistungen', severity: 'warning' });
+    }
+    
+    // Tariffs tab
+    if (tariffs.length === 0) {
+      errors.push({ tab: 'tariffs', field: 'tariffs', message: 'Mindestens ein Tarif erforderlich', severity: 'error' });
+    }
+    
+    // Dates tab
+    if (dates.length === 0) {
+      errors.push({ tab: 'dates', field: 'dates', message: 'Mindestens ein Termin erforderlich', severity: 'error' });
+    }
+    
+    // Routes tab
+    if (routes.length === 0) {
+      errors.push({ tab: 'routes', field: 'routes', message: 'Mindestens eine Route erforderlich', severity: 'error' });
+    } else {
+      const hasStops = routes.some(r => (r.pickup_stops || []).length > 0);
+      if (!hasStops) {
+        errors.push({ tab: 'routes', field: 'pickup_stops', message: 'Routen haben keine Zustiege', severity: 'warning' });
+      }
+    }
+    
+    // Legal tab
+    if (legal.length === 0) {
+      errors.push({ tab: 'legal', field: 'legal', message: 'Rechtliche Hinweise erforderlich', severity: 'error' });
+    }
+    
+    // SEO tab
+    if (!tour?.slug) {
+      errors.push({ tab: 'seo', field: 'slug', message: 'URL-Slug fehlt', severity: 'warning' });
+    }
+    
+    return errors;
+  };
+
+  const validationErrors = computeValidationErrors();
   
   const validateForPublish = (): string[] => {
-    const errors: string[] = [];
-    if (!tour?.destination) errors.push('Reiseziel fehlt');
-    if (!tour?.hero_image_url && !tour?.image_url) errors.push('Hero-Bild fehlt');
-    if (dates.length === 0) errors.push('Mindestens ein Termin erforderlich');
-    if (tariffs.length === 0) errors.push('Tarife fehlen');
-    if (routes.length === 0) errors.push('Mindestens eine Route erforderlich');
-    if (legal.length === 0) errors.push('Rechtliche Hinweise fehlen');
-    return errors;
+    return validationErrors
+      .filter(e => e.severity === 'error')
+      .map(e => e.message);
   };
 
   // Update a single tour field
