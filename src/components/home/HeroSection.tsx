@@ -92,12 +92,12 @@ const HeroSection = () => {
 
         <div className="max-w-4xl mx-auto text-center mb-10 animate-fade-in">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground mb-6 leading-tight">
-            Entdecke Europa mit{" "}
+            Komfortabel reisen mit{" "}
             <span className="text-primary">METROPOL TOURS</span>
           </h1>
           <p className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto mb-4">
-            Traumhafte Pauschalreisen zu den schönsten Zielen am Balkan – 
-            Bus, Hotel & Ausflüge inklusive. Entspannt buchen, unvergesslich erleben.
+            Busreisen zu den schönsten Zielen in Europa und darüber hinaus – 
+            individuell, als Gruppe oder mit Rundum-Sorglos-Paket. Entspannt buchen, unvergesslich erleben.
           </p>
           
           {/* Package Deal Highlight */}
@@ -151,10 +151,10 @@ const HeroSection = () => {
           <SearchForm variant="hero" />
         </div>
 
-        {/* Popular Routes */}
+        {/* Quick Route Suggestions */}
         {popularRoutes.length > 0 && (
           <div className="mt-8 flex flex-wrap justify-center gap-3 animate-fade-in" style={{ animationDelay: "400ms" }}>
-            <span className="text-primary-foreground/60 text-sm">Beliebte Routen:</span>
+            <span className="text-primary-foreground/60 text-sm">Schnellauswahl:</span>
             {popularRoutes.map((route) => (
               <button
                 key={`${route.from.id}-${route.to.id}`}

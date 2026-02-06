@@ -87,38 +87,8 @@ const FeaturesSection = () => {
   return (
     <section className="py-20 lg:py-28 bg-muted/50">
       <div className="container mx-auto px-4">
-        {/* Comfort Features */}
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-            Reisen mit <span className="text-primary">Komfort</span>
-          </h2>
-          <p className="text-muted-foreground text-lg">
-            Unsere modernen Busse bieten alles, was Sie für eine entspannte Reise brauchen.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-24">
-          {comfortFeatures.map((feature, index) => (
-            <div
-              key={feature.title}
-              className="card-elevated p-6 lg:p-8 group"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
-                <feature.icon className="w-7 h-7 text-primary group-hover:text-primary-foreground transition-colors" />
-              </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-muted-foreground">
-                {feature.description}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* Business Services */}
-        <div className="relative">
+        {/* Travel Types (formerly Business Services) - Now First */}
+        <div className="relative mb-24">
           {/* Decorative background */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 rounded-3xl -m-4 lg:-m-8" />
           
@@ -126,10 +96,10 @@ const FeaturesSection = () => {
             <div className="text-center max-w-3xl mx-auto mb-12">
               <div className="inline-flex items-center gap-2 bg-primary/10 rounded-full px-4 py-2 text-primary text-sm font-medium mb-4">
                 <Train className="w-4 h-4" />
-                Für Geschäftskunden & Gruppen
+                Für jeden Anlass die richtige Reise
               </div>
               <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-                Professionelle <span className="text-primary">Services</span>
+                Unsere <span className="text-primary">Reisearten</span>
               </h2>
               <p className="text-muted-foreground text-lg">
                 Maßgeschneiderte Transportlösungen für Unternehmen, Vereine, Schulen und private Veranstaltungen.
@@ -175,7 +145,7 @@ const FeaturesSection = () => {
             <div className="text-center">
               <Link to="/business">
                 <Button size="lg" className="group">
-                  Alle Services entdecken
+                  Alle Reisearten entdecken
                   <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
@@ -185,6 +155,37 @@ const FeaturesSection = () => {
             </div>
           </div>
         </div>
+
+        {/* Comfort Features - Now Second */}
+        <div className="text-center max-w-2xl mx-auto mb-16">
+          <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
+            Reisen mit <span className="text-primary">Komfort</span>
+          </h2>
+          <p className="text-muted-foreground text-lg">
+            Unsere modernen Busse bieten alles, was Sie für eine entspannte Reise brauchen.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+          {comfortFeatures.map((feature, index) => (
+            <div
+              key={feature.title}
+              className="card-elevated p-6 lg:p-8 group"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
+                <feature.icon className="w-7 h-7 text-primary group-hover:text-primary-foreground transition-colors" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                {feature.title}
+              </h3>
+              <p className="text-muted-foreground">
+                {feature.description}
+              </p>
+            </div>
+          ))}
+        </div>
+
       </div>
     </section>
   );
