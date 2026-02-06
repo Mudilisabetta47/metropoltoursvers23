@@ -165,7 +165,7 @@ const PackageToursSection = () => {
                     variant="outline"
                     size="sm"
                     className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors text-xs"
-                    onClick={() => navigate(`/pauschalreisen/${tour.destination.toLowerCase()}`)}
+                    onClick={() => navigate(`/reisen/${tour.slug || tour.id}`)}
                   >
                     Mehr erfahren
                     <ArrowRight className="w-3 h-3 ml-1" />
