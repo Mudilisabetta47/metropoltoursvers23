@@ -86,8 +86,18 @@ export interface TourInclusion {
   icon: string;
   title: string;
   description: string | null;
-  category: 'included' | 'excluded' | 'hint';
+  category: 'included' | 'optional' | 'not_included';
   sort_order: number;
+}
+
+// Alias for components
+export type TourData = ExtendedPackageTour;
+
+export interface ValidationError {
+  tab: string;
+  field: string;
+  message: string;
+  severity: 'error' | 'warning';
 }
 
 export interface TourLegal {
