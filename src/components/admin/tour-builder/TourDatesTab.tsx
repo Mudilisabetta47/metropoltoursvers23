@@ -83,20 +83,35 @@ const TourDatesTab = ({ tourId, dates, tariffs, onCreate, onUpdate, onDelete }: 
 
     try {
       // Calculate duration from dates
-      const departure = parseISO(dialog.date.departure_date!);
-      const returnD = parseISO(dialog.date.return_date!);
+      const departure = parseISO(dialog.date.departure_date || format(new Date(), 'yyyy-MM-dd'));
+      const returnD = parseISO(dialog.date.return_date || format(new Date(), 'yyyy-MM-dd'));
       const duration = differenceInDays(returnD, departure) + 1;
 
+      const fullDateData = {
+        tour_id: tourId,
+        departure_date: dialog.date.departure_date || format(new Date(), 'yyyy-MM-dd'),
+        return_date: dialog.date.return_date || format(new Date(), 'yyyy-MM-dd'),
+        duration_days: duration,
+        price_basic: dialog.date.price_basic ?? 199,
+        price_smart: dialog.date.price_smart ?? 214,
+        price_flex: dialog.date.price_flex ?? 224,
+        price_business: dialog.date.price_business ?? 239,
+        total_seats: dialog.date.total_seats ?? 45,
+        booked_seats: dialog.date.booked_seats ?? 0,
+        status: dialog.date.status ?? 'available' as const,
+        is_active: dialog.date.is_active ?? true,
+        early_bird_discount_percent: dialog.date.early_bird_discount_percent ?? 0,
+        early_bird_deadline: dialog.date.early_bird_deadline ?? null,
+        promo_code: dialog.date.promo_code ?? null,
+        promo_discount_percent: dialog.date.promo_discount_percent ?? 0,
+        notes: dialog.date.notes ?? null,
+      };
+
       if (dialog.isNew) {
-        await onCreate({
-          ...emptyDate,
-          ...dialog.date,
-          tour_id: tourId,
-          duration_days: duration,
-        });
+        await onCreate(fullDateData);
       } else {
-        const { id, ...updates } = dialog.date;
-        await onUpdate(id!, { ...updates, duration_days: duration });
+        const { id } = dialog.date;
+        await onUpdate(id!, fullDateData);
       }
       setDialog({ open: false, date: null, isNew: false });
     } finally {

@@ -82,16 +82,20 @@ const TourRoutesTab = ({
     setIsSaving(true);
 
     try {
+      const fullRouteData = {
+        tour_id: tourId,
+        name: routeDialog.route.name || '',
+        code: routeDialog.route.code || '',
+        description: routeDialog.route.description || null,
+        sort_order: routeDialog.route.sort_order ?? routes.length,
+        is_active: routeDialog.route.is_active ?? true,
+      };
+
       if (routeDialog.isNew) {
-        await onCreateRoute({
-          ...emptyRoute,
-          ...routeDialog.route,
-          tour_id: tourId,
-          sort_order: routes.length,
-        });
+        await onCreateRoute(fullRouteData);
       } else {
-        const { id, pickupStops, ...updates } = routeDialog.route;
-        await onUpdateRoute(id!, updates);
+        const { id } = routeDialog.route;
+        await onUpdateRoute(id!, fullRouteData);
       }
       setRouteDialog({ open: false, route: null, isNew: false });
     } finally {
@@ -112,16 +116,25 @@ const TourRoutesTab = ({
       const route = routes.find(r => r.id === stopDialog.routeId);
       const stopsCount = route?.pickup_stops?.length || 0;
 
+      const fullStopData = {
+        route_id: stopDialog.routeId,
+        city: stopDialog.stop.city || '',
+        location_name: stopDialog.stop.location_name || '',
+        address: stopDialog.stop.address || null,
+        meeting_point: stopDialog.stop.meeting_point || null,
+        departure_time: stopDialog.stop.departure_time || '06:00',
+        arrival_offset_minutes: stopDialog.stop.arrival_offset_minutes ?? 0,
+        surcharge: stopDialog.stop.surcharge ?? 0,
+        max_passengers: stopDialog.stop.max_passengers ?? null,
+        sort_order: stopDialog.stop.sort_order ?? stopsCount,
+        is_active: stopDialog.stop.is_active ?? true,
+      };
+
       if (stopDialog.isNew) {
-        await onCreateStop({
-          ...emptyStop,
-          ...stopDialog.stop,
-          route_id: stopDialog.routeId,
-          sort_order: stopsCount,
-        });
+        await onCreateStop(fullStopData);
       } else {
-        const { id, ...updates } = stopDialog.stop;
-        await onUpdateStop(id!, updates);
+        const { id } = stopDialog.stop;
+        await onUpdateStop(id!, fullStopData);
       }
       setStopDialog({ open: false, stop: null, isNew: false, routeId: null });
     } finally {
@@ -148,10 +161,12 @@ const TourRoutesTab = ({
       for (let i = 0; i < defaultRoutes.length; i++) {
         if (!routes.some(r => r.code === defaultRoutes[i].code)) {
           await onCreateRoute({
-            ...emptyRoute,
-            ...defaultRoutes[i],
             tour_id: tourId,
+            name: defaultRoutes[i].name,
+            code: defaultRoutes[i].code,
+            description: defaultRoutes[i].description,
             sort_order: i,
+            is_active: true,
           });
         }
       }
