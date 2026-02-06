@@ -18,6 +18,7 @@ import PackageTourDetailPage from "./pages/PackageTourDetailPage";
 import AdminInquiriesPage from "./pages/AdminInquiriesPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminCMS from "./pages/AdminCMS";
+import OperationsDashboard from "./pages/OperationsDashboard";
 import NotFound from "./pages/NotFound";
 import CookieBanner from "./components/CookieBanner";
 
@@ -42,7 +43,8 @@ const App = () => (
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/pauschalreisen/:tourId" element={<PackageTourDetailPage />} />
-            <Route path="/admin" element={<Navigate to="/admin/cms" replace />} />
+            <Route path="/admin" element={<Navigate to="/admin/ops" replace />} />
+            <Route path="/admin/ops" element={<OperationsDashboard />} />
             <Route path="/admin/inquiries" element={<AdminInquiriesPage />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/cms" element={<AdminCMS />} />
