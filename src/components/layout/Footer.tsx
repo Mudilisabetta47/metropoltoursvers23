@@ -239,15 +239,22 @@ const Footer = () => {
       {/* Bottom Bar */}
       <div className="border-t border-muted-foreground/10 bg-secondary/80">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              © {currentYear} METROPOL TOURS GmbH. Alle Rechte vorbehalten.
-            </p>
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <span>🇩🇪 Made in Germany</span>
-              <span>•</span>
-              <span>Sichere SSL-Verschlüsselung</span>
-            </div>
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-muted-foreground">
+            © {currentYear} METROPOL TOURS GmbH. Alle Rechte vorbehalten.
+          </p>
+          <div className="flex items-center gap-6 text-sm text-muted-foreground">
+            <span>🇩🇪 Made in Germany</span>
+            <span>•</span>
+            <span>Sichere SSL-Verschlüsselung</span>
+            <span>•</span>
+            <Link 
+              to="/admin" 
+              className="text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+            >
+              Agentur Login
+            </Link>
+          </div>
           </div>
         </div>
       </div>
