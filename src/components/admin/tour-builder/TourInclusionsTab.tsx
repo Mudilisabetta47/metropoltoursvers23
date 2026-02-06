@@ -71,16 +71,20 @@ const TourInclusionsTab = ({ tourId, inclusions, onCreate, onUpdate, onDelete }:
     setIsSaving(true);
 
     try {
+      const fullInclusionData = {
+        tour_id: tourId,
+        icon: dialog.inclusion.icon || 'Check',
+        title: dialog.inclusion.title || '',
+        description: dialog.inclusion.description || null,
+        category: dialog.inclusion.category || 'included' as const,
+        sort_order: dialog.inclusion.sort_order ?? inclusions.length,
+      };
+
       if (dialog.isNew) {
-        await onCreate({
-          ...emptyInclusion,
-          ...dialog.inclusion,
-          tour_id: tourId,
-          sort_order: inclusions.length,
-        });
+        await onCreate(fullInclusionData);
       } else {
-        const { id, ...updates } = dialog.inclusion;
-        await onUpdate(id!, updates);
+        const { id } = dialog.inclusion;
+        await onUpdate(id!, fullInclusionData);
       }
       setDialog({ open: false, inclusion: null, isNew: false });
     } finally {

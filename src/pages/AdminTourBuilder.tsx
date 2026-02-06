@@ -2,16 +2,14 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { 
   ArrowLeft, Save, Eye, Globe, Settings, Palmtree, MapPin, Calendar,
-  Luggage, Scale, FileText, Check, ChevronRight, Loader2, AlertCircle
+  Luggage, Scale, Check, ChevronRight, Loader2, AlertCircle, Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { useTourBuilder, TourData, TourTariff, TourDate, TourRoute, TourPickupStop, TourLuggageAddon, TourInclusion, TourLegal } from "@/hooks/useTourBuilder";
-import { Shield } from "lucide-react";
+import { useTourBuilder, TourData } from "@/hooks/useTourBuilder";
 
 // Tab Components
 import TourBasicsTab from "@/components/admin/tour-builder/TourBasicsTab";
@@ -41,10 +39,10 @@ const AdminTourBuilder = () => {
   const { user, isAdmin, isLoading: authLoading } = useAuth();
   
   const {
-    currentTour,
+    tour: currentTour,
     isLoading,
     isSaving,
-    loadTour,
+    fetchTour,
     saveTour,
     publishTour,
     updateTourField,
@@ -85,7 +83,7 @@ const AdminTourBuilder = () => {
     // Validation
     validationErrors,
     validateForPublish
-  } = useTourBuilder();
+  } = useTourBuilder(tourId);
 
   const [activeTab, setActiveTab] = useState('basics');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -93,9 +91,9 @@ const AdminTourBuilder = () => {
   // Load tour if editing
   useEffect(() => {
     if (tourId) {
-      loadTour(tourId);
+      fetchTour();
     }
-  }, [tourId, loadTour]);
+  }, [tourId, fetchTour]);
 
   // Access control
   if (authLoading) {
@@ -126,11 +124,11 @@ const AdminTourBuilder = () => {
   }
 
   const handleSave = async () => {
-    const { error } = await saveTour();
-    if (error) {
+    const result = await saveTour({});
+    if (result.error) {
       toast({ 
         title: "Fehler beim Speichern", 
-        description: error.message,
+        description: (result.error as Error).message,
         variant: "destructive" 
       });
     } else {
@@ -150,11 +148,11 @@ const AdminTourBuilder = () => {
       return;
     }
 
-    const { error } = await publishTour();
-    if (error) {
+    const result = await publishTour();
+    if (result.error) {
       toast({ 
         title: "Fehler beim Veröffentlichen", 
-        description: error.message,
+        description: (result.error as Error).message,
         variant: "destructive" 
       });
     } else {

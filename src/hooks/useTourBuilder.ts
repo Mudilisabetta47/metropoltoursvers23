@@ -631,33 +631,156 @@ export function useTourBuilder(tourId?: string) {
     }
   };
 
+  // Validation for publishing
+  const validationErrors: ValidationError[] = [];
+  
+  const validateForPublish = (): string[] => {
+    const errors: string[] = [];
+    if (!tour?.destination) errors.push('Reiseziel fehlt');
+    if (!tour?.hero_image_url && !tour?.image_url) errors.push('Hero-Bild fehlt');
+    if (dates.length === 0) errors.push('Mindestens ein Termin erforderlich');
+    if (tariffs.length === 0) errors.push('Tarife fehlen');
+    if (routes.length === 0) errors.push('Mindestens eine Route erforderlich');
+    if (legal.length === 0) errors.push('Rechtliche Hinweise fehlen');
+    return errors;
+  };
+
+  // Update a single tour field
+  const updateTourField = (field: keyof ExtendedPackageTour, value: unknown) => {
+    setTour(prev => prev ? { ...prev, [field]: value } : null);
+  };
+
+  // Wrapper functions for create/update operations
+  const createTariff = async (data: Omit<TourTariff, 'id' | 'created_at' | 'updated_at'>) => {
+    return saveTariff(data);
+  };
+  const updateTariff = async (id: string, data: Partial<TourTariff>) => {
+    return saveTariff({ ...data, id });
+  };
+  const deleteTariff = async (tariffId: string) => {
+    try {
+      const { error } = await client.from('tour_tariffs').delete().eq('id', tariffId);
+      if (error) throw error;
+      setTariffs(prev => prev.filter(t => t.id !== tariffId));
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
+  const createDate = async (data: Omit<TourDate, 'id' | 'created_at' | 'updated_at'>) => {
+    return saveDate(data);
+  };
+  const updateDate = async (id: string, data: Partial<TourDate>) => {
+    return saveDate({ ...data, id });
+  };
+
+  const createRoute = async (data: Omit<TourRoute, 'id' | 'created_at'>) => {
+    return saveRoute(data);
+  };
+  const updateRoute = async (id: string, data: Partial<TourRoute>) => {
+    return saveRoute({ ...data, id });
+  };
+
+  const createPickupStop = async (data: Omit<TourPickupStop, 'id' | 'created_at'>) => {
+    return savePickupStop(data);
+  };
+  const updatePickupStop = async (id: string, data: Partial<TourPickupStop> & { route_id: string }) => {
+    return savePickupStop({ ...data, id });
+  };
+
+  const createLuggageAddon = async (data: Omit<TourLuggageAddon, 'id' | 'created_at'>) => {
+    return saveLuggageAddon(data);
+  };
+  const updateLuggageAddon = async (id: string, data: Partial<TourLuggageAddon>) => {
+    return saveLuggageAddon({ ...data, id });
+  };
+  const deleteLuggageAddon = async (addonId: string) => {
+    try {
+      const { error } = await client.from('tour_luggage_addons').delete().eq('id', addonId);
+      if (error) throw error;
+      setLuggageAddons(prev => prev.filter(a => a.id !== addonId));
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
+  const createInclusion = async (data: Omit<TourInclusion, 'id' | 'created_at'>) => {
+    return saveInclusion(data);
+  };
+  const updateInclusion = async (id: string, data: Partial<TourInclusion>) => {
+    return saveInclusion({ ...data, id });
+  };
+
+  const createLegalSection = async (data: Omit<TourLegal, 'id' | 'created_at'>) => {
+    return saveLegal(data);
+  };
+  const updateLegalSection = async (id: string, data: Partial<TourLegal>) => {
+    return saveLegal({ ...data, id });
+  };
+  const deleteLegalSection = deleteLegal;
+
   return {
+    // Main tour
     tour,
-    tariffs,
-    dates,
-    routes,
-    luggageAddons,
-    inclusions,
-    legal,
+    currentTour: tour,
     isLoading,
     isSaving,
     fetchTour,
+    loadTour: fetchTour,
     saveTour,
     createTour,
+    updateTourField,
+    // Tariffs
+    tariffs,
+    createTariff,
+    updateTariff,
+    deleteTariff,
     saveTariff,
-    saveDate,
+    // Dates
+    dates,
+    createDate,
+    updateDate,
     deleteDate,
-    saveRoute,
+    saveDate,
+    // Routes
+    routes,
+    createRoute,
+    updateRoute,
     deleteRoute,
-    savePickupStop,
+    saveRoute,
+    // Pickup Stops
+    createPickupStop,
+    updatePickupStop,
     deletePickupStop,
+    savePickupStop,
+    // Luggage
+    luggageAddons,
+    createLuggageAddon,
+    updateLuggageAddon,
+    deleteLuggageAddon,
     saveLuggageAddon,
-    saveInclusion,
+    // Inclusions
+    inclusions,
+    createInclusion,
+    updateInclusion,
     deleteInclusion,
+    saveInclusion,
+    // Legal
+    legal,
+    legalSections: legal,
+    createLegalSection,
+    updateLegalSection,
+    deleteLegalSection,
     saveLegal,
     deleteLegal,
+    // Publishing
     publishTour,
     unpublishTour,
+    // Validation
+    validationErrors,
+    validateForPublish,
   };
 }
 
