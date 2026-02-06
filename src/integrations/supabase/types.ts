@@ -255,6 +255,42 @@ export type Database = {
         }
         Relationships: []
       }
+      command_logs: {
+        Row: {
+          command_type: string
+          created_at: string
+          error_message: string | null
+          id: string
+          parameters: Json | null
+          result: string
+          target_id: string | null
+          target_type: string | null
+          user_id: string
+        }
+        Insert: {
+          command_type: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          parameters?: Json | null
+          result?: string
+          target_id?: string | null
+          target_type?: string | null
+          user_id: string
+        }
+        Update: {
+          command_type?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          parameters?: Json | null
+          result?: string
+          target_id?: string | null
+          target_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       cookie_consents: {
         Row: {
           analytics: boolean
@@ -285,6 +321,153 @@ export type Database = {
           session_id?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      employee_shifts: {
+        Row: {
+          actual_end: string | null
+          actual_start: string | null
+          assigned_bus_id: string | null
+          assigned_trip_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          role: string
+          shift_date: string
+          shift_end: string | null
+          shift_start: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_end?: string | null
+          actual_start?: string | null
+          assigned_bus_id?: string | null
+          assigned_trip_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          role?: string
+          shift_date?: string
+          shift_end?: string | null
+          shift_start: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_end?: string | null
+          actual_start?: string | null
+          assigned_bus_id?: string | null
+          assigned_trip_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          role?: string
+          shift_date?: string
+          shift_end?: string | null
+          shift_start?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_shifts_assigned_bus_id_fkey"
+            columns: ["assigned_bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_shifts_assigned_trip_id_fkey"
+            columns: ["assigned_trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incidents: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          description: string | null
+          id: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          source_id: string | null
+          source_type: string | null
+          status: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          source_id?: string | null
+          source_type?: string | null
+          status?: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          source_id?: string | null
+          source_type?: string | null
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      operations_metrics: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          metric_date: string
+          metric_hour: number | null
+          metric_type: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_date?: string
+          metric_hour?: number | null
+          metric_type: string
+          value: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_date?: string
+          metric_hour?: number | null
+          metric_type?: string
+          value?: number
         }
         Relationships: []
       }
@@ -512,6 +695,90 @@ export type Database = {
         }
         Relationships: []
       }
+      scanner_events: {
+        Row: {
+          booking_id: string | null
+          bus_id: string | null
+          created_at: string
+          error_reason: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          result: string
+          scan_type: string
+          scanner_user_id: string
+          stop_id: string | null
+          ticket_number: string | null
+          trip_id: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          bus_id?: string | null
+          created_at?: string
+          error_reason?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          result?: string
+          scan_type?: string
+          scanner_user_id: string
+          stop_id?: string | null
+          ticket_number?: string | null
+          trip_id?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          bus_id?: string | null
+          created_at?: string
+          error_reason?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          result?: string
+          scan_type?: string
+          scanner_user_id?: string
+          stop_id?: string | null
+          ticket_number?: string | null
+          trip_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scanner_events_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scanner_events_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_agent_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scanner_events_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scanner_events_stop_id_fkey"
+            columns: ["stop_id"]
+            isOneToOne: false
+            referencedRelation: "stops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scanner_events_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seat_holds: {
         Row: {
           created_at: string
@@ -698,6 +965,36 @@ export type Database = {
           },
         ]
       }
+      system_status: {
+        Row: {
+          error_message: string | null
+          id: string
+          last_check: string
+          latency_ms: number | null
+          metadata: Json | null
+          service_name: string
+          status: string
+        }
+        Insert: {
+          error_message?: string | null
+          id?: string
+          last_check?: string
+          latency_ms?: number | null
+          metadata?: Json | null
+          service_name: string
+          status?: string
+        }
+        Update: {
+          error_message?: string | null
+          id?: string
+          last_check?: string
+          latency_ms?: number | null
+          metadata?: Json | null
+          service_name?: string
+          status?: string
+        }
+        Relationships: []
+      }
       trips: {
         Row: {
           arrival_time: string
@@ -772,6 +1069,92 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vehicle_positions: {
+        Row: {
+          bus_id: string
+          created_at: string
+          delay_minutes: number | null
+          driver_name: string | null
+          eta_next_stop: string | null
+          heading: number | null
+          id: string
+          last_stop_id: string | null
+          latitude: number
+          longitude: number
+          next_stop_id: string | null
+          passenger_count: number | null
+          speed_kmh: number | null
+          status: string
+          trip_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          bus_id: string
+          created_at?: string
+          delay_minutes?: number | null
+          driver_name?: string | null
+          eta_next_stop?: string | null
+          heading?: number | null
+          id?: string
+          last_stop_id?: string | null
+          latitude: number
+          longitude: number
+          next_stop_id?: string | null
+          passenger_count?: number | null
+          speed_kmh?: number | null
+          status?: string
+          trip_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bus_id?: string
+          created_at?: string
+          delay_minutes?: number | null
+          driver_name?: string | null
+          eta_next_stop?: string | null
+          heading?: number | null
+          id?: string
+          last_stop_id?: string | null
+          latitude?: number
+          longitude?: number
+          next_stop_id?: string | null
+          passenger_count?: number | null
+          speed_kmh?: number | null
+          status?: string
+          trip_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_positions_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_positions_last_stop_id_fkey"
+            columns: ["last_stop_id"]
+            isOneToOne: false
+            referencedRelation: "stops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_positions_next_stop_id_fkey"
+            columns: ["next_stop_id"]
+            isOneToOne: false
+            referencedRelation: "stops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_positions_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -959,6 +1342,22 @@ export type Database = {
           trip_id: string
           updated_at: string
           user_id: string
+        }[]
+      }
+      get_incident_counts: {
+        Args: never
+        Returns: {
+          count: number
+          severity: string
+        }[]
+      }
+      get_scanner_stats_hourly: {
+        Args: never
+        Returns: {
+          fraud_suspected: number
+          invalid_scans: number
+          total_scans: number
+          valid_scans: number
         }[]
       }
       has_role: {
