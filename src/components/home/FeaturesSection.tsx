@@ -106,36 +106,36 @@ const FeaturesSection = () => {
               </p>
             </div>
 
-            {/* Services Grid - Modern Card Layout */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 mb-10">
+            {/* Services Grid - Larger Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8 mb-12">
               {businessServices.map((service, index) => (
                 <Link
                   to="/business"
                   key={service.title}
-                  className="group relative bg-card rounded-2xl p-5 lg:p-6 shadow-card hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-border/50 hover:border-primary/30 overflow-hidden"
+                  className="group relative bg-card rounded-3xl p-8 lg:p-10 shadow-card hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border border-border/50 hover:border-primary/30 overflow-hidden min-h-[280px] flex flex-col"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   {/* Highlight badge */}
-                  <div className="absolute top-3 right-3 bg-primary/10 text-primary text-xs font-medium px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute top-4 right-4 bg-primary/10 text-primary text-xs font-semibold px-3 py-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
                     {service.highlight}
                   </div>
                   
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-4 group-hover:from-primary group-hover:to-primary/80 transition-all duration-300">
-                    <service.icon className="w-6 h-6 text-primary group-hover:text-primary-foreground transition-colors" />
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-6 group-hover:from-primary group-hover:to-primary/80 transition-all duration-300 group-hover:scale-110">
+                    <service.icon className="w-8 h-8 text-primary group-hover:text-primary-foreground transition-colors" />
                   </div>
                   
-                  <h3 className="text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
+                  <h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors">
                     {service.title}
                   </h3>
                   
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-muted-foreground leading-relaxed flex-1">
                     {service.description}
                   </p>
                   
                   {/* Hover indicator */}
-                  <div className="flex items-center gap-1 text-primary text-sm font-medium mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-2 text-primary font-semibold mt-5 opacity-0 group-hover:opacity-100 transition-opacity">
                     Mehr erfahren
-                    <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </Link>
               ))}
