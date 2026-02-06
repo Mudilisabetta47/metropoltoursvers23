@@ -14,7 +14,7 @@ import AuthPage from "./pages/AuthPage";
 import ImprintPage from "./pages/ImprintPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
-import PackageTourDetailPage from "./pages/PackageTourDetailPage";
+import TourDetailPage from "./components/tours/TourDetailPage";
 import AdminInquiriesPage from "./pages/AdminInquiriesPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminCMS from "./pages/AdminCMS";
@@ -43,7 +43,8 @@ const App = () => (
             <Route path="/imprint" element={<ImprintPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
-            <Route path="/pauschalreisen/:tourId" element={<PackageTourDetailPage />} />
+            <Route path="/pauschalreisen/:tourId" element={<TourDetailPage />} />
+            <Route path="/reisen/:tourId" element={<TourDetailPage />} />
             <Route path="/admin" element={<Navigate to="/admin/ops" replace />} />
             <Route path="/admin/ops" element={<OperationsDashboard />} />
             <Route path="/admin/inquiries" element={<AdminInquiriesPage />} />
