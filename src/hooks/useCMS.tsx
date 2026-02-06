@@ -11,7 +11,7 @@ export interface PackageTour {
   image_url: string | null;
   highlights: string[];
   description: string | null;
-  itinerary: { day: number; title: string; description: string }[];
+  itinerary: unknown[];
   included_services: string[];
   departure_date: string;
   return_date: string;
@@ -22,6 +22,20 @@ export interface PackageTour {
   discount_percent: number;
   created_at: string;
   updated_at: string;
+  // Extended fields (optional for backward compatibility)
+  slug?: string | null;
+  meta_title?: string | null;
+  meta_description?: string | null;
+  hero_image_url?: string | null;
+  gallery_images?: string[];
+  short_description?: string | null;
+  category?: string | null;
+  tags?: string[];
+  insurance_info?: string | null;
+  documents_required?: string | null;
+  min_participants?: number;
+  published_at?: string | null;
+  publish_status?: 'draft' | 'published' | 'archived';
 }
 
 export interface ServiceType {
