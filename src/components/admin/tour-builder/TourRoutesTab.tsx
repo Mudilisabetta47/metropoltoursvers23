@@ -28,7 +28,7 @@ interface TourRoutesTabProps {
   onUpdateRoute: (id: string, data: Partial<TourRoute>) => Promise<{ error: Error | null }>;
   onDeleteRoute: (id: string) => Promise<{ error: Error | null }>;
   onCreateStop: (data: Omit<TourPickupStop, 'id' | 'created_at'>) => Promise<{ error: Error | null }>;
-  onUpdateStop: (id: string, data: Partial<TourPickupStop>) => Promise<{ error: Error | null }>;
+  onUpdateStop: (id: string, data: Partial<TourPickupStop> & { route_id: string }) => Promise<{ error: Error | null }>;
   onDeleteStop: (id: string) => Promise<{ error: Error | null }>;
 }
 
