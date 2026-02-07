@@ -669,7 +669,16 @@ const WeekendTripDetailPage = () => {
                     <Button 
                       size="lg" 
                       className="w-full text-lg font-semibold py-6 shadow-lg"
-                      onClick={() => navigate(`/search?from=${selectedStop?.city || 'Hamburg'}&to=${destination}`)}
+                      onClick={() => {
+                        // Navigate to checkout with route info - will find matching trip
+                        const params = new URLSearchParams({
+                          routeId: route.id,
+                          from: selectedStop?.city || 'Hamburg',
+                          to: destination || '',
+                          passengers: participants.toString(),
+                        });
+                        navigate(`/checkout?${params.toString()}`);
+                      }}
                     >
                       Jetzt buchen
                     </Button>
