@@ -77,7 +77,7 @@ const HeroSlider = () => {
     if (showContactHint) {
       navigate("/business");
     } else {
-      navigate("/service");
+      navigate("/reisen");
     }
   };
 
@@ -371,7 +371,7 @@ const HeroSlider = () => {
                 variant="outline"
                 size="sm"
                 className="gap-2"
-                onClick={() => navigate("/service")}
+                onClick={() => navigate("/reisen")}
               >
                 Alle Reiseziele anzeigen
                 <ArrowRight className="w-4 h-4" />
