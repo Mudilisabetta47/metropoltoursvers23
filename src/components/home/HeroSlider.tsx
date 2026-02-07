@@ -1,250 +1,286 @@
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MapPin, Calendar, Users, Search, ArrowRight, Wifi, Snowflake, Armchair, Plug } from "lucide-react";
+import { MapPin, Calendar, Users, ArrowRight, ArrowLeftRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { usePackageTours } from "@/hooks/useCMS";
 import heroBus from "@/assets/hero-bus.jpg";
+
+// Import tour images
+import tourCroatia from "@/assets/tour-croatia.jpg";
+import tourSlovenia from "@/assets/tour-slovenia.jpg";
+import tourBosnia from "@/assets/tour-bosnia.jpg";
+import tourMontenegro from "@/assets/tour-montenegro.jpg";
+import tourSerbien from "@/assets/tour-serbien.jpg";
+import tourNordmazedonien from "@/assets/tour-nordmazedonien.jpg";
+import tourAlbanien from "@/assets/tour-albanien.jpg";
+import tourKosovo from "@/assets/tour-kosovo.jpg";
+
+const imageMap: Record<string, string> = {
+  '/tour-croatia.jpg': tourCroatia,
+  '/tour-slovenia.jpg': tourSlovenia,
+  '/tour-bosnia.jpg': tourBosnia,
+  '/tour-montenegro.jpg': tourMontenegro,
+  '/tour-serbien.jpg': tourSerbien,
+  '/tour-nordmazedonien.jpg': tourNordmazedonien,
+  '/tour-albanien.jpg': tourAlbanien,
+  '/tour-kosovo.jpg': tourKosovo,
+};
 
 const HeroSlider = () => {
   const navigate = useNavigate();
+  const { tours } = usePackageTours();
+  const [tripType, setTripType] = useState<'oneway' | 'roundtrip'>('roundtrip');
+  const [_currentSlide, setCurrentSlide] = useState(0);
+
+  const destinations = tours.slice(0, 6);
+
+  const getImageSrc = (imageUrl: string | null, destination: string) => {
+    if (imageUrl && imageMap[imageUrl]) {
+      return imageMap[imageUrl];
+    }
+    const fallbackKey = `/tour-${destination.toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue')}.jpg`;
+    return imageMap[fallbackKey] || tourCroatia;
+  };
+
+  const nextSlide = useCallback(() => {
+    if (destinations.length === 0) return;
+    setCurrentSlide((prev) => (prev + 1) % destinations.length);
+  }, [destinations.length]);
+
+  const prevSlide = useCallback(() => {
+    if (destinations.length === 0) return;
+    setCurrentSlide((prev) => (prev - 1 + destinations.length) % destinations.length);
+  }, [destinations.length]);
+
+  useEffect(() => {
+    if (destinations.length === 0) return;
+    const interval = setInterval(nextSlide, 5000);
+    return () => clearInterval(interval);
+  }, [nextSlide, destinations.length]);
 
   return (
-    <section className="relative h-screen overflow-hidden">
-      {/* Background Image */}
-      <motion.div
-        initial={{ scale: 1.1 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 1.5, ease: "easeOut" }}
-        className="absolute inset-0"
-      >
-        <img
-          src={heroBus}
-          alt="Metropol Tours Bus"
-          className="w-full h-full object-cover"
-        />
-        {/* Gradient Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
-      </motion.div>
+    <section className="relative min-h-screen bg-gradient-to-br from-muted to-muted/80 overflow-hidden">
+      {/* Background Image - Right Side */}
+      <div className="absolute inset-0">
+        <div className="absolute right-0 top-0 w-full lg:w-3/5 h-full">
+          <img
+            src={heroBus}
+            alt="Metropol Tours Bus"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-muted via-muted/80 to-transparent lg:from-muted lg:via-transparent lg:to-transparent" />
+        </div>
+      </div>
 
-      {/* Large Typography Overlay */}
-      <div className="absolute inset-0 flex flex-col justify-center">
-        <div className="container mx-auto px-4 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
+      {/* Main Content */}
+      <div className="relative z-10 container mx-auto px-4 pt-32 lg:pt-40 pb-12">
+        <div className="max-w-2xl">
+          {/* Headline */}
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
-            className="max-w-5xl"
+            transition={{ duration: 0.6 }}
+            className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight"
           >
-            {/* Brand Label */}
-            <motion.div 
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5, duration: 0.6 }}
-              className="flex items-center gap-3 mb-4"
-            >
-              <div className="w-12 h-[2px] bg-primary" />
-              <span className="text-primary font-medium tracking-wider uppercase text-sm">
-                Ihr Reiseunternehmen
-              </span>
-            </motion.div>
+            Günstige <span className="text-primary">Busreisen</span>
+          </motion.h1>
 
-            {/* Large Brand Name - Split Typography */}
-            <div className="relative mb-6">
-              <motion.h1 
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6, duration: 0.8 }}
-                className="text-5xl sm:text-6xl md:text-7xl lg:text-[9rem] font-black leading-[0.85] tracking-tight"
-              >
-                <span className="text-white/90 block">Komfortabel</span>
-                <span className="text-primary block mt-2">Reisen</span>
-              </motion.h1>
+          {/* FlixBus-Style Search Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="bg-white rounded-2xl shadow-xl p-6 lg:p-8"
+          >
+            {/* Trip Type Toggle */}
+            <div className="flex items-center gap-6 mb-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="tripType"
+                  checked={tripType === 'oneway'}
+                  onChange={() => setTripType('oneway')}
+                  className="w-5 h-5 text-primary border-2 border-muted-foreground focus:ring-primary"
+                />
+                <span className="text-foreground font-medium">Einfache Fahrt</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="tripType"
+                  checked={tripType === 'roundtrip'}
+                  onChange={() => setTripType('roundtrip')}
+                  className="w-5 h-5 text-primary border-2 border-muted-foreground focus:ring-primary accent-primary"
+                />
+                <span className="text-foreground font-medium">Hin- und Rückfahrt</span>
+              </label>
             </div>
 
-            {/* Tagline */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8, duration: 0.6 }}
-              className="text-xl md:text-2xl text-white/80 max-w-2xl mb-8 font-light"
-            >
-              Busreisen zu den schönsten Zielen in Europa – 
-              <span className="text-primary font-medium"> individuell</span>, als Gruppe oder mit Rundum-Sorglos-Paket.
-            </motion.p>
+            {/* Search Fields */}
+            <div className="space-y-4">
+              {/* From / To Row */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm text-muted-foreground mb-1">Von</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
+                    <input
+                      type="text"
+                      placeholder="Hamburg"
+                      className="w-full pl-10 pr-4 py-3 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                    />
+                  </div>
+                </div>
+                
+                {/* Swap Button */}
+                <div className="flex items-end justify-center md:pb-1">
+                  <button className="p-2 rounded-full hover:bg-muted transition-colors">
+                    <ArrowLeftRight className="w-5 h-5 text-primary" />
+                  </button>
+                </div>
+                
+                <div className="flex-1">
+                  <label className="block text-sm text-muted-foreground mb-1">Nach</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
+                    <input
+                      type="text"
+                      placeholder="Kroatien"
+                      className="w-full pl-10 pr-4 py-3 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                    />
+                  </div>
+                </div>
+              </div>
 
-            {/* Feature Pills */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1, duration: 0.6 }}
-              className="flex flex-wrap gap-3 mb-8"
-            >
-              {[
-                { icon: Wifi, label: "Gratis WLAN" },
-                { icon: Snowflake, label: "Klimaanlage" },
-                { icon: Armchair, label: "Komfortsitze" },
-                { icon: Plug, label: "Steckdosen" },
-              ].map((feature, index) => (
-                <motion.div
-                  key={feature.label}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 1.1 + index * 0.1, duration: 0.4 }}
-                  className="flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 rounded-full px-4 py-2 text-white text-sm"
+              {/* Date / Passengers Row */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm text-muted-foreground mb-1">Hin</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
+                    <input
+                      type="text"
+                      placeholder="Datum wählen"
+                      className="w-full pl-10 pr-4 py-3 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                    />
+                  </div>
+                </div>
+                
+                {tripType === 'roundtrip' && (
+                  <div className="flex-1">
+                    <label className="block text-sm text-muted-foreground mb-1">Zurück</label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
+                      <input
+                        type="text"
+                        placeholder="Datum wählen"
+                        className="w-full pl-10 pr-4 py-3 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex-1">
+                  <label className="block text-sm text-muted-foreground mb-1">Fahrgäste</label>
+                  <div className="relative">
+                    <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
+                    <select className="w-full pl-10 pr-4 py-3 border border-border rounded-lg text-foreground bg-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary appearance-none">
+                      <option>1 Erwachsener</option>
+                      <option>2 Erwachsene</option>
+                      <option>3 Erwachsene</option>
+                      <option>4 Erwachsene</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Search Button */}
+                <div className="flex items-end">
+                  <Button 
+                    size="lg" 
+                    className="w-full md:w-auto bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-base font-semibold rounded-lg"
+                    onClick={() => navigate("/search")}
+                  >
+                    Suchen
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Destination Slider - Bottom */}
+      {destinations.length > 0 && (
+        <div className="relative z-10 bg-white border-t border-border">
+          <div className="container mx-auto px-4 py-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-foreground">Beliebte Reiseziele</h2>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={prevSlide}
+                  className="p-2 rounded-full border border-border hover:bg-muted transition-colors"
                 >
-                  <feature.icon className="w-4 h-4 text-primary" />
-                  <span>{feature.label}</span>
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={nextSlide}
+                  className="p-2 rounded-full border border-border hover:bg-muted transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Destinations Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {destinations.map((dest, index) => (
+                <motion.div
+                  key={dest.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="group cursor-pointer"
+                  onClick={() => navigate(`/reisen/${dest.slug || dest.id}`)}
+                >
+                  <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-3">
+                    <img
+                      src={getImageSrc(dest.image_url, dest.destination)}
+                      alt={dest.destination}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <div className="absolute bottom-2 left-2 right-2">
+                      <p className="text-white font-semibold text-sm truncate">{dest.destination}</p>
+                    </div>
+                    {dest.discount_percent > 0 && (
+                      <div className="absolute top-2 right-2 bg-accent text-accent-foreground text-xs font-bold px-2 py-1 rounded">
+                        -{dest.discount_percent}%
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">{dest.duration_days} Tage</span>
+                    <span className="text-sm font-bold text-primary">ab {dest.price_from}€</span>
+                  </div>
                 </motion.div>
               ))}
-            </motion.div>
+            </div>
 
-            {/* CTA Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.3, duration: 0.6 }}
-              className="flex flex-wrap gap-4"
-            >
-              <Button 
-                size="lg" 
-                className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg font-semibold gap-2 group"
+            {/* View All Link */}
+            <div className="text-center mt-8">
+              <Button
+                variant="outline"
+                className="gap-2"
                 onClick={() => navigate("/service")}
               >
-                Pauschalreisen entdecken
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                Alle Reiseziele anzeigen
+                <ArrowRight className="w-4 h-4" />
               </Button>
-              <Button 
-                size="lg" 
-                variant="outline"
-                className="bg-white/10 backdrop-blur border-white/30 text-white hover:bg-white/20 px-8 py-6 text-lg"
-                onClick={() => navigate("/search")}
-              >
-                Fahrten suchen
-              </Button>
-            </motion.div>
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Promo Badge */}
-      <motion.div
-        initial={{ opacity: 0, x: 50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 1.5, duration: 0.6 }}
-        className="absolute top-24 right-8 lg:right-16 z-20 hidden md:block"
-      >
-        <div className="bg-accent text-accent-foreground px-6 py-4 rounded-2xl shadow-2xl transform rotate-3 hover:rotate-0 transition-transform">
-          <div className="text-sm font-medium">Wochenend-Aktion</div>
-          <div className="text-2xl font-black">Bis -25%</div>
-        </div>
-      </motion.div>
-
-      {/* TUI-Style Search Bar */}
-      <div className="absolute bottom-0 left-0 right-0 z-20">
-        <motion.div 
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.8, ease: "easeOut" }}
-          className="bg-white/95 backdrop-blur-lg border-t-4 border-primary shadow-2xl"
-        >
-          <div className="container mx-auto px-4 py-6">
-            <div className="flex flex-col lg:flex-row items-stretch gap-4">
-              {/* Destination Input */}
-              <div className="flex-1">
-                <label className="block text-xs font-semibold text-foreground/70 uppercase tracking-wide mb-2">
-                  Wo soll es hin gehen?
-                </label>
-                <div className="relative">
-                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
-                  <input
-                    type="text"
-                    placeholder="z.B. Kroatien, Montenegro..."
-                    className="w-full pl-12 pr-4 py-4 bg-muted/50 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Date Input */}
-              <div className="flex-1 lg:max-w-xs">
-                <label className="block text-xs font-semibold text-foreground/70 uppercase tracking-wide mb-2">
-                  Wann & wie lange?
-                </label>
-                <div className="relative">
-                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
-                  <input
-                    type="text"
-                    placeholder="Reisezeitraum wählen"
-                    className="w-full pl-12 pr-4 py-4 bg-muted/50 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Travelers Input */}
-              <div className="flex-1 lg:max-w-xs">
-                <label className="block text-xs font-semibold text-foreground/70 uppercase tracking-wide mb-2">
-                  Wer reist mit?
-                </label>
-                <div className="relative">
-                  <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
-                  <input
-                    type="text"
-                    placeholder="2 Erwachsene"
-                    className="w-full pl-12 pr-4 py-4 bg-muted/50 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Search Button */}
-              <div className="flex items-end">
-                <Button 
-                  size="lg" 
-                  className="w-full lg:w-auto bg-primary hover:bg-primary/90 text-primary-foreground px-10 py-7 text-lg font-semibold gap-2 rounded-xl"
-                  onClick={() => navigate("/service")}
-                >
-                  <Search className="w-5 h-5" />
-                  Angebote finden
-                </Button>
-              </div>
             </div>
           </div>
-        </motion.div>
-      </div>
-
-      {/* Decorative Elements */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 2, duration: 1 }}
-        className="absolute left-8 bottom-40 z-10 hidden lg:flex flex-col gap-3"
-      >
-        {[1, 2, 3].map((_, index) => (
-          <div
-            key={index}
-            className={`h-[3px] bg-primary/50 ${
-              index === 0 ? 'w-8' : index === 1 ? 'w-6' : 'w-4'
-            }`}
-          />
-        ))}
-      </motion.div>
-
-      {/* Scroll Indicator */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 2, duration: 0.6 }}
-        className="absolute left-1/2 -translate-x-1/2 bottom-36 lg:bottom-32 z-10 hidden md:block"
-      >
-        <div className="flex flex-col items-center gap-2 text-white/50">
-          <span className="text-xs uppercase tracking-widest">Scrollen</span>
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-            className="w-6 h-10 rounded-full border-2 border-white/30 flex items-start justify-center p-2"
-          >
-            <div className="w-1 h-3 rounded-full bg-white/50" />
-          </motion.div>
         </div>
-      </motion.div>
+      )}
     </section>
   );
 };

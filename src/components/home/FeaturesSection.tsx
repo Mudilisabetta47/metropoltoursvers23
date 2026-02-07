@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { 
-  Wifi, Snowflake, Armchair, Plug, Coffee, Shield,
-  School, Users, MapPin, Trophy, Plane, PartyPopper, ArrowRight, Loader2
+  MapPin, Bus, Ticket, Users,
+  School, Trophy, Plane, PartyPopper, ArrowRight, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useServiceTypes, useCMSContent } from "@/hooks/useCMS";
@@ -15,36 +15,31 @@ const iconMap: Record<string, React.ElementType> = {
   PartyPopper,
 };
 
-const comfortFeatures = [
+// FlixBus-style feature highlights
+const flixFeatures = [
   {
-    icon: Wifi,
-    title: "Kostenloses WLAN",
-    description: "Surfen, streamen und arbeiten Sie während der gesamten Fahrt.",
+    icon: MapPin,
+    title: "Die Welt wartet auf Dich",
+    description: "Unendliche Möglichkeiten: Entdecke traumhafte Reiseziele in ganz Europa.",
+    color: "text-primary",
   },
   {
-    icon: Snowflake,
-    title: "Klimaanlage",
-    description: "Angenehme Temperatur bei jeder Witterung, das ganze Jahr über.",
+    icon: Bus,
+    title: "Unterwegs mit Komfort",
+    description: "Genieße kostenloses WLAN, Steckdosen und extra viel Beinfreiheit.",
+    color: "text-primary",
   },
   {
-    icon: Armchair,
-    title: "Bequeme Sitze",
-    description: "Großzügiger Sitzabstand und ergonomische Polsterung für Ihren Komfort.",
+    icon: Ticket,
+    title: "Auswählen, buchen, reisen",
+    description: "Blitzschnell vom Bildschirm zu Deinem Sitzplatz: einfach und unkompliziert.",
+    color: "text-primary",
   },
   {
-    icon: Plug,
-    title: "Steckdosen",
-    description: "Halten Sie Ihre Geräte während der Fahrt aufgeladen.",
-  },
-  {
-    icon: Coffee,
-    title: "Bordservice",
-    description: "Snacks und Getränke für Ihre Erfrischung während der Reise.",
-  },
-  {
-    icon: Shield,
-    title: "Sichere Reise",
-    description: "Erfahrene Fahrer und modernste Sicherheitstechnik an Bord.",
+    icon: Users,
+    title: "Gemeinsam unterwegs",
+    description: "Warum mehr Autos, wenn wir gemeinsam reisen können?",
+    color: "text-primary",
   },
 ];
 
@@ -55,124 +50,92 @@ const FeaturesSection = () => {
   const servicesHeadline = getContent('services_headline');
 
   return (
-    <section className="py-20 lg:py-28 bg-muted/50">
+    <section className="py-16 lg:py-24 bg-white">
       <div className="container mx-auto px-4">
-        {/* Travel Types (Business Services) - Now First */}
-        <div className="relative mb-24">
-          {/* Decorative background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 rounded-3xl -m-4 lg:-m-8" />
-          
-          <div className="relative">
-            <div className="text-center max-w-3xl mx-auto mb-12">
-              <div className="inline-flex items-center gap-2 bg-primary/10 rounded-full px-4 py-2 text-primary text-sm font-medium mb-4">
-                <Users className="w-4 h-4" />
-                {servicesHeadline?.subtitle || "Für jeden Anlass die richtige Reise"}
-              </div>
-              <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-                {servicesHeadline?.title?.split(' ').slice(0, -1).join(' ') || "Unsere"}{" "}
-                <span className="text-primary">{servicesHeadline?.title?.split(' ').slice(-1)[0] || "Reisearten"}</span>
-              </h2>
-              <p className="text-muted-foreground text-lg">
-                {servicesHeadline?.content || "Maßgeschneiderte Transportlösungen für Unternehmen, Vereine, Schulen und private Veranstaltungen."}
-              </p>
-            </div>
-
-            {/* Services Grid - Dynamic from CMS */}
-            {isLoading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
-            ) : services.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <p>Keine Services verfügbar.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8 mb-12">
-                {services.map((service, index) => {
-                  const IconComponent = iconMap[service.icon] || Users;
-                  
-                  return (
-                    <Link
-                      to="/business"
-                      key={service.id}
-                      className="group relative bg-card rounded-3xl p-8 lg:p-10 shadow-card hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border border-border/50 hover:border-primary/30 overflow-hidden min-h-[280px] flex flex-col"
-                      style={{ animationDelay: `${index * 50}ms` }}
-                    >
-                      {/* Highlight badge */}
-                      {service.highlight && (
-                        <div className="absolute top-4 right-4 bg-primary/10 text-primary text-xs font-semibold px-3 py-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                          {service.highlight}
-                        </div>
-                      )}
-                      
-                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-6 group-hover:from-primary group-hover:to-primary/80 transition-all duration-300 group-hover:scale-110">
-                        <IconComponent className="w-8 h-8 text-primary group-hover:text-primary-foreground transition-colors" />
-                      </div>
-                      
-                      <h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors">
-                        {service.name}
-                      </h3>
-                      
-                      <p className="text-muted-foreground leading-relaxed flex-1">
-                        {service.description}
-                      </p>
-                      
-                      {/* Hover indicator */}
-                      <div className="flex items-center gap-2 text-primary font-semibold mt-5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        Mehr erfahren
-                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* CTA */}
-            <div className="text-center">
-              <Link to="/business">
-                <Button size="lg" className="group">
-                  Alle Reisearten entdecken
-                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-              <p className="text-sm text-muted-foreground mt-4">
-                Über 20 Jahre Erfahrung • 50+ moderne Busse • 24/7 Erreichbarkeit
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Comfort Features - Now Second */}
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-            Reisen mit <span className="text-primary">Komfort</span>
-          </h2>
-          <p className="text-muted-foreground text-lg">
-            Unsere modernen Busse bieten alles, was Sie für eine entspannte Reise brauchen.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          {comfortFeatures.map((feature, index) => (
+        {/* FlixBus-Style Features - Clean horizontal layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-20 border-b border-border pb-16">
+          {flixFeatures.map((feature, index) => (
             <div
               key={feature.title}
-              className="card-elevated p-6 lg:p-8 group"
-              style={{ animationDelay: `${index * 100}ms` }}
+              className="text-center"
             >
-              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
-                <feature.icon className="w-7 h-7 text-primary group-hover:text-primary-foreground transition-colors" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-5">
+                <feature.icon className={`w-8 h-8 ${feature.color}`} />
               </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">
+              <h3 className="text-lg font-bold text-foreground mb-2">
                 {feature.title}
               </h3>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 {feature.description}
               </p>
             </div>
           ))}
         </div>
 
+        {/* Travel Types Section */}
+        <div className="relative">
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
+              {servicesHeadline?.title?.split(' ').slice(0, -1).join(' ') || "Unsere"}{" "}
+              <span className="text-primary">{servicesHeadline?.title?.split(' ').slice(-1)[0] || "Reisearten"}</span>
+            </h2>
+            <p className="text-muted-foreground text-lg">
+              {servicesHeadline?.content || "Maßgeschneiderte Transportlösungen für Unternehmen, Vereine, Schulen und private Veranstaltungen."}
+            </p>
+          </div>
+
+          {/* Services Grid */}
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : services.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <p>Keine Services verfügbar.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+              {services.map((service, index) => {
+                const IconComponent = iconMap[service.icon] || Users;
+                
+                return (
+                  <Link
+                    to="/business"
+                    key={service.id}
+                    className="group relative bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-border hover:border-primary/30"
+                  >
+                    <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary transition-colors">
+                      <IconComponent className="w-7 h-7 text-primary group-hover:text-primary-foreground transition-colors" />
+                    </div>
+                    
+                    <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
+                      {service.name}
+                    </h3>
+                    
+                    <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+                      {service.description}
+                    </p>
+                    
+                    <div className="flex items-center gap-1 text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                      Mehr erfahren
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+
+          {/* CTA */}
+          <div className="text-center">
+            <Link to="/business">
+              <Button size="lg" variant="outline" className="gap-2">
+                Alle Reisearten entdecken
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
       </div>
     </section>
   );
