@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, MapPin, Calendar, Bus } from "lucide-react";
@@ -89,9 +89,7 @@ const WeekendTripsSection = () => {
               <div
                 key={route.id}
                 className="group relative rounded-2xl overflow-hidden cursor-pointer"
-                onClick={() =>
-                  navigate(`/search?from=Hamburg&to=${destination}`)
-                }
+                onClick={() => navigate(`/wochenendtrips/${destination}`)}
               >
                 {/* Image */}
                 <div className="aspect-[4/5] relative">
