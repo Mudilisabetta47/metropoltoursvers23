@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
+import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 import { useVehiclePositions, VehiclePosition } from "@/hooks/useOperations";
-import { supabase } from "@/integrations/supabase/client";
 import { 
   Bus, MapPin, Clock, Users,
   Maximize2, Minimize2, Layers
@@ -122,58 +121,56 @@ const VehicleDetailPanel = ({ vehicle, onClose }: VehicleDetailPanelProps) => {
   );
 };
 
+// Map style URLs (free tile providers)
+const MAP_STYLES = {
+  dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+  light: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
+  satellite: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json', // Fallback - no free satellite
+};
+
 const LiveMap = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const markers = useRef<Record<string, mapboxgl.Marker>>({});
+  const map = useRef<maplibregl.Map | null>(null);
+  const markers = useRef<Record<string, maplibregl.Marker>>({});
   const { vehicles } = useVehiclePositions();
-  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<VehiclePosition | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [mapStyle, setMapStyle] = useState<'dark' | 'satellite'>('dark');
-
-  // Fetch Mapbox token from edge function
-  useEffect(() => {
-    const getToken = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-        if (!error && data?.token) {
-          setMapboxToken(data.token);
-        }
-      } catch (err) {
-        console.error('Failed to get Mapbox token:', err);
-        // Use a placeholder for demo
-        setMapboxToken('demo');
-      }
-    };
-    getToken();
-  }, []);
+  const [mapStyle, setMapStyle] = useState<'dark' | 'light'>('dark');
+  const [mapReady, setMapReady] = useState(false);
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken || mapboxToken === 'demo') return;
+    if (!mapContainer.current || map.current) return;
     
-    mapboxgl.accessToken = mapboxToken;
-    
-    map.current = new mapboxgl.Map({
+    map.current = new maplibregl.Map({
       container: mapContainer.current,
-      style: mapStyle === 'dark' 
-        ? 'mapbox://styles/mapbox/dark-v11'
-        : 'mapbox://styles/mapbox/satellite-streets-v12',
+      style: MAP_STYLES[mapStyle],
       center: [10.0, 51.0], // Center of Germany
       zoom: 5,
     });
 
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    map.current.addControl(new maplibregl.NavigationControl(), 'top-right');
+    
+    map.current.on('load', () => {
+      setMapReady(true);
+    });
 
     return () => {
       map.current?.remove();
+      map.current = null;
     };
-  }, [mapboxToken, mapStyle]);
+  }, []);
+
+  // Update map style
+  useEffect(() => {
+    if (map.current && mapReady) {
+      map.current.setStyle(MAP_STYLES[mapStyle]);
+    }
+  }, [mapStyle, mapReady]);
 
   // Update vehicle markers
   useEffect(() => {
-    if (!map.current || !mapboxToken || mapboxToken === 'demo') return;
+    if (!map.current || !mapReady) return;
 
     // Update or create markers for each vehicle
     vehicles.forEach((vehicle) => {
@@ -212,7 +209,7 @@ const LiveMap = () => {
           setSelectedVehicle(vehicle);
         });
 
-        const marker = new mapboxgl.Marker({ element: el, rotation: vehicle.heading })
+        const marker = new maplibregl.Marker({ element: el, rotation: vehicle.heading })
           .setLngLat([vehicle.longitude, vehicle.latitude])
           .addTo(map.current!);
         
@@ -227,88 +224,7 @@ const LiveMap = () => {
         delete markers.current[id];
       }
     });
-  }, [vehicles, mapboxToken]);
-
-  // Demo mode without real Mapbox
-  if (!mapboxToken || mapboxToken === 'demo') {
-    return (
-      <div className={cn(
-        "relative bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden",
-        isFullscreen ? "fixed inset-0 z-50 rounded-none" : "h-full"
-      )}>
-        {/* Header */}
-        <div className="absolute top-0 left-0 right-0 z-10 p-3 bg-gradient-to-b from-zinc-900 to-transparent">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-primary" />
-              <span className="text-sm font-medium text-white">Live-Tracking</span>
-              <Badge className="bg-emerald-500/20 text-emerald-400 text-xs">
-                {vehicles.length} Fahrzeuge
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button 
-                size="sm" 
-                variant="ghost" 
-                className="text-zinc-400"
-                onClick={() => setMapStyle(mapStyle === 'dark' ? 'satellite' : 'dark')}
-              >
-                <Layers className="w-4 h-4" />
-              </Button>
-              <Button 
-                size="sm" 
-                variant="ghost" 
-                className="text-zinc-400"
-                onClick={() => setIsFullscreen(!isFullscreen)}
-              >
-                {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Demo Map Background */}
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMCAwaDQwdjQwSDB6IiBmaWxsPSIjMTgxODFiIi8+PHBhdGggZD0iTTAgMGg0MHY0MEgweiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMjcyNzJhIiBzdHJva2Utd2lkdGg9IjAuNSIvPjwvc3ZnPg==')] opacity-50" />
-        
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-500">
-          <MapPin className="w-16 h-16 mb-4 text-zinc-600" />
-          <p className="text-lg font-medium">Live-Karte (Demo-Modus)</p>
-          <p className="text-sm text-zinc-600 mt-1">Mapbox Token erforderlich für Echtzeit-Karte</p>
-          
-          {/* Simulated Vehicle List */}
-          <div className="mt-6 grid grid-cols-2 gap-2 max-w-md">
-            {vehicles.slice(0, 4).map((vehicle) => (
-              <div 
-                key={vehicle.id}
-                className="p-3 bg-zinc-800/50 rounded-lg border border-zinc-700 cursor-pointer hover:bg-zinc-800 transition-colors"
-                onClick={() => setSelectedVehicle(vehicle)}
-              >
-                <div className="flex items-center gap-2">
-                  <div className={cn(
-                    "w-2 h-2 rounded-full",
-                    vehicle.status === 'on_time' ? 'bg-emerald-400' :
-                    vehicle.status === 'delayed' ? 'bg-amber-400' :
-                    vehicle.status === 'incident' ? 'bg-red-400' :
-                    'bg-zinc-400'
-                  )} />
-                  <span className="text-xs text-white">Bus #{vehicle.bus_id.slice(0, 6)}</span>
-                </div>
-                <div className="text-[10px] text-zinc-500 mt-1">
-                  {vehicle.speed_kmh} km/h • {vehicle.passenger_count} Pax
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Vehicle Detail Panel */}
-        <VehicleDetailPanel 
-          vehicle={selectedVehicle} 
-          onClose={() => setSelectedVehicle(null)} 
-        />
-      </div>
-    );
-  }
+  }, [vehicles, mapReady]);
 
   return (
     <div className={cn(
@@ -330,7 +246,7 @@ const LiveMap = () => {
               size="sm" 
               variant="ghost" 
               className="text-zinc-400"
-              onClick={() => setMapStyle(mapStyle === 'dark' ? 'satellite' : 'dark')}
+              onClick={() => setMapStyle(mapStyle === 'dark' ? 'light' : 'dark')}
             >
               <Layers className="w-4 h-4" />
             </Button>
