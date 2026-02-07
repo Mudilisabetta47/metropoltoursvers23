@@ -1,10 +1,14 @@
-import { useEffect, useRef, useState } from "react";
-import Map, { Marker, NavigationControl } from "react-map-gl";
+import { useRef, useState } from "react";
+import Map, { Marker, NavigationControl } from "@vis.gl/react-mapbox";
 import { useVehiclePositions, VehiclePosition } from "@/hooks/useOperations";
-import { supabase } from "@/integrations/supabase/client";
-import { 
-  Bus, MapPin, Clock, Users,
-  Maximize2, Minimize2, Layers
+import {
+  Bus,
+  MapPin,
+  Clock,
+  Users,
+  Maximize2,
+  Minimize2,
+  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,23 +25,35 @@ const VehicleDetailPanel = ({ vehicle, onClose }: VehicleDetailPanelProps) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'on_time': return 'text-emerald-400 bg-emerald-500/20';
-      case 'delayed': return 'text-amber-400 bg-amber-500/20';
-      case 'stopped': return 'text-blue-400 bg-blue-500/20';
-      case 'offline': return 'text-zinc-400 bg-zinc-500/20';
-      case 'incident': return 'text-red-400 bg-red-500/20';
-      default: return 'text-zinc-400 bg-zinc-500/20';
+      case "on_time":
+        return "text-emerald-400 bg-emerald-500/20";
+      case "delayed":
+        return "text-amber-400 bg-amber-500/20";
+      case "stopped":
+        return "text-blue-400 bg-blue-500/20";
+      case "offline":
+        return "text-zinc-400 bg-zinc-500/20";
+      case "incident":
+        return "text-red-400 bg-red-500/20";
+      default:
+        return "text-zinc-400 bg-zinc-500/20";
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'on_time': return 'Pünktlich';
-      case 'delayed': return 'Verspätet';
-      case 'stopped': return 'Angehalten';
-      case 'offline': return 'Offline';
-      case 'incident': return 'Störung';
-      default: return status;
+      case "on_time":
+        return "Pünktlich";
+      case "delayed":
+        return "Verspätet";
+      case "stopped":
+        return "Angehalten";
+      case "offline":
+        return "Offline";
+      case "incident":
+        return "Störung";
+      default:
+        return status;
     }
   };
 
@@ -50,11 +66,15 @@ const VehicleDetailPanel = ({ vehicle, onClose }: VehicleDetailPanelProps) => {
               <Bus className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">Bus #{vehicle.bus_id.slice(0, 8)}</h3>
-              <p className="text-xs text-zinc-400">{vehicle.driver_name || 'Kein Fahrer zugewiesen'}</p>
+              <h3 className="text-sm font-bold text-white">
+                Bus #{vehicle.bus_id.slice(0, 8)}
+              </h3>
+              <p className="text-xs text-zinc-400">
+                {vehicle.driver_name || "Kein Fahrer zugewiesen"}
+              </p>
             </div>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="text-zinc-400 hover:text-white transition-colors"
           >
@@ -77,34 +97,32 @@ const VehicleDetailPanel = ({ vehicle, onClose }: VehicleDetailPanelProps) => {
               {vehicle.latitude.toFixed(4)}, {vehicle.longitude.toFixed(4)}
             </div>
           </div>
-          
+
           <div className="p-2 bg-zinc-800/50 rounded-lg">
             <div className="text-zinc-400 text-xs mb-1 flex items-center gap-1">
               <Clock className="w-3 h-3" />
               Geschwindigkeit
             </div>
-            <div className="text-white text-xs">
-              {vehicle.speed_kmh} km/h
-            </div>
+            <div className="text-white text-xs">{vehicle.speed_kmh} km/h</div>
           </div>
-          
+
           <div className="p-2 bg-zinc-800/50 rounded-lg">
             <div className="text-zinc-400 text-xs mb-1 flex items-center gap-1">
               <Users className="w-3 h-3" />
               Passagiere
             </div>
-            <div className="text-white text-xs">
-              {vehicle.passenger_count} an Bord
-            </div>
+            <div className="text-white text-xs">{vehicle.passenger_count} an Bord</div>
           </div>
-          
+
           <div className="p-2 bg-zinc-800/50 rounded-lg">
             <div className="text-zinc-400 text-xs mb-1">ETA</div>
             <div className="text-white text-xs">
-              {vehicle.eta_next_stop 
-                ? new Date(vehicle.eta_next_stop).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
-                : '-'
-              }
+              {vehicle.eta_next_stop
+                ? new Date(vehicle.eta_next_stop).toLocaleTimeString("de-DE", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : "-"}
             </div>
           </div>
         </div>
@@ -125,28 +143,10 @@ const VehicleDetailPanel = ({ vehicle, onClose }: VehicleDetailPanelProps) => {
 const LiveMap = () => {
   const mapRef = useRef<any>(null);
   const { vehicles } = useVehiclePositions();
-  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const mapboxToken = (import.meta.env.VITE_MAPBOX_TOKEN as string | undefined)?.trim() || null;
   const [selectedVehicle, setSelectedVehicle] = useState<VehiclePosition | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [mapStyle, setMapStyle] = useState<'dark' | 'satellite'>('dark');
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Fetch Mapbox token from edge function
-  useEffect(() => {
-    const getToken = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-        if (!error && data?.token) {
-          setMapboxToken(data.token);
-        }
-      } catch (err) {
-        console.error('Failed to get Mapbox token:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    getToken();
-  }, []);
+  const [mapStyle, setMapStyle] = useState<"dark" | "satellite">("dark");
 
   const getMarkerColor = (status: string) => {
     switch (status) {
@@ -159,13 +159,15 @@ const LiveMap = () => {
     }
   };
 
-  // Demo/Loading state
-  if (isLoading || !mapboxToken) {
+  // Token missing fallback
+  if (!mapboxToken) {
     return (
-      <div className={cn(
-        "relative bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden",
-        isFullscreen ? "fixed inset-0 z-50 rounded-none" : "h-full"
-      )}>
+      <div
+        className={cn(
+          "relative bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden",
+          isFullscreen ? "fixed inset-0 z-50 rounded-none" : "h-full"
+        )}
+      >
         {/* Header */}
         <div className="absolute top-0 left-0 right-0 z-10 p-3 bg-gradient-to-b from-zinc-900 to-transparent">
           <div className="flex items-center justify-between">
@@ -177,54 +179,59 @@ const LiveMap = () => {
               </Badge>
             </div>
             <div className="flex items-center gap-2">
-              <Button 
-                size="sm" 
-                variant="ghost" 
+              <Button
+                size="sm"
+                variant="ghost"
                 className="text-zinc-400"
-                onClick={() => setMapStyle(mapStyle === 'dark' ? 'satellite' : 'dark')}
+                onClick={() => setMapStyle(mapStyle === "dark" ? "satellite" : "dark")}
               >
                 <Layers className="w-4 h-4" />
               </Button>
-              <Button 
-                size="sm" 
-                variant="ghost" 
+              <Button
+                size="sm"
+                variant="ghost"
                 className="text-zinc-400"
                 onClick={() => setIsFullscreen(!isFullscreen)}
               >
-                {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                {isFullscreen ? (
+                  <Minimize2 className="w-4 h-4" />
+                ) : (
+                  <Maximize2 className="w-4 h-4" />
+                )}
               </Button>
             </div>
           </div>
         </div>
 
-        {/* Demo Map Background */}
+        {/* Placeholder Background */}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMCAwaDQwdjQwSDB6IiBmaWxsPSIjMTgxODFiIi8+PHBhdGggZD0iTTAgMGg0MHY0MEgweiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMjcyNzJhIiBzdHJva2Utd2lkdGg9IjAuNSIvPjwvc3ZnPg==')] opacity-50" />
-        
+
         <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-500">
           <MapPin className="w-16 h-16 mb-4 text-zinc-600" />
-          <p className="text-lg font-medium">
-            {isLoading ? 'Karte wird geladen...' : 'Live-Karte (Demo-Modus)'}
-          </p>
-          <p className="text-sm text-zinc-600 mt-1">
-            {isLoading ? '' : 'Mapbox Token wird geladen...'}
-          </p>
-          
+          <p className="text-lg font-medium">Live-Karte nicht verfügbar</p>
+          <p className="text-sm text-zinc-600 mt-1">VITE_MAPBOX_TOKEN ist nicht gesetzt.</p>
+
           {/* Simulated Vehicle List */}
           <div className="mt-6 grid grid-cols-2 gap-2 max-w-md">
             {vehicles.slice(0, 4).map((vehicle) => (
-              <div 
+              <div
                 key={vehicle.id}
                 className="p-3 bg-zinc-800/50 rounded-lg border border-zinc-700 cursor-pointer hover:bg-zinc-800 transition-colors"
                 onClick={() => setSelectedVehicle(vehicle)}
               >
                 <div className="flex items-center gap-2">
-                  <div className={cn(
-                    "w-2 h-2 rounded-full",
-                    vehicle.status === 'on_time' ? 'bg-emerald-400' :
-                    vehicle.status === 'delayed' ? 'bg-amber-400' :
-                    vehicle.status === 'incident' ? 'bg-red-400' :
-                    'bg-zinc-400'
-                  )} />
+                  <div
+                    className={cn(
+                      "w-2 h-2 rounded-full",
+                      vehicle.status === "on_time"
+                        ? "bg-emerald-400"
+                        : vehicle.status === "delayed"
+                          ? "bg-amber-400"
+                          : vehicle.status === "incident"
+                            ? "bg-red-400"
+                            : "bg-zinc-400"
+                    )}
+                  />
                   <span className="text-xs text-white">Bus #{vehicle.bus_id.slice(0, 6)}</span>
                 </div>
                 <div className="text-[10px] text-zinc-500 mt-1">
@@ -234,6 +241,7 @@ const LiveMap = () => {
             ))}
           </div>
         </div>
+
 
         {/* Vehicle Detail Panel */}
         <VehicleDetailPanel 
