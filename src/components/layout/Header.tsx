@@ -13,9 +13,10 @@ const Header = () => {
 
   const navLinks = [
     { name: "Startseite", path: "/" },
-    { name: "Fahrten suchen", path: "/search" },
-    { name: "Reisen mit Komfort", path: "/service" },
-    { name: "Services", path: "/business" },
+    { name: "Pauschalreisen", path: "/reisen" },
+    { name: "Wochenendtrips", path: "/wochenendtrips" },
+    { name: "Service & Info", path: "/service" },
+    { name: "Gruppenreisen", path: "/business" },
     { name: "Meine Buchungen", path: "/bookings" }
   ];
 
@@ -75,7 +76,7 @@ const Header = () => {
                 </Button>
               )
             )}
-            <Button size="sm" onClick={() => navigate('/search')}>
+            <Button size="sm" onClick={() => navigate('/reisen')}>
               Jetzt buchen
             </Button>
           </div>
@@ -122,7 +123,7 @@ const Header = () => {
                 Anmelden
               </Button>
             )}
-            <Button className="w-full" onClick={() => { navigate('/search'); setIsMenuOpen(false); }}>
+            <Button className="w-full" onClick={() => { navigate('/reisen'); setIsMenuOpen(false); }}>
               Jetzt buchen
             </Button>
           </div>
