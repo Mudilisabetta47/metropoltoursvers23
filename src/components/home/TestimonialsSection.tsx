@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Star, Quote } from "lucide-react";
 
 const testimonials = [
@@ -67,16 +68,22 @@ const TestimonialsSection = () => {
   };
 
   return (
-    <section className="py-20 lg:py-28 bg-primary/5">
+    <section className="py-20 lg:py-28 bg-primary/5 overflow-hidden">
       <div className="container mx-auto px-4">
-        <div className="text-center max-w-2xl mx-auto mb-16">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-center max-w-2xl mx-auto mb-16"
+        >
           <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
             Das sagen unsere <span className="text-primary">Kunden</span>
           </h2>
           <p className="text-muted-foreground text-lg">
             Über 2 Millionen zufriedene Reisende vertrauen METROPOL TOURS.
           </p>
-        </div>
+        </motion.div>
 
         {/* Testimonial Slider */}
         <div className="relative max-w-4xl mx-auto">
@@ -163,21 +170,39 @@ const TestimonialsSection = () => {
         </div>
 
         {/* Trust Badges */}
-        <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={{
+            hidden: {},
+            visible: {
+              transition: { staggerChildren: 0.1 }
+            }
+          }}
+          className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto"
+        >
           {[
             { value: "4.8", label: "Google Bewertung" },
             { value: "2M+", label: "Zufriedene Kunden" },
             { value: "99%", label: "Pünktlichkeit" },
             { value: "24/7", label: "Kundensupport" },
           ].map((stat) => (
-            <div key={stat.label} className="text-center">
-              <div className="text-3xl lg:text-4xl font-bold text-primary mb-1">
+            <motion.div 
+              key={stat.label} 
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+              }}
+              className="text-center group"
+            >
+              <div className="text-3xl lg:text-4xl font-bold text-primary mb-1 transition-transform duration-300 group-hover:scale-110">
                 {stat.value}
               </div>
               <div className="text-sm text-muted-foreground">{stat.label}</div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
