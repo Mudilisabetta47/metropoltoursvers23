@@ -1,6 +1,5 @@
-import { useEffect, useState, useRef } from "react";
-import Map, { Marker, Source, Layer, NavigationControl } from "react-map-gl";
-import { supabase } from "@/integrations/supabase/client";
+import { useRef } from "react";
+import Map, { Marker, Source, Layer, NavigationControl } from "@vis.gl/react-mapbox";
 import { TourPickupStop } from "@/hooks/useTourBuilder";
 import { useCookieConsent } from "@/hooks/useCookieConsent";
 import { Button } from "@/components/ui/button";
@@ -15,9 +14,9 @@ interface RouteMapProps {
 const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
   "hamburg": { lat: 53.5511, lng: 9.9937 },
   "bremen": { lat: 53.0793, lng: 8.8017 },
-  "hannover": { lat: 52.3759, lng: 9.7320 },
-  "berlin": { lat: 52.5200, lng: 13.4050 },
-  "münchen": { lat: 48.1351, lng: 11.5820 },
+  "hannover": { lat: 52.3759, lng: 9.732 },
+  "berlin": { lat: 52.52, lng: 13.405 },
+  "münchen": { lat: 48.1351, lng: 11.582 },
   "köln": { lat: 50.9375, lng: 6.9603 },
   "frankfurt": { lat: 50.1109, lng: 8.6821 },
   "düsseldorf": { lat: 51.2277, lng: 6.7735 },
@@ -53,7 +52,7 @@ const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
   "prag": { lat: 50.0755, lng: 14.4378 },
   "wien": { lat: 48.2082, lng: 16.3738 },
   "barcelona": { lat: 41.3851, lng: 2.1734 },
-  "zagreb": { lat: 45.8150, lng: 15.9819 },
+  "zagreb": { lat: 45.815, lng: 15.9819 },
   "split": { lat: 43.5081, lng: 16.4402 },
   "dubrovnik": { lat: 42.6507, lng: 18.0944 },
   "belgrad": { lat: 44.7866, lng: 20.4489 },
@@ -80,37 +79,8 @@ const getCityCoords = (city: string): { lat: number; lng: number } | null => {
 
 const RouteMap = ({ stops }: RouteMapProps) => {
   const { hasAnalyticsConsent, isLoading: consentLoading } = useCookieConsent();
-  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const mapboxToken = (import.meta.env.VITE_MAPBOX_TOKEN as string | undefined)?.trim() || null;
   const mapRef = useRef<any>(null);
-
-  // Fetch token from edge function
-  useEffect(() => {
-    if (consentLoading) return;
-    if (!hasAnalyticsConsent) {
-      setIsLoading(false);
-      return;
-    }
-
-    const fetchToken = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-        if (error) throw error;
-        if (data?.token) {
-          setMapboxToken(data.token);
-        } else {
-          setError('Mapbox Token nicht konfiguriert');
-        }
-      } catch (err) {
-        console.error('Error fetching Mapbox token:', err);
-        setError('Karte konnte nicht geladen werden');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchToken();
-  }, [hasAnalyticsConsent, consentLoading]);
 
   // Parse coordinates from stops using city lookup
   const markers = stops
@@ -176,7 +146,7 @@ const RouteMap = ({ stops }: RouteMapProps) => {
   } : null;
 
   // Loading state
-  if (isLoading || consentLoading) {
+  if (consentLoading) {
     return (
       <div className="h-64 bg-muted rounded-xl flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Karte wird geladen...</div>
@@ -209,10 +179,13 @@ const RouteMap = ({ stops }: RouteMapProps) => {
     );
   }
 
-  if (error || !mapboxToken) {
+  // Token missing - show fallback
+  if (!mapboxToken) {
     return (
       <div className="h-64 bg-muted rounded-xl flex items-center justify-center">
-        <p className="text-muted-foreground text-sm">{error || 'Karte nicht verfügbar'}</p>
+        <p className="text-muted-foreground text-sm">
+          Karte nicht verfügbar (VITE_MAPBOX_TOKEN fehlt)
+        </p>
       </div>
     );
   }
