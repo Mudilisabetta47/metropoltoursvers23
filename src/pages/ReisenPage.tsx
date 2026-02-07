@@ -16,6 +16,7 @@ import tourSerbien from "@/assets/tour-serbien.jpg";
 import tourNordmazedonien from "@/assets/tour-nordmazedonien.jpg";
 import tourAlbanien from "@/assets/tour-albanien.jpg";
 import tourKosovo from "@/assets/tour-kosovo.jpg";
+import heroBeach from "@/assets/hero-beach-swimming.jpg";
 
 const imageMap: Record<string, string> = {
   '/tour-croatia.jpg': tourCroatia,
@@ -54,22 +55,32 @@ const ReisenPage = () => {
       
       <main className="flex-1 pt-20 lg:pt-24">
         {/* Hero Section */}
-        <section className="bg-gradient-to-br from-primary to-primary-dark py-16 lg:py-24">
-          <div className="container mx-auto px-4">
+        <section className="relative min-h-[50vh] lg:min-h-[60vh] flex items-center overflow-hidden">
+          {/* Background Image */}
+          <div className="absolute inset-0">
+            <img
+              src={heroBeach}
+              alt="Traumhafter Strandurlaub"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/30" />
+          </div>
+          
+          <div className="relative z-10 container mx-auto px-4 py-16 lg:py-24">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               className="text-center max-w-4xl mx-auto"
             >
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary-foreground mb-6">
+              <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold text-white mb-6 drop-shadow-lg">
                 Entdecken Sie unsere Pauschalreisen
               </h1>
-              <p className="text-lg lg:text-xl text-primary-foreground/90 mb-8">
+              <p className="text-lg lg:text-xl text-white/90 mb-8 max-w-2xl mx-auto drop-shadow">
                 Von traumhaften Stränden bis zu historischen Städten – finden Sie Ihre perfekte Reise 
                 mit Komfort, Service und unvergesslichen Erlebnissen.
               </p>
-              <div className="flex flex-wrap justify-center gap-4 text-primary-foreground/80">
+              <div className="flex flex-wrap justify-center gap-4 text-white/90">
                 <div className="flex items-center gap-2">
                   <Star className="w-5 h-5" />
                   <span>Inkl. Übernachtung & Frühstück</span>
