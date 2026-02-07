@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { 
   MapPin, Bus, Ticket, Users,
   School, Trophy, Plane, PartyPopper, ArrowRight, Loader2
@@ -43,6 +44,27 @@ const flixFeatures = [
   },
 ];
 
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: "easeOut" as const,
+    },
+  },
+};
+
 const FeaturesSection = () => {
   const { services, isLoading } = useServiceTypes();
   const { getContent } = useCMSContent();
@@ -50,17 +72,24 @@ const FeaturesSection = () => {
   const servicesHeadline = getContent('services_headline');
 
   return (
-    <section className="py-16 lg:py-24 bg-white">
+    <section className="py-16 lg:py-24 bg-white overflow-hidden">
       <div className="container mx-auto px-4">
         {/* FlixBus-Style Features - Clean horizontal layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-20 border-b border-border pb-16">
-          {flixFeatures.map((feature, index) => (
-            <div
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          variants={containerVariants}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-20 border-b border-border pb-16"
+        >
+          {flixFeatures.map((feature) => (
+            <motion.div
               key={feature.title}
-              className="text-center"
+              variants={itemVariants}
+              className="text-center group"
             >
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-5">
-                <feature.icon className={`w-8 h-8 ${feature.color}`} />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-5 transition-all duration-300 group-hover:bg-primary/20 group-hover:scale-110">
+                <feature.icon className={`w-8 h-8 ${feature.color} transition-transform duration-300 group-hover:scale-110`} />
               </div>
               <h3 className="text-lg font-bold text-foreground mb-2">
                 {feature.title}
@@ -68,9 +97,9 @@ const FeaturesSection = () => {
               <p className="text-muted-foreground text-sm leading-relaxed">
                 {feature.description}
               </p>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Travel Types Section */}
         <div className="relative">
@@ -94,36 +123,43 @@ const FeaturesSection = () => {
               <p>Keine Services verfügbar.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-              {services.map((service, index) => {
+            <motion.div 
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-30px" }}
+              variants={containerVariants}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12"
+            >
+              {services.map((service) => {
                 const IconComponent = iconMap[service.icon] || Users;
                 
                 return (
-                  <Link
-                    to="/business"
-                    key={service.id}
-                    className="group relative bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-border hover:border-primary/30"
-                  >
-                    <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary transition-colors">
-                      <IconComponent className="w-7 h-7 text-primary group-hover:text-primary-foreground transition-colors" />
-                    </div>
-                    
-                    <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
-                      {service.name}
-                    </h3>
-                    
-                    <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-                      {service.description}
-                    </p>
-                    
-                    <div className="flex items-center gap-1 text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                      Mehr erfahren
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </Link>
+                  <motion.div key={service.id} variants={itemVariants}>
+                    <Link
+                      to="/business"
+                      className="group relative bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-border hover:border-primary/30 block hover:-translate-y-1"
+                    >
+                      <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary transition-all duration-300 group-hover:scale-105">
+                        <IconComponent className="w-7 h-7 text-primary group-hover:text-primary-foreground transition-colors" />
+                      </div>
+                      
+                      <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
+                        {service.name}
+                      </h3>
+                      
+                      <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+                        {service.description}
+                      </p>
+                      
+                      <div className="flex items-center gap-1 text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-1">
+                        Mehr erfahren
+                        <ArrowRight className="w-4 h-4" />
+                      </div>
+                    </Link>
+                  </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
           )}
 
           {/* CTA */}

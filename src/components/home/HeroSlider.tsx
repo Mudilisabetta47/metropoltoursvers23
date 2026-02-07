@@ -102,14 +102,14 @@ const HeroSlider = () => {
       {/* Main Content */}
       <div className="relative z-10 container mx-auto px-4 pt-28 lg:pt-36 pb-8">
         <div className="max-w-2xl">
-          {/* Urgency Badge */}
+          {/* Urgency Badge - Animated */}
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 bg-accent text-accent-foreground px-4 py-2 rounded-full text-sm font-semibold mb-6 shadow-lg"
+            initial={{ opacity: 0, x: -20, scale: 0.95 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+            className="inline-flex items-center gap-2 bg-accent text-accent-foreground px-4 py-2 rounded-full text-sm font-semibold mb-6 shadow-lg animate-pulse-soft"
           >
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-4 h-4 animate-bounce-subtle" />
             <span>Jetzt sparen – bis zu 25% Frühbucher-Rabatt!</span>
             <Percent className="w-4 h-4" />
           </motion.div>
