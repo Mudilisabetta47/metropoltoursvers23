@@ -24,7 +24,7 @@ const TourTabNavigation = ({ activeTab, onTabChange }: TourTabNavigationProps) =
   };
 
   return (
-    <nav className="sticky top-0 z-40 bg-white border-b shadow-sm">
+    <nav className="sticky top-16 lg:top-20 z-40 bg-white border-b shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide">

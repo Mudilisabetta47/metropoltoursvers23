@@ -1,4 +1,4 @@
-import { Check, X, Plus, Luggage, Armchair, RefreshCcw } from "lucide-react";
+import { Check, X, Plus, Luggage, Armchair, RefreshCcw, Hotel, Coffee, Bus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TourInclusion, TourTariff } from "@/hooks/useTourBuilder";
@@ -16,6 +16,9 @@ const iconMap: Record<string, React.ElementType> = {
   'X': X,
   'Plus': Plus,
   'Luggage': Luggage,
+  'Hotel': Hotel,
+  'Coffee': Coffee,
+  'Bus': Bus,
   'default': Check,
 };
 
@@ -36,7 +39,7 @@ const TourInclusionsSection = ({
         <CardHeader>
           <CardTitle className="text-xl font-bold">Wählen Sie Ihren Tarif</CardTitle>
           <CardDescription>
-            Alle Tarife beinhalten die Busreise. Unterschiede in Storno & Gepäck.
+            Alle Tarife beinhalten die Busreise, Übernachtung mit Frühstück. Unterschiede in Storno & Gepäck.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -121,6 +124,35 @@ const TourInclusionsSection = ({
         </CardHeader>
         <CardContent>
           <div className="grid sm:grid-cols-2 gap-3">
+            {/* Always show accommodation and breakfast */}
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-50">
+              <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
+                <Hotel className="w-4 h-4 text-emerald-600" />
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Übernachtung</p>
+                <p className="text-sm text-muted-foreground">Im Hotel oder Apartment inkl.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-50">
+              <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
+                <Coffee className="w-4 h-4 text-emerald-600" />
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Frühstück</p>
+                <p className="text-sm text-muted-foreground">Täglich im Hotel inkl.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-50">
+              <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
+                <Bus className="w-4 h-4 text-emerald-600" />
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Busreise</p>
+                <p className="text-sm text-muted-foreground">Hin- und Rückfahrt im Komfortbus</p>
+              </div>
+            </div>
+            {/* Dynamic inclusions from DB */}
             {includedItems.map((item) => {
               const Icon = iconMap[item.icon] || iconMap.default;
               return (

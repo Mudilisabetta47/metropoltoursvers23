@@ -15,6 +15,7 @@ import ImprintPage from "./pages/ImprintPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
 import TourDetailPage from "./components/tours/TourDetailPage";
+import TourCheckoutPage from "./pages/TourCheckoutPage";
 import AdminInquiriesPage from "./pages/AdminInquiriesPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminCMS from "./pages/AdminCMS";
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/pauschalreisen/:tourId" element={<TourDetailPage />} />
             <Route path="/reisen/:tourId" element={<TourDetailPage />} />
+            <Route path="/reisen/checkout" element={<TourCheckoutPage />} />
             <Route path="/admin" element={<Navigate to="/admin/ops" replace />} />
             <Route path="/admin/ops" element={<OperationsDashboard />} />
             <Route path="/admin/inquiries" element={<AdminInquiriesPage />} />
