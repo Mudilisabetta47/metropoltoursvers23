@@ -1,23 +1,24 @@
-import { Clock, Euro, Luggage, Bus, MapPin } from "lucide-react";
+import { useState } from "react";
+import { Clock, Euro, Luggage, Bus, MapPin, Route as RouteIcon, Timer } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TourRoute, TourLuggageAddon } from "@/hooks/useTourBuilder";
 import RouteMap from "./RouteMap";
 
 interface TourRoutesSectionProps {
   routes: TourRoute[];
   luggageAddons: TourLuggageAddon[];
+  onSelectStop?: (stopId: string, surcharge: number) => void;
 }
 
-const TourRoutesSection = ({ routes, luggageAddons }: TourRoutesSectionProps) => {
+const TourRoutesSection = ({ routes, luggageAddons, onSelectStop }: TourRoutesSectionProps) => {
+  const [selectedRouteId, setSelectedRouteId] = useState<string>(routes[0]?.id || '');
+  
   // Get all stops for map display
   const allStops = routes.flatMap(r => r.pickup_stops || []);
+  const currentRoute = routes.find(r => r.id === selectedRouteId);
+  const currentStops = currentRoute?.pickup_stops || [];
   
   return (
     <section id="section-route" className="space-y-6 scroll-mt-20">
@@ -34,12 +35,12 @@ const TourRoutesSection = ({ routes, luggageAddons }: TourRoutesSectionProps) =>
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <RouteMap stops={allStops} />
+            <RouteMap stops={currentStops.length > 0 ? currentStops : allStops} />
           </CardContent>
         </Card>
       )}
 
-      {/* Bus Routes */}
+      {/* Bus Routes with Tabs */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl font-bold">
@@ -47,7 +48,7 @@ const TourRoutesSection = ({ routes, luggageAddons }: TourRoutesSectionProps) =>
             Unsere Busrouten & Zustiege
           </CardTitle>
           <CardDescription>
-            Wählen Sie Ihren Zustiegsort. Aufpreise gelten pro Person für Hin- und Rückfahrt.
+            Wählen Sie Ihre Route und Ihren Zustiegsort. Aufpreise gelten pro Person für Hin- und Rückfahrt.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -55,89 +56,32 @@ const TourRoutesSection = ({ routes, luggageAddons }: TourRoutesSectionProps) =>
             <div className="text-center py-8 text-muted-foreground">
               <p>Zustiegsorte werden noch bekannt gegeben.</p>
             </div>
+          ) : routes.length === 1 ? (
+            // Single route - show directly without tabs
+            <RouteContent 
+              route={routes[0]} 
+              onSelectStop={onSelectStop}
+            />
           ) : (
-            <Accordion type="single" collapsible className="space-y-3">
-              {routes.map((route, index) => (
-                <AccordionItem 
-                  key={route.id} 
-                  value={route.id}
-                  className="border rounded-xl px-4 data-[state=open]:bg-muted/50"
-                >
-                  <AccordionTrigger className="hover:no-underline py-4">
-                    <div className="flex items-center gap-4 text-left">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                        {route.code || `R${index + 1}`}
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-foreground">{route.name}</h4>
-                        {route.description && (
-                          <p className="text-sm text-muted-foreground">{route.description}</p>
-                        )}
-                      </div>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="pb-4 pt-2">
-                      {route.pickup_stops && route.pickup_stops.length > 0 ? (
-                        <div className="space-y-3">
-                          {route.pickup_stops
-                            .sort((a, b) => a.sort_order - b.sort_order)
-                            .map((stop, stopIndex) => (
-                              <div 
-                                key={stop.id}
-                                className="flex items-start gap-4 p-4 bg-background rounded-lg border"
-                              >
-                                {/* Timeline dot */}
-                                <div className="flex flex-col items-center">
-                                  <div className="w-3 h-3 rounded-full bg-primary" />
-                                  {stopIndex < (route.pickup_stops?.length || 0) - 1 && (
-                                    <div className="w-0.5 h-full bg-primary/20 min-h-[40px]" />
-                                  )}
-                                </div>
-
-                                <div className="flex-1 grid sm:grid-cols-4 gap-4">
-                                  {/* City & Location */}
-                                  <div className="sm:col-span-2">
-                                    <h5 className="font-semibold text-foreground">{stop.city}</h5>
-                                    <p className="text-sm text-muted-foreground">{stop.location_name}</p>
-                                    {stop.address && (
-                                      <p className="text-xs text-muted-foreground mt-1">{stop.address}</p>
-                                    )}
-                                  </div>
-
-                                  {/* Time */}
-                                  <div className="flex items-center gap-2">
-                                    <Clock className="w-4 h-4 text-muted-foreground" />
-                                    <span className="font-medium">{stop.departure_time} Uhr</span>
-                                  </div>
-
-                                  {/* Surcharge */}
-                                  <div className="flex items-center gap-2">
-                                    {stop.surcharge > 0 ? (
-                                      <Badge variant="secondary" className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                                        <Euro className="w-3 h-3 mr-1" />
-                                        +{stop.surcharge.toFixed(0)} €
-                                      </Badge>
-                                    ) : (
-                                      <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                                        Inkl.
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                        </div>
-                      ) : (
-                        <p className="text-muted-foreground text-sm">
-                          Genaue Zustiegsorte werden nach der Buchung mitgeteilt.
-                        </p>
-                      )}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
+            // Multiple routes - show as tabs
+            <Tabs value={selectedRouteId} onValueChange={setSelectedRouteId}>
+              <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${Math.min(routes.length, 4)}, 1fr)` }}>
+                {routes.map((route) => (
+                  <TabsTrigger key={route.id} value={route.id} className="text-xs sm:text-sm">
+                    {route.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              
+              {routes.map((route) => (
+                <TabsContent key={route.id} value={route.id} className="mt-4">
+                  <RouteContent 
+                    route={route} 
+                    onSelectStop={onSelectStop}
+                  />
+                </TabsContent>
               ))}
-            </Accordion>
+            </Tabs>
           )}
         </CardContent>
       </Card>
@@ -189,6 +133,133 @@ const TourRoutesSection = ({ routes, luggageAddons }: TourRoutesSectionProps) =>
         </Card>
       )}
     </section>
+  );
+};
+
+// Separate component for route content
+interface RouteContentProps {
+  route: TourRoute & { distance_km?: number; duration_hours?: number };
+  onSelectStop?: (stopId: string, surcharge: number) => void;
+}
+
+const RouteContent = ({ route, onSelectStop }: RouteContentProps) => {
+  const stops = route.pickup_stops || [];
+  const sortedStops = [...stops].sort((a, b) => a.sort_order - b.sort_order);
+
+  return (
+    <div className="space-y-4">
+      {/* Route Info Badges */}
+      <div className="flex flex-wrap gap-3 mb-4">
+        {route.description && (
+          <p className="text-sm text-muted-foreground w-full mb-2">{route.description}</p>
+        )}
+        
+        {route.distance_km && (
+          <Badge variant="secondary" className="gap-1.5 py-1.5 px-3">
+            <RouteIcon className="w-4 h-4" />
+            Entfernung: {route.distance_km} km
+          </Badge>
+        )}
+        
+        {route.duration_hours && (
+          <Badge variant="secondary" className="gap-1.5 py-1.5 px-3">
+            <Timer className="w-4 h-4" />
+            Fahrzeit: ca. {route.duration_hours} Std.
+          </Badge>
+        )}
+      </div>
+
+      {/* Stops Timeline */}
+      {sortedStops.length > 0 ? (
+        <div className="relative">
+          {/* Timeline Line */}
+          <div className="absolute left-4 top-6 bottom-6 w-0.5 bg-primary/20" />
+          
+          <div className="space-y-0">
+            {sortedStops.map((stop, index) => {
+              const isFirst = index === 0;
+              const isLast = index === sortedStops.length - 1;
+              
+              return (
+                <div 
+                  key={stop.id}
+                  className="relative flex items-start gap-4 py-3 group"
+                  onClick={() => onSelectStop?.(stop.id, stop.surcharge)}
+                >
+                  {/* Timeline Dot */}
+                  <div className="relative z-10 flex items-center justify-center">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-sm border-2 ${
+                      isFirst || isLast 
+                        ? 'bg-primary text-primary-foreground border-primary' 
+                        : 'bg-background text-foreground border-primary/50'
+                    }`}>
+                      {index + 1}
+                    </div>
+                  </div>
+
+                  {/* Stop Content */}
+                  <div className={`flex-1 p-4 rounded-xl border transition-all ${
+                    onSelectStop 
+                      ? 'cursor-pointer hover:border-primary hover:bg-primary/5' 
+                      : ''
+                  } ${isFirst || isLast ? 'bg-muted/50' : 'bg-background'}`}>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h5 className="font-semibold text-foreground">{stop.city}</h5>
+                          {isFirst && (
+                            <Badge variant="outline" className="text-xs">Start</Badge>
+                          )}
+                          {isLast && (
+                            <Badge variant="outline" className="text-xs">Ziel</Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">{stop.location_name}</p>
+                        {stop.address && (
+                          <p className="text-xs text-muted-foreground mt-0.5">{stop.address}</p>
+                        )}
+                        {stop.meeting_point && (
+                          <p className="text-xs text-primary mt-0.5">Treffpunkt: {stop.meeting_point}</p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-4">
+                        {/* Time */}
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-muted-foreground" />
+                          {stop.departure_time ? (
+                            <span className="font-medium text-sm">{stop.departure_time} Uhr</span>
+                          ) : (
+                            <span className="text-sm text-muted-foreground italic">Uhrzeit folgt</span>
+                          )}
+                        </div>
+
+                        {/* Surcharge */}
+                        {stop.surcharge > 0 ? (
+                          <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                            <Euro className="w-3 h-3 mr-1" />
+                            +{stop.surcharge.toFixed(0)} €
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+                            Inkl.
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="text-center py-8 text-muted-foreground bg-muted/50 rounded-xl">
+          <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
+          <p className="text-sm">Genaue Zustiegsorte werden nach der Buchung mitgeteilt.</p>
+        </div>
+      )}
+    </div>
   );
 };
 

@@ -2,6 +2,9 @@ import { useEffect, useState, useRef } from "react";
 import Map, { Marker, Source, Layer, NavigationControl } from "react-map-gl";
 import { supabase } from "@/integrations/supabase/client";
 import { TourPickupStop } from "@/hooks/useTourBuilder";
+import { useCookieConsent } from "@/hooks/useCookieConsent";
+import { Button } from "@/components/ui/button";
+import { Cookie } from "lucide-react";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 interface RouteMapProps {
@@ -42,7 +45,14 @@ const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
   "bremerhaven": { lat: 53.5396, lng: 8.5809 },
   "paderborn": { lat: 51.7189, lng: 8.7544 },
   "münster": { lat: 51.9607, lng: 7.6261 },
-  // Balkan destinations
+  // European destinations
+  "kopenhagen": { lat: 55.6761, lng: 12.5683 },
+  "amsterdam": { lat: 52.3676, lng: 4.9041 },
+  "paris": { lat: 48.8566, lng: 2.3522 },
+  "rom": { lat: 41.9028, lng: 12.4964 },
+  "prag": { lat: 50.0755, lng: 14.4378 },
+  "wien": { lat: 48.2082, lng: 16.3738 },
+  "barcelona": { lat: 41.3851, lng: 2.1734 },
   "zagreb": { lat: 45.8150, lng: 15.9819 },
   "split": { lat: 43.5081, lng: 16.4402 },
   "dubrovnik": { lat: 42.6507, lng: 18.0944 },
@@ -55,6 +65,7 @@ const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
   "pristina": { lat: 42.6629, lng: 21.1655 },
   "prishtina": { lat: 42.6629, lng: 21.1655 },
   "novi sad": { lat: 45.2671, lng: 19.8335 },
+  "kosovo": { lat: 42.6629, lng: 21.1655 },
 };
 
 const getCityCoords = (city: string): { lat: number; lng: number } | null => {
@@ -68,13 +79,20 @@ const getCityCoords = (city: string): { lat: number; lng: number } | null => {
 };
 
 const RouteMap = ({ stops }: RouteMapProps) => {
+  const { hasAnalyticsConsent, isLoading: consentLoading } = useCookieConsent();
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const mapRef = useRef<any>(null);
 
-  // Fetch Mapbox token
+  // Don't fetch token if no consent
   useEffect(() => {
+    if (consentLoading) return;
+    if (!hasAnalyticsConsent) {
+      setIsLoading(false);
+      return;
+    }
+
     const fetchToken = async () => {
       try {
         const { data, error } = await supabase.functions.invoke('get-mapbox-token');
@@ -92,7 +110,7 @@ const RouteMap = ({ stops }: RouteMapProps) => {
       }
     };
     fetchToken();
-  }, []);
+  }, [hasAnalyticsConsent, consentLoading]);
 
   // Parse coordinates from stops using city lookup
   const markers = stops
@@ -157,10 +175,36 @@ const RouteMap = ({ stops }: RouteMapProps) => {
     properties: {},
   } : null;
 
-  if (isLoading) {
+  // Loading state
+  if (isLoading || consentLoading) {
     return (
       <div className="h-64 bg-muted rounded-xl flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Karte wird geladen...</div>
+      </div>
+    );
+  }
+
+  // No consent - show consent prompt
+  if (!hasAnalyticsConsent) {
+    return (
+      <div className="h-64 bg-muted rounded-xl flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+          <Cookie className="w-6 h-6 text-primary" />
+        </div>
+        <h4 className="font-semibold text-foreground mb-2">Karte deaktiviert</h4>
+        <p className="text-sm text-muted-foreground mb-4 max-w-md">
+          Um die interaktive Karte zu nutzen, akzeptieren Sie bitte die Analyse-Cookies in den Cookie-Einstellungen.
+        </p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            localStorage.removeItem('metropol_cookie_consent');
+            window.location.reload();
+          }}
+        >
+          Cookie-Einstellungen öffnen
+        </Button>
       </div>
     );
   }
@@ -188,7 +232,7 @@ const RouteMap = ({ stops }: RouteMapProps) => {
         mapboxAccessToken={mapboxToken}
         initialViewState={{
           ...center,
-          zoom: markers.length === 1 ? 10 : 6,
+          zoom: markers.length === 1 ? 10 : 5,
         }}
         style={{ width: "100%", height: "100%" }}
         mapStyle="mapbox://styles/mapbox/streets-v12"

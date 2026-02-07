@@ -1371,6 +1371,7 @@ export type Database = {
           location_name: string
           max_passengers: number | null
           meeting_point: string | null
+          notes: string | null
           route_id: string
           sort_order: number
           surcharge: number
@@ -1386,6 +1387,7 @@ export type Database = {
           location_name: string
           max_passengers?: number | null
           meeting_point?: string | null
+          notes?: string | null
           route_id: string
           sort_order?: number
           surcharge?: number
@@ -1401,6 +1403,7 @@ export type Database = {
           location_name?: string
           max_passengers?: number | null
           meeting_point?: string | null
+          notes?: string | null
           route_id?: string
           sort_order?: number
           surcharge?: number
@@ -1420,6 +1423,8 @@ export type Database = {
           code: string
           created_at: string
           description: string | null
+          distance_km: number | null
+          duration_hours: number | null
           id: string
           is_active: boolean
           name: string
@@ -1430,6 +1435,8 @@ export type Database = {
           code: string
           created_at?: string
           description?: string | null
+          distance_km?: number | null
+          duration_hours?: number | null
           id?: string
           is_active?: boolean
           name: string
@@ -1440,6 +1447,8 @@ export type Database = {
           code?: string
           created_at?: string
           description?: string | null
+          distance_km?: number | null
+          duration_hours?: number | null
           id?: string
           is_active?: boolean
           name?: string

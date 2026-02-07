@@ -49,6 +49,8 @@ export interface TourRoute {
   name: string;
   code: string;
   description: string | null;
+  distance_km: number | null;
+  duration_hours: number | null;
   sort_order: number;
   is_active: boolean;
   pickup_stops?: TourPickupStop[];
@@ -67,6 +69,7 @@ export interface TourPickupStop {
   max_passengers: number | null;
   sort_order: number;
   is_active: boolean;
+  notes: string | null;
 }
 
 export interface TourLuggageAddon {

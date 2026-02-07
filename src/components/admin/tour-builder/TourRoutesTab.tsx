@@ -3,7 +3,7 @@ import { TourRoute, TourPickupStop } from "@/hooks/useTourBuilder";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -19,7 +19,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { MapPin, Plus, Pencil, Trash2, Clock, Euro, GripVertical, Bus } from "lucide-react";
+import { MapPin, Plus, Pencil, Trash2, Clock, GripVertical, Bus } from "lucide-react";
 
 interface TourRoutesTabProps {
   tourId?: string;
@@ -36,6 +36,8 @@ const emptyRoute: Partial<TourRoute> = {
   name: '',
   code: '',
   description: '',
+  distance_km: null,
+  duration_hours: null,
   sort_order: 0,
   is_active: true,
   pickup_stops: [],
@@ -52,6 +54,7 @@ const emptyStop: Omit<TourPickupStop, 'id' | 'route_id' | 'created_at'> = {
   max_passengers: null,
   sort_order: 0,
   is_active: true,
+  notes: null,
 };
 
 const TourRoutesTab = ({ 
@@ -87,6 +90,8 @@ const TourRoutesTab = ({
         name: routeDialog.route.name || '',
         code: routeDialog.route.code || '',
         description: routeDialog.route.description || null,
+        distance_km: routeDialog.route.distance_km ?? null,
+        duration_hours: routeDialog.route.duration_hours ?? null,
         sort_order: routeDialog.route.sort_order ?? routes.length,
         is_active: routeDialog.route.is_active ?? true,
       };
@@ -128,6 +133,7 @@ const TourRoutesTab = ({
         max_passengers: stopDialog.stop.max_passengers ?? null,
         sort_order: stopDialog.stop.sort_order ?? stopsCount,
         is_active: stopDialog.stop.is_active ?? true,
+        notes: stopDialog.stop.notes ?? null,
       };
 
       if (stopDialog.isNew) {
@@ -165,6 +171,8 @@ const TourRoutesTab = ({
             name: defaultRoutes[i].name,
             code: defaultRoutes[i].code,
             description: defaultRoutes[i].description,
+            distance_km: null,
+            duration_hours: null,
             sort_order: i,
             is_active: true,
           });
@@ -242,6 +250,16 @@ const TourRoutesTab = ({
                       <Badge variant="outline" className="text-xs border-zinc-700">
                         {route.code}
                       </Badge>
+                      {route.distance_km && (
+                        <Badge variant="secondary" className="text-xs bg-zinc-800/50">
+                          {route.distance_km} km
+                        </Badge>
+                      )}
+                      {route.duration_hours && (
+                        <Badge variant="secondary" className="text-xs bg-zinc-800/50">
+                          {route.duration_hours} Std.
+                        </Badge>
+                      )}
                     </div>
                     {route.description && (
                       <p className="text-sm text-zinc-500">{route.description}</p>
@@ -401,6 +419,36 @@ const TourRoutesTab = ({
                 className="bg-zinc-800 border-zinc-700 mt-1"
                 rows={2}
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Entfernung (km)</Label>
+                <Input
+                  type="number"
+                  value={routeDialog.route?.distance_km || ''}
+                  onChange={(e) => setRouteDialog(prev => ({
+                    ...prev,
+                    route: { ...prev.route, distance_km: parseInt(e.target.value) || null }
+                  }))}
+                  placeholder="z.B. 586"
+                  className="bg-zinc-800 border-zinc-700 mt-1"
+                />
+              </div>
+              <div>
+                <Label>Fahrzeit (Stunden)</Label>
+                <Input
+                  type="number"
+                  step="0.5"
+                  value={routeDialog.route?.duration_hours || ''}
+                  onChange={(e) => setRouteDialog(prev => ({
+                    ...prev,
+                    route: { ...prev.route, duration_hours: parseFloat(e.target.value) || null }
+                  }))}
+                  placeholder="z.B. 7.5"
+                  className="bg-zinc-800 border-zinc-700 mt-1"
+                />
+              </div>
             </div>
           </div>
 
