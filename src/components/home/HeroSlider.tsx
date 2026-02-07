@@ -132,10 +132,13 @@ const HeroSlider = () => {
                 <div className="relative">
                   <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
                   <select className="w-full pl-10 pr-4 py-3 border border-border rounded-lg text-foreground bg-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary appearance-none">
-                    <option>1 Erwachsener</option>
-                    <option>2 Erwachsene</option>
-                    <option>3 Erwachsene</option>
-                    <option>4 Erwachsene</option>
+                    <option>1 Erwachsener, 0 Kinder</option>
+                    <option>2 Erwachsene, 0 Kinder</option>
+                    <option>2 Erwachsene, 1 Kind</option>
+                    <option>2 Erwachsene, 2 Kinder</option>
+                    <option>3 Erwachsene, 0 Kinder</option>
+                    <option>3 Erwachsene, 1 Kind</option>
+                    <option>4 Erwachsene, 0 Kinder</option>
                   </select>
                 </div>
               </div>
