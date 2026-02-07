@@ -62,9 +62,13 @@ const CheckoutPage = () => {
   const { user } = useAuth();
   const { downloadTicket, isDownloading } = useTicketDownload();
   
+  // Support both direct trip params and route-based params (for weekend trips)
   const tripId = searchParams.get("tripId") || "";
   const fromStopId = searchParams.get("fromStopId") || "";
   const toStopId = searchParams.get("toStopId") || "";
+  const routeId = searchParams.get("routeId") || "";
+  const fromCity = searchParams.get("from") || "";
+  const toCity = searchParams.get("to") || "";
   const passengers = parseInt(searchParams.get("passengers") || "1");
   
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("seats");
@@ -73,6 +77,7 @@ const CheckoutPage = () => {
   const [destinationStop, setDestinationStop] = useState<StopDetails | null>(null);
   const [price, setPrice] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [noTripsAvailable, setNoTripsAvailable] = useState(false);
   
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   const [passengerInfo, setPassengerInfo] = useState<PassengerInfo[]>(
@@ -100,11 +105,83 @@ const CheckoutPage = () => {
 
   useEffect(() => {
     if (tripId && fromStopId && toStopId) {
-      loadTripData();
+      // Direct trip booking
+      loadTripData(tripId, fromStopId, toStopId);
+    } else if (routeId && fromCity && toCity) {
+      // Route-based booking (weekend trips) - find next available trip
+      findAndLoadTrip();
+    } else {
+      setIsLoading(false);
     }
-  }, [tripId, fromStopId, toStopId]);
+  }, [tripId, fromStopId, toStopId, routeId, fromCity, toCity]);
 
-  const loadTripData = async () => {
+  const findAndLoadTrip = async () => {
+    setIsLoading(true);
+    try {
+      // Find stops for this route
+      const { data: stops, error: stopsError } = await supabase
+        .from('stops')
+        .select('*')
+        .eq('route_id', routeId)
+        .order('stop_order');
+      
+      if (stopsError || !stops || stops.length === 0) {
+        throw new Error('Stops not found');
+      }
+
+      // Find origin and destination stops by city name
+      const origin = stops.find(s => s.city.toLowerCase() === fromCity.toLowerCase());
+      const destination = stops.find(s => s.city.toLowerCase() === toCity.toLowerCase());
+
+      if (!origin || !destination) {
+        throw new Error('Origin or destination not found');
+      }
+
+      // Find next available trip for this route
+      const today = new Date().toISOString().split('T')[0];
+      const { data: trips, error: tripsError } = await supabase
+        .from('trips')
+        .select(`*, route:routes(*), bus:buses(*)`)
+        .eq('route_id', routeId)
+        .eq('is_active', true)
+        .gte('departure_date', today)
+        .order('departure_date')
+        .limit(1);
+
+      if (tripsError || !trips || trips.length === 0) {
+        setNoTripsAvailable(true);
+        setIsLoading(false);
+        return;
+      }
+
+      const tripData = trips[0];
+      setTrip(tripData);
+      setOriginStop(origin);
+      setDestinationStop(destination);
+
+      // Calculate price
+      const { data: priceData } = await supabase
+        .rpc('calculate_trip_price', {
+          p_trip_id: tripData.id,
+          p_origin_stop_id: origin.id,
+          p_destination_stop_id: destination.id
+        });
+
+      if (priceData !== null) {
+        setPrice(priceData);
+      } else {
+        setPrice(destination.price_from_start - origin.price_from_start);
+      }
+
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error finding trip:', error);
+      setNoTripsAvailable(true);
+      setIsLoading(false);
+    }
+  };
+
+  const loadTripData = async (tId: string, fromId: string, toId: string) => {
     setIsLoading(true);
     try {
       // Load trip details
@@ -115,7 +192,7 @@ const CheckoutPage = () => {
           route:routes(*),
           bus:buses(*)
         `)
-        .eq('id', tripId)
+        .eq('id', tId)
         .single();
 
       if (tripError) throw tripError;
@@ -125,21 +202,21 @@ const CheckoutPage = () => {
       const { data: stopsData, error: stopsError } = await supabase
         .from('stops')
         .select('*')
-        .in('id', [fromStopId, toStopId]);
+        .in('id', [fromId, toId]);
 
       if (stopsError) throw stopsError;
 
-      const origin = stopsData?.find(s => s.id === fromStopId);
-      const destination = stopsData?.find(s => s.id === toStopId);
+      const origin = stopsData?.find(s => s.id === fromId);
+      const destination = stopsData?.find(s => s.id === toId);
       setOriginStop(origin || null);
       setDestinationStop(destination || null);
 
       // Calculate price
       const { data: priceData, error: priceError } = await supabase
         .rpc('calculate_trip_price', {
-          p_trip_id: tripId,
-          p_origin_stop_id: fromStopId,
-          p_destination_stop_id: toStopId
+          p_trip_id: tId,
+          p_origin_stop_id: fromId,
+          p_destination_stop_id: toId
         });
 
       if (!priceError && priceData !== null) {
@@ -247,14 +324,15 @@ const CheckoutPage = () => {
           price: e.price
         }));
 
+        // Use trip.id and stop.id from loaded data (works for both direct and route-based bookings)
         const { data: bookingData, error: bookingError } = await supabase
           .from('bookings')
           .insert({
             ticket_number: ticketNumber,
             user_id: user?.id || null,
-            trip_id: tripId,
-            origin_stop_id: fromStopId,
-            destination_stop_id: toStopId,
+            trip_id: trip!.id,
+            origin_stop_id: originStop!.id,
+            destination_stop_id: destinationStop!.id,
             seat_id: passenger.seatId,
             passenger_first_name: passenger.firstName,
             passenger_last_name: passenger.lastName,
@@ -333,6 +411,31 @@ const CheckoutPage = () => {
     );
   }
 
+  if (noTripsAvailable) {
+    return (
+      <div className="min-h-screen flex flex-col bg-muted/30">
+        <Header />
+        <main className="flex-1 pt-20 lg:pt-24 flex flex-col items-center justify-center text-center px-4">
+          <AlertCircle className="w-16 h-16 text-amber-500 mb-4" />
+          <h2 className="text-2xl font-bold text-foreground mb-2">Keine Fahrten verfügbar</h2>
+          <p className="text-muted-foreground mb-6">
+            Für diese Strecke sind aktuell keine Fahrten verfügbar. 
+            Bitte versuchen Sie es später erneut oder wählen Sie ein anderes Ziel.
+          </p>
+          <div className="flex gap-4">
+            <Button variant="outline" onClick={() => navigate(-1)}>
+              Zurück
+            </Button>
+            <Button onClick={() => navigate('/wochenendtrips')}>
+              Alle Wochenendtrips
+            </Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   if (!trip || !originStop || !destinationStop) {
     return (
       <div className="min-h-screen flex flex-col bg-muted/30">
@@ -402,10 +505,10 @@ const CheckoutPage = () => {
               {/* Step 1: Seat Selection */}
               {currentStep === "seats" && (
                 <SeatMap
-                  tripId={tripId}
+                  tripId={trip.id}
                   busId={trip.bus_id}
-                  originStopId={fromStopId}
-                  destinationStopId={toStopId}
+                  originStopId={originStop.id}
+                  destinationStopId={destinationStop.id}
                   originStopOrder={originStop.stop_order}
                   destinationStopOrder={destinationStop.stop_order}
                   selectedSeats={selectedSeats}
