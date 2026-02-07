@@ -360,47 +360,39 @@ const HeroSlider = () => {
             </div>
           </motion.div>
 
-          {/* Trust Bar - Visible & Strong */}
+          {/* Trust Elements - Seamless Background Integration */}
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="mt-8 bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-border/50 shadow-lg"
+            className="mt-10 flex flex-wrap items-center justify-start gap-x-8 gap-y-4"
           >
-            <div className="flex flex-wrap items-center justify-center gap-6 lg:gap-10">
-              <div className="flex items-center gap-2">
-                <div className="flex">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <span className="font-bold text-foreground">4.9/5</span>
-                <span className="text-muted-foreground text-sm">Kundenbewertung</span>
+            <div className="flex items-center gap-2">
+              <div className="flex">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400 drop-shadow-sm" />
+                ))}
               </div>
-              <div className="h-6 w-px bg-border hidden lg:block" />
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Users className="w-4 h-4 text-primary" />
-                </div>
-                <span className="font-semibold text-foreground">50.000+</span>
-                <span className="text-muted-foreground">zufriedene Kunden</span>
-              </div>
-              <div className="h-6 w-px bg-border hidden lg:block" />
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                </div>
-                <span className="font-semibold text-foreground">Sichere Zahlung</span>
-              </div>
-              <div className="h-6 w-px bg-border hidden lg:block" />
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Clock className="w-4 h-4 text-primary" />
-                </div>
-                <span className="font-semibold text-foreground">24/7 Service</span>
-              </div>
+              <span className="font-bold text-foreground">4.9/5</span>
+              <span className="text-muted-foreground text-sm">Bewertung</span>
+            </div>
+            
+            <div className="flex items-center gap-2 text-sm">
+              <Users className="w-4 h-4 text-primary" />
+              <span className="font-semibold text-foreground">50.000+</span>
+              <span className="text-muted-foreground">Kunden</span>
+            </div>
+            
+            <div className="flex items-center gap-2 text-sm">
+              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              <span className="font-semibold text-foreground">Sichere Zahlung</span>
+            </div>
+            
+            <div className="flex items-center gap-2 text-sm">
+              <Clock className="w-4 h-4 text-primary" />
+              <span className="font-semibold text-foreground">24/7 Service</span>
             </div>
           </motion.div>
         </div>
