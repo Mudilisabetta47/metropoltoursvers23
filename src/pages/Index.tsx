@@ -3,6 +3,7 @@ import Footer from "@/components/layout/Footer";
 import HeroSection from "@/components/home/HeroSection";
 import FeaturesSection from "@/components/home/FeaturesSection";
 import PackageToursSection from "@/components/home/PackageToursSection";
+import WeekendTripsSection from "@/components/home/WeekendTripsSection";
 import PopularRoutesSection from "@/components/home/PopularRoutesSection";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
 import CTASection from "@/components/home/CTASection";
@@ -15,6 +16,7 @@ const Index = () => {
         <HeroSection />
         <FeaturesSection />
         <PackageToursSection />
+        <WeekendTripsSection />
         <PopularRoutesSection />
         <TestimonialsSection />
         <CTASection />
