@@ -20,6 +20,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminCMS from "./pages/AdminCMS";
 import AdminTourBuilder from "./pages/AdminTourBuilder";
 import OperationsDashboard from "./pages/OperationsDashboard";
+import WeekendTripsPage from "./pages/WeekendTripsPage";
 import NotFound from "./pages/NotFound";
 import CookieBanner from "./components/CookieBanner";
 
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/service" element={<ServicePage />} />
             <Route path="/business" element={<BusinessServicesPage />} />
             <Route path="/bookings" element={<BookingsPage />} />
+            <Route path="/wochenendtrips" element={<WeekendTripsPage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/imprint" element={<ImprintPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
