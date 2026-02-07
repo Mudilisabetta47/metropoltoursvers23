@@ -1,6 +1,5 @@
-import { Tag, Sparkles, Zap, Info } from "lucide-react";
+import { Tag, Sparkles, Zap, TrendingUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
@@ -17,7 +16,7 @@ const TourRecommendations = ({ dates, tariffs, onSelectDate }: TourRecommendatio
 
   const formatDate = (dateStr: string) => {
     try {
-      return format(parseISO(dateStr), 'dd.MM.yyyy', { locale: de });
+      return format(parseISO(dateStr), 'dd. MMM', { locale: de });
     } catch {
       return dateStr;
     }
@@ -28,10 +27,8 @@ const TourRecommendations = ({ dates, tariffs, onSelectDate }: TourRecommendatio
     current.price_basic < best.price_basic ? current : best
   , dates[0]);
 
-  // Find comfort date (highest price = most comfort)
-  const comfortDate = dates.reduce((best, current) => 
-    (current.price_business || current.price_basic) > (best.price_business || best.price_basic) ? current : best
-  , dates[0]);
+  // Find comfort date (smart tariff)
+  const comfortDate = dates.find(d => d.price_smart) || dates[0];
 
   // Find flex date (with flex tariff available)
   const flexTariff = tariffs.find(t => t.slug === 'flex' || t.is_refundable);
@@ -40,40 +37,48 @@ const TourRecommendations = ({ dates, tariffs, onSelectDate }: TourRecommendatio
   const recommendations = [
     {
       id: 'best-price',
-      title: 'BESTER PREIS',
+      title: 'Sparpreis',
       icon: Tag,
+      gradient: 'from-emerald-500 to-teal-600',
+      iconBg: 'bg-emerald-100',
       iconColor: 'text-emerald-600',
       date: bestPriceDate,
       highlight: 'Günstigster Termin',
       price: bestPriceDate.price_basic,
+      subtitle: 'Nur Handgepäck',
     },
     {
       id: 'comfort',
-      title: 'KOMFORT',
+      title: 'Komfort',
       icon: Sparkles,
+      gradient: 'from-blue-500 to-indigo-600',
+      iconBg: 'bg-blue-100',
       iconColor: 'text-blue-600',
       date: comfortDate,
-      highlight: 'Inkl. Sitzplatzreservierung',
+      highlight: 'Koffer inkl.',
       price: comfortDate.price_smart || comfortDate.price_basic,
+      subtitle: 'Inkl. 20kg Koffer',
+      isRecommended: true,
     },
     {
       id: 'flex',
-      title: 'MAX. FLEXIBEL',
+      title: 'Flexpreis',
       icon: Zap,
-      iconColor: 'text-purple-600',
+      gradient: 'from-violet-500 to-purple-600',
+      iconBg: 'bg-violet-100',
+      iconColor: 'text-violet-600',
       date: flexDate,
-      highlight: flexTariff?.is_refundable ? 'Kostenlose Stornierung' : 'Umbuchbar',
+      highlight: flexTariff?.is_refundable ? 'Stornierbar' : 'Umbuchbar',
       price: flexDate.price_flex || flexDate.price_basic,
+      subtitle: 'Kostenlos stornieren',
     },
   ];
 
   return (
-    <section className="bg-slate-100 rounded-2xl p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <h2 className="text-xl font-bold text-foreground">Unsere Empfehlungen</h2>
-        <button className="text-muted-foreground hover:text-foreground">
-          <Info className="w-5 h-5" />
-        </button>
+    <section className="mb-2">
+      <div className="flex items-center gap-3 mb-4">
+        <TrendingUp className="w-5 h-5 text-primary" />
+        <h2 className="text-lg font-bold text-foreground">Schnellauswahl</h2>
       </div>
 
       <div className="grid md:grid-cols-3 gap-4">
@@ -82,32 +87,56 @@ const TourRecommendations = ({ dates, tariffs, onSelectDate }: TourRecommendatio
           return (
             <Card 
               key={rec.id}
-              className="bg-white border-2 border-transparent hover:border-primary/30 transition-all cursor-pointer group"
+              className={`relative overflow-hidden bg-white border-2 transition-all cursor-pointer group hover:shadow-lg ${
+                rec.isRecommended ? 'border-primary shadow-md' : 'border-transparent hover:border-primary/40'
+              }`}
               onClick={() => onSelectDate(rec.date)}
             >
-              <CardContent className="p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <Icon className={`w-5 h-5 ${rec.iconColor}`} />
-                  <span className="text-xs font-bold tracking-wide text-muted-foreground uppercase">
-                    {rec.title}
-                  </span>
+              {rec.isRecommended && (
+                <div className="absolute top-0 left-0 right-0 bg-primary text-primary-foreground text-center text-xs font-medium py-1">
+                  Unsere Empfehlung
+                </div>
+              )}
+              
+              <CardContent className={`p-5 ${rec.isRecommended ? 'pt-8' : ''}`}>
+                {/* Header */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`w-10 h-10 rounded-xl ${rec.iconBg} flex items-center justify-center`}>
+                    <Icon className={`w-5 h-5 ${rec.iconColor}`} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-foreground">{rec.title}</p>
+                    <p className="text-xs text-muted-foreground">{rec.subtitle}</p>
+                  </div>
                 </div>
 
-                <div className="space-y-2 mb-4">
-                  <p className="text-sm text-foreground leading-relaxed">
-                    <span className="font-semibold">{rec.date.duration_days} Tage</span> ab {formatDate(rec.date.departure_date)}
-                  </p>
-                  <Badge variant="secondary" className="text-xs bg-slate-100">
-                    {rec.highlight}
-                  </Badge>
+                {/* Date Info */}
+                <div className="bg-muted/50 rounded-lg p-3 mb-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Reisezeitraum</span>
+                    <span className="font-medium text-foreground">
+                      {formatDate(rec.date.departure_date)} – {formatDate(rec.date.return_date)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm mt-1">
+                    <span className="text-muted-foreground">Dauer</span>
+                    <span className="font-medium text-foreground">{rec.date.duration_days} Tage</span>
+                  </div>
                 </div>
 
-                <Button
-                  variant="outline"
-                  className="w-full border-primary text-primary hover:bg-primary hover:text-white group-hover:bg-primary group-hover:text-white transition-colors"
-                >
-                  pro Person ab {rec.price.toFixed(0)} €
-                </Button>
+                {/* Highlight */}
+                <Badge variant="secondary" className={`mb-4 ${rec.iconBg} ${rec.iconColor} border-0`}>
+                  {rec.highlight}
+                </Badge>
+
+                {/* Price */}
+                <div className="flex items-end justify-between border-t border-border pt-4">
+                  <span className="text-sm text-muted-foreground">ab</span>
+                  <div className="text-right">
+                    <span className="text-2xl font-bold text-primary">{rec.price.toFixed(0)}€</span>
+                    <span className="text-sm text-muted-foreground ml-1">p.P.</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           );
