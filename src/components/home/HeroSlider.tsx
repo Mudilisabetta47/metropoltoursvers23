@@ -26,7 +26,21 @@ const HeroSlider = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
       </motion.div>
 
-      {/* Large Typography Overlay */}
+      {/* Bus Branding Overlay - Large Typography on Bus */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
+          className="relative"
+        >
+          {/* Main Brand Text - Positioned to overlay on bus area */}
+          <h2 className="text-[8vw] md:text-[6vw] lg:text-[5vw] font-black tracking-tight leading-none text-center">
+            <span className="block text-white/20 mix-blend-overlay">METROPOL</span>
+            <span className="block text-primary/40 mix-blend-screen -mt-2">TOURS</span>
+          </h2>
+        </motion.div>
+      </div>
       <div className="absolute inset-0 flex flex-col justify-center">
         <div className="container mx-auto px-4 lg:px-8">
           <motion.div
