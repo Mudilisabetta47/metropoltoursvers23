@@ -139,43 +139,45 @@ const WeekendTripsPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-slate-50">
       <Header />
 
-      {/* Hero Section */}
-      <section className="relative py-20 bg-gradient-to-br from-primary/10 via-background to-primary/5">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl">
-            <Badge className="mb-4 bg-primary/20 text-primary border-0">
-              <Calendar className="w-3 h-3 mr-1" />
-              Wochenendtrips
-            </Badge>
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              Europa erleben –<br />
-              <span className="text-primary">an einem Wochenende</span>
-            </h1>
-            <p className="text-lg text-muted-foreground mb-8">
-              Entdecken Sie die schönsten Städte Europas mit unseren komfortablen
-              Busreisen ab Hamburg. Alle Routen starten vom ZOB Hamburg mit
-              Zustiegsmöglichkeiten in Bremen und Hannover.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Wifi className="w-4 h-4 text-primary" />
-                Kostenloses WLAN
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Plug className="w-4 h-4 text-primary" />
-                Steckdosen am Platz
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Armchair className="w-4 h-4 text-primary" />
-                Komfort-Sitze
+      {/* pt-16 lg:pt-20 accounts for fixed header height */}
+      <main className="flex-1 pt-16 lg:pt-20">
+        {/* Hero Section */}
+        <section className="relative py-16 lg:py-20 bg-gradient-to-br from-primary/10 via-background to-primary/5">
+          <div className="container mx-auto px-4">
+            <div className="max-w-3xl">
+              <Badge className="mb-4 bg-primary/20 text-primary border-0">
+                <Calendar className="w-3 h-3 mr-1" />
+                Wochenendtrips
+              </Badge>
+              <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+                Europa erleben –<br />
+                <span className="text-primary">an einem Wochenende</span>
+              </h1>
+              <p className="text-lg text-muted-foreground mb-8">
+                Entdecken Sie die schönsten Städte Europas mit unseren komfortablen
+                Busreisen ab Hamburg. Alle Routen starten vom ZOB Hamburg mit
+                Zustiegsmöglichkeiten in Bremen und Hannover.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Wifi className="w-4 h-4 text-primary" />
+                  Kostenloses WLAN
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Plug className="w-4 h-4 text-primary" />
+                  Steckdosen am Platz
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Armchair className="w-4 h-4 text-primary" />
+                  Komfort-Sitze
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
       {/* Dynamic Pricing Info */}
       <section className="py-6 bg-muted/30 border-y border-border">
@@ -347,6 +349,7 @@ const WeekendTripsPage = () => {
           </div>
         </div>
       </section>
+      </main>
 
       <Footer />
     </div>

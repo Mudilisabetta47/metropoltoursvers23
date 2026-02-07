@@ -205,120 +205,121 @@ const WeekendTripDetailPage = () => {
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Header />
       
-      <main className="flex-1">
-        {/* Breadcrumb */}
-        <div className="bg-white border-b">
-          <div className="container mx-auto px-4 py-3">
-            <nav className="flex items-center gap-2 text-sm">
-              <Link to="/" className="text-primary hover:underline font-medium">
-                METROPOL TOURS
-              </Link>
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              <Link to="/wochenendtrips" className="text-primary hover:underline">
-                Wochenendtrips
-              </Link>
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              <span className="text-muted-foreground">{destination}</span>
-            </nav>
-          </div>
-        </div>
-
-        {/* Title Bar */}
-        <div className="bg-white border-b">
-          <div className="container mx-auto px-4 py-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <Badge className="mb-2 bg-primary/10 text-primary border-0">
-                  <Calendar className="w-3 h-3 mr-1" />
-                  Wochenendtrip
-                </Badge>
-                <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                  {destination}
-                </h1>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <Clock className="w-4 h-4" />
-                    <span>{meta.duration}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <MapPin className="w-4 h-4" />
-                    <span>{meta.distance}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Share2 className="w-4 h-4" />
-                  <span className="hidden sm:inline">Teilen</span>
-                </Button>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Heart className="w-4 h-4" />
-                  <span className="hidden sm:inline">Merken</span>
-                </Button>
+      {/* pt-16 lg:pt-20 accounts for fixed header height */}
+      <main className="flex-1 pt-16 lg:pt-20">
+        {/* Hero Section - Full width like TourDetailPage */}
+        <section className="relative">
+          <div className="relative h-[50vh] lg:h-[60vh] min-h-[400px] max-h-[600px] overflow-hidden">
+            <img
+              src={meta.image}
+              alt={destination}
+              className="w-full h-full object-cover"
+            />
+            {/* Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+            
+            {/* Breadcrumb - Top */}
+            <div className="absolute top-0 left-0 right-0 pt-4">
+              <div className="container mx-auto px-4">
+                <nav className="flex items-center gap-2 text-sm text-white/80">
+                  <Link to="/" className="hover:text-white transition-colors font-medium">
+                    METROPOL TOURS
+                  </Link>
+                  <ChevronRight className="w-4 h-4" />
+                  <Link to="/wochenendtrips" className="hover:text-white transition-colors">
+                    Wochenendtrips
+                  </Link>
+                  <ChevronRight className="w-4 h-4" />
+                  <span className="text-white">{destination}</span>
+                </nav>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Hero Image */}
-        <div className="container mx-auto px-4 py-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2 relative aspect-[16/10] lg:aspect-[16/9] rounded-xl overflow-hidden shadow-lg">
-              <img
-                src={meta.image}
-                alt={destination}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-              <div className="absolute bottom-4 left-4 right-4">
-                <div className="flex flex-wrap gap-2">
-                  {meta.highlights.map((highlight) => (
-                    <Badge key={highlight} className="bg-white/90 text-foreground">
-                      <Star className="w-3 h-3 mr-1 text-amber-500" />
-                      {highlight}
+            {/* Hero Content - Bottom */}
+            <div className="absolute bottom-0 left-0 right-0 pb-8">
+              <div className="container mx-auto px-4">
+                <div className="max-w-4xl">
+                  {/* Badges */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <Badge className="bg-accent text-accent-foreground shadow-lg">
+                      <Calendar className="w-3 h-3 mr-1" />
+                      Wochenendtrip
                     </Badge>
-                  ))}
+                  </div>
+
+                  {/* Title */}
+                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 drop-shadow-lg">
+                    {destination}
+                  </h1>
+                  
+                  {/* Subtitle */}
+                  <div className="flex flex-wrap items-center gap-4 text-white/90 mb-4">
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4" />
+                      <span>{meta.distance}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="w-4 h-4" />
+                      <span>Fahrzeit: {meta.duration}</span>
+                    </div>
+                    <div className="flex items-center gap-0.5">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                      ))}
+                      <span className="ml-1 text-sm">(4.7)</span>
+                    </div>
+                  </div>
+
+                  {/* Quick Info Pills */}
+                  <div className="flex flex-wrap gap-3 mb-5">
+                    <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-2 text-white text-sm">
+                      <Bus className="w-4 h-4" />
+                      <span>Komfortbus inkl.</span>
+                    </div>
+                    <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-2 text-white text-sm">
+                      <Wifi className="w-4 h-4" />
+                      <span>WLAN an Bord</span>
+                    </div>
+                    <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-2 text-white text-sm">
+                      <Plug className="w-4 h-4" />
+                      <span>Steckdosen</span>
+                    </div>
+                  </div>
+
+                  {/* Price Teaser */}
+                  <div className="inline-flex items-end gap-2 bg-white/95 backdrop-blur rounded-xl px-5 py-3 shadow-xl">
+                    <span className="text-muted-foreground text-sm">ab</span>
+                    <span className="text-3xl font-bold text-primary">{route.base_price}€</span>
+                    <span className="text-muted-foreground text-sm pb-1">pro Person</span>
+                  </div>
                 </div>
               </div>
-              <Badge className="absolute top-4 left-4 bg-primary shadow-lg">
-                ab {route.base_price}€
-              </Badge>
             </div>
 
-            {/* Mini Route Map */}
-            <div className="hidden lg:flex flex-col gap-4">
-              <div className="flex-1 bg-slate-100 rounded-xl p-4">
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <Bus className="w-4 h-4 text-primary" />
-                  Route
-                </h3>
-                <div className="space-y-2">
-                  {stops?.map((stop, idx) => (
-                    <div key={stop.id} className="flex items-center gap-2">
-                      <div className={`w-3 h-3 rounded-full ${
-                        idx === 0 ? 'bg-emerald-500' : 
-                        idx === (stops?.length || 1) - 1 ? 'bg-primary' : 'bg-slate-300'
-                      }`} />
-                      <span className={`text-sm ${
-                        idx === (stops?.length || 1) - 1 ? 'font-semibold text-primary' : 'text-muted-foreground'
-                      }`}>
-                        {stop.city}
-                      </span>
-                      {stop.price_from_start > 0 && idx < (stops?.length || 1) - 1 && (
-                        <Badge variant="outline" className="text-xs ml-auto">
-                          -{stop.price_from_start}€
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
+            {/* Action Buttons - Top Right */}
+            <div className="absolute top-4 right-4 flex items-center gap-2">
+              <Button variant="secondary" size="sm" className="bg-white/90 backdrop-blur hover:bg-white shadow-lg gap-2">
+                <Share2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Teilen</span>
+              </Button>
+              <Button variant="secondary" size="sm" className="bg-white/90 backdrop-blur hover:bg-white shadow-lg gap-2">
+                <Heart className="w-4 h-4" />
+                <span className="hidden sm:inline">Merken</span>
+              </Button>
             </div>
           </div>
-        </div>
 
-        {/* Tab Navigation */}
-        <nav className="sticky top-0 z-40 bg-white border-b shadow-sm">
+          {/* Short Description Bar */}
+          <div className="bg-muted/50 border-b">
+            <div className="container mx-auto px-4 py-4">
+              <p className="text-muted-foreground max-w-3xl">
+                {meta.fullDescription}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <nav className="sticky top-16 lg:top-20 z-40 bg-white border-b shadow-sm">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1 overflow-x-auto py-2">
@@ -571,9 +572,9 @@ const WeekendTripDetailPage = () => {
               )}
             </div>
 
-            {/* Right Sidebar - 1/3 */}
+            {/* Right Sidebar - 1/3 with proper header offset */}
             <div className="lg:col-span-1">
-              <div className="sticky top-20">
+              <div className="sticky top-[calc(theme(spacing.20)+theme(spacing.16))] lg:top-[calc(theme(spacing.20)+theme(spacing.20))]">
                 <Card className="border-2 border-primary/20 shadow-xl overflow-hidden">
                   <CardHeader className="bg-gradient-to-br from-primary/5 to-primary/10 border-b pb-4">
                     <h3 className="text-lg font-bold text-foreground">Dein Angebot:</h3>
