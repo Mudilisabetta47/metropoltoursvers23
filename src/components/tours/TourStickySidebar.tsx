@@ -66,19 +66,19 @@ const TourStickySidebar = ({
   const totalPrice = pricePerPerson * participants;
 
   const handleBooking = () => {
-    // Navigate to booking flow with selected options
+    // Navigate directly to tour checkout with selected options
     const params = new URLSearchParams({
       tour: tour.id,
       date: selectedDate?.id || '',
       tariff: selectedTariff?.id || '',
       pax: participants.toString(),
     });
-    navigate(`/checkout?${params.toString()}`);
+    navigate(`/reisen/checkout?${params.toString()}`);
   };
 
   return (
-    <div className="sticky top-4">
-      <Card className="border-2 border-primary/20 shadow-xl overflow-hidden">
+    <div className="sticky top-[calc(theme(spacing.16)+theme(spacing.4))] lg:top-[calc(theme(spacing.20)+theme(spacing.4))]">
+      <Card className="border-2 border-primary/20 shadow-xl overflow-hidden relative z-10">
         <CardHeader className="bg-gradient-to-br from-primary/5 to-primary/10 border-b pb-4">
           <h3 className="text-lg font-bold text-foreground">Dein Angebot:</h3>
         </CardHeader>

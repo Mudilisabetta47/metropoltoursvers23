@@ -172,7 +172,8 @@ const TourDetailPage = () => {
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Header />
       
-      <main className="flex-1">
+      {/* pt-16 lg:pt-20 accounts for fixed header height */}
+      <main className="flex-1 pt-16 lg:pt-20">
         {/* Hero Section */}
         <TourHeroSection 
           tour={tourData.tour}

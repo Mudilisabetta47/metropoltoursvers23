@@ -11,6 +11,7 @@ interface TourHeroSectionProps {
 
 const TourHeroSection = ({ tour, heroImage }: TourHeroSectionProps) => {
   return (
+    /* scroll-margin-top for anchor navigation with fixed header */
     <section className="relative">
       {/* Breadcrumb */}
       <div className="bg-white border-b">
