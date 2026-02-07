@@ -1,4 +1,4 @@
-import { Clock, Euro, Luggage, Bus } from "lucide-react";
+import { Clock, Euro, Luggage, Bus, MapPin } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -8,6 +8,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { TourRoute, TourLuggageAddon } from "@/hooks/useTourBuilder";
+import RouteMap from "./RouteMap";
 
 interface TourRoutesSectionProps {
   routes: TourRoute[];
@@ -15,8 +16,29 @@ interface TourRoutesSectionProps {
 }
 
 const TourRoutesSection = ({ routes, luggageAddons }: TourRoutesSectionProps) => {
+  // Get all stops for map display
+  const allStops = routes.flatMap(r => r.pickup_stops || []);
+  
   return (
     <section id="section-route" className="space-y-6 scroll-mt-20">
+      {/* Interactive Map */}
+      {allStops.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl font-bold">
+              <MapPin className="w-6 h-6 text-primary" />
+              Routenübersicht
+            </CardTitle>
+            <CardDescription>
+              Interaktive Karte aller Zustiegsorte
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RouteMap stops={allStops} />
+          </CardContent>
+        </Card>
+      )}
+
       {/* Bus Routes */}
       <Card>
         <CardHeader>
@@ -39,7 +61,7 @@ const TourRoutesSection = ({ routes, luggageAddons }: TourRoutesSectionProps) =>
                 <AccordionItem 
                   key={route.id} 
                   value={route.id}
-                  className="border rounded-xl px-4 data-[state=open]:bg-slate-50"
+                  className="border rounded-xl px-4 data-[state=open]:bg-muted/50"
                 >
                   <AccordionTrigger className="hover:no-underline py-4">
                     <div className="flex items-center gap-4 text-left">
@@ -63,7 +85,7 @@ const TourRoutesSection = ({ routes, luggageAddons }: TourRoutesSectionProps) =>
                             .map((stop, stopIndex) => (
                               <div 
                                 key={stop.id}
-                                className="flex items-start gap-4 p-4 bg-white rounded-lg border"
+                                className="flex items-start gap-4 p-4 bg-background rounded-lg border"
                               >
                                 {/* Timeline dot */}
                                 <div className="flex flex-col items-center">
@@ -92,12 +114,12 @@ const TourRoutesSection = ({ routes, luggageAddons }: TourRoutesSectionProps) =>
                                   {/* Surcharge */}
                                   <div className="flex items-center gap-2">
                                     {stop.surcharge > 0 ? (
-                                      <Badge variant="secondary" className="bg-amber-100 text-amber-700">
+                                      <Badge variant="secondary" className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                                         <Euro className="w-3 h-3 mr-1" />
                                         +{stop.surcharge.toFixed(0)} €
                                       </Badge>
                                     ) : (
-                                      <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">
+                                      <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                                         Inkl.
                                       </Badge>
                                     )}
@@ -137,7 +159,7 @@ const TourRoutesSection = ({ routes, luggageAddons }: TourRoutesSectionProps) =>
               {luggageAddons.map((addon) => (
                 <div 
                   key={addon.id}
-                  className="p-4 rounded-xl border bg-slate-50 hover:border-primary/50 transition-colors"
+                  className="p-4 rounded-xl border bg-muted/50 hover:border-primary/50 transition-colors"
                 >
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -149,7 +171,7 @@ const TourRoutesSection = ({ routes, luggageAddons }: TourRoutesSectionProps) =>
                         <p className="text-sm text-muted-foreground">{addon.description}</p>
                       )}
                       <div className="flex items-center gap-3 mt-2">
-                        <Badge className="bg-primary text-white">
+                        <Badge className="bg-primary text-primary-foreground">
                           +{addon.price.toFixed(0)} €
                         </Badge>
                         {addon.weight_limit_kg && (
