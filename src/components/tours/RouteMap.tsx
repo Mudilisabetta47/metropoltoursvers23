@@ -1,11 +1,11 @@
 import { useEffect, useState, useRef } from "react";
-import Map, { Marker, Source, Layer, NavigationControl } from "react-map-gl/maplibre";
+import Map, { Marker, Source, Layer, NavigationControl } from "react-map-gl";
 import { supabase } from "@/integrations/supabase/client";
 import { TourPickupStop } from "@/hooks/useTourBuilder";
 import { useCookieConsent } from "@/hooks/useCookieConsent";
 import { Button } from "@/components/ui/button";
 import { Cookie } from "lucide-react";
-import "maplibre-gl/dist/maplibre-gl.css";
+import "mapbox-gl/dist/mapbox-gl.css";
 
 interface RouteMapProps {
   stops: TourPickupStop[];
@@ -80,14 +80,37 @@ const getCityCoords = (city: string): { lat: number; lng: number } | null => {
 
 const RouteMap = ({ stops }: RouteMapProps) => {
   const { hasAnalyticsConsent, isLoading: consentLoading } = useCookieConsent();
-  const [isReady, setIsReady] = useState(false);
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const mapRef = useRef<any>(null);
 
+  // Fetch token from edge function
   useEffect(() => {
-    if (!consentLoading) {
-      setIsReady(true);
+    if (consentLoading) return;
+    if (!hasAnalyticsConsent) {
+      setIsLoading(false);
+      return;
     }
-  }, [consentLoading]);
+
+    const fetchToken = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+        if (error) throw error;
+        if (data?.token) {
+          setMapboxToken(data.token);
+        } else {
+          setError('Mapbox Token nicht konfiguriert');
+        }
+      } catch (err) {
+        console.error('Error fetching Mapbox token:', err);
+        setError('Karte konnte nicht geladen werden');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchToken();
+  }, [hasAnalyticsConsent, consentLoading]);
 
   // Parse coordinates from stops using city lookup
   const markers = stops
@@ -153,7 +176,7 @@ const RouteMap = ({ stops }: RouteMapProps) => {
   } : null;
 
   // Loading state
-  if (!isReady || consentLoading) {
+  if (isLoading || consentLoading) {
     return (
       <div className="h-64 bg-muted rounded-xl flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Karte wird geladen...</div>
@@ -186,6 +209,14 @@ const RouteMap = ({ stops }: RouteMapProps) => {
     );
   }
 
+  if (error || !mapboxToken) {
+    return (
+      <div className="h-64 bg-muted rounded-xl flex items-center justify-center">
+        <p className="text-muted-foreground text-sm">{error || 'Karte nicht verfügbar'}</p>
+      </div>
+    );
+  }
+
   if (markers.length === 0) {
     return (
       <div className="h-64 bg-muted rounded-xl flex items-center justify-center">
@@ -198,12 +229,13 @@ const RouteMap = ({ stops }: RouteMapProps) => {
     <div className="h-72 rounded-xl overflow-hidden border shadow-sm">
       <Map
         ref={mapRef}
+        mapboxAccessToken={mapboxToken}
         initialViewState={{
           ...center,
           zoom: markers.length === 1 ? 10 : 5,
         }}
         style={{ width: "100%", height: "100%" }}
-        mapStyle="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
+        mapStyle="mapbox://styles/mapbox/streets-v12"
         attributionControl={false}
       >
         <NavigationControl position="top-right" showCompass={false} />
