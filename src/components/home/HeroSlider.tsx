@@ -140,40 +140,50 @@ const HeroSlider = () => {
             Entdecken Sie die schönsten Reiseziele Europas – mit Komfort, erstklassigem Service und unvergesslichen Erlebnissen.
           </motion.p>
 
-          {/* Search Card */}
+          {/* Premium Search Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="bg-white rounded-2xl shadow-2xl p-6 border border-border/50"
+            className="bg-white rounded-3xl shadow-2xl p-8 border border-border/50 max-w-4xl"
           >
             {/* Limited Time Banner */}
-            <div className="flex items-center gap-2 text-sm text-accent font-medium mb-4 pb-4 border-b border-border">
-              <Clock className="w-4 h-4" />
+            <div className="flex items-center gap-2 text-sm text-accent font-semibold mb-6 pb-5 border-b border-border">
+              <Clock className="w-5 h-5" />
               <span>Nur für kurze Zeit: Kostenlose Stornierung bis 14 Tage vor Abreise!</span>
             </div>
 
-            {/* Search Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Destination Dropdown */}
-              <div className="md:col-span-2 lg:col-span-1">
-                <label className="block text-sm font-semibold text-foreground mb-2">
-                  Wo soll es hin gehen?
+            {/* Search Fields - Premium Layout */}
+            <div className="space-y-6">
+              {/* Destination Field - Dominant */}
+              <div>
+                <label className="block text-sm font-bold text-foreground mb-3 uppercase tracking-wide">
+                  Wohin soll die Reise gehen?
                 </label>
                 <Popover open={isDestinationOpen} onOpenChange={setIsDestinationOpen}>
                   <PopoverTrigger asChild>
-                    <button className="w-full flex items-center justify-between px-4 py-3.5 border-2 border-border rounded-xl text-left hover:border-primary/50 transition-all duration-200 bg-muted/30 hover:bg-muted/50">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-5 h-5 text-primary" />
-                        <span className={selectedDestination ? "text-foreground font-medium" : "text-muted-foreground"}>
-                          {selectedDestination || "Reiseziel wählen"}
-                        </span>
+                    <button className="w-full flex items-center justify-between px-6 py-5 border-2 border-border rounded-2xl text-left hover:border-primary transition-all duration-300 bg-muted/20 hover:bg-muted/40 hover:shadow-md group">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                          <MapPin className="w-6 h-6 text-primary" />
+                        </div>
+                        <div>
+                          <span className={cn(
+                            "block text-lg font-semibold",
+                            selectedDestination ? "text-foreground" : "text-muted-foreground"
+                          )}>
+                            {selectedDestination || "Reiseziel auswählen"}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {uniqueDestinations.length} Traumziele verfügbar
+                          </span>
+                        </div>
                       </div>
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                      <ChevronDown className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[300px] p-0" align="start">
-                    <div className="max-h-[300px] overflow-auto">
+                  <PopoverContent className="w-[400px] p-0 bg-white border shadow-xl" align="start">
+                    <div className="max-h-[350px] overflow-auto">
                       {uniqueDestinations.map((tour) => (
                         <button
                           key={tour.id}
@@ -181,19 +191,19 @@ const HeroSlider = () => {
                             setSelectedDestination(tour.destination);
                             setIsDestinationOpen(false);
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors text-left group"
+                          className="w-full flex items-center gap-4 px-5 py-4 hover:bg-primary/5 transition-colors text-left group border-b border-border/50 last:border-0"
                         >
                           <img 
                             src={getImageSrc(tour.image_url, tour.destination)} 
                             alt={tour.destination}
-                            className="w-12 h-12 rounded-lg object-cover group-hover:scale-105 transition-transform"
+                            className="w-16 h-16 rounded-xl object-cover group-hover:scale-105 transition-transform shadow-sm"
                           />
                           <div className="flex-1">
-                            <p className="font-semibold text-foreground">{tour.destination}</p>
-                            <p className="text-xs text-muted-foreground">{tour.country} • ab {tour.price_from}€</p>
+                            <p className="font-bold text-foreground text-lg">{tour.destination}</p>
+                            <p className="text-sm text-muted-foreground">{tour.country} • ab {tour.price_from}€</p>
                           </div>
                           {tour.discount_percent > 0 && (
-                            <span className="text-xs bg-accent/10 text-accent px-2 py-0.5 rounded font-medium">
+                            <span className="text-sm bg-accent text-accent-foreground px-3 py-1 rounded-full font-bold">
                               -{tour.discount_percent}%
                             </span>
                           )}
@@ -204,171 +214,197 @@ const HeroSlider = () => {
                 </Popover>
               </div>
 
-              {/* Date Range Picker */}
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-2">
-                  Wann & wie lange?
-                </label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="w-full flex items-center gap-2 px-4 py-3.5 border-2 border-border rounded-xl text-left hover:border-primary/50 transition-all duration-200 bg-muted/30 hover:bg-muted/50">
-                      <Calendar className="w-5 h-5 text-primary" />
-                      <span className={dateRange.from ? "text-foreground font-medium text-sm" : "text-muted-foreground"}>
-                        {dateRange.from ? (
-                          dateRange.to ? (
-                            `${format(dateRange.from, "dd.MM", { locale: de })} - ${format(dateRange.to, "dd.MM.yy", { locale: de })}`
+              {/* Date & Travelers Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Date Range Picker */}
+                <div>
+                  <label className="block text-sm font-bold text-foreground mb-3 uppercase tracking-wide">
+                    Reisezeitraum
+                  </label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="w-full flex items-center gap-4 px-5 py-4 border-2 border-border rounded-2xl text-left hover:border-primary transition-all duration-300 bg-muted/20 hover:bg-muted/40 hover:shadow-md group">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                          <Calendar className="w-5 h-5 text-primary" />
+                        </div>
+                        <span className={dateRange.from ? "text-foreground font-medium" : "text-muted-foreground"}>
+                          {dateRange.from ? (
+                            dateRange.to ? (
+                              `${format(dateRange.from, "dd.MM", { locale: de })} - ${format(dateRange.to, "dd.MM.yy", { locale: de })}`
+                            ) : (
+                              format(dateRange.from, "dd.MM.yyyy", { locale: de })
+                            )
                           ) : (
-                            format(dateRange.from, "dd.MM.yyyy", { locale: de })
-                          )
-                        ) : (
-                          "Datum wählen"
-                        )}
-                      </span>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <CalendarComponent
-                      mode="range"
-                      selected={dateRange}
-                      onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
-                      numberOfMonths={2}
-                      disabled={(date) => date < new Date()}
-                      className={cn("p-3 pointer-events-auto")}
-                      locale={de}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              {/* Travelers Selector */}
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-2">
-                  Wer reist mit?
-                </label>
-                <Popover open={isTravelersOpen} onOpenChange={setIsTravelersOpen}>
-                  <PopoverTrigger asChild>
-                    <button className="w-full flex items-center justify-between px-4 py-3.5 border-2 border-border rounded-xl text-left hover:border-primary/50 transition-all duration-200 bg-muted/30 hover:bg-muted/50">
-                      <div className="flex items-center gap-2">
-                        <Users className="w-5 h-5 text-primary" />
-                        <span className="text-foreground font-medium text-sm">
-                          {adults} Erw.{children > 0 ? `, ${children} Kind${children > 1 ? 'er' : ''}` : ''}
+                            "Datum wählen"
+                          )}
                         </span>
-                      </div>
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[300px] p-4" align="start">
-                    <div className="space-y-4">
-                      {/* Adults */}
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-semibold text-foreground">Erwachsene</p>
-                          <p className="text-xs text-muted-foreground">Ab 12 Jahren</p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => setAdults(Math.max(1, adults - 1))}
-                            disabled={adults <= 1}
-                            className="w-9 h-9 rounded-full border-2 border-border flex items-center justify-center hover:bg-muted hover:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                          >
-                            <Minus className="w-4 h-4" />
-                          </button>
-                          <span className="w-6 text-center font-bold text-lg">{adults}</span>
-                          <button
-                            onClick={() => setAdults(Math.min(20, adults + 1))}
-                            disabled={adults >= 20}
-                            className="w-9 h-9 rounded-full border-2 border-border flex items-center justify-center hover:bg-muted hover:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 bg-white border shadow-xl" align="start">
+                      <CalendarComponent
+                        mode="range"
+                        selected={dateRange}
+                        onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
+                        numberOfMonths={2}
+                        disabled={(date) => date < new Date()}
+                        className={cn("p-3 pointer-events-auto")}
+                        locale={de}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
 
-                      {/* Children */}
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-semibold text-foreground">Kinder</p>
-                          <p className="text-xs text-muted-foreground">0-11 Jahre</p>
+                {/* Travelers Selector */}
+                <div>
+                  <label className="block text-sm font-bold text-foreground mb-3 uppercase tracking-wide">
+                    Reisende
+                  </label>
+                  <Popover open={isTravelersOpen} onOpenChange={setIsTravelersOpen}>
+                    <PopoverTrigger asChild>
+                      <button className="w-full flex items-center justify-between px-5 py-4 border-2 border-border rounded-2xl text-left hover:border-primary transition-all duration-300 bg-muted/20 hover:bg-muted/40 hover:shadow-md group">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                            <Users className="w-5 h-5 text-primary" />
+                          </div>
+                          <span className="text-foreground font-medium">
+                            {adults} Erw.{children > 0 ? `, ${children} Kind${children > 1 ? 'er' : ''}` : ''}
+                          </span>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => setChildren(Math.max(0, children - 1))}
-                            disabled={children <= 0}
-                            className="w-9 h-9 rounded-full border-2 border-border flex items-center justify-center hover:bg-muted hover:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                          >
-                            <Minus className="w-4 h-4" />
-                          </button>
-                          <span className="w-6 text-center font-bold text-lg">{children}</span>
-                          <button
-                            onClick={() => setChildren(Math.min(10, children + 1))}
-                            disabled={children >= 10}
-                            className="w-9 h-9 rounded-full border-2 border-border flex items-center justify-center hover:bg-muted hover:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* 20+ Contact Hint */}
-                      {showContactHint && (
-                        <div className="bg-accent/10 rounded-xl p-3 flex items-start gap-2 border border-accent/20">
-                          <Phone className="w-4 h-4 text-accent mt-0.5" />
-                          <div className="text-xs">
-                            <p className="font-semibold text-foreground">Gruppenreise ab 20 Personen?</p>
-                            <p className="text-muted-foreground">Kontaktieren Sie uns für ein individuelles Angebot!</p>
+                        <ChevronDown className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[320px] p-5 bg-white border shadow-xl" align="start">
+                      <div className="space-y-5">
+                        {/* Adults */}
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-bold text-foreground">Erwachsene</p>
+                            <p className="text-xs text-muted-foreground">Ab 12 Jahren</p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => setAdults(Math.max(1, adults - 1))}
+                              disabled={adults <= 1}
+                              className="w-10 h-10 rounded-full border-2 border-border flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            >
+                              <Minus className="w-4 h-4" />
+                            </button>
+                            <span className="w-8 text-center font-bold text-xl">{adults}</span>
+                            <button
+                              onClick={() => setAdults(Math.min(20, adults + 1))}
+                              disabled={adults >= 20}
+                              className="w-10 h-10 rounded-full border-2 border-border flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
-                      )}
 
-                      <Button 
-                        className="w-full" 
-                        size="sm"
-                        onClick={() => setIsTravelersOpen(false)}
-                      >
-                        Übernehmen
-                      </Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                        {/* Children */}
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-bold text-foreground">Kinder</p>
+                            <p className="text-xs text-muted-foreground">0-11 Jahre</p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => setChildren(Math.max(0, children - 1))}
+                              disabled={children <= 0}
+                              className="w-10 h-10 rounded-full border-2 border-border flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            >
+                              <Minus className="w-4 h-4" />
+                            </button>
+                            <span className="w-8 text-center font-bold text-xl">{children}</span>
+                            <button
+                              onClick={() => setChildren(Math.min(10, children + 1))}
+                              disabled={children >= 10}
+                              className="w-10 h-10 rounded-full border-2 border-border flex items-center justify-center hover:bg-primary hover:border-primary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* 20+ Contact Hint */}
+                        {showContactHint && (
+                          <div className="bg-accent/10 rounded-xl p-4 flex items-start gap-3 border border-accent/20">
+                            <Phone className="w-5 h-5 text-accent mt-0.5" />
+                            <div className="text-sm">
+                              <p className="font-bold text-foreground">Gruppenreise ab 20 Personen?</p>
+                              <p className="text-muted-foreground">Kontaktieren Sie uns für ein individuelles Angebot!</p>
+                            </div>
+                          </div>
+                        )}
+
+                        <Button 
+                          className="w-full" 
+                          onClick={() => setIsTravelersOpen(false)}
+                        >
+                          Übernehmen
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
 
-              {/* Search Button */}
-              <div className="flex items-end">
-                <Button 
-                  size="lg" 
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 text-base font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 gap-2"
-                  onClick={handleSearch}
-                >
-                  {showContactHint ? "Anfrage senden" : "Angebote finden"}
-                  <ArrowRight className="w-5 h-5" />
-                </Button>
-              </div>
+              {/* Premium CTA Button */}
+              <Button 
+                size="xl" 
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-7 text-lg font-bold rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 gap-3 group"
+                onClick={handleSearch}
+              >
+                {showContactHint ? "Gruppenanfrage senden" : "Angebote finden"}
+                <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+              </Button>
             </div>
           </motion.div>
 
-          {/* Trust Badges */}
+          {/* Trust Bar - Visible & Strong */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="flex flex-wrap gap-4 mt-6 text-sm text-muted-foreground"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="mt-8 bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-border/50 shadow-lg"
           >
-            <div className="flex items-center gap-1.5">
-              <Star className="w-4 h-4 text-accent fill-accent" />
-              <span>4.9/5 Kundenbewertung</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-1 h-1 rounded-full bg-muted-foreground" />
-              <span>Über 50.000 zufriedene Kunden</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-1 h-1 rounded-full bg-muted-foreground" />
-              <span>Kostenlose Stornierung</span>
+            <div className="flex flex-wrap items-center justify-center gap-6 lg:gap-10">
+              <div className="flex items-center gap-2">
+                <div className="flex">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <span className="font-bold text-foreground">4.9/5</span>
+                <span className="text-muted-foreground text-sm">Kundenbewertung</span>
+              </div>
+              <div className="h-6 w-px bg-border hidden lg:block" />
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Users className="w-4 h-4 text-primary" />
+                </div>
+                <span className="font-semibold text-foreground">50.000+</span>
+                <span className="text-muted-foreground">zufriedene Kunden</span>
+              </div>
+              <div className="h-6 w-px bg-border hidden lg:block" />
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <span className="font-semibold text-foreground">Sichere Zahlung</span>
+              </div>
+              <div className="h-6 w-px bg-border hidden lg:block" />
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Clock className="w-4 h-4 text-primary" />
+                </div>
+                <span className="font-semibold text-foreground">24/7 Service</span>
+              </div>
             </div>
           </motion.div>
         </div>
       </div>
-
       {/* Destination Slider - Integrated */}
       {destinations.length > 0 && (
         <div className="relative z-10 bg-white border-t border-border">
