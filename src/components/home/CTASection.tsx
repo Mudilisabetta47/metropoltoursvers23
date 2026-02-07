@@ -35,7 +35,7 @@ const CTASection = () => {
               <Button
                 variant="hero"
                 size="xl"
-                onClick={() => navigate("/search")}
+                onClick={() => navigate("/reisen")}
               >
                 Jetzt buchen
                 <ArrowRight className="w-5 h-5" />
