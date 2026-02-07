@@ -76,23 +76,23 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-2">
             {navLinks.map(link => (
               <Link
                 key={link.path}
                 to={link.path}
                 className={cn(
-                  "relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 group",
+                  "relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
                   isActive(link.path)
                     ? "text-primary bg-primary/10"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
                 )}
               >
                 {link.name}
                 {/* Active indicator */}
                 <span className={cn(
-                  "absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 bg-primary rounded-full transition-all duration-300",
-                  isActive(link.path) ? "w-6" : "w-0 group-hover:w-4"
+                  "absolute bottom-0.5 left-1/2 -translate-x-1/2 h-0.5 bg-primary rounded-full transition-all duration-300",
+                  isActive(link.path) ? "w-8" : "w-0 group-hover:w-6"
                 )} />
               </Link>
             ))}
@@ -135,10 +135,10 @@ const Header = () => {
             <Button 
               size="sm" 
               onClick={() => navigate('/reisen')}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 group"
             >
               Jetzt buchen
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </Button>
           </div>
 

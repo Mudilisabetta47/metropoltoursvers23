@@ -192,11 +192,11 @@ const PackageToursSection = () => {
           </p>
           <Button
             size="lg"
-            onClick={() => navigate("/service")}
-            className="bg-primary hover:bg-primary/90"
+            onClick={() => navigate("/reisen")}
+            className="bg-primary hover:bg-primary/90 group"
           >
             Alle Pauschalreisen entdecken
-            <ArrowRight className="w-5 h-5 ml-2" />
+            <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
           </Button>
         </div>
       </div>
