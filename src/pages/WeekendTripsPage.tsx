@@ -219,9 +219,7 @@ const WeekendTripsPage = () => {
                   <Card
                     key={route.id}
                     className="group overflow-hidden border-border hover:border-primary/50 transition-all cursor-pointer"
-                    onClick={() =>
-                      navigate(`/search?from=Hamburg&to=${destination}`)
-                    }
+                    onClick={() => navigate(`/wochenendtrips/${destination}`)}
                   >
                     {/* Image */}
                     <div className="relative h-48 overflow-hidden">
