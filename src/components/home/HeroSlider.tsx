@@ -360,41 +360,46 @@ const HeroSlider = () => {
             </div>
           </motion.div>
 
-          {/* Trust Elements - Seamless Background Integration */}
+          {/* Trust Elements - Single Row */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="mt-10 flex flex-wrap items-center justify-start gap-x-8 gap-y-4"
+            className="mt-10 flex items-center gap-6 lg:gap-8 flex-nowrap overflow-x-auto pb-2"
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 shrink-0">
               <div className="flex">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400 drop-shadow-sm" />
+                  <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                 ))}
               </div>
-              <span className="font-bold text-foreground">4.9/5</span>
-              <span className="text-muted-foreground text-sm">Bewertung</span>
+              <span className="font-bold text-foreground text-sm">4.9/5</span>
             </div>
             
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex items-center gap-1.5 text-sm shrink-0">
               <Users className="w-4 h-4 text-primary" />
-              <span className="font-semibold text-foreground">50.000+</span>
-              <span className="text-muted-foreground">Kunden</span>
+              <span className="font-semibold text-foreground">50.000+ Kunden</span>
             </div>
             
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex items-center gap-1.5 text-sm shrink-0">
               <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
               <span className="font-semibold text-foreground">Sichere Zahlung</span>
             </div>
             
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex items-center gap-1.5 text-sm shrink-0">
               <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
-              <span className="font-semibold text-foreground">Top Hotels inklusive</span>
+              <span className="font-semibold text-foreground">Top Hotels</span>
+            </div>
+            
+            <div className="flex items-center gap-1.5 text-sm shrink-0">
+              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="font-semibold text-foreground">Kostenlose Stornierung</span>
             </div>
           </motion.div>
         </div>
