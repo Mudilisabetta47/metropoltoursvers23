@@ -178,6 +178,7 @@ const TourDetailPage = () => {
         <TourHeroSection 
           tour={tourData.tour}
           heroImage={getHeroImage()}
+          lowestPrice={lowestPrice}
         />
 
         {/* Tab Navigation - Sticky */}
