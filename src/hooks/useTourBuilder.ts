@@ -439,12 +439,17 @@ export function useTourBuilder(tourId?: string) {
   const saveDate = async (dateData: Partial<TourDate> & { id?: string }) => {
     if (!tourId) return { error: new Error('No tour ID') };
 
+    // NOTE: In the DB, tour_dates.duration_days is a GENERATED ALWAYS column.
+    // Any attempt to INSERT/UPDATE it (even null) will fail with:
+    // "cannot insert a non-DEFAULT value into column \"duration_days\"".
+    const { id, duration_days: _durationDays, tour_id: _tourId, ...payload } = dateData;
+
     try {
-      if (dateData.id) {
-        const { error } = await client.from('tour_dates').update(dateData).eq('id', dateData.id);
+      if (id) {
+        const { error } = await client.from('tour_dates').update(payload).eq('id', id);
         if (error) throw error;
       } else {
-        const { error } = await client.from('tour_dates').insert({ ...dateData, tour_id: tourId });
+        const { error } = await client.from('tour_dates').insert({ ...payload, tour_id: tourId });
         if (error) throw error;
       }
       await fetchTour();
