@@ -173,7 +173,7 @@ const PackageToursSection = () => {
                       size="sm"
                       className="group-hover:bg-primary group-hover:text-primary-foreground"
                       variant="outline"
-                      onClick={() => navigate(`/reisen/${tour.slug || tour.id}`)}
+                      onClick={() => navigate(`/reisen/${tour.id}`)}
                     >
                       Details
                       <ArrowRight className="w-3.5 h-3.5 ml-1" />
