@@ -2,7 +2,7 @@ import { useState } from "react";
 import { TourDate, TourTariff } from "@/hooks/useTourBuilder";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -40,10 +40,11 @@ interface TourDatesTabProps {
   onDelete: (id: string) => Promise<{ error: Error | null }>;
 }
 
+// Status options must match TourDate type: 'available' | 'limited' | 'soldout' | 'on_request' | 'cancelled'
 const statusOptions = [
   { value: 'available', label: 'Buchbar', color: 'bg-emerald-600' },
-  { value: 'few_seats', label: 'Wenige Plätze', color: 'bg-amber-600' },
-  { value: 'sold_out', label: 'Ausgebucht', color: 'bg-red-600' },
+  { value: 'limited', label: 'Wenige Plätze', color: 'bg-amber-600' },
+  { value: 'soldout', label: 'Ausgebucht', color: 'bg-red-600' },
   { value: 'on_request', label: 'Auf Anfrage', color: 'bg-blue-600' },
   { value: 'cancelled', label: 'Abgesagt', color: 'bg-zinc-600' },
 ];
@@ -66,8 +67,7 @@ const emptyDate: Partial<TourDate> = {
   promo_discount_percent: 0,
   notes: null,
 };
-
-type DateStatus = 'available' | 'few_seats' | 'sold_out' | 'on_request' | 'cancelled';
+// DateStatus type matching TourDate interface
 
 const TourDatesTab = ({ tourId, dates, tariffs, onCreate, onUpdate, onDelete }: TourDatesTabProps) => {
   const [dialog, setDialog] = useState<{ open: boolean; date: Partial<TourDate> | null; isNew: boolean }>({
