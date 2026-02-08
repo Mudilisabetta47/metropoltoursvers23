@@ -65,15 +65,33 @@ const TourDetailPage = () => {
       
       setIsLoading(true);
       try {
-        // Fetch tour by slug or id
-        const { data: tour, error: tourError } = await supabase
+        // First try to find by slug
+        let tour = null;
+        let tourError = null;
+
+        // Try slug first
+        const { data: slugMatch, error: slugError } = await supabase
           .from('package_tours')
           .select('*')
-          .or(`slug.eq.${tourId},id.eq.${tourId}`)
-          .single();
+          .eq('slug', tourId)
+          .maybeSingle();
 
-        if (tourError || !tour) {
-          console.error('Tour not found:', tourError);
+        if (slugMatch) {
+          tour = slugMatch;
+        } else {
+          // Fallback: try by ID (UUID format)
+          const { data: idMatch, error: idError } = await supabase
+            .from('package_tours')
+            .select('*')
+            .eq('id', tourId)
+            .maybeSingle();
+          
+          tour = idMatch;
+          tourError = idError;
+        }
+
+        if (!tour) {
+          console.error('Tour not found:', tourError || slugError);
           setTourData(null);
           return;
         }
