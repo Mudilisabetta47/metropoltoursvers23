@@ -89,13 +89,13 @@ const HeroSlider = () => {
     <section className="relative min-h-[90vh] bg-gradient-to-br from-muted to-muted/80 overflow-hidden">
       {/* Background Image - Right Side */}
       <div className="absolute inset-0">
-        <div className="absolute right-0 top-0 w-full lg:w-3/5 h-full">
+        <div className="absolute right-0 top-0 w-full lg:w-[65%] h-full">
           <img
             src={heroBus}
             alt="Metropol Tours Bus"
-            className="w-full h-full object-cover object-right-top"
+            className="w-full h-full object-cover object-center"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-muted via-muted/80 to-transparent lg:from-muted lg:via-transparent lg:to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-muted via-muted/60 to-transparent lg:from-muted lg:via-muted/40 lg:to-transparent" />
         </div>
       </div>
 
