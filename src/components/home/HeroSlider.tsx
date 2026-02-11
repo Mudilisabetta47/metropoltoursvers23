@@ -93,7 +93,7 @@ const HeroSlider = () => {
           <img
             src={heroBus}
             alt="Metropol Tours Bus"
-            className="w-full h-full object-cover object-[70%_center] scale-[0.85]"
+            className="w-full h-full object-cover object-right-top"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-muted via-muted/80 to-transparent lg:from-muted lg:via-transparent lg:to-transparent" />
         </div>
