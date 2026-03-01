@@ -96,7 +96,7 @@ const handler = async (req: Request): Promise<Response> => {
       const safeBookingNum = escapeHtml(booking.booking_number);
 
       const emailResponse = await resend.emails.send({
-        from: "METROPOL TOURS <onboarding@resend.dev>",
+        from: "METROPOL TOURS <buchungsbestätigung@app.metours.de>",
         to: [booking.contact_email],
         subject: `Buchungsbestätigung ${safeBookingNum} – ${safeDest}`,
         html: `<!DOCTYPE html><html><head><meta charset="utf-8">
@@ -187,7 +187,7 @@ const handler = async (req: Request): Promise<Response> => {
       const safeTicket = escapeHtml(booking.ticket_number);
 
       const emailResponse = await resend.emails.send({
-        from: "METROPOL TOURS <onboarding@resend.dev>",
+        from: "METROPOL TOURS <buchungsbestätigung@app.metours.de>",
         to: [booking.passenger_email],
         subject: `Buchungsbestätigung ${safeTicket} – ${safeFrom} → ${safeTo}`,
         html: `<!DOCTYPE html><html><head><meta charset="utf-8">
