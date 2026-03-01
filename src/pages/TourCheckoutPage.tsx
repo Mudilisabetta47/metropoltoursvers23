@@ -10,7 +10,7 @@ import {
   Users,
   Luggage,
   Check,
-  CreditCard,
+  
   Loader2,
   AlertCircle,
   Hotel,
@@ -26,9 +26,10 @@ import {
   X,
   Star,
   Shield,
-  Lock,
   Clock,
   CheckCircle2,
+  Banknote,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,6 +81,14 @@ interface PickupStop {
   meeting_point?: string;
 }
 
+// Bank details constants
+const BANK_DETAILS = {
+  recipient: "METROPOL TOURS GmbH",
+  iban: "DE89 3704 0044 0532 0130 00",
+  bic: "COBADEFFXXX",
+  bank: "Commerzbank",
+};
+
 const TourCheckoutPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -90,8 +99,6 @@ const TourCheckoutPage = () => {
   const dateId = searchParams.get("date") || "";
   const tariffId = searchParams.get("tariff") || "";
   const initialPax = parseInt(searchParams.get("pax") || "2");
-  const paymentStatus = searchParams.get("payment");
-  const stripeSessionId = searchParams.get("session_id");
 
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("summary");
   const [isLoading, setIsLoading] = useState(true);
@@ -115,7 +122,10 @@ const TourCheckoutPage = () => {
   const [selectedExtras, setSelectedExtras] = useState<Record<string, number>>({});
   const [selectedAddons, setSelectedAddons] = useState<Record<string, number>>({});
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const [agreeTravelInfo, setAgreeTravelInfo] = useState(false);
   const [bookingNumber, setBookingNumber] = useState<string | null>(null);
+  const [bookingId, setBookingId] = useState<string | null>(null);
 
   // Coupon state
   const [couponCode, setCouponCode] = useState("");
@@ -127,40 +137,6 @@ const TourCheckoutPage = () => {
   } | null>(null);
   const [couponError, setCouponError] = useState("");
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
-
-  // Handle Stripe return
-  useEffect(() => {
-    if (paymentStatus === "success" && stripeSessionId) {
-      verifyPayment(stripeSessionId);
-    } else if (paymentStatus === "cancelled") {
-      toast.error("Zahlung wurde abgebrochen");
-    }
-  }, [paymentStatus, stripeSessionId]);
-
-  const verifyPayment = async (sessionId: string) => {
-    setIsProcessing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("verify-tour-payment", {
-        body: { sessionId },
-      });
-      if (error) throw error;
-      if (data?.success) {
-        setBookingNumber(data.bookingNumber);
-        setCurrentStep("confirmation");
-        toast.success("Zahlung erfolgreich! Buchung bestätigt.");
-        supabase.functions.invoke("send-booking-confirmation", {
-          body: { tourBookingId: data.bookingId },
-        }).catch((err) => console.error("Email send error:", err));
-      } else {
-        toast.error("Zahlung konnte nicht verifiziert werden");
-      }
-    } catch (error) {
-      console.error("Payment verification error:", error);
-      toast.error("Fehler bei der Zahlungsverifizierung");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   useEffect(() => {
     if (tourId) loadTourData();
@@ -292,7 +268,7 @@ const TourCheckoutPage = () => {
   const steps: { key: CheckoutStep; label: string; icon: React.ElementType }[] = [
     { key: "summary", label: "Reise", icon: Bus },
     { key: "passengers", label: "Reisende", icon: Users },
-    { key: "payment", label: "Zahlung", icon: CreditCard },
+    { key: "payment", label: "Zahlung", icon: Banknote },
     { key: "confirmation", label: "Bestätigung", icon: CheckCircle2 },
   ];
 
@@ -324,6 +300,10 @@ const TourCheckoutPage = () => {
         toast.error("Bitte akzeptieren Sie die AGB");
         return;
       }
+      if (!agreePrivacy) {
+        toast.error("Bitte bestätigen Sie die Datenschutzhinweise");
+        return;
+      }
       await processBooking();
     }
   };
@@ -348,6 +328,8 @@ const TourCheckoutPage = () => {
           return { addon_id: addonId, name: addon?.name || "", quantity: qty, price_each: addon?.price || 0, total: (addon?.price || 0) * qty };
         });
 
+      const consentTimestamp = new Date().toISOString();
+
       const { data: bookingData, error: bookingError } = await supabase
         .from("tour_bookings")
         .insert({
@@ -359,7 +341,12 @@ const TourCheckoutPage = () => {
           base_price: pricePerPerson, pickup_surcharge: pickupSurcharge * participants,
           luggage_addons: luggageAddonsData, total_price: totalPrice,
           discount_code: appliedCoupon?.code || null, discount_amount: discountAmount || null,
-          payment_method: "stripe", status: "pending", booking_type: "direct",
+          payment_method: "bank_transfer", status: "pending", booking_type: "direct",
+          customer_notes: JSON.stringify({
+            consent_agb: consentTimestamp,
+            consent_privacy: consentTimestamp,
+            consent_travel_info: agreeTravelInfo ? consentTimestamp : null,
+          }),
         })
         .select("id, booking_number").single();
 
@@ -369,15 +356,16 @@ const TourCheckoutPage = () => {
         .update({ booked_seats: selectedDate!.booked_seats + participants })
         .eq("id", selectedDate!.id);
 
-      const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
-        "create-tour-payment",
-        { body: { bookingId: bookingData.id, couponCode: appliedCoupon?.code || null } }
-      );
+      setBookingNumber(bookingData.booking_number);
+      setBookingId(bookingData.id);
+      setCurrentStep("confirmation");
+      toast.success("Buchung erfolgreich erstellt!");
 
-      if (paymentError || !paymentData?.url) {
-        throw new Error(paymentData?.error || "Stripe-Sitzung konnte nicht erstellt werden");
-      }
-      window.location.href = paymentData.url;
+      // Send confirmation emails (customer + admin) via edge function
+      supabase.functions.invoke("send-booking-confirmation", {
+        body: { tourBookingId: bookingData.id },
+      }).catch((err) => console.error("Email send error:", err));
+
     } catch (error: any) {
       console.error("Error creating booking:", error);
       toast.error(error.message || "Fehler bei der Buchung. Bitte versuchen Sie es erneut.");
@@ -408,8 +396,13 @@ const TourCheckoutPage = () => {
     setSelectedExtras({ ...selectedExtras, [extraId]: newVal });
   };
 
-  // Loading state with skeleton
-  if (isLoading || (paymentStatus === "success" && isProcessing)) {
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Kopiert!");
+  };
+
+  // Loading state
+  if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-muted/30">
         <Header />
@@ -418,9 +411,7 @@ const TourCheckoutPage = () => {
             <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
           </div>
           <div className="text-center space-y-2">
-            <p className="font-semibold text-foreground">
-              {paymentStatus === "success" ? "Zahlung wird verifiziert..." : "Reisedaten werden geladen..."}
-            </p>
+            <p className="font-semibold text-foreground">Reisedaten werden geladen...</p>
             <p className="text-sm text-muted-foreground">Einen Moment bitte</p>
           </div>
         </main>
@@ -823,39 +814,41 @@ const TourCheckoutPage = () => {
                 </Card>
               )}
 
-              {/* Step 3: Payment */}
+              {/* Step 3: Payment – Bank Transfer */}
               {currentStep === "payment" && (
                 <div className="space-y-5">
-                  {/* Payment Info */}
+                  {/* Payment Method */}
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
-                        <CreditCard className="w-5 h-5 text-primary" />
-                        Sichere Zahlung
+                        <Banknote className="w-5 h-5 text-primary" />
+                        Zahlung per Überweisung
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-5">
                       <div className="p-5 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl space-y-3">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Lock className="w-5 h-5 text-primary" />
+                            <Banknote className="w-5 h-5 text-primary" />
                           </div>
                           <div>
-                            <p className="font-semibold text-foreground">256-bit SSL-verschlüsselt</p>
+                            <p className="font-semibold text-foreground">Zahlungsart: Überweisung</p>
                             <p className="text-sm text-muted-foreground">
-                              Ihre Daten werden sicher übertragen
+                              Du erhältst nach der Buchung eine E-Mail mit unseren Bankdaten und dem Verwendungszweck.
                             </p>
                           </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          Sie werden nach dem Klick auf „Jetzt bezahlen" zu Stripe weitergeleitet. 
-                          Dort können Sie sicher mit Kreditkarte, SEPA-Lastschrift, Apple Pay oder Google Pay bezahlen.
-                        </p>
+                        <div className="p-3 bg-card rounded-lg border border-border/50 text-sm">
+                          <p className="text-muted-foreground">
+                            Deine Buchung wird nach Zahlungseingang bestätigt und automatisch freigegeben.
+                            Du erhältst dann eine zweite E-Mail mit deinen vollständigen Reiseunterlagen.
+                          </p>
+                        </div>
                       </div>
 
                       {/* Booking Summary */}
                       <div className="p-4 bg-muted/30 rounded-xl space-y-2 text-sm">
-                        <h4 className="font-semibold text-foreground mb-3">Ihre Buchung im Überblick</h4>
+                        <h4 className="font-semibold text-foreground mb-3">Deine Buchung im Überblick</h4>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Reise</span>
                           <span className="font-medium">{tour.destination}</span>
@@ -880,17 +873,43 @@ const TourCheckoutPage = () => {
 
                       <Separator />
 
-                      <div className="flex items-start gap-3">
-                        <Checkbox
-                          id="terms"
-                          checked={agreeTerms}
-                          onCheckedChange={(checked) => setAgreeTerms(checked as boolean)}
-                        />
-                        <Label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer leading-relaxed">
-                          Ich akzeptiere die{" "}
-                          <a href="/terms" target="_blank" className="text-primary hover:underline font-medium">AGB</a>{" "}und{" "}
-                          <a href="/privacy" target="_blank" className="text-primary hover:underline font-medium">Datenschutzbestimmungen</a>
-                        </Label>
+                      {/* Checkboxes */}
+                      <div className="space-y-4">
+                        <div className="flex items-start gap-3">
+                          <Checkbox
+                            id="terms"
+                            checked={agreeTerms}
+                            onCheckedChange={(checked) => setAgreeTerms(checked as boolean)}
+                          />
+                          <Label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer leading-relaxed">
+                            Ich akzeptiere die{" "}
+                            <a href="/terms" target="_blank" className="text-primary hover:underline font-medium">AGB</a> *
+                          </Label>
+                        </div>
+
+                        <div className="flex items-start gap-3">
+                          <Checkbox
+                            id="privacy"
+                            checked={agreePrivacy}
+                            onCheckedChange={(checked) => setAgreePrivacy(checked as boolean)}
+                          />
+                          <Label htmlFor="privacy" className="text-sm text-muted-foreground cursor-pointer leading-relaxed">
+                            Ich habe die{" "}
+                            <a href="/privacy" target="_blank" className="text-primary hover:underline font-medium">Datenschutzhinweise</a>{" "}
+                            gelesen und akzeptiert *
+                          </Label>
+                        </div>
+
+                        <div className="flex items-start gap-3">
+                          <Checkbox
+                            id="travelinfo"
+                            checked={agreeTravelInfo}
+                            onCheckedChange={(checked) => setAgreeTravelInfo(checked as boolean)}
+                          />
+                          <Label htmlFor="travelinfo" className="text-sm text-muted-foreground cursor-pointer leading-relaxed">
+                            Ich bestätige die Reiseinformationen zur Pauschalreise (optional)
+                          </Label>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -904,22 +923,50 @@ const TourCheckoutPage = () => {
                     <div className="w-20 h-20 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-5">
                       <CheckCircle2 className="w-10 h-10 text-primary" />
                     </div>
-                    <h2 className="text-2xl font-bold text-foreground mb-2">Buchung erfolgreich!</h2>
+                    <h2 className="text-2xl font-bold text-foreground mb-2">Buchung erfolgreich erstellt!</h2>
                     <p className="text-muted-foreground mb-2">
                       Buchungsnummer: <span className="font-mono font-bold text-foreground">{bookingNumber}</span>
                     </p>
-                    <Badge className="bg-primary text-primary-foreground">Bezahlt via Stripe ✓</Badge>
+                    <Badge className="bg-amber-100 text-amber-800 border-amber-300">⏳ Warte auf Zahlungseingang</Badge>
                   </div>
                   <CardContent className="p-6 space-y-6">
                     <p className="text-center text-muted-foreground">
-                      Eine Bestätigung wurde an <strong>{passengerInfo[0]?.email}</strong> gesendet.
+                      Eine Bestätigung mit den Bankdaten wurde an <strong>{passengerInfo[0]?.email}</strong> gesendet.
                     </p>
+
+                    {/* Bank Details */}
+                    <div className="bg-primary/5 rounded-xl p-5 border border-primary/20">
+                      <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
+                        <Banknote className="w-5 h-5 text-primary" />
+                        Überweisungsdaten
+                      </h3>
+                      <div className="space-y-3 text-sm">
+                        {[
+                          { label: "Empfänger", value: BANK_DETAILS.recipient },
+                          { label: "IBAN", value: BANK_DETAILS.iban },
+                          { label: "BIC", value: BANK_DETAILS.bic },
+                          { label: "Bank", value: BANK_DETAILS.bank },
+                          { label: "Verwendungszweck", value: `Buchung ${bookingNumber}` },
+                          { label: "Betrag", value: `${totalPrice.toFixed(2)} €` },
+                        ].map((item) => (
+                          <div key={item.label} className="flex items-center justify-between p-2.5 bg-card rounded-lg border border-border/50">
+                            <div>
+                              <span className="text-muted-foreground text-xs">{item.label}</span>
+                              <p className="font-semibold text-foreground">{item.value}</p>
+                            </div>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyToClipboard(item.value)}>
+                              <Copy className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
 
                     {/* Document Downloads */}
                     <div className="bg-muted/30 rounded-xl p-5">
                       <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
                         <FileText className="w-5 h-5 text-primary" />
-                        Ihre Reiseunterlagen
+                        Deine Reiseunterlagen
                       </h3>
                       <div className="grid sm:grid-cols-3 gap-3">
                         <Button
@@ -1054,12 +1101,12 @@ const TourCheckoutPage = () => {
                         {isProcessing ? (
                           <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Weiterleitung zu Stripe...
+                            Buchung wird erstellt...
                           </>
                         ) : currentStep === "payment" ? (
                           <>
-                            <Lock className="w-4 h-4 mr-2" />
-                            Jetzt sicher bezahlen
+                            <CheckCircle2 className="w-4 h-4 mr-2" />
+                            Jetzt verbindlich buchen
                           </>
                         ) : (
                           "Weiter"
@@ -1076,16 +1123,16 @@ const TourCheckoutPage = () => {
                       {/* Trust Elements */}
                       <div className="space-y-2 pt-2">
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Shield className="w-3.5 h-3.5 text-primary shrink-0" />
-                          <span>Sichere Zahlung mit Stripe</span>
+                          <Banknote className="w-3.5 h-3.5 text-primary shrink-0" />
+                          <span>Zahlung per Überweisung</span>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Lock className="w-3.5 h-3.5 text-primary shrink-0" />
+                          <Shield className="w-3.5 h-3.5 text-primary shrink-0" />
                           <span>SSL-verschlüsselt</span>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
-                          <span>Sofortige Buchungsbestätigung</span>
+                          <span>Sofortige Buchungsbestätigung per E-Mail</span>
                         </div>
                         {selectedTariff?.is_refundable && (
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -1116,8 +1163,8 @@ const TourCheckoutPage = () => {
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : currentStep === "payment" ? (
                 <>
-                  <Lock className="w-4 h-4 mr-1" />
-                  Bezahlen
+                  <CheckCircle2 className="w-4 h-4 mr-1" />
+                  Buchen
                 </>
               ) : (
                 "Weiter"
