@@ -46,7 +46,6 @@ const FAQ_ITEMS = [
   { q: "Wie bekomme ich meine Tickets?", a: "Nach erfolgreicher Zahlung erhalten Sie Buchungsbestätigung, Rechnung und Reise-Voucher per E-Mail. Alle Dokumente sind auch in 'Meine Reisen' abrufbar." },
   { q: "Kann ich kostenlos stornieren?", a: "Je nach Tarif ist eine kostenfreie Stornierung bis 14 Tage vor Abfahrt möglich. Details finden Sie in der Tarifauswahl." },
   { q: "Ist eine Reiseversicherung enthalten?", a: "Eine Reiseversicherung ist optional buchbar und kann bei der Buchung als Zusatzleistung hinzugefügt werden." },
-  { q: "Was passiert bei Nichterreichen der Mindestteilnehmerzahl?", a: "Sollte die Mindestteilnehmerzahl nicht erreicht werden, informieren wir Sie spätestens 14 Tage vor Abfahrt. Sie erhalten den vollen Reisepreis zurück." },
 ];
 
 const TourDetailPage = () => {
