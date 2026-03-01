@@ -13,6 +13,7 @@ import TourHeroSection from "./TourHeroSection";
 import TourStickySidebar from "./TourStickySidebar";
 import TourTabNavigation from "./TourTabNavigation";
 import TourRecommendations from "./TourRecommendations";
+import TourSocialProof from "./TourSocialProof";
 import TourDatesSection from "./TourDatesSection";
 import TourInclusionsSection from "./TourInclusionsSection";
 import TourRoutesSection from "./TourRoutesSection";
@@ -178,6 +179,13 @@ const TourDetailPage = () => {
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Left 2/3 */}
             <div className="lg:col-span-2 space-y-8">
+              {/* Social Proof */}
+              <TourSocialProof
+                tourId={tourData.tour.id}
+                availableSeats={availableSeats}
+                selectedDateId={selectedDate?.id}
+              />
+
               {/* Quick Picks */}
               <TourRecommendations
                 dates={tourData.dates}
