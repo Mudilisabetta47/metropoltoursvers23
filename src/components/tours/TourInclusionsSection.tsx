@@ -10,103 +10,95 @@ interface TourInclusionsSectionProps {
   onSelectTariff: (tariff: TourTariff) => void;
 }
 
-// Icon mapping
 const iconMap: Record<string, React.ElementType> = {
-  'Check': Check,
-  'X': X,
-  'Plus': Plus,
-  'Luggage': Luggage,
-  'Hotel': Hotel,
-  'Coffee': Coffee,
-  'Bus': Bus,
-  'default': Check,
+  'Check': Check, 'X': X, 'Plus': Plus, 'Luggage': Luggage,
+  'Hotel': Hotel, 'Coffee': Coffee, 'Bus': Bus, 'default': Check,
 };
 
-const TourInclusionsSection = ({ 
-  inclusions, 
-  tariffs, 
-  selectedTariff, 
-  onSelectTariff 
-}: TourInclusionsSectionProps) => {
+const TourInclusionsSection = ({ inclusions, tariffs, selectedTariff, onSelectTariff }: TourInclusionsSectionProps) => {
   const includedItems = inclusions.filter(i => i.category === 'included');
   const optionalItems = inclusions.filter(i => i.category === 'optional');
   const notIncludedItems = inclusions.filter(i => i.category === 'not_included');
 
   return (
-    <section id="section-leistungen" className="space-y-6 scroll-mt-20">
-      {/* Tariff Comparison */}
+    <section id="section-leistungen" className="space-y-6 scroll-mt-36">
+      {/* Options Table (Booking-style "Zimmer") */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl font-bold">Wählen Sie Ihren Tarif</CardTitle>
+          <CardTitle className="text-xl font-bold">Wählen Sie Ihre Option</CardTitle>
           <CardDescription>
-            Alle Tarife beinhalten die Busreise, Übernachtung mit Frühstück. Unterschiede in Storno & Gepäck.
+            Alle Optionen beinhalten Bus + Hotel + Frühstück
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <CardContent className="p-0">
+          {/* Table Header */}
+          <div className="hidden md:grid md:grid-cols-12 gap-4 px-6 py-3 bg-muted/50 border-y text-sm font-medium text-muted-foreground">
+            <div className="col-span-3">Option</div>
+            <div className="col-span-2">Gepäck</div>
+            <div className="col-span-2">Storno</div>
+            <div className="col-span-2">Sitzplatz</div>
+            <div className="col-span-1">Aufpreis</div>
+            <div className="col-span-2 text-right">Auswahl</div>
+          </div>
+
+          <div className="divide-y">
             {tariffs.map((tariff) => {
               const isSelected = selectedTariff?.id === tariff.id;
               return (
                 <div
                   key={tariff.id}
                   onClick={() => onSelectTariff(tariff)}
-                  className={`relative p-5 rounded-xl border-2 cursor-pointer transition-all ${
-                    isSelected 
-                      ? 'border-primary bg-primary/5 shadow-lg' 
-                      : 'border-slate-200 hover:border-primary/50 hover:shadow-md'
+                  className={`grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 px-6 py-4 items-center cursor-pointer transition-colors ${
+                    isSelected ? 'bg-primary/5 border-l-4 border-l-primary' : 'hover:bg-muted/30'
                   }`}
                 >
-                  {tariff.is_recommended && (
-                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-accent-foreground">
-                      Empfohlen
-                    </Badge>
-                  )}
-                  
-                  <h4 className="text-lg font-bold text-foreground mb-3">{tariff.name}</h4>
-                  
-                  <div className="space-y-2 text-sm">
-                    {/* Luggage */}
-                    <div className="flex items-center gap-2">
-                      <Luggage className={`w-4 h-4 ${tariff.suitcase_included ? 'text-emerald-600' : 'text-slate-400'}`} />
-                      <span className={tariff.suitcase_included ? 'text-foreground' : 'text-muted-foreground'}>
-                        {tariff.suitcase_included 
-                          ? `Koffer bis ${tariff.suitcase_weight_kg || 20}kg`
-                          : 'Nur Handgepäck'}
-                      </span>
-                    </div>
-
-                    {/* Seat Reservation */}
-                    <div className="flex items-center gap-2">
-                      <Armchair className={`w-4 h-4 ${tariff.seat_reservation ? 'text-emerald-600' : 'text-slate-400'}`} />
-                      <span className={tariff.seat_reservation ? 'text-foreground' : 'text-muted-foreground'}>
-                        {tariff.seat_reservation ? 'Sitzplatzreservierung' : 'Freie Platzwahl'}
-                      </span>
-                    </div>
-
-                    {/* Refund */}
-                    <div className="flex items-center gap-2">
-                      <RefreshCcw className={`w-4 h-4 ${tariff.is_refundable ? 'text-emerald-600' : 'text-slate-400'}`} />
-                      <span className={tariff.is_refundable ? 'text-foreground' : 'text-muted-foreground'}>
-                        {tariff.is_refundable 
-                          ? `Stornierung bis ${tariff.cancellation_days}T vorher`
-                          : 'Keine Stornierung'}
-                      </span>
-                    </div>
+                  {/* Name */}
+                  <div className="md:col-span-3 flex items-center gap-2">
+                    <span className="font-bold text-foreground">{tariff.name}</span>
+                    {tariff.is_recommended && (
+                      <Badge className="bg-primary text-primary-foreground text-[10px]">Empfohlen</Badge>
+                    )}
                   </div>
 
-                  {tariff.price_modifier > 0 && (
-                    <p className="mt-3 text-sm font-medium text-primary">
-                      +{tariff.price_modifier.toFixed(0)} € p.P.
-                    </p>
-                  )}
+                  {/* Luggage */}
+                  <div className="md:col-span-2 flex items-center gap-2 text-sm">
+                    <Luggage className={`w-4 h-4 ${tariff.suitcase_included ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <span className={tariff.suitcase_included ? 'text-foreground' : 'text-muted-foreground'}>
+                      {tariff.suitcase_included ? `${tariff.suitcase_weight_kg || 20}kg Koffer` : 'Handgepäck'}
+                    </span>
+                  </div>
 
-                  {isSelected && (
-                    <div className="absolute top-3 right-3">
-                      <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                        <Check className="w-4 h-4 text-white" />
-                      </div>
+                  {/* Cancellation */}
+                  <div className="md:col-span-2 flex items-center gap-2 text-sm">
+                    <RefreshCcw className={`w-4 h-4 ${tariff.is_refundable ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <span className={tariff.is_refundable ? 'text-foreground' : 'text-muted-foreground'}>
+                      {tariff.is_refundable ? `Bis ${tariff.cancellation_days}T vorher` : 'Nicht möglich'}
+                    </span>
+                  </div>
+
+                  {/* Seat */}
+                  <div className="md:col-span-2 flex items-center gap-2 text-sm">
+                    <Armchair className={`w-4 h-4 ${tariff.seat_reservation ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <span className={tariff.seat_reservation ? 'text-foreground' : 'text-muted-foreground'}>
+                      {tariff.seat_reservation ? 'Reserviert' : 'Freie Wahl'}
+                    </span>
+                  </div>
+
+                  {/* Price */}
+                  <div className="md:col-span-1">
+                    <span className="font-semibold text-primary">
+                      {tariff.price_modifier > 0 ? `+${tariff.price_modifier.toFixed(0)}€` : 'inkl.'}
+                    </span>
+                  </div>
+
+                  {/* Select */}
+                  <div className="md:col-span-2 flex justify-end">
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                      isSelected ? 'border-primary bg-primary' : 'border-muted-foreground/30'
+                    }`}>
+                      {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             })}
@@ -118,53 +110,37 @@ const TourInclusionsSection = ({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl font-bold">
-            <Check className="w-6 h-6 text-emerald-600" />
-            Im Preis enthalten
+            <Check className="w-6 h-6 text-primary" />
+            Das ist inklusive
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid sm:grid-cols-2 gap-3">
-            {/* Always show accommodation and breakfast */}
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-50">
-              <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
-                <Hotel className="w-4 h-4 text-emerald-600" />
+            {[
+              { icon: Hotel, title: "Übernachtung", desc: "Im Hotel oder Apartment inkl." },
+              { icon: Coffee, title: "Frühstück", desc: "Täglich im Hotel inkl." },
+              { icon: Bus, title: "Busreise", desc: "Hin- und Rückfahrt im Komfortbus" },
+            ].map((item, i) => (
+              <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-primary/5">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <item.icon className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">{item.title}</p>
+                  <p className="text-sm text-muted-foreground">{item.desc}</p>
+                </div>
               </div>
-              <div>
-                <p className="font-medium text-foreground">Übernachtung</p>
-                <p className="text-sm text-muted-foreground">Im Hotel oder Apartment inkl.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-50">
-              <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
-                <Coffee className="w-4 h-4 text-emerald-600" />
-              </div>
-              <div>
-                <p className="font-medium text-foreground">Frühstück</p>
-                <p className="text-sm text-muted-foreground">Täglich im Hotel inkl.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-50">
-              <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
-                <Bus className="w-4 h-4 text-emerald-600" />
-              </div>
-              <div>
-                <p className="font-medium text-foreground">Busreise</p>
-                <p className="text-sm text-muted-foreground">Hin- und Rückfahrt im Komfortbus</p>
-              </div>
-            </div>
-            {/* Dynamic inclusions from DB */}
+            ))}
             {includedItems.map((item) => {
               const Icon = iconMap[item.icon] || iconMap.default;
               return (
-                <div key={item.id} className="flex items-start gap-3 p-3 rounded-lg bg-emerald-50">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
-                    <Icon className="w-4 h-4 text-emerald-600" />
+                <div key={item.id} className="flex items-start gap-3 p-3 rounded-lg bg-primary/5">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Icon className="w-4 h-4 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium text-foreground">{item.title}</p>
-                    {item.description && (
-                      <p className="text-sm text-muted-foreground">{item.description}</p>
-                    )}
+                    {item.description && <p className="text-sm text-muted-foreground">{item.description}</p>}
                   </div>
                 </div>
               );
@@ -173,7 +149,7 @@ const TourInclusionsSection = ({
         </CardContent>
       </Card>
 
-      {/* Optional Services */}
+      {/* Optional */}
       {optionalItems.length > 0 && (
         <Card>
           <CardHeader>
@@ -191,9 +167,7 @@ const TourInclusionsSection = ({
                   </div>
                   <div>
                     <p className="font-medium text-foreground">{item.title}</p>
-                    {item.description && (
-                      <p className="text-sm text-muted-foreground">{item.description}</p>
-                    )}
+                    {item.description && <p className="text-sm text-muted-foreground">{item.description}</p>}
                   </div>
                 </div>
               ))}
@@ -202,25 +176,22 @@ const TourInclusionsSection = ({
         </Card>
       )}
 
-      {/* Not Included */}
+      {/* Not included */}
       {notIncludedItems.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl font-bold text-muted-foreground">
-              <X className="w-6 h-6" />
-              Nicht im Preis enthalten
+              <X className="w-6 h-6" /> Nicht enthalten
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid sm:grid-cols-2 gap-3">
               {notIncludedItems.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
-                  <X className="w-4 h-4 text-slate-400 shrink-0" />
+                <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                  <X className="w-4 h-4 text-muted-foreground shrink-0" />
                   <div>
                     <p className="text-muted-foreground">{item.title}</p>
-                    {item.description && (
-                      <p className="text-sm text-muted-foreground/70">{item.description}</p>
-                    )}
+                    {item.description && <p className="text-sm text-muted-foreground/70">{item.description}</p>}
                   </div>
                 </div>
               ))}

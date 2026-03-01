@@ -1,7 +1,9 @@
-import { MapPin, Share2, Heart, ChevronRight, Clock, Star, Bus, Hotel, Coffee } from "lucide-react";
+import { useState } from "react";
+import { MapPin, Share2, Heart, ChevronRight, Clock, Bus, Hotel, Coffee, Images, X, ChevronLeft as ChevronLeftIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ExtendedPackageTour } from "@/hooks/useTourBuilder";
 
 interface TourHeroSectionProps {
@@ -10,134 +12,268 @@ interface TourHeroSectionProps {
   lowestPrice?: number;
 }
 
-const TourHeroSection = ({ tour, heroImage, lowestPrice }: TourHeroSectionProps) => {
+const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice }: TourHeroSectionProps) => {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [isSaved, setIsSaved] = useState(false);
+
+  // Build gallery from available images
+  const allImages: string[] = [];
+  if (tour.hero_image_url) allImages.push(tour.hero_image_url);
+  if (tour.image_url && tour.image_url !== tour.hero_image_url) allImages.push(tour.image_url);
+  if (tour.gallery_images && tour.gallery_images.length > 0) {
+    tour.gallery_images.forEach(img => {
+      if (img && !allImages.includes(img)) allImages.push(img);
+    });
+  }
+  // Pad with hero fallback if needed
+  while (allImages.length < 5) {
+    allImages.push(heroImage);
+  }
+
+  const mainImage = allImages[0] || heroImage;
+  const sideImages = allImages.slice(1, 5);
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
+  // Rating data (could come from DB in future)
+  const rating = 8.7;
+  const ratingLabel = rating >= 9 ? "Ausgezeichnet" : rating >= 8 ? "Hervorragend" : rating >= 7 ? "Sehr gut" : "Gut";
+  const reviewCount = 312;
+  const subscores = [
+    { label: "Lage", score: 9.1 },
+    { label: "Komfort", score: 8.8 },
+    { label: "Preis/Leistung", score: 8.5 },
+  ];
 
   return (
-    <section className="relative">
-      {/* Full-width Hero Image */}
-      <div className="relative h-[50vh] lg:h-[60vh] min-h-[400px] max-h-[600px] overflow-hidden">
-        <img
-          src={heroImage}
-          alt={tour.destination}
-          className="w-full h-full object-cover"
-        />
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
-        
-        {/* Breadcrumb - Top */}
-        <div className="absolute top-0 left-0 right-0 pt-4">
-          <div className="container mx-auto px-4">
-            <nav className="flex items-center gap-2 text-sm text-white/80">
-              <Link to="/" className="hover:text-white transition-colors font-medium">
-                METROPOL TOURS
-              </Link>
-              <ChevronRight className="w-4 h-4" />
-              <Link to="/" className="hover:text-white transition-colors">
-                Pauschalreisen
-              </Link>
-              <ChevronRight className="w-4 h-4" />
-              <span className="text-white">{tour.destination}</span>
-            </nav>
-          </div>
+    <section>
+      {/* Breadcrumb */}
+      <div className="bg-card border-b border-border">
+        <div className="max-w-[1240px] mx-auto px-4 py-3">
+          <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <Link to="/" className="hover:text-primary transition-colors">Startseite</Link>
+            <ChevronRight className="w-3.5 h-3.5" />
+            <Link to="/reisen" className="hover:text-primary transition-colors">Pauschalreisen</Link>
+            <ChevronRight className="w-3.5 h-3.5" />
+            <span className="text-foreground font-medium">{tour.destination}</span>
+          </nav>
         </div>
+      </div>
 
-        {/* Hero Content - Bottom */}
-        <div className="absolute bottom-0 left-0 right-0 pb-8">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl">
+      {/* Title Bar */}
+      <div className="bg-card border-b border-border">
+        <div className="max-w-[1240px] mx-auto px-4 py-4">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+            <div className="flex-1 min-w-0">
               {/* Badges */}
-              <div className="flex flex-wrap gap-2 mb-4">
+              <div className="flex flex-wrap gap-2 mb-2">
                 {tour.is_featured && (
-                  <Badge className="bg-accent text-accent-foreground shadow-lg">
-                    ★ Top-Empfehlung
-                  </Badge>
+                  <Badge className="bg-primary text-primary-foreground text-xs">★ Top-Empfehlung</Badge>
                 )}
                 {tour.discount_percent && tour.discount_percent > 0 && (
-                  <Badge className="bg-red-500 text-white shadow-lg">
-                    -{tour.discount_percent}% Frühbucher-Rabatt
-                  </Badge>
+                  <Badge variant="destructive" className="text-xs">-{tour.discount_percent}% Frühbucher</Badge>
                 )}
                 {tour.category && (
-                  <Badge variant="secondary" className="bg-white/20 text-white border-0 backdrop-blur-sm">
-                    {tour.category}
-                  </Badge>
+                  <Badge variant="secondary" className="text-xs">{tour.category}</Badge>
                 )}
               </div>
 
-              {/* Title */}
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 drop-shadow-lg">
-                {tour.destination}
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+                {tour.destination} – {tour.duration_days} Tage {tour.category ? `(${tour.category})` : ''}
               </h1>
-              
-              {/* Subtitle */}
-              <div className="flex flex-wrap items-center gap-4 text-white/90 mb-4">
-                <div className="flex items-center gap-1.5">
+
+              <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
-                  <span>{tour.location}, {tour.country}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
+                  {tour.location}, {tour.country}
+                </span>
+                <span className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  <span>{tour.duration_days} Tage / {(tour.duration_days || 1) - 1} Nächte</span>
-                </div>
-                <div className="flex items-center gap-0.5">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  ))}
-                  <span className="ml-1 text-sm">(4.8)</span>
-                </div>
+                  {tour.duration_days} Tage / {(tour.duration_days || 1) - 1} Nächte
+                </span>
+                <span className="flex items-center gap-1">
+                  <Bus className="w-3.5 h-3.5 text-primary" /> Bus inkl.
+                </span>
+                <span className="flex items-center gap-1">
+                  <Hotel className="w-3.5 h-3.5 text-primary" /> Hotel inkl.
+                </span>
+                <span className="flex items-center gap-1">
+                  <Coffee className="w-3.5 h-3.5 text-primary" /> Frühstück inkl.
+                </span>
+              </div>
+            </div>
+
+            {/* Actions + Rating */}
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <Share2 className="w-4 h-4" /> Teilen
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => setIsSaved(!isSaved)}
+                >
+                  <Heart className={`w-4 h-4 ${isSaved ? 'fill-destructive text-destructive' : ''}`} /> Merken
+                </Button>
               </div>
 
-              {/* Quick Info Pills */}
-              <div className="flex flex-wrap gap-3 mb-5">
-                <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-2 text-white text-sm">
-                  <Bus className="w-4 h-4" />
-                  <span>Komfortbus inkl.</span>
+              {/* Rating Badge */}
+              <div className="flex items-center gap-2">
+                <div className="text-right hidden sm:block">
+                  <p className="text-sm font-semibold text-foreground">{ratingLabel}</p>
+                  <p className="text-xs text-muted-foreground">{reviewCount} Bewertungen</p>
                 </div>
-                <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-2 text-white text-sm">
-                  <Hotel className="w-4 h-4" />
-                  <span>Übernachtung inkl.</span>
-                </div>
-                <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-2 text-white text-sm">
-                  <Coffee className="w-4 h-4" />
-                  <span>Frühstück inkl.</span>
+                <div className="w-11 h-11 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg">
+                  {rating}
                 </div>
               </div>
-
-              {/* Price Teaser */}
-              {lowestPrice && (
-                <div className="inline-flex items-end gap-2 bg-white/95 backdrop-blur rounded-xl px-5 py-3 shadow-xl">
-                  <span className="text-muted-foreground text-sm">ab</span>
-                  <span className="text-3xl font-bold text-primary">{lowestPrice.toFixed(0)}€</span>
-                  <span className="text-muted-foreground text-sm pb-1">pro Person</span>
-                </div>
-              )}
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Action Buttons - Top Right */}
-        <div className="absolute top-4 right-4 flex items-center gap-2">
-          <Button variant="secondary" size="sm" className="bg-white/90 backdrop-blur hover:bg-white shadow-lg gap-2">
-            <Share2 className="w-4 h-4" />
-            <span className="hidden sm:inline">Teilen</span>
-          </Button>
-          <Button variant="secondary" size="sm" className="bg-white/90 backdrop-blur hover:bg-white shadow-lg gap-2">
-            <Heart className="w-4 h-4" />
-            <span className="hidden sm:inline">Merken</span>
+      {/* Gallery Grid */}
+      <div className="max-w-[1240px] mx-auto px-4 pt-4">
+        <div className="grid grid-cols-4 grid-rows-2 gap-2 h-[300px] md:h-[420px] rounded-xl overflow-hidden">
+          {/* Main large image */}
+          <div
+            className="col-span-2 row-span-2 relative cursor-pointer group"
+            onClick={() => openLightbox(0)}
+          >
+            <img src={mainImage} alt={tour.destination} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+          </div>
+
+          {/* 4 smaller images */}
+          {sideImages.map((img, i) => (
+            <div
+              key={i}
+              className="relative cursor-pointer group overflow-hidden"
+              onClick={() => openLightbox(i + 1)}
+            >
+              <img src={img} alt={`${tour.destination} ${i + 2}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+
+              {/* "Show all photos" overlay on last image */}
+              {i === 3 && allImages.length > 5 && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <Button variant="secondary" size="sm" className="gap-1.5 bg-white/90 text-foreground hover:bg-white">
+                    <Images className="w-4 h-4" />
+                    Alle Fotos ({allImages.length})
+                  </Button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Show all photos button (mobile) */}
+        <div className="flex justify-end mt-2 md:hidden">
+          <Button variant="outline" size="sm" onClick={() => openLightbox(0)} className="gap-1.5 text-xs">
+            <Images className="w-3.5 h-3.5" />
+            Alle Fotos anzeigen
           </Button>
         </div>
       </div>
 
-      {/* Short Description Bar */}
-      {tour.short_description && (
-        <div className="bg-muted/50 border-b">
-          <div className="container mx-auto px-4 py-4">
-            <p className="text-muted-foreground max-w-3xl">
-              {tour.short_description}
-            </p>
+      {/* Review Subscores Bar */}
+      <div className="max-w-[1240px] mx-auto px-4 mt-4">
+        <div className="bg-card rounded-xl border border-border p-4 flex flex-col sm:flex-row sm:items-center gap-4">
+          {/* Main Score */}
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold text-2xl">
+              {rating}
+            </div>
+            <div>
+              <p className="font-bold text-foreground text-lg">{ratingLabel}</p>
+              <p className="text-sm text-muted-foreground">{reviewCount} Bewertungen</p>
+            </div>
           </div>
+
+          {/* Divider */}
+          <div className="hidden sm:block w-px h-10 bg-border" />
+
+          {/* Subscores */}
+          <div className="flex flex-1 gap-6">
+            {subscores.map((sub) => (
+              <div key={sub.label} className="flex-1">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-muted-foreground">{sub.label}</span>
+                  <span className="text-sm font-semibold text-foreground">{sub.score}</span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary rounded-full transition-all"
+                    style={{ width: `${(sub.score / 10) * 100}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA */}
+          <Button variant="outline" size="sm" className="shrink-0 text-xs">
+            Bewertungen lesen
+          </Button>
+        </div>
+      </div>
+
+      {/* Short description */}
+      {tour.short_description && (
+        <div className="max-w-[1240px] mx-auto px-4 mt-4">
+          <p className="text-muted-foreground text-sm">{tour.short_description}</p>
         </div>
       )}
+
+      {/* Lightbox Dialog */}
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <DialogContent className="max-w-5xl p-0 bg-black border-0">
+          <div className="relative">
+            <img
+              src={allImages[lightboxIndex] || heroImage}
+              alt={`${tour.destination} Foto ${lightboxIndex + 1}`}
+              className="w-full max-h-[80vh] object-contain"
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-4 right-4 text-white hover:bg-white/20"
+              onClick={() => setLightboxOpen(false)}
+            >
+              <X className="w-6 h-6" />
+            </Button>
+            {allImages.length > 1 && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20"
+                  onClick={() => setLightboxIndex((lightboxIndex - 1 + allImages.length) % allImages.length)}
+                >
+                  <ChevronLeftIcon className="w-8 h-8" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20"
+                  onClick={() => setLightboxIndex((lightboxIndex + 1) % allImages.length)}
+                >
+                  <ChevronRight className="w-8 h-8" />
+                </Button>
+              </>
+            )}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm bg-black/50 px-3 py-1 rounded-full">
+              {lightboxIndex + 1} / {allImages.length}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 };
