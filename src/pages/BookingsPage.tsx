@@ -49,6 +49,7 @@ const BookingsPage = () => {
   const [lookupEmail, setLookupEmail] = useState("");
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [guestBooking, setGuestBooking] = useState<Booking | null>(null);
+  const [guestTourBooking, setGuestTourBooking] = useState<any | null>(null);
 
   useEffect(() => {
     if (user) {
