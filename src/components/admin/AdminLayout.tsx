@@ -32,11 +32,11 @@ interface MenuSection {
   items: MenuItem[];
 }
 
-const ALL_STAFF: AppRole[] = ["admin", "office", "agent", "driver"];
+const ALL_STAFF: AppRole[] = ["admin", "office", "agent"];
 const MANAGEMENT: AppRole[] = ["admin", "office"];
 const ADMIN_ONLY: AppRole[] = ["admin"];
 const BOOKING_STAFF: AppRole[] = ["admin", "office", "agent"];
-const OPS_STAFF: AppRole[] = ["admin", "office", "driver"];
+const OPS_STAFF: AppRole[] = ["admin", "office"];
 
 const menuSections: MenuSection[] = [
   {
