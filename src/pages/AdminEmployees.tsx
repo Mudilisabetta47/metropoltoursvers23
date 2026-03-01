@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { Users, Plus, Loader2, Shield, Trash2 } from "lucide-react";
+import { Plus, Loader2, Trash2, Mail, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +30,8 @@ const AdminEmployees = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [addModal, setAddModal] = useState(false);
-  const [addForm, setAddForm] = useState({ email: "", role: "office" as string });
+  const [addForm, setAddForm] = useState({ email: "", role: "office" as string, first_name: "", last_name: "" });
+  const [isInviting, setIsInviting] = useState(false);
 
   useEffect(() => {
     loadEmployees();
@@ -83,39 +84,35 @@ const AdminEmployees = () => {
     setIsLoading(false);
   };
 
-  const addRole = async () => {
+  const inviteEmployee = async () => {
     if (!addForm.email.trim()) return;
+    setIsInviting(true);
     try {
-      // Find user by email in profiles
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("user_id")
-        .eq("email", addForm.email.trim())
-        .single();
+      const { data, error } = await supabase.functions.invoke("invite-employee", {
+        body: {
+          email: addForm.email.trim(),
+          role: addForm.role,
+          first_name: addForm.first_name.trim() || undefined,
+          last_name: addForm.last_name.trim() || undefined,
+        },
+      });
 
-      if (!profile) {
-        toast({ title: "Benutzer nicht gefunden", description: "Dieser Benutzer muss sich zuerst registrieren.", variant: "destructive" });
-        return;
-      }
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error);
 
-      const { error } = await supabase
-        .from("user_roles")
-        .insert({ user_id: profile.user_id, role: addForm.role as any });
-
-      if (error) {
-        if (error.code === "23505") toast({ title: "Rolle bereits vergeben" });
-        else throw error;
-      } else {
-        toast({ title: `✅ Rolle "${addForm.role}" vergeben` });
-      }
+      toast({
+        title: data.invited ? "📧 Einladung gesendet" : "✅ Rolle vergeben",
+        description: data.message,
+      });
 
       setAddModal(false);
-      setAddForm({ email: "", role: "office" });
+      setAddForm({ email: "", role: "office", first_name: "", last_name: "" });
       loadEmployees();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast({ title: "Fehler", variant: "destructive" });
+      toast({ title: "Fehler", description: err.message || "Einladung fehlgeschlagen", variant: "destructive" });
     }
+    setIsInviting(false);
   };
 
   const removeRole = async (userId: string, role: string) => {
@@ -145,7 +142,7 @@ const AdminEmployees = () => {
   return (
     <AdminLayout title="Mitarbeiter & Rollen" subtitle={`${employees.length} Mitarbeiter mit Sonderrollen`} actions={
       <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setAddModal(true)}>
-        <Plus className="w-3 h-3 mr-1" /> Rolle vergeben
+        <UserPlus className="w-3 h-3 mr-1" /> Mitarbeiter einladen
       </Button>
     }>
       {isLoading ? (
@@ -205,7 +202,7 @@ const AdminEmployees = () => {
                       </TableCell>
                       <TableCell className="text-zinc-400 text-sm">{format(new Date(emp.created_at), "dd.MM.yy", { locale: de })}</TableCell>
                       <TableCell className="text-right">
-                        <Button size="sm" variant="ghost" className="text-zinc-400 h-7" onClick={() => { setAddForm({ email: emp.email, role: "office" }); setAddModal(true); }}>
+                        <Button size="sm" variant="ghost" className="text-zinc-400 h-7" onClick={() => { setAddForm({ email: emp.email, role: "office", first_name: emp.first_name || "", last_name: emp.last_name || "" }); setAddModal(true); }}>
                           <Plus className="w-3 h-3 mr-1" /> Rolle
                         </Button>
                       </TableCell>
@@ -259,11 +256,21 @@ const AdminEmployees = () => {
 
       <Dialog open={addModal} onOpenChange={setAddModal}>
         <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
-          <DialogHeader><DialogTitle>Rolle vergeben</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><UserPlus className="w-5 h-5 text-emerald-400" /> Mitarbeiter einladen</DialogTitle></DialogHeader>
           <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-zinc-400">Vorname</Label>
+                <Input value={addForm.first_name} onChange={(e) => setAddForm(f => ({ ...f, first_name: e.target.value }))} className="bg-zinc-800 border-zinc-700 text-white" placeholder="Max" />
+              </div>
+              <div>
+                <Label className="text-zinc-400">Nachname</Label>
+                <Input value={addForm.last_name} onChange={(e) => setAddForm(f => ({ ...f, last_name: e.target.value }))} className="bg-zinc-800 border-zinc-700 text-white" placeholder="Mustermann" />
+              </div>
+            </div>
             <div>
-              <Label className="text-zinc-400">E-Mail des Benutzers</Label>
-              <Input value={addForm.email} onChange={(e) => setAddForm(f => ({ ...f, email: e.target.value }))} className="bg-zinc-800 border-zinc-700 text-white" placeholder="mitarbeiter@example.com" />
+              <Label className="text-zinc-400">E-Mail-Adresse</Label>
+              <Input value={addForm.email} onChange={(e) => setAddForm(f => ({ ...f, email: e.target.value }))} className="bg-zinc-800 border-zinc-700 text-white" placeholder="mitarbeiter@example.com" type="email" />
             </div>
             <div>
               <Label className="text-zinc-400">Rolle</Label>
@@ -277,11 +284,26 @@ const AdminEmployees = () => {
                 </SelectContent>
               </Select>
             </div>
-            <p className="text-xs text-zinc-500">Der Benutzer muss sich zuvor registriert haben.</p>
+            <div className="bg-zinc-800/50 rounded-lg p-3 border border-zinc-700/50">
+              <div className="flex items-start gap-2">
+                <Mail className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+                <div className="text-xs text-zinc-400">
+                  <p className="font-medium text-zinc-300 mb-1">So funktioniert die Einladung:</p>
+                  <ul className="space-y-0.5 list-disc list-inside">
+                    <li>Der Mitarbeiter erhält eine E-Mail mit Einladungslink</li>
+                    <li>Nach Aktivierung wird die Rolle automatisch zugewiesen</li>
+                    <li>Falls der Account bereits existiert, wird nur die Rolle vergeben</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setAddModal(false)} className="text-zinc-400">Abbrechen</Button>
-            <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={addRole}>Rolle vergeben</Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={inviteEmployee} disabled={isInviting || !addForm.email.trim()}>
+              {isInviting ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Mail className="w-3 h-3 mr-1" />}
+              {isInviting ? "Wird gesendet…" : "Einladung senden"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
