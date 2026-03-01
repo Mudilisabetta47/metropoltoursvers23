@@ -35,6 +35,9 @@ const AdminLegal = lazy(() => import("./pages/AdminLegal"));
 const AdminTourBookings = lazy(() => import("./pages/AdminTourBookings"));
 const AdminEmployees = lazy(() => import("./pages/AdminEmployees"));
 const AdminSettings = lazy(() => import("./pages/AdminSettings"));
+const AdminRoutes = lazy(() => import("./pages/AdminRoutes"));
+const AdminStops = lazy(() => import("./pages/AdminStops"));
+const AdminBuses = lazy(() => import("./pages/AdminBuses"));
 const WeekendTripsPage = lazy(() => import("./pages/WeekendTripsPage"));
 const WeekendTripDetailPage = lazy(() => import("./pages/WeekendTripDetailPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -86,6 +89,13 @@ const App = () => (
               <Route path="/admin/cms" element={<AdminCMS />} />
               <Route path="/admin/tour-builder" element={<AdminTourBuilder />} />
               <Route path="/admin/tour-builder/:tourId" element={<AdminTourBuilder />} />
+              <Route path="/admin/tour-bookings" element={<AdminTourBookings />} />
+              <Route path="/admin/bus-bookings" element={<AdminDashboard />} />
+              <Route path="/admin/employees" element={<AdminEmployees />} />
+              <Route path="/admin/settings" element={<AdminSettings />} />
+              <Route path="/admin/routes" element={<AdminRoutes />} />
+              <Route path="/admin/stops" element={<AdminStops />} />
+              <Route path="/admin/buses" element={<AdminBuses />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
