@@ -1,6 +1,6 @@
 // Database types for METROPOL TOURS
 
-export type AppRole = 'customer' | 'agent' | 'admin';
+export type AppRole = 'customer' | 'agent' | 'admin' | 'office' | 'driver';
 export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
 export type SeatStatus = 'available' | 'reserved' | 'booked';
 
