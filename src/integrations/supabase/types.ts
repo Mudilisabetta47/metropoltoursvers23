@@ -324,6 +324,60 @@ export type Database = {
         }
         Relationships: []
       }
+      coupons: {
+        Row: {
+          amount_off: number | null
+          code: string
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          max_redemptions: number | null
+          min_amount: number | null
+          percent_off: number | null
+          stripe_coupon_id: string | null
+          times_redeemed: number | null
+          updated_at: string | null
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          amount_off?: number | null
+          code: string
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_redemptions?: number | null
+          min_amount?: number | null
+          percent_off?: number | null
+          stripe_coupon_id?: string | null
+          times_redeemed?: number | null
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          amount_off?: number | null
+          code?: string
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_redemptions?: number | null
+          min_amount?: number | null
+          percent_off?: number | null
+          stripe_coupon_id?: string | null
+          times_redeemed?: number | null
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       employee_shifts: {
         Row: {
           actual_end: string | null
@@ -1058,6 +1112,8 @@ export type Database = {
           pickup_stop_id: string | null
           pickup_surcharge: number
           status: string
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
           tariff_id: string
           total_price: number
           tour_date_id: string
@@ -1088,6 +1144,8 @@ export type Database = {
           pickup_stop_id?: string | null
           pickup_surcharge?: number
           status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           tariff_id: string
           total_price: number
           tour_date_id: string
@@ -1118,6 +1176,8 @@ export type Database = {
           pickup_stop_id?: string | null
           pickup_surcharge?: number
           status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           tariff_id?: string
           total_price?: number
           tour_date_id?: string

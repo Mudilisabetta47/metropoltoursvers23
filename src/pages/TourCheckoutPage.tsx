@@ -22,6 +22,8 @@ import {
   FileText,
   Receipt,
   Download,
+  Tag,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,6 +83,8 @@ const TourCheckoutPage = () => {
   const dateId = searchParams.get("date") || "";
   const tariffId = searchParams.get("tariff") || "";
   const initialPax = parseInt(searchParams.get("pax") || "2");
+  const paymentStatus = searchParams.get("payment");
+  const stripeSessionId = searchParams.get("session_id");
 
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("summary");
   const [isLoading, setIsLoading] = useState(true);
@@ -102,8 +106,56 @@ const TourCheckoutPage = () => {
   const [passengerInfo, setPassengerInfo] = useState<PassengerInfo[]>([]);
   const [selectedAddons, setSelectedAddons] = useState<Record<string, number>>({});
   const [agreeTerms, setAgreeTerms] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal" | "invoice">("card");
   const [bookingNumber, setBookingNumber] = useState<string | null>(null);
+
+  // Coupon state
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    percent_off?: number;
+    amount_off?: number;
+    description?: string;
+  } | null>(null);
+  const [couponError, setCouponError] = useState("");
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+
+  // Handle Stripe return
+  useEffect(() => {
+    if (paymentStatus === "success" && stripeSessionId) {
+      verifyPayment(stripeSessionId);
+    } else if (paymentStatus === "cancelled") {
+      toast.error("Zahlung wurde abgebrochen");
+    }
+  }, [paymentStatus, stripeSessionId]);
+
+  const verifyPayment = async (sessionId: string) => {
+    setIsProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("verify-tour-payment", {
+        body: { sessionId },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        setBookingNumber(data.bookingNumber);
+        setCurrentStep("confirmation");
+        toast.success("Zahlung erfolgreich! Buchung bestätigt.");
+
+        // Send confirmation email
+        supabase.functions.invoke("send-booking-confirmation", {
+          body: { tourBookingId: data.bookingId },
+        }).catch((err) => console.error("Email send error:", err));
+      } else {
+        toast.error("Zahlung konnte nicht verifiziert werden");
+      }
+    } catch (error) {
+      console.error("Payment verification error:", error);
+      toast.error("Fehler bei der Zahlungsverifizierung");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   useEffect(() => {
     if (tourId) {
@@ -112,7 +164,6 @@ const TourCheckoutPage = () => {
   }, [tourId, dateId, tariffId]);
 
   useEffect(() => {
-    // Initialize passenger info when participants change
     setPassengerInfo(
       Array(participants)
         .fill(null)
@@ -123,19 +174,15 @@ const TourCheckoutPage = () => {
   const loadTourData = async () => {
     setIsLoading(true);
     try {
-      // Fetch tour
       const { data: tourData, error: tourError } = await supabase
         .from("package_tours")
         .select("*")
         .eq("id", tourId)
         .single();
 
-      if (tourError || !tourData) {
-        throw new Error("Tour not found");
-      }
+      if (tourError || !tourData) throw new Error("Tour not found");
       setTour(tourData as unknown as ExtendedPackageTour);
 
-      // Parallel fetches
       const [datesRes, tariffsRes, routesRes, luggageRes] = await Promise.all([
         supabase.from("tour_dates").select("*").eq("tour_id", tourId).eq("is_active", true).order("departure_date"),
         supabase.from("tour_tariffs").select("*").eq("tour_id", tourId).eq("is_active", true).order("sort_order"),
@@ -150,30 +197,23 @@ const TourCheckoutPage = () => {
       setAllTariffs(tariffs);
       setLuggageAddons((luggageRes.data || []) as TourLuggageAddon[]);
 
-      // Extract pickup stops from routes
       const allStops: PickupStop[] = [];
       (routesRes.data || []).forEach((route: any) => {
         if (route.tour_pickup_stops) {
           route.tour_pickup_stops.forEach((stop: any) => {
-            if (stop.is_active) {
-              allStops.push(stop);
-            }
+            if (stop.is_active) allStops.push(stop);
           });
         }
       });
       setPickupStops(allStops.sort((a, b) => a.surcharge - b.surcharge));
       setRoutes(routesRes.data as TourRoute[] || []);
 
-      // Set selected date and tariff
       const date = dates.find((d) => d.id === dateId) || dates[0];
       const tariff = tariffs.find((t) => t.id === tariffId) || tariffs.find((t) => t.is_recommended) || tariffs[0];
       setSelectedDate(date || null);
       setSelectedTariff(tariff || null);
 
-      // Auto-select first pickup stop
-      if (allStops.length > 0) {
-        setSelectedPickupStop(allStops[0]);
-      }
+      if (allStops.length > 0) setSelectedPickupStop(allStops[0]);
     } catch (error) {
       console.error("Error loading tour data:", error);
       toast.error("Fehler beim Laden der Reisedaten");
@@ -190,9 +230,7 @@ const TourCheckoutPage = () => {
     }
   };
 
-  const formatTime = (timeStr: string) => {
-    return timeStr?.slice(0, 5) || "";
-  };
+  const formatTime = (timeStr: string) => timeStr?.slice(0, 5) || "";
 
   // Price calculation
   const calculateBasePrice = () => {
@@ -218,8 +256,69 @@ const TourCheckoutPage = () => {
     return sum + (addon?.price || 0) * qty;
   }, 0);
 
-  const totalPrice = baseTotal + addonsTotal;
+  const subtotal = baseTotal + addonsTotal;
+
+  // Calculate discount
+  const discountAmount = appliedCoupon
+    ? appliedCoupon.percent_off
+      ? Math.round(subtotal * (appliedCoupon.percent_off / 100))
+      : appliedCoupon.amount_off || 0
+    : 0;
+
+  const totalPrice = Math.max(subtotal - discountAmount, 0);
   const availableSeats = selectedDate ? selectedDate.total_seats - selectedDate.booked_seats : 0;
+
+  // Coupon validation
+  const validateCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setIsValidatingCoupon(true);
+    setCouponError("");
+
+    try {
+      const { data, error } = await supabase
+        .from("coupons")
+        .select("*")
+        .eq("code", couponCode.toUpperCase().trim())
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (error || !data) {
+        setCouponError("Ungültiger Gutscheincode");
+        return;
+      }
+
+      if (data.valid_until && new Date(data.valid_until) < new Date()) {
+        setCouponError("Gutschein ist abgelaufen");
+        return;
+      }
+      if (data.max_redemptions && data.times_redeemed >= data.max_redemptions) {
+        setCouponError("Gutschein bereits vollständig eingelöst");
+        return;
+      }
+      if (data.min_amount && subtotal < data.min_amount) {
+        setCouponError(`Mindestbestellwert: ${data.min_amount}€`);
+        return;
+      }
+
+      setAppliedCoupon({
+        code: data.code,
+        percent_off: data.percent_off,
+        amount_off: data.amount_off,
+        description: data.description,
+      });
+      toast.success("Gutschein angewendet!");
+    } catch {
+      setCouponError("Fehler bei der Gutscheinprüfung");
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponError("");
+  };
 
   const steps: { key: CheckoutStep; label: string }[] = [
     { key: "summary", label: "Übersicht" },
@@ -265,7 +364,6 @@ const TourCheckoutPage = () => {
   const processBooking = async () => {
     setIsProcessing(true);
     try {
-      // Generate booking number
       const bookingNum = `MT-${Date.now().toString(36).toUpperCase()}`;
 
       const passengerDetails = passengerInfo.map((p, i) => ({
@@ -308,7 +406,9 @@ const TourCheckoutPage = () => {
           pickup_surcharge: pickupSurcharge * participants,
           luggage_addons: luggageAddonsData,
           total_price: totalPrice,
-          payment_method: paymentMethod,
+          discount_code: appliedCoupon?.code || null,
+          discount_amount: discountAmount || null,
+          payment_method: "stripe",
           status: "pending",
           booking_type: "direct",
         })
@@ -323,17 +423,26 @@ const TourCheckoutPage = () => {
         .update({ booked_seats: selectedDate!.booked_seats + participants })
         .eq("id", selectedDate!.id);
 
-      setBookingNumber(bookingData.booking_number);
-      setCurrentStep("confirmation");
-      toast.success("Buchung erfolgreich!");
+      // Create Stripe checkout session
+      const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
+        "create-tour-payment",
+        {
+          body: {
+            bookingId: bookingData.id,
+            couponCode: appliedCoupon?.code || null,
+          },
+        }
+      );
 
-      // Send confirmation email (fire-and-forget)
-      supabase.functions.invoke("send-booking-confirmation", {
-        body: { tourBookingId: bookingData.id },
-      }).catch((err) => console.error("Email send error:", err));
-    } catch (error) {
+      if (paymentError || !paymentData?.url) {
+        throw new Error(paymentData?.error || "Stripe-Sitzung konnte nicht erstellt werden");
+      }
+
+      // Redirect to Stripe Checkout
+      window.location.href = paymentData.url;
+    } catch (error: any) {
       console.error("Error creating booking:", error);
-      toast.error("Fehler bei der Buchung. Bitte versuchen Sie es erneut.");
+      toast.error(error.message || "Fehler bei der Buchung. Bitte versuchen Sie es erneut.");
     } finally {
       setIsProcessing(false);
     }
@@ -353,12 +462,13 @@ const TourCheckoutPage = () => {
     setSelectedAddons({ ...selectedAddons, [addonId]: newVal });
   };
 
-  if (isLoading) {
+  if (isLoading || (paymentStatus === "success" && isProcessing)) {
     return (
       <div className="min-h-screen flex flex-col bg-muted/30">
         <Header />
-        <main className="flex-1 pt-16 lg:pt-20 flex items-center justify-center">
-          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <main className="flex-1 pt-16 lg:pt-20 flex flex-col items-center justify-center">
+          <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+          {paymentStatus === "success" && <p className="text-muted-foreground">Zahlung wird verifiziert...</p>}
         </main>
         <Footer />
       </div>
@@ -388,12 +498,7 @@ const TourCheckoutPage = () => {
         <div className="container mx-auto px-4 py-8">
           {/* Back Button */}
           {currentStep !== "confirmation" && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate(-1)}
-              className="mb-4"
-            >
+            <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-4">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Zurück zur Reise
             </Button>
@@ -470,7 +575,6 @@ const TourCheckoutPage = () => {
                         </div>
                       </div>
 
-                      {/* Included Features */}
                       <Separator />
                       <div className="grid sm:grid-cols-2 gap-3">
                         <div className="flex items-center gap-2 text-sm">
@@ -507,29 +611,17 @@ const TourCheckoutPage = () => {
                       <div className="flex items-center justify-between">
                         <span className="text-foreground">Anzahl Reisende</span>
                         <div className="flex items-center gap-3">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setParticipants(Math.max(1, participants - 1))}
-                            disabled={participants <= 1}
-                          >
+                          <Button variant="outline" size="icon" onClick={() => setParticipants(Math.max(1, participants - 1))} disabled={participants <= 1}>
                             <Minus className="w-4 h-4" />
                           </Button>
                           <span className="w-8 text-center font-bold text-lg">{participants}</span>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setParticipants(Math.min(availableSeats, participants + 1))}
-                            disabled={participants >= availableSeats}
-                          >
+                          <Button variant="outline" size="icon" onClick={() => setParticipants(Math.min(availableSeats, participants + 1))} disabled={participants >= availableSeats}>
                             <Plus className="w-4 h-4" />
                           </Button>
                         </div>
                       </div>
                       {availableSeats <= 10 && (
-                        <p className="text-sm text-amber-600 mt-2">
-                          Nur noch {availableSeats} Plätze verfügbar!
-                        </p>
+                        <p className="text-sm text-amber-600 mt-2">Nur noch {availableSeats} Plätze verfügbar!</p>
                       )}
                     </CardContent>
                   </Card>
@@ -553,9 +645,7 @@ const TourCheckoutPage = () => {
                             )}
                           >
                             {tariff.is_recommended && (
-                              <Badge className="absolute -top-2 left-4 bg-accent text-accent-foreground">
-                                Empfohlen
-                              </Badge>
+                              <Badge className="absolute -top-2 left-4 bg-accent text-accent-foreground">Empfohlen</Badge>
                             )}
                             <h4 className="font-bold text-foreground">{tariff.name}</h4>
                             <div className="mt-2 space-y-1 text-sm">
@@ -605,13 +695,9 @@ const TourCheckoutPage = () => {
                             {pickupStops.map((stop) => (
                               <SelectItem key={stop.id} value={stop.id}>
                                 <div className="flex items-center justify-between w-full gap-4">
-                                  <span>
-                                    {stop.city} – {stop.location_name} ({formatTime(stop.departure_time)} Uhr)
-                                  </span>
+                                  <span>{stop.city} – {stop.location_name} ({formatTime(stop.departure_time)} Uhr)</span>
                                   {stop.surcharge > 0 && (
-                                    <Badge variant="secondary" className="ml-2">
-                                      +{stop.surcharge}€
-                                    </Badge>
+                                    <Badge variant="secondary" className="ml-2">+{stop.surcharge}€</Badge>
                                   )}
                                 </div>
                               </SelectItem>
@@ -621,12 +707,8 @@ const TourCheckoutPage = () => {
                         {selectedPickupStop && (
                           <div className="mt-3 p-3 bg-muted/50 rounded-lg text-sm">
                             <p className="font-medium">{selectedPickupStop.city} – {selectedPickupStop.location_name}</p>
-                            {selectedPickupStop.address && (
-                              <p className="text-muted-foreground">{selectedPickupStop.address}</p>
-                            )}
-                            {selectedPickupStop.meeting_point && (
-                              <p className="text-muted-foreground">Treffpunkt: {selectedPickupStop.meeting_point}</p>
-                            )}
+                            {selectedPickupStop.address && <p className="text-muted-foreground">{selectedPickupStop.address}</p>}
+                            {selectedPickupStop.meeting_point && <p className="text-muted-foreground">Treffpunkt: {selectedPickupStop.meeting_point}</p>}
                             <p className="text-primary font-medium mt-1">
                               Abfahrt: {formatTime(selectedPickupStop.departure_time)} Uhr
                               {selectedPickupStop.surcharge > 0 && ` | +${selectedPickupStop.surcharge}€ p.P.`}
@@ -651,31 +733,15 @@ const TourCheckoutPage = () => {
                           <div key={addon.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                             <div>
                               <p className="font-medium">{addon.name}</p>
-                              {addon.description && (
-                                <p className="text-sm text-muted-foreground">{addon.description}</p>
-                              )}
+                              {addon.description && <p className="text-sm text-muted-foreground">{addon.description}</p>}
                               <p className="text-sm text-primary font-medium">{addon.price}€</p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => toggleAddon(addon.id, -1)}
-                                disabled={!selectedAddons[addon.id]}
-                              >
+                              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => toggleAddon(addon.id, -1)} disabled={!selectedAddons[addon.id]}>
                                 <Minus className="w-3 h-3" />
                               </Button>
-                              <span className="w-6 text-center font-medium">
-                                {selectedAddons[addon.id] || 0}
-                              </span>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => toggleAddon(addon.id, 1)}
-                                disabled={(selectedAddons[addon.id] || 0) >= addon.max_per_booking}
-                              >
+                              <span className="w-6 text-center font-medium">{selectedAddons[addon.id] || 0}</span>
+                              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => toggleAddon(addon.id, 1)} disabled={(selectedAddons[addon.id] || 0) >= addon.max_per_booking}>
                                 <Plus className="w-3 h-3" />
                               </Button>
                             </div>
@@ -703,41 +769,19 @@ const TourCheckoutPage = () => {
                         <div className="grid sm:grid-cols-2 gap-4">
                           <div>
                             <Label>Vorname *</Label>
-                            <Input
-                              value={passenger.firstName}
-                              onChange={(e) => updatePassenger(index, "firstName", e.target.value)}
-                              placeholder="Max"
-                              className="mt-1"
-                            />
+                            <Input value={passenger.firstName} onChange={(e) => updatePassenger(index, "firstName", e.target.value)} placeholder="Max" className="mt-1" />
                           </div>
                           <div>
                             <Label>Nachname *</Label>
-                            <Input
-                              value={passenger.lastName}
-                              onChange={(e) => updatePassenger(index, "lastName", e.target.value)}
-                              placeholder="Mustermann"
-                              className="mt-1"
-                            />
+                            <Input value={passenger.lastName} onChange={(e) => updatePassenger(index, "lastName", e.target.value)} placeholder="Mustermann" className="mt-1" />
                           </div>
                           <div>
                             <Label>E-Mail *</Label>
-                            <Input
-                              type="email"
-                              value={passenger.email}
-                              onChange={(e) => updatePassenger(index, "email", e.target.value)}
-                              placeholder="max@beispiel.de"
-                              className="mt-1"
-                            />
+                            <Input type="email" value={passenger.email} onChange={(e) => updatePassenger(index, "email", e.target.value)} placeholder="max@beispiel.de" className="mt-1" />
                           </div>
                           <div>
                             <Label>Telefon</Label>
-                            <Input
-                              type="tel"
-                              value={passenger.phone}
-                              onChange={(e) => updatePassenger(index, "phone", e.target.value)}
-                              placeholder="+49..."
-                              className="mt-1"
-                            />
+                            <Input type="tel" value={passenger.phone} onChange={(e) => updatePassenger(index, "phone", e.target.value)} placeholder="+49..." className="mt-1" />
                           </div>
                         </div>
                       </div>
@@ -752,28 +796,16 @@ const TourCheckoutPage = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <CreditCard className="w-5 h-5 text-primary" />
-                      Zahlungsmethode
+                      Zahlung via Stripe
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid sm:grid-cols-3 gap-4">
-                      {(["card", "paypal", "invoice"] as const).map((method) => (
-                        <div
-                          key={method}
-                          onClick={() => setPaymentMethod(method)}
-                          className={cn(
-                            "p-4 rounded-lg border-2 cursor-pointer text-center transition-all",
-                            paymentMethod === method
-                              ? "border-primary bg-primary/5"
-                              : "border-muted hover:border-primary/50"
-                          )}
-                        >
-                          <CreditCard className="w-6 h-6 mx-auto mb-2" />
-                          <span className="font-medium">
-                            {method === "card" ? "Kreditkarte" : method === "paypal" ? "PayPal" : "Rechnung"}
-                          </span>
-                        </div>
-                      ))}
+                    <div className="p-4 bg-muted/50 rounded-xl text-sm space-y-2">
+                      <p className="font-medium text-foreground">Sichere Zahlung über Stripe</p>
+                      <p className="text-muted-foreground">
+                        Sie werden nach dem Klick auf "Jetzt bezahlen" zu Stripe weitergeleitet. 
+                        Dort können Sie sicher mit Kreditkarte, SEPA-Lastschrift, Apple Pay oder Google Pay bezahlen.
+                      </p>
                     </div>
 
                     <Separator className="my-6" />
@@ -786,13 +818,8 @@ const TourCheckoutPage = () => {
                       />
                       <Label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer">
                         Ich akzeptiere die{" "}
-                        <a href="/terms" target="_blank" className="text-primary hover:underline">
-                          AGB
-                        </a>{" "}
-                        und{" "}
-                        <a href="/privacy" target="_blank" className="text-primary hover:underline">
-                          Datenschutzbestimmungen
-                        </a>
+                        <a href="/terms" target="_blank" className="text-primary hover:underline">AGB</a>{" "}und{" "}
+                        <a href="/privacy" target="_blank" className="text-primary hover:underline">Datenschutzbestimmungen</a>
                       </Label>
                     </div>
                   </CardContent>
@@ -807,11 +834,12 @@ const TourCheckoutPage = () => {
                       <Check className="w-8 h-8 text-emerald-600" />
                     </div>
                     <h2 className="text-2xl font-bold text-emerald-800 mb-2">Buchung erfolgreich!</h2>
-                    <p className="text-emerald-700 mb-4">
+                    <p className="text-emerald-700 mb-1">
                       Ihre Buchungsnummer: <span className="font-mono font-bold">{bookingNumber}</span>
                     </p>
+                    <Badge className="bg-emerald-600 text-white mb-4">Bezahlt via Stripe ✓</Badge>
                     <p className="text-muted-foreground mb-6">
-                      Eine Bestätigung wurde an {passengerInfo[0]?.email} gesendet.
+                      Eine Bestätigung wurde an {passengerInfo[0]?.email || "Ihre E-Mail"} gesendet.
                     </p>
 
                     {/* Document Downloads */}
@@ -862,9 +890,7 @@ const TourCheckoutPage = () => {
 
                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
                       <Button onClick={() => navigate("/bookings")}>Meine Buchungen</Button>
-                      <Button variant="outline" onClick={() => navigate("/")}>
-                        Zur Startseite
-                      </Button>
+                      <Button variant="outline" onClick={() => navigate("/")}>Zur Startseite</Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -896,42 +922,83 @@ const TourCheckoutPage = () => {
                           <span>+{addonsTotal.toFixed(0)}€</span>
                         </div>
                       )}
+                      {appliedCoupon && (
+                        <div className="flex justify-between text-emerald-600 font-medium">
+                          <span className="flex items-center gap-1">
+                            <Tag className="w-3 h-3" />
+                            Gutschein ({appliedCoupon.code})
+                          </span>
+                          <span>-{discountAmount.toFixed(0)}€</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Coupon Input */}
+                    <div className="space-y-2">
+                      {appliedCoupon ? (
+                        <div className="flex items-center gap-2 p-2 bg-emerald-50 rounded-lg border border-emerald-200">
+                          <Tag className="w-4 h-4 text-emerald-600" />
+                          <span className="text-sm font-medium text-emerald-700 flex-1">{appliedCoupon.code}</span>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={removeCoupon}>
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Gutscheincode"
+                            value={couponCode}
+                            onChange={(e) => {
+                              setCouponCode(e.target.value.toUpperCase());
+                              setCouponError("");
+                            }}
+                            className="text-sm"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={validateCoupon}
+                            disabled={!couponCode.trim() || isValidatingCoupon}
+                          >
+                            {isValidatingCoupon ? <Loader2 className="w-3 h-3 animate-spin" /> : "OK"}
+                          </Button>
+                        </div>
+                      )}
+                      {couponError && <p className="text-xs text-destructive">{couponError}</p>}
                     </div>
 
                     <Separator />
 
                     <div className="flex justify-between items-end">
                       <span className="text-muted-foreground">Gesamtpreis</span>
-                      <span className="text-2xl font-bold text-primary">{totalPrice.toFixed(0)}€</span>
+                      <div className="text-right">
+                        {discountAmount > 0 && (
+                          <span className="text-sm text-muted-foreground line-through block">{subtotal.toFixed(0)}€</span>
+                        )}
+                        <span className="text-2xl font-bold text-primary">{totalPrice.toFixed(0)}€</span>
+                      </div>
                     </div>
 
                     {/* CTA */}
-                    <Button
-                      size="lg"
-                      className="w-full"
-                      onClick={handleNextStep}
-                      disabled={isProcessing}
-                    >
+                    <Button size="lg" className="w-full" onClick={handleNextStep} disabled={isProcessing}>
                       {isProcessing ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Wird gebucht...
+                          Weiterleitung zu Stripe...
                         </>
                       ) : currentStep === "payment" ? (
-                        "Jetzt kostenpflichtig buchen"
+                        "Jetzt bezahlen"
                       ) : (
                         "Weiter"
                       )}
                     </Button>
 
                     {currentStep !== "summary" && (
-                      <Button variant="ghost" size="sm" className="w-full" onClick={handlePrevStep}>
-                        Zurück
-                      </Button>
+                      <Button variant="ghost" size="sm" className="w-full" onClick={handlePrevStep}>Zurück</Button>
                     )}
 
                     <p className="text-xs text-center text-muted-foreground">
-                      ✓ Sichere Zahlung • ✓ Sofortige Bestätigung
+                      🔒 Sichere Zahlung über Stripe • ✓ Sofortige Bestätigung
                     </p>
                   </CardContent>
                 </Card>
