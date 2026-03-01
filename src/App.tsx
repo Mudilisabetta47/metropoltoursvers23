@@ -41,6 +41,7 @@ const AdminBuses = lazy(() => import("./pages/AdminBuses"));
 const WeekendTripsPage = lazy(() => import("./pages/WeekendTripsPage"));
 const WeekendTripDetailPage = lazy(() => import("./pages/WeekendTripDetailPage"));
 const PassengerDataPage = lazy(() => import("./pages/PassengerDataPage"));
+const DriverDashboard = lazy(() => import("./pages/DriverDashboard"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -55,8 +56,8 @@ const PageLoader = () => (
 const AdminRedirect = () => {
   const { roles, isLoading } = useAuth();
   if (isLoading) return <PageLoader />;
-  const isDriver = roles.includes('driver') && !roles.includes('admin') && !roles.includes('office') && !roles.includes('agent');
-  return <Navigate to={isDriver ? "/admin/ops" : "/admin/dashboard"} replace />;
+  const isDriverOnly = roles.includes('driver') && !roles.includes('admin') && !roles.includes('office') && !roles.includes('agent');
+  return <Navigate to={isDriverOnly ? "/admin/driver" : "/admin/dashboard"} replace />;
 };
 
 const App = () => (
@@ -87,6 +88,7 @@ const App = () => (
               <Route path="/tour-checkout" element={<TourCheckoutPage />} />
               <Route path="/admin" element={<AdminRedirect />} />
               <Route path="/admin/ops" element={<OperationsDashboard />} />
+              <Route path="/admin/driver" element={<DriverDashboard />} />
               <Route path="/admin/inquiries" element={<AdminInquiriesPage />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin/booking/:bookingId" element={<AdminBookingDetail />} />
