@@ -1293,6 +1293,59 @@ export type Database = {
           },
         ]
       }
+      tour_extras: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          icon: string
+          id: string
+          is_active: boolean
+          max_per_booking: number
+          name: string
+          price: number
+          price_type: string
+          sort_order: number
+          tour_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          is_active?: boolean
+          max_per_booking?: number
+          name: string
+          price?: number
+          price_type?: string
+          sort_order?: number
+          tour_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          is_active?: boolean
+          max_per_booking?: number
+          name?: string
+          price?: number
+          price_type?: string
+          sort_order?: number
+          tour_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tour_extras_tour_id_fkey"
+            columns: ["tour_id"]
+            isOneToOne: false
+            referencedRelation: "package_tours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tour_inclusions: {
         Row: {
           category: string

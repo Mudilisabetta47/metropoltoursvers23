@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { 
   ArrowLeft, Save, Eye, Globe, Settings, Palmtree, MapPin, Calendar,
-  Luggage, Scale, Check, ChevronRight, Loader2, AlertCircle, Shield
+  Luggage, Scale, Check, ChevronRight, Loader2, AlertCircle, Shield, Star
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +19,7 @@ import TourDatesTab from "@/components/admin/tour-builder/TourDatesTab";
 import TourRoutesTab from "@/components/admin/tour-builder/TourRoutesTab";
 import TourLuggageTab from "@/components/admin/tour-builder/TourLuggageTab";
 import TourLegalTab from "@/components/admin/tour-builder/TourLegalTab";
+import TourExtrasTab from "@/components/admin/tour-builder/TourExtrasTab";
 import TourSEOTab from "@/components/admin/tour-builder/TourSEOTab";
 
 const tabs = [
@@ -28,6 +29,7 @@ const tabs = [
   { id: 'dates', label: 'Termine', icon: Calendar },
   { id: 'routes', label: 'Routen', icon: MapPin },
   { id: 'luggage', label: 'Gepäck', icon: Luggage },
+  { id: 'extras', label: 'Extras', icon: Star },
   { id: 'legal', label: 'Rechtliches', icon: Scale },
   { id: 'seo', label: 'SEO & Publish', icon: Globe },
 ];
@@ -81,6 +83,11 @@ const AdminTourBuilder = () => {
     createLegalSection,
     updateLegalSection,
     deleteLegalSection,
+    // Extras
+    extras,
+    createExtra,
+    updateExtra,
+    deleteExtra,
     // Validation
     validationErrors,
     validateForPublish
@@ -423,6 +430,16 @@ const AdminTourBuilder = () => {
                 onCreate={createLuggageAddon}
                 onUpdate={updateLuggageAddon}
                 onDelete={deleteLuggageAddon}
+              />
+            )}
+            
+            {activeTab === 'extras' && (
+              <TourExtrasTab
+                tourId={currentTour?.id}
+                extras={extras}
+                onCreate={createExtra}
+                onUpdate={updateExtra}
+                onDelete={deleteExtra}
               />
             )}
             
