@@ -33,6 +33,7 @@ const Footer = () => {
       { name: "Impressum", path: "/imprint" },
       { name: "Datenschutz", path: "/privacy" },
       { name: "AGB", path: "/terms" },
+      { name: "Karriere", path: "/karriere" },
       { name: "Cookie-Einstellungen", path: "/privacy" },
     ],
   };
