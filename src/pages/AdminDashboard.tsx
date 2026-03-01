@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import TourBookingsTab from "@/components/admin/TourBookingsTab";
 import { useNavigate } from "react-router-dom";
 import { 
   Route, MapPin, Bus, Calendar, Users, Settings, LogOut,
@@ -40,7 +41,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
-type TabType = 'overview' | 'routes' | 'stops' | 'buses' | 'trips' | 'bookings' | 'inquiries' | 'cms';
+type TabType = 'overview' | 'routes' | 'stops' | 'buses' | 'trips' | 'bookings' | 'tour-bookings' | 'inquiries' | 'cms';
 
 interface RouteData {
   id: string;
@@ -259,6 +260,7 @@ const AdminDashboard = () => {
     { id: 'buses' as TabType, label: 'Busse', icon: Bus },
     { id: 'trips' as TabType, label: 'Fahrten', icon: Calendar },
     { id: 'bookings' as TabType, label: 'Buchungen', icon: Users },
+    { id: 'tour-bookings' as TabType, label: 'Reise-Buchungen', icon: FileText },
     { id: 'inquiries' as TabType, label: 'Anfragen', icon: FileText },
     { id: 'cms' as TabType, label: 'CMS / Inhalte', icon: LayoutDashboard },
   ];
@@ -969,6 +971,9 @@ const AdminDashboard = () => {
               </div>
             </div>
           )}
+
+          {/* Tour Bookings Tab */}
+          {activeTab === 'tour-bookings' && <TourBookingsTab />}
         </div>
       </main>
 
