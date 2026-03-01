@@ -138,19 +138,65 @@ const TourCheckoutPage = () => {
   const [couponError, setCouponError] = useState("");
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
 
-  // Check if returning from payment (e.g. Stripe redirect or direct link with payment=success)
+  // Check if returning from payment (e.g. Stripe redirect with payment=success)
   useEffect(() => {
     const paymentStatus = searchParams.get("payment");
     const sessionId = searchParams.get("session_id");
+    if (paymentStatus === "success" && tourId && sessionId) {
+      const verifyAndLoadBooking = async () => {
+        setIsLoading(true);
+        try {
+          // Call verify-tour-payment to confirm with Stripe, update status, send email
+          const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-tour-payment', {
+            body: { sessionId }
+          });
+
+          if (verifyError) {
+            console.error("Payment verification error:", verifyError);
+          }
+
+          if (verifyData?.success && verifyData?.bookingId) {
+            setBookingId(verifyData.bookingId);
+            setBookingNumber(verifyData.bookingNumber || "");
+            setCurrentStep("confirmation");
+
+            // Trigger PDF document generation (non-blocking)
+            try {
+              await supabase.functions.invoke('generate-tour-documents', {
+                body: { bookingId: verifyData.bookingId }
+              });
+              console.log("Tour documents generated successfully");
+            } catch (docErr) {
+              console.error("Document generation failed (non-blocking):", docErr);
+            }
+          } else {
+            // Fallback: try to find existing booking
+            let query = supabase.from("tour_bookings").select("id, booking_number").eq("tour_id", tourId);
+            if (sessionId) {
+              query = query.eq("stripe_session_id", sessionId);
+            }
+            const { data } = await query.order("created_at", { ascending: false }).limit(1).maybeSingle();
+            if (data) {
+              setBookingNumber(data.booking_number);
+              setBookingId(data.id);
+              setCurrentStep("confirmation");
+            }
+          }
+        } catch (err) {
+          console.error("Error verifying payment:", err);
+        }
+        await loadTourData();
+      };
+      verifyAndLoadBooking();
+      return;
+    }
     if (paymentStatus === "success" && tourId) {
-      // Look up existing booking by tour_id + session_id or just latest for this tour
+      // No session_id but payment=success (e.g. bank transfer)
       const findExistingBooking = async () => {
         setIsLoading(true);
         try {
           let query = supabase.from("tour_bookings").select("id, booking_number").eq("tour_id", tourId);
-          if (sessionId) {
-            query = query.eq("stripe_session_id", sessionId);
-          } else if (dateId) {
+          if (dateId) {
             query = query.eq("tour_date_id", dateId);
           }
           const { data } = await query.order("created_at", { ascending: false }).limit(1).maybeSingle();
@@ -162,7 +208,6 @@ const TourCheckoutPage = () => {
         } catch (err) {
           console.error("Error finding booking:", err);
         }
-        // Still load tour data for the confirmation view
         await loadTourData();
       };
       findExistingBooking();
