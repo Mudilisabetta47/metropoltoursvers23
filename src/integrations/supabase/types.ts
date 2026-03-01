@@ -1132,6 +1132,62 @@ export type Database = {
           },
         ]
       }
+      tour_booking_insurance: {
+        Row: {
+          booking_id: string
+          created_at: string
+          id: string
+          insured_persons: Json | null
+          is_active: boolean
+          notes: string | null
+          policy_number: string | null
+          policy_pdf_url: string | null
+          policy_status: string
+          price: number | null
+          product: string | null
+          provider: string | null
+          updated_at: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          id?: string
+          insured_persons?: Json | null
+          is_active?: boolean
+          notes?: string | null
+          policy_number?: string | null
+          policy_pdf_url?: string | null
+          policy_status?: string
+          price?: number | null
+          product?: string | null
+          provider?: string | null
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          id?: string
+          insured_persons?: Json | null
+          is_active?: boolean
+          notes?: string | null
+          policy_number?: string | null
+          policy_pdf_url?: string | null
+          policy_status?: string
+          price?: number | null
+          product?: string | null
+          provider?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tour_booking_insurance_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "tour_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tour_bookings: {
         Row: {
           base_price: number
@@ -1260,6 +1316,30 @@ export type Database = {
           },
         ]
       }
+      tour_customer_notes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_email: string
+          id: string
+          note: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_email: string
+          id?: string
+          note: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_email?: string
+          id?: string
+          note?: string
+        }
+        Relationships: []
+      }
       tour_dates: {
         Row: {
           booked_seats: number
@@ -1378,6 +1458,42 @@ export type Database = {
           },
         ]
       }
+      tour_email_templates: {
+        Row: {
+          body_html: string
+          category: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          body_html: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          body_html?: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tour_extras: {
         Row: {
           category: string
@@ -1472,6 +1588,62 @@ export type Database = {
           },
         ]
       }
+      tour_invoices: {
+        Row: {
+          amount: number
+          booking_id: string
+          cancelled_at: string | null
+          created_at: string
+          id: string
+          invoice_number: string
+          issued_at: string | null
+          net_amount: number
+          notes: string | null
+          paid_at: string | null
+          status: string
+          tax_amount: number
+          tax_rate: number
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+          cancelled_at?: string | null
+          created_at?: string
+          id?: string
+          invoice_number: string
+          issued_at?: string | null
+          net_amount?: number
+          notes?: string | null
+          paid_at?: string | null
+          status?: string
+          tax_amount?: number
+          tax_rate?: number
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+          cancelled_at?: string | null
+          created_at?: string
+          id?: string
+          invoice_number?: string
+          issued_at?: string | null
+          net_amount?: number
+          notes?: string | null
+          paid_at?: string | null
+          status?: string
+          tax_amount?: number
+          tax_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tour_invoices_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "tour_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tour_legal: {
         Row: {
           content: string
@@ -1512,6 +1684,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tour_legal_documents: {
+        Row: {
+          content: string | null
+          created_at: string
+          document_type: string
+          file_url: string | null
+          id: string
+          is_current: boolean
+          title: string
+          valid_from: string | null
+          version: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          document_type: string
+          file_url?: string | null
+          id?: string
+          is_current?: boolean
+          title: string
+          valid_from?: string | null
+          version?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          document_type?: string
+          file_url?: string | null
+          id?: string
+          is_current?: boolean
+          title?: string
+          valid_from?: string | null
+          version?: string
+        }
+        Relationships: []
       }
       tour_luggage_addons: {
         Row: {

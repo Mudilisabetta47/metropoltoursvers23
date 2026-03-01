@@ -27,6 +27,11 @@ const AdminCMS = lazy(() => import("./pages/AdminCMS"));
 const AdminTourBuilder = lazy(() => import("./pages/AdminTourBuilder"));
 const OperationsDashboard = lazy(() => import("./pages/OperationsDashboard"));
 const AdminBookingDetail = lazy(() => import("./pages/AdminBookingDetail"));
+const AdminCustomers = lazy(() => import("./pages/AdminCustomers"));
+const AdminFinances = lazy(() => import("./pages/AdminFinances"));
+const AdminDepartures = lazy(() => import("./pages/AdminDepartures"));
+const AdminTemplates = lazy(() => import("./pages/AdminTemplates"));
+const AdminLegal = lazy(() => import("./pages/AdminLegal"));
 const WeekendTripsPage = lazy(() => import("./pages/WeekendTripsPage"));
 const WeekendTripDetailPage = lazy(() => import("./pages/WeekendTripDetailPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -70,6 +75,11 @@ const App = () => (
               <Route path="/admin/inquiries" element={<AdminInquiriesPage />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin/booking/:bookingId" element={<AdminBookingDetail />} />
+              <Route path="/admin/customers" element={<AdminCustomers />} />
+              <Route path="/admin/finances" element={<AdminFinances />} />
+              <Route path="/admin/departures" element={<AdminDepartures />} />
+              <Route path="/admin/templates" element={<AdminTemplates />} />
+              <Route path="/admin/legal" element={<AdminLegal />} />
               <Route path="/admin/cms" element={<AdminCMS />} />
               <Route path="/admin/tour-builder" element={<AdminTourBuilder />} />
               <Route path="/admin/tour-builder/:tourId" element={<AdminTourBuilder />} />
