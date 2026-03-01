@@ -40,9 +40,6 @@ const Header = () => {
     name: "Gruppenanfrage",
     path: "/business"
   }, {
-    name: "Karriere",
-    path: "/karriere"
-  }, {
     name: "Meine Reisen",
     path: "/bookings"
   }];
