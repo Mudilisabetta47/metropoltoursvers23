@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { de } from "date-fns/locale";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +22,7 @@ const AdminFinances = () => {
   const [payments, setPayments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [period, setPeriod] = useState("all");
+  const [overdueFilter, setOverdueFilter] = useState("all");
 
   useEffect(() => {
     if (!authLoading && user && isAdmin) loadData();
@@ -49,10 +51,36 @@ const AdminFinances = () => {
   const filteredBookings = filterByPeriod(bookings, "created_at");
   const filteredPayments = filterByPeriod(payments, "recorded_at");
   const totalRevenue = filteredBookings.filter(b => b.status !== "cancelled").reduce((s: number, b: any) => s + Number(b.total_price), 0);
-  const totalPaid = filteredPayments.reduce((s: number, p: any) => s + Number(p.amount), 0);
+  const totalPaid = filteredPayments.filter((p: any) => Number(p.amount) > 0).reduce((s: number, p: any) => s + Number(p.amount), 0);
+  const totalRefunded = filteredPayments.filter((p: any) => Number(p.amount) < 0).reduce((s: number, p: any) => s + Math.abs(Number(p.amount)), 0);
   const openAmount = filteredBookings.filter(b => b.status === "pending").reduce((s: number, b: any) => s + Number(b.total_price), 0);
   const netRevenue = totalPaid / 1.19;
   const taxAmount = totalPaid - netRevenue;
+
+  // Open items (pending bookings) with days overdue
+  const openItems = filteredBookings
+    .filter((b: any) => b.status === "pending")
+    .map((b: any) => ({
+      ...b,
+      daysOpen: differenceInDays(new Date(), new Date(b.created_at)),
+      dunningLevel: (() => {
+        const days = differenceInDays(new Date(), new Date(b.created_at));
+        if (days > 14) return 3;
+        if (days > 7) return 2;
+        if (days > 3) return 1;
+        return 0;
+      })(),
+    }))
+    .filter((b: any) => {
+      if (overdueFilter === "all") return true;
+      if (overdueFilter === "overdue7") return b.daysOpen > 7;
+      if (overdueFilter === "overdue14") return b.daysOpen > 14;
+      if (overdueFilter === "level1") return b.dunningLevel >= 1;
+      if (overdueFilter === "level2") return b.dunningLevel >= 2;
+      if (overdueFilter === "level3") return b.dunningLevel >= 3;
+      return true;
+    })
+    .sort((a: any, b: any) => b.daysOpen - a.daysOpen);
 
   const exportCSV = () => {
     const rows = [
@@ -65,6 +93,28 @@ const AdminFinances = () => {
     a.download = `finanzen-${format(new Date(), "yyyy-MM-dd")}.csv`;
     a.click();
     toast({ title: "✅ CSV exportiert" });
+  };
+
+  const exportOpenItemsCSV = () => {
+    const rows = [
+      ["Buchungsnr.", "Kunde", "E-Mail", "Betrag", "Tage offen", "Mahnstufe", "Buchungsdatum"].join(";"),
+      ...openItems.map((b: any) => [b.booking_number, `${b.contact_first_name} ${b.contact_last_name}`, b.contact_email, b.total_price, b.daysOpen, b.dunningLevel, format(new Date(b.created_at), "dd.MM.yyyy")].join(";")),
+    ].join("\n");
+    const blob = new Blob(["\uFEFF" + rows], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `offene-posten-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    a.click();
+    toast({ title: "✅ Offene Posten CSV exportiert" });
+  };
+
+  const getDunningBadge = (level: number) => {
+    switch (level) {
+      case 1: return <Badge className="bg-amber-600">Stufe 1</Badge>;
+      case 2: return <Badge className="bg-orange-600">Stufe 2</Badge>;
+      case 3: return <Badge className="bg-red-600">Stufe 3</Badge>;
+      default: return <Badge className="bg-zinc-600">Aktuell</Badge>;
+    }
   };
 
   return (
@@ -86,54 +136,123 @@ const AdminFinances = () => {
         <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-emerald-400" /></div>
       ) : (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          {/* KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
             <Card className="bg-zinc-900 border-zinc-800"><CardContent className="pt-4"><div className="text-xs text-zinc-500 mb-1">Umsatz (brutto)</div><div className="text-2xl font-bold text-emerald-400">{totalRevenue.toFixed(2)}€</div></CardContent></Card>
             <Card className="bg-zinc-900 border-zinc-800"><CardContent className="pt-4"><div className="text-xs text-zinc-500 mb-1">Eingegangen</div><div className="text-2xl font-bold text-emerald-400">{totalPaid.toFixed(2)}€</div></CardContent></Card>
             <Card className="bg-zinc-900 border-zinc-800"><CardContent className="pt-4"><div className="text-xs text-zinc-500 mb-1">Offen</div><div className="text-2xl font-bold text-red-400">{openAmount.toFixed(2)}€</div></CardContent></Card>
+            <Card className="bg-zinc-900 border-zinc-800"><CardContent className="pt-4"><div className="text-xs text-zinc-500 mb-1">Erstattet</div><div className="text-2xl font-bold text-orange-400">{totalRefunded.toFixed(2)}€</div></CardContent></Card>
             <Card className="bg-zinc-900 border-zinc-800"><CardContent className="pt-4"><div className="text-xs text-zinc-500 mb-1">Netto</div><div className="text-2xl font-bold text-white">{netRevenue.toFixed(2)}€</div></CardContent></Card>
-            <Card className="bg-zinc-900 border-zinc-800"><CardContent className="pt-4"><div className="text-xs text-zinc-500 mb-1">MwSt</div><div className="text-2xl font-bold text-zinc-400">{taxAmount.toFixed(2)}€</div></CardContent></Card>
+            <Card className="bg-zinc-900 border-zinc-800"><CardContent className="pt-4"><div className="text-xs text-zinc-500 mb-1">MwSt (19%)</div><div className="text-2xl font-bold text-zinc-400">{taxAmount.toFixed(2)}€</div></CardContent></Card>
           </div>
 
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardHeader><CardTitle className="text-sm text-zinc-400">Zahlungseingänge ({filteredPayments.length})</CardTitle></CardHeader>
-            <CardContent>
-              {filteredPayments.length === 0 ? <p className="text-zinc-500 text-sm py-4 text-center">Keine Zahlungen</p> : (
-                <Table>
-                  <TableHeader><TableRow className="border-zinc-800"><TableHead className="text-zinc-400">Datum</TableHead><TableHead className="text-zinc-400">Betrag</TableHead><TableHead className="text-zinc-400">Methode</TableHead><TableHead className="text-zinc-400">Referenz</TableHead></TableRow></TableHeader>
-                  <TableBody>
-                    {filteredPayments.slice(0, 50).map((p: any) => (
-                      <TableRow key={p.id} className="border-zinc-800">
-                        <TableCell className="text-zinc-300">{format(new Date(p.recorded_at), "dd.MM.yy HH:mm", { locale: de })}</TableCell>
-                        <TableCell className="text-emerald-400 font-semibold">{Number(p.amount).toFixed(2)}€</TableCell>
-                        <TableCell className="text-zinc-300">{p.method === "bank_transfer" ? "Überweisung" : p.method}</TableCell>
-                        <TableCell className="text-zinc-400">{p.reference || "–"}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+          <Tabs defaultValue="open-items" className="space-y-4">
+            <TabsList className="bg-zinc-900 border border-zinc-800">
+              <TabsTrigger value="open-items" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+                <AlertTriangle className="w-3 h-3 mr-1" /> Offene Posten ({openItems.length})
+              </TabsTrigger>
+              <TabsTrigger value="payments" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Zahlungseingänge</TabsTrigger>
+              <TabsTrigger value="all-bookings" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Alle Buchungen</TabsTrigger>
+            </TabsList>
 
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardHeader><CardTitle className="text-sm text-zinc-400">Buchungen ({filteredBookings.length})</CardTitle></CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader><TableRow className="border-zinc-800"><TableHead className="text-zinc-400">Nr.</TableHead><TableHead className="text-zinc-400">Kunde</TableHead><TableHead className="text-zinc-400">Betrag</TableHead><TableHead className="text-zinc-400">Status</TableHead><TableHead className="text-zinc-400">Datum</TableHead></TableRow></TableHeader>
-                <TableBody>
-                  {filteredBookings.slice(0, 100).map((b: any) => (
-                    <TableRow key={b.id} className="border-zinc-800 cursor-pointer hover:bg-zinc-800" onClick={() => navigate(`/admin/booking/${b.id}`)}>
-                      <TableCell className="text-emerald-400 font-mono">{b.booking_number}</TableCell>
-                      <TableCell className="text-white">{b.contact_first_name} {b.contact_last_name}</TableCell>
-                      <TableCell className="text-white font-semibold">{Number(b.total_price).toFixed(2)}€</TableCell>
-                      <TableCell><Badge className={b.status === "confirmed" ? "bg-emerald-600" : b.status === "pending" ? "bg-amber-600" : "bg-red-600"}>{b.status}</Badge></TableCell>
-                      <TableCell className="text-zinc-300">{format(new Date(b.created_at), "dd.MM.yy", { locale: de })}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+            {/* OPEN ITEMS */}
+            <TabsContent value="open-items">
+              <Card className="bg-zinc-900 border-zinc-800">
+                <CardHeader>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <CardTitle className="text-sm text-zinc-400">Offene Posten</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Select value={overdueFilter} onValueChange={setOverdueFilter}>
+                        <SelectTrigger className="w-44 bg-zinc-800 border-zinc-700 text-white text-xs h-8"><SelectValue /></SelectTrigger>
+                        <SelectContent className="bg-zinc-800 border-zinc-700">
+                          <SelectItem value="all" className="text-white">Alle offenen</SelectItem>
+                          <SelectItem value="overdue7" className="text-white">Überfällig &gt; 7 Tage</SelectItem>
+                          <SelectItem value="overdue14" className="text-white">Überfällig &gt; 14 Tage</SelectItem>
+                          <SelectItem value="level1" className="text-white">Mahnstufe ≥ 1</SelectItem>
+                          <SelectItem value="level2" className="text-white">Mahnstufe ≥ 2</SelectItem>
+                          <SelectItem value="level3" className="text-white">Mahnstufe 3</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300 text-xs h-8" onClick={exportOpenItemsCSV}><Download className="w-3 h-3 mr-1" /> CSV</Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {openItems.length === 0 ? <p className="text-zinc-500 text-sm py-4 text-center">Keine offenen Posten</p> : (
+                    <Table>
+                      <TableHeader><TableRow className="border-zinc-800">
+                        <TableHead className="text-zinc-400">Nr.</TableHead>
+                        <TableHead className="text-zinc-400">Kunde</TableHead>
+                        <TableHead className="text-zinc-400">Betrag</TableHead>
+                        <TableHead className="text-zinc-400">Tage offen</TableHead>
+                        <TableHead className="text-zinc-400">Mahnstufe</TableHead>
+                        <TableHead className="text-zinc-400">Datum</TableHead>
+                      </TableRow></TableHeader>
+                      <TableBody>
+                        {openItems.map((b: any) => (
+                          <TableRow key={b.id} className="border-zinc-800 cursor-pointer hover:bg-zinc-800" onClick={() => navigate(`/admin/booking/${b.id}`)}>
+                            <TableCell className="text-emerald-400 font-mono">{b.booking_number}</TableCell>
+                            <TableCell className="text-white">{b.contact_first_name} {b.contact_last_name}</TableCell>
+                            <TableCell className="text-red-400 font-semibold">{Number(b.total_price).toFixed(2)}€</TableCell>
+                            <TableCell className={`font-medium ${b.daysOpen > 7 ? "text-red-400" : b.daysOpen > 3 ? "text-amber-400" : "text-zinc-300"}`}>{b.daysOpen} Tage</TableCell>
+                            <TableCell>{getDunningBadge(b.dunningLevel)}</TableCell>
+                            <TableCell className="text-zinc-300">{format(new Date(b.created_at), "dd.MM.yy", { locale: de })}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* PAYMENTS */}
+            <TabsContent value="payments">
+              <Card className="bg-zinc-900 border-zinc-800">
+                <CardHeader><CardTitle className="text-sm text-zinc-400">Zahlungseingänge ({filteredPayments.length})</CardTitle></CardHeader>
+                <CardContent>
+                  {filteredPayments.length === 0 ? <p className="text-zinc-500 text-sm py-4 text-center">Keine Zahlungen</p> : (
+                    <Table>
+                      <TableHeader><TableRow className="border-zinc-800"><TableHead className="text-zinc-400">Datum</TableHead><TableHead className="text-zinc-400">Betrag</TableHead><TableHead className="text-zinc-400">Methode</TableHead><TableHead className="text-zinc-400">Referenz</TableHead></TableRow></TableHeader>
+                      <TableBody>
+                        {filteredPayments.slice(0, 100).map((p: any) => (
+                          <TableRow key={p.id} className="border-zinc-800">
+                            <TableCell className="text-zinc-300">{format(new Date(p.recorded_at), "dd.MM.yy HH:mm", { locale: de })}</TableCell>
+                            <TableCell className={`font-semibold ${Number(p.amount) < 0 ? "text-orange-400" : "text-emerald-400"}`}>{Number(p.amount) < 0 ? "" : "+"}{Number(p.amount).toFixed(2)}€</TableCell>
+                            <TableCell className="text-zinc-300">{p.method === "bank_transfer" ? "Überweisung" : p.method === "refund" ? "Erstattung" : p.method}</TableCell>
+                            <TableCell className="text-zinc-400">{p.reference || "–"}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* ALL BOOKINGS */}
+            <TabsContent value="all-bookings">
+              <Card className="bg-zinc-900 border-zinc-800">
+                <CardHeader><CardTitle className="text-sm text-zinc-400">Buchungen ({filteredBookings.length})</CardTitle></CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader><TableRow className="border-zinc-800"><TableHead className="text-zinc-400">Nr.</TableHead><TableHead className="text-zinc-400">Kunde</TableHead><TableHead className="text-zinc-400">Betrag</TableHead><TableHead className="text-zinc-400">Status</TableHead><TableHead className="text-zinc-400">Datum</TableHead></TableRow></TableHeader>
+                    <TableBody>
+                      {filteredBookings.slice(0, 100).map((b: any) => (
+                        <TableRow key={b.id} className="border-zinc-800 cursor-pointer hover:bg-zinc-800" onClick={() => navigate(`/admin/booking/${b.id}`)}>
+                          <TableCell className="text-emerald-400 font-mono">{b.booking_number}</TableCell>
+                          <TableCell className="text-white">{b.contact_first_name} {b.contact_last_name}</TableCell>
+                          <TableCell className="text-white font-semibold">{Number(b.total_price).toFixed(2)}€</TableCell>
+                          <TableCell><Badge className={b.status === "confirmed" ? "bg-emerald-600" : b.status === "pending" ? "bg-amber-600" : "bg-red-600"}>{b.status}</Badge></TableCell>
+                          <TableCell className="text-zinc-300">{format(new Date(b.created_at), "dd.MM.yy", { locale: de })}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       )}
     </AdminLayout>
