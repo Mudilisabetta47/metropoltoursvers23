@@ -2,7 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type DocumentType = "confirmation" | "invoice" | "voucher" | "all";
+type DocumentType = "confirmation" | "invoice" | "voucher" | "travelplan" | "all";
 
 interface UseTourDocumentsOptions {
   bookingId?: string;
@@ -77,7 +77,7 @@ export const useTourDocuments = () => {
     if (!docs) return;
 
     // Open each in a new tab
-    const docTypes: DocumentType[] = ["confirmation", "invoice", "voucher"];
+    const docTypes: DocumentType[] = ["confirmation", "invoice", "voucher", "travelplan"];
     for (const type of docTypes) {
       if (docs[type]) {
         const blob = new Blob([docs[type]], { type: "text/html" });
