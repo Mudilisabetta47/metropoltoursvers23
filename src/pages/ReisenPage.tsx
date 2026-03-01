@@ -47,13 +47,7 @@ const imageMap: Record<string, string> = {
   '/tour-kosovo.jpg': tourKosovo,
 };
 
-const CATEGORY_CHIPS = [
-  { key: "all", label: "Alle Reisen" },
-  { key: "balkan", label: "Balkan" },
-  { key: "strand", label: "Strand" },
-  { key: "stadt", label: "Städtereisen" },
-  { key: "wochenende", label: "Wochenende" },
-];
+// Dynamic chips built below from tour data
 
 const DURATION_CHIPS = [
   { key: "1-3", label: "1–3 Tage", min: 1, max: 3 },
@@ -123,6 +117,43 @@ const ReisenPage = () => {
     );
   };
 
+  // Dynamic category chips from tour data
+  const categoryChips = useMemo(() => {
+    const chips: { key: string; label: string }[] = [{ key: "all", label: "Alle Reisen" }];
+    const seen = new Set<string>();
+
+    // Add unique countries
+    tours.forEach(t => {
+      const country = t.country?.trim();
+      if (country && !seen.has(country.toLowerCase())) {
+        seen.add(country.toLowerCase());
+        chips.push({ key: country.toLowerCase(), label: country });
+      }
+    });
+
+    // Add unique categories
+    tours.forEach(t => {
+      const cat = t.category?.trim();
+      if (cat && !seen.has(cat.toLowerCase())) {
+        seen.add(cat.toLowerCase());
+        chips.push({ key: cat.toLowerCase(), label: cat });
+      }
+    });
+
+    // Add unique tags
+    tours.forEach(t => {
+      (t.tags || []).forEach(tag => {
+        const normalized = tag.trim();
+        if (normalized && !seen.has(normalized.toLowerCase())) {
+          seen.add(normalized.toLowerCase());
+          chips.push({ key: normalized.toLowerCase(), label: normalized });
+        }
+      });
+    });
+
+    return chips;
+  }, [tours]);
+
   // Max price for slider
   const maxPrice = useMemo(() => {
     if (tours.length === 0) return 1000;
@@ -148,12 +179,13 @@ const ReisenPage = () => {
       );
     }
 
-    // Category
+    // Category / Country / Tag chip filter
     if (activeCategory !== "all") {
       result = result.filter(t => {
         const tags = (t.tags || []).map(tag => tag.toLowerCase());
         const cat = (t.category || "").toLowerCase();
-        return tags.includes(activeCategory) || cat.includes(activeCategory);
+        const country = (t.country || "").toLowerCase();
+        return tags.includes(activeCategory) || cat.includes(activeCategory) || country === activeCategory;
       });
     }
 
@@ -344,7 +376,7 @@ const ReisenPage = () => {
 
             {/* Category Chips */}
             <div className="flex gap-2 mt-3 overflow-x-auto pb-1 scrollbar-none">
-              {CATEGORY_CHIPS.map(chip => (
+              {categoryChips.map(chip => (
                 <button
                   key={chip.key}
                   onClick={() => setActiveCategory(chip.key)}
