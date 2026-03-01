@@ -5,7 +5,7 @@ import { de } from "date-fns/locale";
 import {
   CheckCircle2, XCircle, Mail, FileText, RefreshCw,
   Loader2, Users, CreditCard, FileCheck, MessageSquare,
-  History, Send, Plus, Eye, Shield
+  History, Send, Plus, Eye, Shield, AlertTriangle, ArrowLeftRight, RotateCcw
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -98,7 +98,7 @@ interface InsuranceData {
 
 const AdminBookingDetail = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const { toast } = useToast();
   const { user, isAdmin, isLoading: authLoading } = useAuth();
 
@@ -119,6 +119,16 @@ const AdminBookingDetail = () => {
     amount: 0, method: "bank_transfer", reference: "", note: "", sendEmail: true,
   });
 
+  // Cancellation modal state
+  const [cancelModal, setCancelModal] = useState(false);
+  const [cancelForm, setCancelForm] = useState({
+    reason: "customer_request", customReason: "", applyFee: true, feePercent: 20,
+  });
+
+  // Refund modal state
+  const [refundModal, setRefundModal] = useState(false);
+  const [refundForm, setRefundForm] = useState({ amount: 0, note: "" });
+
   useEffect(() => {
     if (!authLoading && user && isAdmin && bookingId) loadBooking();
   }, [bookingId, user, isAdmin, authLoading]);
@@ -134,7 +144,7 @@ const AdminBookingDetail = () => {
       const [tourRes, dateRes, tariffRes, pickupRes, paymentsRes, auditRes, docsRes, insuranceRes] = await Promise.all([
         supabase.from("package_tours").select("destination, location, country, duration_days, image_url").eq("id", b.tour_id).single(),
         supabase.from("tour_dates").select("departure_date, return_date, duration_days, total_seats, booked_seats").eq("id", b.tour_date_id).single(),
-        supabase.from("tour_tariffs").select("name, slug, suitcase_included, suitcase_weight_kg, is_refundable").eq("id", b.tariff_id).single(),
+        supabase.from("tour_tariffs").select("name, slug, suitcase_included, suitcase_weight_kg, is_refundable, cancellation_days, cancellation_fee_percent").eq("id", b.tariff_id).single(),
         b.pickup_stop_id ? supabase.from("tour_pickup_stops").select("city, location_name, departure_time, surcharge").eq("id", b.pickup_stop_id).single() : Promise.resolve({ data: null }),
         supabase.from("tour_payment_entries").select("*").eq("booking_id", bookingId).order("recorded_at", { ascending: false }),
         supabase.from("tour_booking_audit").select("*").eq("booking_id", bookingId).order("created_at", { ascending: false }),
@@ -212,6 +222,56 @@ const AdminBookingDetail = () => {
     finally { setProcessing(null); }
   };
 
+  const handleCancellation = async () => {
+    if (!booking) return;
+    setProcessing("cancel");
+    try {
+      const reason = cancelForm.reason === "other" ? cancelForm.customReason : cancelForm.reason;
+      const feeAmount = cancelForm.applyFee ? (booking.total_price * cancelForm.feePercent / 100) : 0;
+      
+      await supabase.from("tour_bookings").update({
+        status: "cancelled",
+        internal_notes: `${booking.internal_notes || ""}\n[STORNO] Grund: ${reason}${feeAmount > 0 ? ` | Gebühr: ${feeAmount.toFixed(2)}€` : ""}`.trim(),
+      }).eq("id", booking.id);
+      
+      await logAudit("CANCELLATION", "status", booking.status, `cancelled (${reason}, Gebühr: ${feeAmount.toFixed(2)}€)`);
+      
+      // If payments exist and fee < total paid, create refund record
+      const totalPaidNow = payments.reduce((s, p) => s + Number(p.amount), 0);
+      if (totalPaidNow > 0) {
+        const refundAmount = Math.max(0, totalPaidNow - feeAmount);
+        if (refundAmount > 0) {
+          await supabase.from("tour_payment_entries").insert({
+            booking_id: booking.id, amount: -refundAmount, method: "refund",
+            note: `Storno-Erstattung (Grund: ${reason})`, recorded_by: user?.id,
+          });
+          await logAudit("REFUND_CREATED", "amount", null, `-${refundAmount.toFixed(2)}€`);
+        }
+      }
+      
+      toast({ title: "✅ Buchung storniert" });
+      setCancelModal(false);
+      loadBooking();
+    } catch { toast({ title: "Fehler", variant: "destructive" }); }
+    finally { setProcessing(null); }
+  };
+
+  const handleRefund = async () => {
+    if (!booking) return;
+    setProcessing("refund");
+    try {
+      await supabase.from("tour_payment_entries").insert({
+        booking_id: booking.id, amount: -refundForm.amount, method: "refund",
+        note: refundForm.note || "Manuelle Erstattung", recorded_by: user?.id,
+      });
+      await logAudit("REFUND_CREATED", "amount", null, `-${refundForm.amount.toFixed(2)}€ (${refundForm.note})`);
+      toast({ title: "✅ Erstattung erfasst" });
+      setRefundModal(false);
+      loadBooking();
+    } catch { toast({ title: "Fehler", variant: "destructive" }); }
+    finally { setProcessing(null); }
+  };
+
   const sendEmail = async (type: string) => {
     if (!booking) return;
     setProcessing(type);
@@ -259,10 +319,22 @@ const AdminBookingDetail = () => {
     return <AdminLayout title="Kein Zugriff"><p className="text-zinc-400">Admin-Rechte erforderlich.</p></AdminLayout>;
   }
 
-  const totalPaid = payments.reduce((s, p) => s + Number(p.amount), 0);
-  const openAmount = Math.max(0, booking.total_price - totalPaid);
-  const paymentStatus = totalPaid >= booking.total_price ? "bezahlt" : totalPaid > 0 ? "teil" : "offen";
+  const totalPaid = payments.filter(p => Number(p.amount) > 0).reduce((s, p) => s + Number(p.amount), 0);
+  const totalRefunded = payments.filter(p => Number(p.amount) < 0).reduce((s, p) => s + Math.abs(Number(p.amount)), 0);
+  const netPaid = totalPaid - totalRefunded;
+  const openAmount = Math.max(0, booking.total_price - netPaid);
+  const paymentStatus = netPaid >= booking.total_price ? "bezahlt" : netPaid > 0 ? "teil" : "offen";
   const passengers: any[] = Array.isArray(booking.passenger_details) ? booking.passenger_details : [];
+  const missingPassengerData = passengers.length < booking.participants || passengers.some((p: any) => !p.firstName && !p.first_name);
+  const hasInsurance = insurance && insurance.is_active;
+
+  const warnings: { text: string; severity: "warning" | "error" }[] = [];
+  if (missingPassengerData) warnings.push({ text: "Passagierdaten unvollständig", severity: "warning" });
+  if (!hasInsurance && booking.status !== "cancelled") warnings.push({ text: "Keine Versicherung", severity: "warning" });
+  if (paymentStatus === "offen" && booking.status === "pending") {
+    const daysSinceBooking = Math.floor((Date.now() - new Date(booking.created_at).getTime()) / 86400000);
+    if (daysSinceBooking > 3) warnings.push({ text: `Zahlung seit ${daysSinceBooking} Tagen offen`, severity: "error" });
+  }
 
   const getStatusColor = (s: string) => {
     switch (s) { case "confirmed": return "bg-emerald-600"; case "pending": return "bg-amber-600"; case "cancelled": return "bg-red-600"; default: return "bg-zinc-600"; }
@@ -277,52 +349,96 @@ const AdminBookingDetail = () => {
       subtitle={`${booking.contact_first_name} ${booking.contact_last_name} • ${tourInfo?.destination || ''}`}
       actions={<Button variant="ghost" size="sm" onClick={loadBooking} className="text-zinc-400"><RefreshCw className="w-4 h-4" /></Button>}
     >
-      {/* Status Bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        <div className="bg-zinc-800 rounded-lg p-3">
-          <div className="text-xs text-zinc-500 mb-1">Buchungsstatus</div>
-          <Badge className={getStatusColor(booking.status)}>{booking.status === "confirmed" ? "Bezahlt" : booking.status === "pending" ? "Offen" : booking.status}</Badge>
+      {/* ===== COMMAND CENTER HEADER (fixed look) ===== */}
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 mb-4 space-y-3">
+        {/* Row 1: Status indicators */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-zinc-500 uppercase tracking-wider">Status</span>
+            <Badge className={getStatusColor(booking.status)}>
+              {booking.status === "confirmed" ? "Bestätigt" : booking.status === "pending" ? "Offen" : booking.status === "cancelled" ? "Storniert" : booking.status}
+            </Badge>
+          </div>
+          <Separator orientation="vertical" className="h-5 bg-zinc-700" />
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-zinc-500 uppercase tracking-wider">Zahlung</span>
+            <Badge className={getPaymentStatusColor(paymentStatus)}>
+              {paymentStatus === "bezahlt" ? `✓ ${netPaid.toFixed(2)}€` : paymentStatus === "teil" ? `${netPaid.toFixed(2)}€ / ${booking.total_price.toFixed(2)}€` : `0€ / ${booking.total_price.toFixed(2)}€`}
+            </Badge>
+          </div>
+          <Separator orientation="vertical" className="h-5 bg-zinc-700" />
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-zinc-500 uppercase tracking-wider">Check-in</span>
+            <Badge className="bg-zinc-700">0/{booking.participants}</Badge>
+          </div>
+          <Separator orientation="vertical" className="h-5 bg-zinc-700" />
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-zinc-500 uppercase tracking-wider">Dokumente</span>
+            <Badge className={docSends.length > 0 ? "bg-emerald-600" : "bg-zinc-700"}>{docSends.length}x</Badge>
+          </div>
+          {totalRefunded > 0 && (
+            <>
+              <Separator orientation="vertical" className="h-5 bg-zinc-700" />
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-zinc-500 uppercase tracking-wider">Erstattung</span>
+                <Badge className="bg-orange-600">{totalRefunded.toFixed(2)}€</Badge>
+              </div>
+            </>
+          )}
         </div>
-        <div className="bg-zinc-800 rounded-lg p-3">
-          <div className="text-xs text-zinc-500 mb-1">Zahlungsstatus</div>
-          <Badge className={getPaymentStatusColor(paymentStatus)}>{paymentStatus === "bezahlt" ? "✓ Bezahlt" : paymentStatus === "teil" ? `Teilzahlung (${totalPaid.toFixed(2)}€)` : "Offen"}</Badge>
-        </div>
-        <div className="bg-zinc-800 rounded-lg p-3">
-          <div className="text-xs text-zinc-500 mb-1">Dokumente</div>
-          <Badge className={docSends.length > 0 ? "bg-emerald-600" : "bg-amber-600"}>{docSends.length > 0 ? `${docSends.length}x gesendet` : "Noch nicht gesendet"}</Badge>
-        </div>
-        <div className="bg-zinc-800 rounded-lg p-3">
-          <div className="text-xs text-zinc-500 mb-1">Check-in</div>
-          <Badge className="bg-zinc-600">0/{booking.participants} eingecheckt</Badge>
+
+        {/* Warnings */}
+        {warnings.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {warnings.map((w, i) => (
+              <div key={i} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${w.severity === "error" ? "bg-red-500/20 text-red-400" : "bg-amber-500/20 text-amber-400"}`}>
+                <AlertTriangle className="w-3 h-3" /> {w.text}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Quick Action Buttons */}
+        <div className="flex flex-wrap gap-2">
+          {booking.status === "pending" && (
+            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setPaymentModal(true)} disabled={!!processing}>
+              <CreditCard className="w-3 h-3 mr-1" /> Zahlung erhalten
+            </Button>
+          )}
+          {booking.status === "pending" && (
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => updateBookingStatus("confirmed")} disabled={!!processing}>
+              <CheckCircle2 className="w-3 h-3 mr-1" /> Bestätigen
+            </Button>
+          )}
+          <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300" onClick={() => sendEmail("booking_confirmation")} disabled={!!processing}>
+            <Mail className="w-3 h-3 mr-1" /> PDF senden
+          </Button>
+          <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300" onClick={regenerateDocuments} disabled={!!processing}>
+            <FileText className="w-3 h-3 mr-1" /> PDF neu
+          </Button>
+          {booking.status !== "cancelled" && (
+            <>
+              <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300" disabled={!!processing}>
+                <ArrowLeftRight className="w-3 h-3 mr-1" /> Umbuchen
+              </Button>
+              <Button size="sm" variant="outline" className="border-orange-800 text-orange-400 hover:bg-orange-950" onClick={() => {
+                setRefundForm({ amount: netPaid, note: "" });
+                setRefundModal(true);
+              }} disabled={!!processing || netPaid <= 0}>
+                <RotateCcw className="w-3 h-3 mr-1" /> Erstattung
+              </Button>
+              <Button size="sm" variant="destructive" onClick={() => {
+                setCancelForm({ reason: "customer_request", customReason: "", applyFee: true, feePercent: tariffInfo?.cancellation_fee_percent || 20 });
+                setCancelModal(true);
+              }} disabled={!!processing}>
+                <XCircle className="w-3 h-3 mr-1" /> Stornieren
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {booking.status === "pending" && (
-          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setPaymentModal(true)} disabled={!!processing}>
-            <CreditCard className="w-3 h-3 mr-1" /> Zahlung erhalten
-          </Button>
-        )}
-        {booking.status === "pending" && (
-          <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => updateBookingStatus("confirmed")} disabled={!!processing}>
-            <CheckCircle2 className="w-3 h-3 mr-1" /> Bestätigen
-          </Button>
-        )}
-        {booking.status !== "cancelled" && (
-          <Button size="sm" variant="destructive" onClick={() => { if (confirm("Buchung wirklich stornieren?")) updateBookingStatus("cancelled"); }} disabled={!!processing}>
-            <XCircle className="w-3 h-3 mr-1" /> Stornieren
-          </Button>
-        )}
-        <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300" onClick={() => sendEmail("booking_confirmation")} disabled={!!processing}>
-          <Mail className="w-3 h-3 mr-1" /> E-Mail senden
-        </Button>
-        <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300" onClick={regenerateDocuments} disabled={!!processing}>
-          <FileText className="w-3 h-3 mr-1" /> PDF neu erstellen
-        </Button>
-      </div>
-
-      {/* Tabs */}
+      {/* ===== TABS ===== */}
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="bg-zinc-900 border border-zinc-800 flex-wrap h-auto">
           <TabsTrigger value="overview" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"><Eye className="w-3 h-3 mr-1" /> Übersicht</TabsTrigger>
@@ -365,15 +481,16 @@ const AdminBookingDetail = () => {
                 {booking.discount_amount && booking.discount_amount > 0 && <div className="flex justify-between"><span className="text-zinc-500">Rabatt ({booking.discount_code})</span><span className="text-emerald-400">-{booking.discount_amount.toFixed(2)}€</span></div>}
                 <Separator className="bg-zinc-700" />
                 <div className="flex justify-between font-bold"><span className="text-zinc-300">Gesamt</span><span className="text-emerald-400 text-lg">{booking.total_price.toFixed(2)}€</span></div>
-                <div className="flex justify-between"><span className="text-zinc-500">Bezahlt</span><span className={totalPaid >= booking.total_price ? "text-emerald-400" : "text-amber-400"}>{totalPaid.toFixed(2)}€</span></div>
+                <div className="flex justify-between"><span className="text-zinc-500">Bezahlt</span><span className={netPaid >= booking.total_price ? "text-emerald-400" : "text-amber-400"}>{netPaid.toFixed(2)}€</span></div>
                 {openAmount > 0 && <div className="flex justify-between"><span className="text-zinc-500">Offen</span><span className="text-red-400">{openAmount.toFixed(2)}€</span></div>}
+                {totalRefunded > 0 && <div className="flex justify-between"><span className="text-zinc-500">Erstattet</span><span className="text-orange-400">-{totalRefunded.toFixed(2)}€</span></div>}
               </CardContent>
             </Card>
             <Card className="bg-zinc-900 border-zinc-800">
               <CardHeader><CardTitle className="text-sm text-zinc-400">Interne Notizen</CardTitle></CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div><span className="text-zinc-500 block mb-1">Kundennotiz:</span><span className="text-white">{booking.customer_notes || "–"}</span></div>
-                <div><span className="text-zinc-500 block mb-1">Interne Notiz:</span><span className="text-white">{booking.internal_notes || "–"}</span></div>
+                <div><span className="text-zinc-500 block mb-1">Interne Notiz:</span><span className="text-white whitespace-pre-line">{booking.internal_notes || "–"}</span></div>
                 <div className="flex justify-between"><span className="text-zinc-500">Erstellt</span><span className="text-white">{format(new Date(booking.created_at), "dd.MM.yyyy HH:mm", { locale: de })}</span></div>
                 {booking.paid_at && <div className="flex justify-between"><span className="text-zinc-500">Bezahlt am</span><span className="text-emerald-400">{format(new Date(booking.paid_at), "dd.MM.yyyy HH:mm", { locale: de })}</span></div>}
               </CardContent>
@@ -384,7 +501,12 @@ const AdminBookingDetail = () => {
         {/* GUESTS */}
         <TabsContent value="guests">
           <Card className="bg-zinc-900 border-zinc-800">
-            <CardHeader><CardTitle className="text-sm text-zinc-400">Passagiere ({passengers.length}/{booking.participants})</CardTitle></CardHeader>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm text-zinc-400">Passagiere ({passengers.length}/{booking.participants})</CardTitle>
+                {missingPassengerData && <Badge className="bg-amber-600">Daten unvollständig</Badge>}
+              </div>
+            </CardHeader>
             <CardContent>
               {passengers.length === 0 ? (
                 <p className="text-zinc-500 text-sm py-4 text-center">Keine Passagierdaten hinterlegt</p>
@@ -396,17 +518,22 @@ const AdminBookingDetail = () => {
                     <TableHead className="text-zinc-400">Nachname</TableHead>
                     <TableHead className="text-zinc-400">Geburtsdatum</TableHead>
                     <TableHead className="text-zinc-400">Notizen</TableHead>
+                    <TableHead className="text-zinc-400">Status</TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
-                    {passengers.map((p: any, i: number) => (
-                      <TableRow key={i} className="border-zinc-800">
-                        <TableCell className="text-zinc-500">{i + 1}</TableCell>
-                        <TableCell className="text-white">{p.firstName || p.first_name || "–"}</TableCell>
-                        <TableCell className="text-white">{p.lastName || p.last_name || "–"}</TableCell>
-                        <TableCell className="text-zinc-300">{p.birthDate || p.birth_date || "–"}</TableCell>
-                        <TableCell className="text-zinc-400">{p.notes || "–"}</TableCell>
-                      </TableRow>
-                    ))}
+                    {passengers.map((p: any, i: number) => {
+                      const hasData = (p.firstName || p.first_name) && (p.lastName || p.last_name);
+                      return (
+                        <TableRow key={i} className="border-zinc-800">
+                          <TableCell className="text-zinc-500">{i + 1}</TableCell>
+                          <TableCell className="text-white">{p.firstName || p.first_name || "–"}</TableCell>
+                          <TableCell className="text-white">{p.lastName || p.last_name || "–"}</TableCell>
+                          <TableCell className="text-zinc-300">{p.birthDate || p.birth_date || "–"}</TableCell>
+                          <TableCell className="text-zinc-400">{p.notes || "–"}</TableCell>
+                          <TableCell>{hasData ? <Badge className="bg-emerald-600 text-xs">✓</Badge> : <Badge className="bg-amber-600 text-xs">Fehlt</Badge>}</TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               )}
@@ -417,15 +544,16 @@ const AdminBookingDetail = () => {
         {/* PAYMENTS */}
         <TabsContent value="payments">
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card className="bg-zinc-900 border-zinc-800"><CardContent className="pt-4"><div className="text-xs text-zinc-500 mb-1">Sollbetrag</div><div className="text-2xl font-bold text-white">{booking.total_price.toFixed(2)}€</div></CardContent></Card>
-              <Card className="bg-zinc-900 border-zinc-800"><CardContent className="pt-4"><div className="text-xs text-zinc-500 mb-1">Bezahlt</div><div className="text-2xl font-bold text-emerald-400">{totalPaid.toFixed(2)}€</div></CardContent></Card>
+              <Card className="bg-zinc-900 border-zinc-800"><CardContent className="pt-4"><div className="text-xs text-zinc-500 mb-1">Eingegangen</div><div className="text-2xl font-bold text-emerald-400">{totalPaid.toFixed(2)}€</div></CardContent></Card>
+              <Card className="bg-zinc-900 border-zinc-800"><CardContent className="pt-4"><div className="text-xs text-zinc-500 mb-1">Erstattet</div><div className="text-2xl font-bold text-orange-400">{totalRefunded.toFixed(2)}€</div></CardContent></Card>
               <Card className="bg-zinc-900 border-zinc-800"><CardContent className="pt-4"><div className="text-xs text-zinc-500 mb-1">Offen</div><div className={`text-2xl font-bold ${openAmount > 0 ? "text-red-400" : "text-emerald-400"}`}>{openAmount.toFixed(2)}€</div></CardContent></Card>
             </div>
             <Card className="bg-zinc-900 border-zinc-800">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm text-zinc-400">Zahlungseingänge</CardTitle>
+                  <CardTitle className="text-sm text-zinc-400">Zahlungseingänge & Erstattungen</CardTitle>
                   <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setPaymentModal(true)}><Plus className="w-3 h-3 mr-1" /> Zahlung erfassen</Button>
                 </div>
               </CardHeader>
@@ -439,8 +567,8 @@ const AdminBookingDetail = () => {
                       {payments.map((p) => (
                         <TableRow key={p.id} className="border-zinc-800">
                           <TableCell className="text-zinc-300">{format(new Date(p.recorded_at), "dd.MM.yy HH:mm", { locale: de })}</TableCell>
-                          <TableCell className="text-emerald-400 font-semibold">{Number(p.amount).toFixed(2)}€</TableCell>
-                          <TableCell className="text-zinc-300">{p.method === "bank_transfer" ? "Überweisung" : p.method === "cash" ? "Bar" : p.method}</TableCell>
+                          <TableCell className={`font-semibold ${Number(p.amount) < 0 ? "text-orange-400" : "text-emerald-400"}`}>{Number(p.amount) < 0 ? "" : "+"}{Number(p.amount).toFixed(2)}€</TableCell>
+                          <TableCell className="text-zinc-300">{p.method === "bank_transfer" ? "Überweisung" : p.method === "cash" ? "Bar" : p.method === "refund" ? "Erstattung" : p.method}</TableCell>
                           <TableCell className="text-zinc-400">{p.reference || "–"}</TableCell>
                           <TableCell className="text-zinc-400">{p.note || "–"}</TableCell>
                         </TableRow>
@@ -472,28 +600,11 @@ const AdminBookingDetail = () => {
               ) : (
                 <div className="space-y-4">
                   <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-zinc-400 text-xs">Anbieter</Label>
-                      <Input defaultValue={insurance.provider || ""} className="bg-zinc-800 border-zinc-700 text-white mt-1" placeholder="z.B. Europäische Reiseversicherung"
-                        onBlur={(e) => saveInsurance({ provider: e.target.value })} />
-                    </div>
-                    <div>
-                      <Label className="text-zinc-400 text-xs">Produkt</Label>
-                      <Input defaultValue={insurance.product || ""} className="bg-zinc-800 border-zinc-700 text-white mt-1" placeholder="z.B. Reiserücktritt Plus"
-                        onBlur={(e) => saveInsurance({ product: e.target.value })} />
-                    </div>
-                    <div>
-                      <Label className="text-zinc-400 text-xs">Policennummer</Label>
-                      <Input defaultValue={insurance.policy_number || ""} className="bg-zinc-800 border-zinc-700 text-white mt-1" placeholder="POL-..."
-                        onBlur={(e) => saveInsurance({ policy_number: e.target.value })} />
-                    </div>
-                    <div>
-                      <Label className="text-zinc-400 text-xs">Preis (€)</Label>
-                      <Input type="number" defaultValue={insurance.price || 0} className="bg-zinc-800 border-zinc-700 text-white mt-1"
-                        onBlur={(e) => saveInsurance({ price: parseFloat(e.target.value) || 0 })} />
-                    </div>
-                    <div>
-                      <Label className="text-zinc-400 text-xs">Policenstatus</Label>
+                    <div><Label className="text-zinc-400 text-xs">Anbieter</Label><Input defaultValue={insurance.provider || ""} className="bg-zinc-800 border-zinc-700 text-white mt-1" placeholder="z.B. Europäische Reiseversicherung" onBlur={(e) => saveInsurance({ provider: e.target.value })} /></div>
+                    <div><Label className="text-zinc-400 text-xs">Produkt</Label><Input defaultValue={insurance.product || ""} className="bg-zinc-800 border-zinc-700 text-white mt-1" placeholder="z.B. Reiserücktritt Plus" onBlur={(e) => saveInsurance({ product: e.target.value })} /></div>
+                    <div><Label className="text-zinc-400 text-xs">Policennummer</Label><Input defaultValue={insurance.policy_number || ""} className="bg-zinc-800 border-zinc-700 text-white mt-1" placeholder="POL-..." onBlur={(e) => saveInsurance({ policy_number: e.target.value })} /></div>
+                    <div><Label className="text-zinc-400 text-xs">Preis (€)</Label><Input type="number" defaultValue={insurance.price || 0} className="bg-zinc-800 border-zinc-700 text-white mt-1" onBlur={(e) => saveInsurance({ price: parseFloat(e.target.value) || 0 })} /></div>
+                    <div><Label className="text-zinc-400 text-xs">Policenstatus</Label>
                       <Select defaultValue={insurance.policy_status} onValueChange={(v) => saveInsurance({ policy_status: v })}>
                         <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1"><SelectValue /></SelectTrigger>
                         <SelectContent className="bg-zinc-800 border-zinc-700">
@@ -505,11 +616,7 @@ const AdminBookingDetail = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div>
-                      <Label className="text-zinc-400 text-xs">Notizen</Label>
-                      <Textarea defaultValue={insurance.notes || ""} className="bg-zinc-800 border-zinc-700 text-white mt-1" rows={2}
-                        onBlur={(e) => saveInsurance({ notes: e.target.value })} />
-                    </div>
+                    <div><Label className="text-zinc-400 text-xs">Notizen</Label><Textarea defaultValue={insurance.notes || ""} className="bg-zinc-800 border-zinc-700 text-white mt-1" rows={2} onBlur={(e) => saveInsurance({ notes: e.target.value })} /></div>
                   </div>
                   <Badge className={insurance.policy_status === "active" ? "bg-emerald-600" : insurance.policy_status === "requested" ? "bg-amber-600" : "bg-zinc-600"}>
                     Status: {insurance.policy_status === "active" ? "Aktiv" : insurance.policy_status === "requested" ? "Angefragt" : insurance.policy_status === "not_requested" ? "Nicht angefragt" : insurance.policy_status}
@@ -554,7 +661,7 @@ const AdminBookingDetail = () => {
                 {docSends.length === 0 ? <p className="text-zinc-500 text-sm py-4 text-center">Noch keine Dokumente versendet</p> : (
                   <Table>
                     <TableHeader><TableRow className="border-zinc-800">
-                      <TableHead className="text-zinc-400">Zeitpunkt</TableHead><TableHead className="text-zinc-400">Dokument</TableHead><TableHead className="text-zinc-400">Empfänger</TableHead><TableHead className="text-zinc-400">Status</TableHead>
+                      <TableHead className="text-zinc-400">Zeitpunkt</TableHead><TableHead className="text-zinc-400">Dokument</TableHead><TableHead className="text-zinc-400">Empfänger</TableHead><TableHead className="text-zinc-400">Status</TableHead><TableHead className="text-zinc-400"></TableHead>
                     </TableRow></TableHeader>
                     <TableBody>
                       {docSends.map((d) => (
@@ -562,7 +669,12 @@ const AdminBookingDetail = () => {
                           <TableCell className="text-zinc-300">{format(new Date(d.created_at), "dd.MM.yy HH:mm", { locale: de })}</TableCell>
                           <TableCell className="text-white">{d.document_type}</TableCell>
                           <TableCell className="text-zinc-400">{d.recipient_email}</TableCell>
-                          <TableCell><Badge className={d.status === "sent" ? "bg-emerald-600" : "bg-red-600"}>{d.status}</Badge></TableCell>
+                          <TableCell><Badge className={d.status === "sent" ? "bg-emerald-600" : d.status === "failed" ? "bg-red-600" : "bg-zinc-600"}>{d.status === "sent" ? "✓ Gesendet" : d.status === "failed" ? "✗ Fehler" : d.status}</Badge></TableCell>
+                          <TableCell>
+                            <Button size="sm" variant="ghost" className="text-zinc-500 h-7 text-xs" onClick={() => sendEmail(d.document_type)} disabled={!!processing}>
+                              <RefreshCw className="w-3 h-3 mr-1" /> Erneut
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -601,7 +713,12 @@ const AdminBookingDetail = () => {
                   {docSends.map((d) => (
                     <div key={d.id} className="bg-zinc-800 rounded-lg p-3 flex items-center justify-between">
                       <div><div className="text-sm text-white">{d.document_type}</div><div className="text-xs text-zinc-500">{format(new Date(d.created_at), "dd.MM.yyyy HH:mm", { locale: de })} → {d.recipient_email}</div></div>
-                      <Badge className={d.status === "sent" ? "bg-emerald-600" : "bg-red-600"}>{d.status === "sent" ? "✓ Gesendet" : "Fehler"}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge className={d.status === "sent" ? "bg-emerald-600" : "bg-red-600"}>{d.status === "sent" ? "✓ Gesendet" : "Fehler"}</Badge>
+                        <Button size="sm" variant="ghost" className="text-zinc-500 h-7 text-xs" onClick={() => sendEmail(d.document_type)} disabled={!!processing}>
+                          <RefreshCw className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -638,7 +755,7 @@ const AdminBookingDetail = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Payment Modal */}
+      {/* ===== PAYMENT MODAL ===== */}
       <Dialog open={paymentModal} onOpenChange={setPaymentModal}>
         <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
           <DialogHeader><DialogTitle>Zahlung erfassen</DialogTitle></DialogHeader>
@@ -665,6 +782,72 @@ const AdminBookingDetail = () => {
             <Button variant="ghost" onClick={() => setPaymentModal(false)} className="text-zinc-400">Abbrechen</Button>
             <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={handlePaymentReceived} disabled={processing === "payment"}>
               {processing === "payment" ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <CheckCircle2 className="w-4 h-4 mr-1" />} Zahlung erfassen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ===== CANCELLATION MODAL ===== */}
+      <Dialog open={cancelModal} onOpenChange={setCancelModal}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
+          <DialogHeader><DialogTitle className="text-red-400">Buchung stornieren</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div><Label className="text-zinc-400">Stornogrund</Label>
+              <Select value={cancelForm.reason} onValueChange={(v) => setCancelForm(f => ({ ...f, reason: v }))}>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  <SelectItem value="customer_request" className="text-white">Kundenwunsch</SelectItem>
+                  <SelectItem value="no_payment" className="text-white">Keine Zahlung eingegangen</SelectItem>
+                  <SelectItem value="tour_cancelled" className="text-white">Reise abgesagt</SelectItem>
+                  <SelectItem value="medical" className="text-white">Krankheit / Notfall</SelectItem>
+                  <SelectItem value="duplicate" className="text-white">Doppelbuchung</SelectItem>
+                  <SelectItem value="other" className="text-white">Sonstiges</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {cancelForm.reason === "other" && (
+              <div><Label className="text-zinc-400">Grund (Freitext)</Label><Input value={cancelForm.customReason} onChange={(e) => setCancelForm(f => ({ ...f, customReason: e.target.value }))} className="bg-zinc-800 border-zinc-700 text-white" /></div>
+            )}
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="applyFeeCheckbox" checked={cancelForm.applyFee} onChange={(e) => setCancelForm(f => ({ ...f, applyFee: e.target.checked }))} className="rounded border-zinc-600" />
+              <Label htmlFor="applyFeeCheckbox" className="text-zinc-400 text-sm cursor-pointer">Stornogebühr anwenden</Label>
+            </div>
+            {cancelForm.applyFee && (
+              <div className="grid grid-cols-2 gap-4">
+                <div><Label className="text-zinc-400">Gebühr (%)</Label><Input type="number" value={cancelForm.feePercent} onChange={(e) => setCancelForm(f => ({ ...f, feePercent: parseInt(e.target.value) || 0 }))} className="bg-zinc-800 border-zinc-700 text-white" /></div>
+                <div><Label className="text-zinc-400">Gebühr (€)</Label><div className="bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-white mt-1">{(booking.total_price * cancelForm.feePercent / 100).toFixed(2)}€</div></div>
+              </div>
+            )}
+            {netPaid > 0 && (
+              <div className="bg-zinc-800 rounded-lg p-3 text-sm">
+                <div className="flex justify-between"><span className="text-zinc-400">Bereits bezahlt</span><span className="text-white">{netPaid.toFixed(2)}€</span></div>
+                <div className="flex justify-between"><span className="text-zinc-400">Stornogebühr</span><span className="text-red-400">{cancelForm.applyFee ? (booking.total_price * cancelForm.feePercent / 100).toFixed(2) : "0.00"}€</span></div>
+                <Separator className="bg-zinc-700 my-2" />
+                <div className="flex justify-between font-bold"><span className="text-zinc-300">Erstattung</span><span className="text-emerald-400">{Math.max(0, netPaid - (cancelForm.applyFee ? booking.total_price * cancelForm.feePercent / 100 : 0)).toFixed(2)}€</span></div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setCancelModal(false)} className="text-zinc-400">Abbrechen</Button>
+            <Button variant="destructive" onClick={handleCancellation} disabled={processing === "cancel"}>
+              {processing === "cancel" ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <XCircle className="w-4 h-4 mr-1" />} Endgültig stornieren
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ===== REFUND MODAL ===== */}
+      <Dialog open={refundModal} onOpenChange={setRefundModal}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
+          <DialogHeader><DialogTitle className="text-orange-400">Erstattung erfassen</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div><Label className="text-zinc-400">Betrag (€)</Label><Input type="number" step="0.01" value={refundForm.amount} onChange={(e) => setRefundForm(f => ({ ...f, amount: parseFloat(e.target.value) || 0 }))} className="bg-zinc-800 border-zinc-700 text-white" /></div>
+            <div><Label className="text-zinc-400">Notiz</Label><Textarea value={refundForm.note} onChange={(e) => setRefundForm(f => ({ ...f, note: e.target.value }))} className="bg-zinc-800 border-zinc-700 text-white" placeholder="Grund für Erstattung" /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setRefundModal(false)} className="text-zinc-400">Abbrechen</Button>
+            <Button className="bg-orange-600 hover:bg-orange-700" onClick={handleRefund} disabled={processing === "refund"}>
+              {processing === "refund" ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <RotateCcw className="w-4 h-4 mr-1" />} Erstattung buchen
             </Button>
           </DialogFooter>
         </DialogContent>
