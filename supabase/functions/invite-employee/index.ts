@@ -57,7 +57,7 @@ serve(async (req) => {
       userId = existingProfile.user_id;
     } else {
       // Invite new user via admin API
-      const appUrl = "https://metropoltours2312admin.lovable.app";
+      const appUrl = "https://app.metours.de";
       const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email.trim(), {
         data: {
           first_name: first_name || null,
