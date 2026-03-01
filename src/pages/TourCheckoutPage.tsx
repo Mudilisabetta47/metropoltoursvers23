@@ -435,10 +435,14 @@ const TourCheckoutPage = () => {
       setCurrentStep("confirmation");
       toast.success("Buchung erfolgreich erstellt!");
 
-      // Send confirmation emails (customer + admin) via edge function
+      // Send confirmation email + generate documents (non-blocking)
       supabase.functions.invoke("send-booking-confirmation", {
         body: { tourBookingId: bookingData.id },
       }).catch((err) => console.error("Email send error:", err));
+
+      supabase.functions.invoke("generate-tour-documents", {
+        body: { bookingId: bookingData.id },
+      }).catch((err) => console.error("Document generation error:", err));
 
     } catch (error: any) {
       console.error("Error creating booking:", error);

@@ -652,9 +652,16 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Generate QR
+    // Generate QR as SVG data URL (canvas not available in Deno)
     const qrData = JSON.stringify({ b: booking.booking_number, p: booking.participants });
-    const qrDataUrl = await QRCode.toDataURL(qrData, { width: 140, margin: 2, color: { dark: "#000000", light: "#ffffff" } });
+    let qrDataUrl = "";
+    try {
+      const qrSvg = await QRCode.toString(qrData, { type: "svg", width: 140, margin: 2, color: { dark: "#000000", light: "#ffffff" } });
+      qrDataUrl = `data:image/svg+xml;base64,${btoa(qrSvg)}`;
+    } catch (qrErr) {
+      console.error("QR generation failed, using placeholder:", qrErr);
+      qrDataUrl = "";
+    }
 
     // Generate documents
     const documents: Record<string, string> = {};
