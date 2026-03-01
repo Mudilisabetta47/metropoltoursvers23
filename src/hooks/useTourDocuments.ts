@@ -59,39 +59,53 @@ export const useTourDocuments = () => {
       printWindow.document.write(html);
       printWindow.document.close();
     } else {
-      // Fallback: download as HTML
-      const blob = new Blob([html], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${documentType}-${options.bookingNumber || options.bookingId}.html`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      downloadHtmlFile(html, documentType, options);
     }
+  };
+
+  const downloadHtmlFile = (html: string, type: string, options: UseTourDocumentsOptions) => {
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${type}-${options.bookingNumber || options.bookingId}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const downloadAllDocuments = async (options: UseTourDocumentsOptions) => {
     const docs = await generateDocument(options, "all");
     if (!docs) return;
 
-    // Open each in a new tab
     const docTypes: DocumentType[] = ["confirmation", "invoice", "voucher", "travelplan"];
-    for (const type of docTypes) {
+    const docLabels: Record<string, string> = {
+      confirmation: "Buchungsbestätigung",
+      invoice: "Rechnung",
+      voucher: "Hotel-Voucher",
+      travelplan: "Reiseplan",
+    };
+
+    let downloadedCount = 0;
+
+    // Use staggered downloads to avoid browser blocking
+    for (let i = 0; i < docTypes.length; i++) {
+      const type = docTypes[i];
       if (docs[type]) {
-        const blob = new Blob([docs[type]], { type: "text/html" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `${type}-${options.bookingNumber || options.bookingId}.html`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        await new Promise<void>((resolve) => {
+          setTimeout(() => {
+            downloadHtmlFile(docs[type], type, options);
+            downloadedCount++;
+            resolve();
+          }, i * 500); // 500ms delay between each download
+        });
       }
     }
-    toast.success("Alle Reiseunterlagen heruntergeladen!");
+
+    if (downloadedCount > 0) {
+      toast.success(`${downloadedCount} Reiseunterlagen heruntergeladen!`);
+    }
   };
 
   return { generateDocument, openDocument, downloadAllDocuments, isGenerating };
