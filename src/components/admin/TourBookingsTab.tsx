@@ -64,7 +64,18 @@ const TourBookingsTab = () => {
         .update({ status: "confirmed", paid_at: new Date().toISOString(), payment_method: "bank_transfer" })
         .eq("id", bookingId);
       if (error) throw error;
-      toast({ title: "✅ Zahlung als erhalten markiert" });
+
+      // Send confirmation email with documents to the guest
+      try {
+        await supabase.functions.invoke("send-booking-confirmation", {
+          body: { bookingId },
+        });
+        toast({ title: "✅ Zahlung bestätigt & Bestätigungsmail gesendet" });
+      } catch (emailErr) {
+        console.error("Email failed:", emailErr);
+        toast({ title: "✅ Zahlung bestätigt (Mail konnte nicht gesendet werden)", variant: "default" });
+      }
+
       loadTourBookings();
     } catch {
       toast({ title: "Fehler", variant: "destructive" });
