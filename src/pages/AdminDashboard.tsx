@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { 
   Route, MapPin, Bus, Calendar, Users, Settings, LogOut,
   Plus, Pencil, Trash2, Save, X, ChevronRight, Shield,
-  LayoutDashboard, FileText, RefreshCw
+  LayoutDashboard, FileText, RefreshCw, DollarSign, Mail,
+  UserCheck, Navigation
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -264,6 +265,14 @@ const AdminDashboard = () => {
     { id: 'inquiries' as TabType, label: 'Anfragen', icon: FileText },
     { id: 'cms' as TabType, label: 'CMS / Inhalte', icon: LayoutDashboard },
   ];
+
+  const externalMenuItems = [
+    { path: '/admin/departures', label: 'Abfahrten', icon: Navigation },
+    { path: '/admin/customers', label: 'Kunden (CRM)', icon: UserCheck },
+    { path: '/admin/finances', label: 'Finanzen', icon: DollarSign },
+    { path: '/admin/templates', label: 'E-Mail Vorlagen', icon: Mail },
+    { path: '/admin/legal', label: 'Rechtliches', icon: Shield },
+  ];
   
   // Helper functions for bookings
   const getStatusBadge = (status: string) => {
@@ -350,7 +359,7 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <nav className="flex-1 p-2">
+        <nav className="flex-1 p-2 overflow-y-auto">
           {menuItems.map((item) => (
             <button
               key={item.id}
@@ -372,6 +381,21 @@ const AdminDashboard = () => {
               )}
             </button>
           ))}
+
+          <div className="border-t border-zinc-800 my-2 pt-2">
+            <div className="px-3 py-1 text-xs text-zinc-600 uppercase tracking-wider">Verwaltung</div>
+            {externalMenuItems.map((item) => (
+              <button
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors mb-1 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+              >
+                <item.icon className="w-4 h-4" />
+                {item.label}
+                <ChevronRight className="w-4 h-4 ml-auto opacity-50" />
+              </button>
+            ))}
+          </div>
         </nav>
 
         <div className="p-4 border-t border-zinc-800">
