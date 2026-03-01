@@ -51,13 +51,13 @@ serve(async (req) => {
       .maybeSingle();
 
     let userId: string;
+    const appUrl = "https://app.metours.de";
 
     if (existingProfile) {
       // User exists, just assign role
       userId = existingProfile.user_id;
     } else {
       // Invite new user via admin API
-      const appUrl = "https://app.metours.de";
       const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email.trim(), {
         data: {
           first_name: first_name || null,
