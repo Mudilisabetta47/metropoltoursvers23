@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { CheckCircle2, Loader2 } from "lucide-react";
@@ -35,6 +36,7 @@ interface TourBooking {
 
 const TourBookingsTab = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [tourBookings, setTourBookings] = useState<TourBooking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -167,7 +169,7 @@ const TourBookingsTab = () => {
             ) : (
               filtered.map((b) => (
                 <TableRow key={b.id} className="border-zinc-800">
-                  <TableCell className="font-mono text-emerald-400 font-medium">{b.booking_number}</TableCell>
+                  <TableCell className="font-mono text-emerald-400 font-medium cursor-pointer hover:underline" onClick={() => navigate(`/admin/booking/${b.id}`)}>{b.booking_number}</TableCell>
                   <TableCell className="text-white">{b.contact_first_name} {b.contact_last_name}</TableCell>
                   <TableCell className="text-zinc-400 text-sm">
                     <div>{b.contact_email}</div>
