@@ -53,6 +53,47 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_email_log: {
+        Row: {
+          booking_id: string | null
+          email_type: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          recipient_email: string
+          sent_at: string
+          status: string
+        }
+        Insert: {
+          booking_id?: string | null
+          email_type: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          recipient_email: string
+          sent_at?: string
+          status?: string
+        }
+        Update: {
+          booking_id?: string | null
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          recipient_email?: string
+          sent_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_email_log_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "tour_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           booked_by_agent_id: string | null
@@ -689,6 +730,41 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      passenger_data_tokens: {
+        Row: {
+          booking_id: string
+          completed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          token: string
+        }
+        Insert: {
+          booking_id: string
+          completed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          token?: string
+        }
+        Update: {
+          booking_id?: string
+          completed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "passenger_data_tokens_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "tour_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       price_tiers: {
         Row: {

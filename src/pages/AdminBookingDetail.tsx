@@ -22,6 +22,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import AutomationPanel from "@/components/admin/AutomationPanel";
 
 interface TourBooking {
   id: string;
@@ -447,6 +448,7 @@ const AdminBookingDetail = () => {
           <TabsTrigger value="insurance" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"><Shield className="w-3 h-3 mr-1" /> Versicherung</TabsTrigger>
           <TabsTrigger value="documents" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"><FileCheck className="w-3 h-3 mr-1" /> Dokumente</TabsTrigger>
           <TabsTrigger value="communication" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"><MessageSquare className="w-3 h-3 mr-1" /> Kommunikation</TabsTrigger>
+          <TabsTrigger value="automation" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"><Mail className="w-3 h-3 mr-1" /> Automationen</TabsTrigger>
           <TabsTrigger value="audit" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"><History className="w-3 h-3 mr-1" /> Änderungen</TabsTrigger>
         </TabsList>
 
@@ -725,6 +727,18 @@ const AdminBookingDetail = () => {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* AUTOMATION */}
+        <TabsContent value="automation">
+          <AutomationPanel
+            bookingId={booking.id}
+            bookingStatus={booking.status}
+            paidAt={booking.paid_at}
+            contactEmail={booking.contact_email}
+            passengerDetails={booking.passenger_details}
+            participants={booking.participants}
+          />
         </TabsContent>
 
         {/* AUDIT LOG */}

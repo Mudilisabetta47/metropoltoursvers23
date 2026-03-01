@@ -12,6 +12,9 @@ interface AuthContextType {
   isAgent: boolean;
   isAdmin: boolean;
   isCustomer: boolean;
+  isOffice: boolean;
+  isDriver: boolean;
+  hasAnyStaffRole: boolean;
   signUp: (email: string, password: string, firstName?: string, lastName?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -135,6 +138,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAgent: roles.includes('agent'),
     isAdmin: roles.includes('admin'),
     isCustomer: roles.includes('customer'),
+    isOffice: roles.includes('office'),
+    isDriver: roles.includes('driver'),
+    hasAnyStaffRole: roles.some(r => ['admin', 'office', 'agent', 'driver'].includes(r)),
     signUp,
     signIn,
     signOut,
