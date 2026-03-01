@@ -26,6 +26,7 @@ const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminCMS = lazy(() => import("./pages/AdminCMS"));
 const AdminTourBuilder = lazy(() => import("./pages/AdminTourBuilder"));
 const OperationsDashboard = lazy(() => import("./pages/OperationsDashboard"));
+const AdminBookingDetail = lazy(() => import("./pages/AdminBookingDetail"));
 const WeekendTripsPage = lazy(() => import("./pages/WeekendTripsPage"));
 const WeekendTripDetailPage = lazy(() => import("./pages/WeekendTripDetailPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -68,6 +69,7 @@ const App = () => (
               <Route path="/admin/ops" element={<OperationsDashboard />} />
               <Route path="/admin/inquiries" element={<AdminInquiriesPage />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/admin/booking/:bookingId" element={<AdminBookingDetail />} />
               <Route path="/admin/cms" element={<AdminCMS />} />
               <Route path="/admin/tour-builder" element={<AdminTourBuilder />} />
               <Route path="/admin/tour-builder/:tourId" element={<AdminTourBuilder />} />

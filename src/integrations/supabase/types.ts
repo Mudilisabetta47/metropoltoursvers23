@@ -1088,6 +1088,50 @@ export type Database = {
         }
         Relationships: []
       }
+      tour_booking_audit: {
+        Row: {
+          action: string
+          booking_id: string
+          created_at: string
+          field_name: string | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+          performed_by: string | null
+          performed_by_email: string | null
+        }
+        Insert: {
+          action: string
+          booking_id: string
+          created_at?: string
+          field_name?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          performed_by?: string | null
+          performed_by_email?: string | null
+        }
+        Update: {
+          action?: string
+          booking_id?: string
+          created_at?: string
+          field_name?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          performed_by?: string | null
+          performed_by_email?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tour_booking_audit_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "tour_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tour_bookings: {
         Row: {
           base_price: number
@@ -1293,6 +1337,47 @@ export type Database = {
           },
         ]
       }
+      tour_document_sends: {
+        Row: {
+          booking_id: string
+          created_at: string
+          document_type: string
+          error_message: string | null
+          id: string
+          recipient_email: string
+          sent_by: string | null
+          status: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          document_type: string
+          error_message?: string | null
+          id?: string
+          recipient_email: string
+          sent_by?: string | null
+          status?: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          document_type?: string
+          error_message?: string | null
+          id?: string
+          recipient_email?: string
+          sent_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tour_document_sends_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "tour_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tour_extras: {
         Row: {
           category: string
@@ -1468,6 +1553,50 @@ export type Database = {
             columns: ["tour_id"]
             isOneToOne: false
             referencedRelation: "package_tours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tour_payment_entries: {
+        Row: {
+          amount: number
+          booking_id: string
+          created_at: string
+          id: string
+          method: string
+          note: string | null
+          recorded_at: string
+          recorded_by: string | null
+          reference: string | null
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+          created_at?: string
+          id?: string
+          method?: string
+          note?: string | null
+          recorded_at?: string
+          recorded_by?: string | null
+          reference?: string | null
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+          created_at?: string
+          id?: string
+          method?: string
+          note?: string | null
+          recorded_at?: string
+          recorded_by?: string | null
+          reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tour_payment_entries_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "tour_bookings"
             referencedColumns: ["id"]
           },
         ]
