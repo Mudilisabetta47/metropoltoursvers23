@@ -8,8 +8,8 @@ const corsHeaders = {
 
 // Simple in-memory rate limiter (per IP)
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 5; // Max 5 lookups per minute per IP
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const MAX_REQUESTS_PER_WINDOW = 5;
 
 function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
   const now = Date.now();
@@ -28,8 +28,7 @@ function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
   return { allowed: true };
 }
 
-// Input validation
-function validateInput(data: any): { valid: boolean; error?: string } {
+function validateInput(data: any): { valid: boolean; error?: string; bookingType?: 'bus' | 'tour' } {
   if (!data.ticketNumber || typeof data.ticketNumber !== 'string') {
     return { valid: false, error: 'Ticket number is required' };
   }
@@ -38,64 +37,59 @@ function validateInput(data: any): { valid: boolean; error?: string } {
     return { valid: false, error: 'Email is required' };
   }
   
-  // Validate ticket number format: TKT-YYYY-XXXXXX
-  const ticketRegex = /^TKT-\d{4}-\d{6}$/;
-  if (!ticketRegex.test(data.ticketNumber.toUpperCase())) {
-    return { valid: false, error: 'Invalid ticket number format' };
+  const ticketUpper = data.ticketNumber.toUpperCase().trim();
+  
+  // Bus booking format: TKT-YYYY-XXXXXX
+  const busTicketRegex = /^TKT-\d{4}-\d{6}$/;
+  // Tour booking format: MT-XXXXXXXX (alphanumeric)
+  const tourTicketRegex = /^MT-[A-Z0-9]{6,10}$/;
+  
+  if (busTicketRegex.test(ticketUpper)) {
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
+      return { valid: false, error: 'Invalid email format' };
+    }
+    return { valid: true, bookingType: 'bus' };
   }
   
-  // Basic email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(data.email)) {
-    return { valid: false, error: 'Invalid email format' };
+  if (tourTicketRegex.test(ticketUpper)) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
+      return { valid: false, error: 'Invalid email format' };
+    }
+    return { valid: true, bookingType: 'tour' };
   }
   
-  return { valid: true };
+  return { valid: false, error: 'Invalid ticket number format' };
 }
 
-// Add artificial delay to prevent timing attacks
 async function addSecurityDelay(min: number = 500, max: number = 1500): Promise<void> {
   const delay = Math.floor(Math.random() * (max - min) + min);
   await new Promise(resolve => setTimeout(resolve, delay));
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Get client IP for rate limiting
     const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
                      req.headers.get('cf-connecting-ip') || 
                      'unknown';
     
-    // Check rate limit
     const rateLimitResult = checkRateLimit(clientIp);
     if (!rateLimitResult.allowed) {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Too many requests. Please try again later.' 
-        }),
-        { 
-          status: 429, 
-          headers: { 
-            "Content-Type": "application/json",
-            "Retry-After": String(rateLimitResult.retryAfter || 60),
-            ...corsHeaders 
-          } 
-        }
+        JSON.stringify({ success: false, error: 'Too many requests. Please try again later.' }),
+        { status: 429, headers: { "Content-Type": "application/json", "Retry-After": String(rateLimitResult.retryAfter || 60), ...corsHeaders } }
       );
     }
 
     const requestData = await req.json();
-    
-    // Validate input
     const validation = validateInput(requestData);
     if (!validation.valid) {
-      // Add delay to prevent enumeration
       await addSecurityDelay();
       return new Response(
         JSON.stringify({ success: false, error: 'Invalid request' }),
@@ -106,12 +100,102 @@ const handler = async (req: Request): Promise<Response> => {
     const ticketNumber = requestData.ticketNumber.toUpperCase().trim();
     const email = requestData.email.toLowerCase().trim();
 
-    // Use service role to bypass RLS for this secure lookup
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Query booking with BOTH ticket number AND email verification
+    if (validation.bookingType === 'tour') {
+      // Look up tour booking
+      const { data: tourBooking, error: tourError } = await supabase
+        .from('tour_bookings')
+        .select(`
+          id,
+          booking_number,
+          status,
+          contact_first_name,
+          contact_last_name,
+          contact_email,
+          contact_phone,
+          participants,
+          total_price,
+          base_price,
+          pickup_surcharge,
+          created_at,
+          booking_type,
+          tour_id,
+          tour_date_id,
+          tariff_id,
+          payment_method,
+          paid_at
+        `)
+        .eq('booking_number', ticketNumber)
+        .single();
+
+      await addSecurityDelay();
+
+      if (tourError || !tourBooking) {
+        console.log('Tour booking not found for:', ticketNumber);
+        return new Response(
+          JSON.stringify({ success: false, error: 'No booking found. Please verify your ticket number and email.' }),
+          { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      if (tourBooking.contact_email.toLowerCase() !== email) {
+        console.log('Email mismatch for tour booking:', ticketNumber);
+        return new Response(
+          JSON.stringify({ success: false, error: 'No booking found. Please verify your ticket number and email.' }),
+          { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      // Fetch tour details
+      const { data: tour } = await supabase
+        .from('package_tours')
+        .select('destination, country, location, image_url')
+        .eq('id', tourBooking.tour_id)
+        .single();
+
+      const { data: tourDate } = await supabase
+        .from('tour_dates')
+        .select('departure_date, return_date, duration_days')
+        .eq('id', tourBooking.tour_date_id)
+        .single();
+
+      const { data: tariff } = await supabase
+        .from('tour_tariffs')
+        .select('name, slug')
+        .eq('id', tourBooking.tariff_id)
+        .single();
+
+      const safeTourBooking = {
+        id: tourBooking.id,
+        booking_number: tourBooking.booking_number,
+        status: tourBooking.status,
+        contact_first_name: tourBooking.contact_first_name,
+        contact_last_name: tourBooking.contact_last_name,
+        participants: tourBooking.participants,
+        total_price: tourBooking.total_price,
+        base_price: tourBooking.base_price,
+        pickup_surcharge: tourBooking.pickup_surcharge,
+        created_at: tourBooking.created_at,
+        booking_type: tourBooking.booking_type,
+        payment_method: tourBooking.payment_method,
+        paid_at: tourBooking.paid_at,
+        tour: tour || null,
+        tour_date: tourDate || null,
+        tariff: tariff || null,
+      };
+
+      console.log('Tour booking found and verified:', ticketNumber);
+
+      return new Response(
+        JSON.stringify({ success: true, booking: safeTourBooking, type: 'tour' }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Bus booking lookup (existing logic)
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
       .select(`
@@ -136,35 +220,24 @@ const handler = async (req: Request): Promise<Response> => {
       .eq('ticket_number', ticketNumber)
       .single();
 
-    // Add security delay before responding
     await addSecurityDelay();
 
     if (bookingError || !booking) {
       console.log('Booking not found for ticket:', ticketNumber);
-      // Generic error to prevent enumeration
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'No booking found. Please verify your ticket number and email.' 
-        }),
+        JSON.stringify({ success: false, error: 'No booking found. Please verify your ticket number and email.' }),
         { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Verify email matches (case-insensitive)
     if (booking.passenger_email.toLowerCase() !== email) {
       console.log('Email mismatch for booking:', ticketNumber);
-      // Same generic error to prevent enumeration
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'No booking found. Please verify your ticket number and email.' 
-        }),
+        JSON.stringify({ success: false, error: 'No booking found. Please verify your ticket number and email.' }),
         { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Return booking data (excluding sensitive fields we don't need to expose)
     const safeBooking = {
       id: booking.id,
       ticket_number: booking.ticket_number,
@@ -182,13 +255,12 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Booking found and verified:', ticketNumber);
 
     return new Response(
-      JSON.stringify({ success: true, booking: safeBooking }),
+      JSON.stringify({ success: true, booking: safeBooking, type: 'bus' }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
 
   } catch (error: any) {
     console.error("Error in lookup-booking:", error);
-    // Add delay on errors too
     await addSecurityDelay();
     return new Response(
       JSON.stringify({ success: false, error: 'An error occurred. Please try again.' }),
