@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { Mail, ArrowLeft, Loader2, Pencil, Save, X } from "lucide-react";
+import { Loader2, Pencil, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,9 +11,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import AdminLayout from "@/components/admin/AdminLayout";
 
 const AdminTemplates = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const { user, isAdmin, isLoading: authLoading } = useAuth();
   const [templates, setTemplates] = useState<any[]>([]);
@@ -33,42 +32,23 @@ const AdminTemplates = () => {
     setIsLoading(false);
   };
 
-  const startEdit = (t: any) => {
-    setEditing(t.id);
-    setEditForm({ subject: t.subject, body_html: t.body_html });
-  };
-
+  const startEdit = (t: any) => { setEditing(t.id); setEditForm({ subject: t.subject, body_html: t.body_html }); };
   const saveEdit = async (id: string) => {
     await supabase.from("tour_email_templates").update(editForm).eq("id", id);
-    toast({ title: "✅ Vorlage gespeichert" });
+    toast({ title: "✅ Gespeichert" });
     setEditing(null);
     loadTemplates();
   };
 
   const getCategoryLabel = (cat: string) => {
-    switch (cat) {
-      case "payment": return "Zahlung";
-      case "reminder": return "Erinnerung";
-      case "ticket": return "Ticket";
-      case "cancellation": return "Stornierung";
-      default: return cat;
-    }
+    switch (cat) { case "payment": return "Zahlung"; case "reminder": return "Erinnerung"; case "ticket": return "Ticket"; case "cancellation": return "Stornierung"; default: return cat; }
   };
 
-  if (authLoading || isLoading) return <div className="min-h-screen bg-zinc-950 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-emerald-400" /></div>;
-  if (!user || !isAdmin) return <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-white">Kein Zugriff</div>;
-
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <div className="max-w-5xl mx-auto px-4 py-6">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/admin/dashboard")} className="text-zinc-400"><ArrowLeft className="w-4 h-4 mr-1" /> Admin</Button>
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2"><Mail className="w-6 h-6 text-emerald-400" /> E-Mail Vorlagen</h1>
-            <p className="text-sm text-zinc-500">{templates.length} Vorlagen • Variablen: {"{{first_name}}"}, {"{{booking_number}}"}, {"{{total_price}}"}, {"{{destination}}"}</p>
-          </div>
-        </div>
-
+    <AdminLayout title="E-Mail Vorlagen" subtitle={`${templates.length} Vorlagen • Variablen: {{first_name}}, {{booking_number}}, {{total_price}}`}>
+      {isLoading ? (
+        <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-emerald-400" /></div>
+      ) : (
         <div className="space-y-4">
           {templates.map((t: any) => (
             <Card key={t.id} className="bg-zinc-900 border-zinc-800">
@@ -91,14 +71,8 @@ const AdminTemplates = () => {
               <CardContent>
                 {editing === t.id ? (
                   <div className="space-y-3">
-                    <div>
-                      <Label className="text-zinc-400 text-xs">Betreff</Label>
-                      <Input value={editForm.subject} onChange={(e) => setEditForm(f => ({ ...f, subject: e.target.value }))} className="bg-zinc-800 border-zinc-700 text-white" />
-                    </div>
-                    <div>
-                      <Label className="text-zinc-400 text-xs">Inhalt (HTML)</Label>
-                      <Textarea value={editForm.body_html} onChange={(e) => setEditForm(f => ({ ...f, body_html: e.target.value }))} className="bg-zinc-800 border-zinc-700 text-white font-mono text-xs" rows={10} />
-                    </div>
+                    <div><Label className="text-zinc-400 text-xs">Betreff</Label><Input value={editForm.subject} onChange={(e) => setEditForm(f => ({ ...f, subject: e.target.value }))} className="bg-zinc-800 border-zinc-700 text-white" /></div>
+                    <div><Label className="text-zinc-400 text-xs">Inhalt (HTML)</Label><Textarea value={editForm.body_html} onChange={(e) => setEditForm(f => ({ ...f, body_html: e.target.value }))} className="bg-zinc-800 border-zinc-700 text-white font-mono text-xs" rows={10} /></div>
                   </div>
                 ) : (
                   <div>
@@ -110,8 +84,8 @@ const AdminTemplates = () => {
             </Card>
           ))}
         </div>
-      </div>
-    </div>
+      )}
+    </AdminLayout>
   );
 };
 
