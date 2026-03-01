@@ -111,15 +111,15 @@ const TourRecommendations = ({ dates, tariffs, onSelectDate }: TourRecommendatio
                 </div>
 
                 {/* Date Info */}
-                <div className="bg-muted/50 rounded-lg p-3 mb-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Reisezeitraum</span>
-                    <span className="font-medium text-foreground">
+                <div className="bg-muted/50 rounded-lg p-3 mb-4 space-y-1">
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Zeitraum: </span>
+                    <span className="font-medium text-foreground whitespace-nowrap">
                       {formatDate(rec.date.departure_date)} – {formatDate(rec.date.return_date)}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-sm mt-1">
-                    <span className="text-muted-foreground">Dauer</span>
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Dauer: </span>
                     <span className="font-medium text-foreground">{rec.date.duration_days} Tage</span>
                   </div>
                 </div>
