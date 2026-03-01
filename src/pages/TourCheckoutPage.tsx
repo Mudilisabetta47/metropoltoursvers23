@@ -51,6 +51,7 @@ import {
   TourDate,
   TourRoute,
   TourLuggageAddon,
+  TourExtra,
   ExtendedPackageTour,
 } from "@/hooks/useTourBuilder";
 
@@ -98,12 +99,14 @@ const TourCheckoutPage = () => {
   const [allTariffs, setAllTariffs] = useState<TourTariff[]>([]);
   const [routes, setRoutes] = useState<TourRoute[]>([]);
   const [luggageAddons, setLuggageAddons] = useState<TourLuggageAddon[]>([]);
+  const [tourExtras, setTourExtras] = useState<TourExtra[]>([]);
   const [pickupStops, setPickupStops] = useState<PickupStop[]>([]);
 
   // Form state
   const [participants, setParticipants] = useState(initialPax);
   const [selectedPickupStop, setSelectedPickupStop] = useState<PickupStop | null>(null);
   const [passengerInfo, setPassengerInfo] = useState<PassengerInfo[]>([]);
+  const [selectedExtras, setSelectedExtras] = useState<Record<string, number>>({});
   const [selectedAddons, setSelectedAddons] = useState<Record<string, number>>({});
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [bookingNumber, setBookingNumber] = useState<string | null>(null);
@@ -183,11 +186,13 @@ const TourCheckoutPage = () => {
       if (tourError || !tourData) throw new Error("Tour not found");
       setTour(tourData as unknown as ExtendedPackageTour);
 
-      const [datesRes, tariffsRes, routesRes, luggageRes] = await Promise.all([
+      const client = supabase as any;
+      const [datesRes, tariffsRes, routesRes, luggageRes, extrasRes] = await Promise.all([
         supabase.from("tour_dates").select("*").eq("tour_id", tourId).eq("is_active", true).order("departure_date"),
         supabase.from("tour_tariffs").select("*").eq("tour_id", tourId).eq("is_active", true).order("sort_order"),
         supabase.from("tour_routes").select("*, tour_pickup_stops(*)").eq("tour_id", tourId).eq("is_active", true),
         supabase.from("tour_luggage_addons").select("*").eq("tour_id", tourId).eq("is_active", true),
+        client.from("tour_extras").select("*").eq("tour_id", tourId).eq("is_active", true).order("sort_order"),
       ]);
 
       const dates = (datesRes.data || []) as TourDate[];
@@ -196,6 +201,7 @@ const TourCheckoutPage = () => {
       setAllDates(dates);
       setAllTariffs(tariffs);
       setLuggageAddons((luggageRes.data || []) as TourLuggageAddon[]);
+      setTourExtras((extrasRes.data || []) as TourExtra[]);
 
       const allStops: PickupStop[] = [];
       (routesRes.data || []).forEach((route: any) => {
@@ -256,7 +262,14 @@ const TourCheckoutPage = () => {
     return sum + (addon?.price || 0) * qty;
   }, 0);
 
-  const subtotal = baseTotal + addonsTotal;
+  const extrasTotal = Object.entries(selectedExtras).reduce((sum, [extraId, qty]) => {
+    const extra = tourExtras.find((e) => e.id === extraId);
+    if (!extra) return sum;
+    const multiplier = extra.price_type === 'per_person' ? participants : 1;
+    return sum + extra.price * qty * multiplier;
+  }, 0);
+
+  const subtotal = baseTotal + addonsTotal + extrasTotal;
 
   // Calculate discount
   const discountAmount = appliedCoupon
@@ -460,6 +473,14 @@ const TourCheckoutPage = () => {
     const current = selectedAddons[addonId] || 0;
     const newVal = Math.max(0, Math.min(addon.max_per_booking, current + delta));
     setSelectedAddons({ ...selectedAddons, [addonId]: newVal });
+  };
+
+  const toggleExtra = (extraId: string, delta: number) => {
+    const extra = tourExtras.find((e) => e.id === extraId);
+    if (!extra) return;
+    const current = selectedExtras[extraId] || 0;
+    const newVal = Math.max(0, Math.min(extra.max_per_booking, current + delta));
+    setSelectedExtras({ ...selectedExtras, [extraId]: newVal });
   };
 
   if (isLoading || (paymentStatus === "success" && isProcessing)) {
@@ -747,6 +768,41 @@ const TourCheckoutPage = () => {
                             </div>
                           </div>
                         ))}
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Tour Extras / Upsells */}
+                  {tourExtras.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Star className="w-5 h-5 text-primary" />
+                          Zusatzleistungen
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        {tourExtras.map((extra) => {
+                          const priceLabel = extra.price_type === 'per_person' ? 'p.P.' : extra.price_type === 'per_night' ? 'pro Nacht' : extra.price_type === 'per_person_night' ? 'p.P./Nacht' : 'pro Buchung';
+                          return (
+                            <div key={extra.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                              <div>
+                                <p className="font-medium">{extra.name}</p>
+                                {extra.description && <p className="text-sm text-muted-foreground">{extra.description}</p>}
+                                <p className="text-sm text-primary font-medium">{extra.price}€ {priceLabel}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => toggleExtra(extra.id, -1)} disabled={!selectedExtras[extra.id]}>
+                                  <Minus className="w-3 h-3" />
+                                </Button>
+                                <span className="w-6 text-center font-medium">{selectedExtras[extra.id] || 0}</span>
+                                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => toggleExtra(extra.id, 1)} disabled={(selectedExtras[extra.id] || 0) >= extra.max_per_booking}>
+                                  <Plus className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </CardContent>
                     </Card>
                   )}

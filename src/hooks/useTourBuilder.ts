@@ -113,6 +113,20 @@ export interface TourLegal {
   is_active: boolean;
 }
 
+export interface TourExtra {
+  id: string;
+  tour_id: string;
+  name: string;
+  description: string | null;
+  category: string;
+  icon: string;
+  price: number;
+  price_type: string;
+  max_per_booking: number;
+  is_active: boolean;
+  sort_order: number;
+}
+
 export interface ExtendedPackageTour {
   id: string;
   destination: string;
@@ -265,6 +279,7 @@ export function useTourBuilder(tourId?: string) {
   const [luggageAddons, setLuggageAddons] = useState<TourLuggageAddon[]>([]);
   const [inclusions, setInclusions] = useState<TourInclusion[]>([]);
   const [legal, setLegal] = useState<TourLegal[]>([]);
+  const [extras, setExtras] = useState<TourExtra[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -288,13 +303,14 @@ export function useTourBuilder(tourId?: string) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const client = supabase as any;
       
-      const [t, d, r, l, i, lg] = await Promise.all([
+      const [t, d, r, l, i, lg, ex] = await Promise.all([
         client.from('tour_tariffs').select('*').eq('tour_id', tourId).order('sort_order'),
         client.from('tour_dates').select('*').eq('tour_id', tourId).order('departure_date'),
         client.from('tour_routes').select('*').eq('tour_id', tourId).order('sort_order'),
         client.from('tour_luggage_addons').select('*').eq('tour_id', tourId),
         client.from('tour_inclusions').select('*').eq('tour_id', tourId).order('sort_order'),
         client.from('tour_legal').select('*').eq('tour_id', tourId).order('sort_order'),
+        client.from('tour_extras').select('*').eq('tour_id', tourId).order('sort_order'),
       ]);
 
       setTariffs((t.data || []) as TourTariff[]);
@@ -303,6 +319,7 @@ export function useTourBuilder(tourId?: string) {
       setLuggageAddons((l.data || []) as TourLuggageAddon[]);
       setInclusions((i.data || []) as TourInclusion[]);
       setLegal((lg.data || []) as TourLegal[]);
+      setExtras((ex.data || []) as TourExtra[]);
 
       // Fetch pickup stops for each route
       if (r.data && r.data.length > 0) {
@@ -607,6 +624,35 @@ export function useTourBuilder(tourId?: string) {
     }
   };
 
+  // Tour extras operations
+  const saveExtra = async (extra: Partial<TourExtra> & { id?: string }) => {
+    if (!tourId) return { error: new Error('No tour ID') };
+    try {
+      if (extra.id) {
+        const { error } = await client.from('tour_extras').update(extra).eq('id', extra.id);
+        if (error) throw error;
+      } else {
+        const { error } = await client.from('tour_extras').insert({ ...extra, tour_id: tourId });
+        if (error) throw error;
+      }
+      await fetchTour();
+      return { error: null };
+    } catch (error) {
+      return { error };
+    }
+  };
+
+  const deleteExtra = async (extraId: string) => {
+    try {
+      const { error } = await client.from('tour_extras').delete().eq('id', extraId);
+      if (error) throw error;
+      setExtras(prev => prev.filter(e => e.id !== extraId));
+      return { error: null };
+    } catch (error) {
+      return { error };
+    }
+  };
+
   // Publish tour
   const publishTour = async () => {
     if (!tourId || !tour) return { error: new Error('No tour') };
@@ -820,6 +866,13 @@ export function useTourBuilder(tourId?: string) {
   };
   const deleteLegalSection = deleteLegal;
 
+  const createExtra = async (data: Omit<TourExtra, 'id' | 'created_at'>) => {
+    return saveExtra(data);
+  };
+  const updateExtra = async (id: string, data: Partial<TourExtra>) => {
+    return saveExtra({ ...data, id });
+  };
+
   return {
     // Main tour
     tour,
@@ -872,6 +925,12 @@ export function useTourBuilder(tourId?: string) {
     createLegalSection,
     updateLegalSection,
     deleteLegalSection,
+    // Extras
+    extras,
+    createExtra,
+    updateExtra,
+    deleteExtra,
+    saveExtra,
     saveLegal,
     deleteLegal,
     // Publishing
@@ -917,6 +976,7 @@ export function useTourBySlug(slug: string) {
   const [luggageAddons, setLuggageAddons] = useState<TourLuggageAddon[]>([]);
   const [inclusions, setInclusions] = useState<TourInclusion[]>([]);
   const [legal, setLegal] = useState<TourLegal[]>([]);
+  const [extras, setExtras] = useState<TourExtra[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -947,13 +1007,14 @@ export function useTourBySlug(slug: string) {
 
         // Fetch related data
         const tourId = tourData.id;
-        const [t, d, r, l, i, lg] = await Promise.all([
+        const [t, d, r, l, i, lg, ex] = await Promise.all([
           client.from('tour_tariffs').select('*').eq('tour_id', tourId).eq('is_active', true).order('sort_order'),
           client.from('tour_dates').select('*').eq('tour_id', tourId).eq('is_active', true).gte('departure_date', new Date().toISOString().split('T')[0]).order('departure_date'),
           client.from('tour_routes').select('*').eq('tour_id', tourId).eq('is_active', true).order('sort_order'),
           client.from('tour_luggage_addons').select('*').eq('tour_id', tourId).eq('is_active', true),
           client.from('tour_inclusions').select('*').eq('tour_id', tourId).order('sort_order'),
           client.from('tour_legal').select('*').eq('tour_id', tourId).eq('is_active', true).order('sort_order'),
+          client.from('tour_extras').select('*').eq('tour_id', tourId).eq('is_active', true).order('sort_order'),
         ]);
 
         setTariffs((t.data || []) as TourTariff[]);
@@ -961,6 +1022,7 @@ export function useTourBySlug(slug: string) {
         setLuggageAddons((l.data || []) as TourLuggageAddon[]);
         setInclusions((i.data || []) as TourInclusion[]);
         setLegal((lg.data || []) as TourLegal[]);
+        setExtras((ex.data || []) as TourExtra[]);
 
         // Fetch pickup stops for routes
         if (r.data && r.data.length > 0) {
@@ -999,6 +1061,7 @@ export function useTourBySlug(slug: string) {
     luggageAddons,
     inclusions,
     legal,
+    extras,
     isLoading,
     error,
   };
