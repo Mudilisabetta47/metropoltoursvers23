@@ -6,8 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Globe, Search, AlertCircle, Check, ExternalLink, Eye, 
-  Loader2, CheckCircle, XCircle
+  Globe, Search, AlertCircle, Check, Eye, 
+  CheckCircle, XCircle
 } from "lucide-react";
 
 interface TourSEOTabProps {
