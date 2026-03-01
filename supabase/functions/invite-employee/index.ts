@@ -57,12 +57,13 @@ serve(async (req) => {
       userId = existingProfile.user_id;
     } else {
       // Invite new user via admin API
+      const appUrl = "https://metropoltours2312admin.lovable.app";
       const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email.trim(), {
         data: {
           first_name: first_name || null,
           last_name: last_name || null,
         },
-        redirectTo: `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/auth`,
+        redirectTo: `${appUrl}/auth`,
       });
 
       if (inviteError) {
@@ -126,6 +127,12 @@ serve(async (req) => {
               <p style="color: #444; font-size: 16px; line-height: 1.6;">
                 Bitte klicken Sie auf den Link in der separaten Einladungs-E-Mail, um Ihr Konto zu aktivieren und Ihr Passwort festzulegen.
               </p>
+              <p style="color: #444; font-size: 16px; line-height: 1.6;">
+                Nach der Aktivierung können Sie sich hier anmelden:
+              </p>
+              <div style="text-align: center; margin: 20px 0;">
+                <a href="${appUrl}/auth" style="background: #00CC36; color: #fff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">Zum Admin-Panel</a>
+              </div>
               <div style="background: #f5f5f5; border-radius: 8px; padding: 16px; margin: 24px 0;">
                 <p style="color: #666; font-size: 14px; margin: 0;"><strong>Ihre Rolle:</strong> ${roleLabels[role]}</p>
                 <p style="color: #666; font-size: 14px; margin: 8px 0 0 0;"><strong>Berechtigungen:</strong></p>
