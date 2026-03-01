@@ -23,7 +23,7 @@ type TabType = 'overview' | 'map' | 'incidents' | 'employees' | 'scanner' | 'com
 
 const OperationsDashboard = () => {
   const navigate = useNavigate();
-  const { user, isAdmin, isLoading: authLoading, signOut } = useAuth();
+  const { user, isAdmin, isOffice, isDriver, hasAnyStaffRole, isLoading: authLoading, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -36,8 +36,7 @@ const OperationsDashboard = () => {
     );
   }
 
-  const { isOffice } = useAuth();
-  if (!user || !(isAdmin || isOffice)) {
+  if (!user || !hasAnyStaffRole) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="max-w-md w-full mx-4 p-6 bg-zinc-900 border border-zinc-800 rounded-xl text-center">
@@ -54,15 +53,19 @@ const OperationsDashboard = () => {
     );
   }
 
-  const menuItems = [
-    { id: 'overview' as TabType, label: 'Übersicht', icon: LayoutDashboard },
-    { id: 'map' as TabType, label: 'Live-Karte', icon: Map },
-    { id: 'incidents' as TabType, label: 'Incidents', icon: AlertTriangle },
-    { id: 'employees' as TabType, label: 'Mitarbeiter', icon: Users },
-    { id: 'scanner' as TabType, label: 'Scanner', icon: Scan },
-    { id: 'commands' as TabType, label: 'Commands', icon: Zap },
-    { id: 'logs' as TabType, label: 'Logs', icon: FileText },
+  // Filter menu items based on role
+  const allMenuItems = [
+    { id: 'overview' as TabType, label: 'Übersicht', icon: LayoutDashboard, roles: ['admin', 'office', 'driver'] },
+    { id: 'map' as TabType, label: 'Live-Karte', icon: Map, roles: ['admin', 'office', 'driver'] },
+    { id: 'incidents' as TabType, label: 'Incidents', icon: AlertTriangle, roles: ['admin', 'office'] },
+    { id: 'employees' as TabType, label: 'Mitarbeiter', icon: Users, roles: ['admin', 'office'] },
+    { id: 'scanner' as TabType, label: 'Scanner', icon: Scan, roles: ['admin', 'office', 'driver'] },
+    { id: 'commands' as TabType, label: 'Commands', icon: Zap, roles: ['admin'] },
+    { id: 'logs' as TabType, label: 'Logs', icon: FileText, roles: ['admin', 'office'] },
   ];
+
+  const userRoles = isAdmin ? 'admin' : isOffice ? 'office' : isDriver ? 'driver' : '';
+  const menuItems = allMenuItems.filter(item => item.roles.includes(userRoles));
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
