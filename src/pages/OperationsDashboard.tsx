@@ -36,7 +36,8 @@ const OperationsDashboard = () => {
     );
   }
 
-  if (!user || !isAdmin) {
+  const { isOffice } = useAuth();
+  if (!user || !(isAdmin || isOffice)) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="max-w-md w-full mx-4 p-6 bg-zinc-900 border border-zinc-800 rounded-xl text-center">

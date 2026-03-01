@@ -77,7 +77,7 @@ const App = () => (
               <Route path="/reisen/:tourId" element={<TourDetailPage />} />
               <Route path="/reisen/checkout" element={<TourCheckoutPage />} />
               <Route path="/tour-checkout" element={<TourCheckoutPage />} />
-              <Route path="/admin" element={<Navigate to="/admin/ops" replace />} />
+              <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="/admin/ops" element={<OperationsDashboard />} />
               <Route path="/admin/inquiries" element={<AdminInquiriesPage />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
