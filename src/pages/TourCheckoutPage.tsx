@@ -19,6 +19,9 @@ import {
   RefreshCcw,
   Plus,
   Minus,
+  FileText,
+  Receipt,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +43,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useTourDocuments } from "@/hooks/useTourDocuments";
 import {
   TourTariff,
   TourDate,
@@ -71,6 +75,7 @@ const TourCheckoutPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { openDocument, downloadAllDocuments, isGenerating } = useTourDocuments();
 
   const tourId = searchParams.get("tour") || "";
   const dateId = searchParams.get("date") || "";
@@ -321,6 +326,11 @@ const TourCheckoutPage = () => {
       setBookingNumber(bookingData.booking_number);
       setCurrentStep("confirmation");
       toast.success("Buchung erfolgreich!");
+
+      // Send confirmation email (fire-and-forget)
+      supabase.functions.invoke("send-booking-confirmation", {
+        body: { tourBookingId: bookingData.id },
+      }).catch((err) => console.error("Email send error:", err));
     } catch (error) {
       console.error("Error creating booking:", error);
       toast.error("Fehler bei der Buchung. Bitte versuchen Sie es erneut.");
@@ -803,6 +813,53 @@ const TourCheckoutPage = () => {
                     <p className="text-muted-foreground mb-6">
                       Eine Bestätigung wurde an {passengerInfo[0]?.email} gesendet.
                     </p>
+
+                    {/* Document Downloads */}
+                    <div className="bg-white rounded-xl p-6 mb-6 text-left">
+                      <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-primary" />
+                        Ihre Reiseunterlagen
+                      </h3>
+                      <div className="grid sm:grid-cols-3 gap-3">
+                        <Button
+                          variant="outline"
+                          className="flex flex-col items-center gap-2 h-auto py-4"
+                          disabled={isGenerating}
+                          onClick={() => openDocument({ bookingNumber: bookingNumber! }, "confirmation")}
+                        >
+                          <FileText className="w-6 h-6 text-primary" />
+                          <span className="text-sm font-medium">Bestätigung</span>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="flex flex-col items-center gap-2 h-auto py-4"
+                          disabled={isGenerating}
+                          onClick={() => openDocument({ bookingNumber: bookingNumber! }, "invoice")}
+                        >
+                          <Receipt className="w-6 h-6 text-primary" />
+                          <span className="text-sm font-medium">Rechnung</span>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="flex flex-col items-center gap-2 h-auto py-4"
+                          disabled={isGenerating}
+                          onClick={() => openDocument({ bookingNumber: bookingNumber! }, "voucher")}
+                        >
+                          <Hotel className="w-6 h-6 text-amber-600" />
+                          <span className="text-sm font-medium">Voucher</span>
+                        </Button>
+                      </div>
+                      <Button
+                        variant="secondary"
+                        className="w-full mt-3"
+                        disabled={isGenerating}
+                        onClick={() => downloadAllDocuments({ bookingNumber: bookingNumber! })}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        {isGenerating ? "Wird generiert..." : "Alle Unterlagen herunterladen"}
+                      </Button>
+                    </div>
+
                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
                       <Button onClick={() => navigate("/bookings")}>Meine Buchungen</Button>
                       <Button variant="outline" onClick={() => navigate("/")}>
