@@ -138,7 +138,36 @@ const TourCheckoutPage = () => {
   const [couponError, setCouponError] = useState("");
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
 
+  // Check if returning from payment (e.g. Stripe redirect or direct link with payment=success)
   useEffect(() => {
+    const paymentStatus = searchParams.get("payment");
+    const sessionId = searchParams.get("session_id");
+    if (paymentStatus === "success" && tourId) {
+      // Look up existing booking by tour_id + session_id or just latest for this tour
+      const findExistingBooking = async () => {
+        setIsLoading(true);
+        try {
+          let query = supabase.from("tour_bookings").select("id, booking_number").eq("tour_id", tourId);
+          if (sessionId) {
+            query = query.eq("stripe_session_id", sessionId);
+          } else if (dateId) {
+            query = query.eq("tour_date_id", dateId);
+          }
+          const { data } = await query.order("created_at", { ascending: false }).limit(1).maybeSingle();
+          if (data) {
+            setBookingNumber(data.booking_number);
+            setBookingId(data.id);
+            setCurrentStep("confirmation");
+          }
+        } catch (err) {
+          console.error("Error finding booking:", err);
+        }
+        // Still load tour data for the confirmation view
+        await loadTourData();
+      };
+      findExistingBooking();
+      return;
+    }
     if (tourId) loadTourData();
   }, [tourId, dateId, tariffId]);
 
