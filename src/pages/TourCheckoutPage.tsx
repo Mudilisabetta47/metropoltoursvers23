@@ -968,7 +968,7 @@ const TourCheckoutPage = () => {
                         <FileText className="w-5 h-5 text-primary" />
                         Deine Reiseunterlagen
                       </h3>
-                      <div className="grid sm:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         <Button
                           variant="outline"
                           className="flex flex-col items-center gap-2 h-auto py-4 hover:border-primary hover:bg-primary/5"
@@ -995,6 +995,15 @@ const TourCheckoutPage = () => {
                         >
                           <Hotel className="w-6 h-6 text-accent" />
                           <span className="text-sm font-medium">Voucher</span>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="flex flex-col items-center gap-2 h-auto py-4 hover:border-primary hover:bg-primary/5"
+                          disabled={isGenerating}
+                          onClick={() => openDocument({ bookingNumber: bookingNumber! }, "travelplan")}
+                        >
+                          <MapPin className="w-6 h-6 text-primary" />
+                          <span className="text-sm font-medium">Reiseplan</span>
                         </Button>
                       </div>
                       <Button
