@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, Palmtree, Briefcase, FileText, Users, Settings, LogOut,
-  Plus, Pencil, Trash2, RefreshCw, Shield, ChevronRight, Globe, Star
+  Plus, Pencil, Trash2, RefreshCw, Shield, ChevronRight, Globe, Star, Tag, UserPlus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,8 +45,33 @@ import {
 } from "@/hooks/useCMS";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
 
-type TabType = 'overview' | 'tours' | 'services' | 'content' | 'inquiries' | 'legacy';
+type TabType = 'overview' | 'tours' | 'services' | 'content' | 'categories' | 'jobs' | 'inquiries' | 'legacy';
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  icon: string | null;
+  sort_order: number | null;
+  is_active: boolean | null;
+}
+
+interface JobListing {
+  id: string;
+  title: string;
+  department: string;
+  location: string;
+  employment_type: string;
+  description: string | null;
+  requirements: string[];
+  benefits: string[];
+  salary_range: string | null;
+  is_active: boolean;
+  sort_order: number;
+}
 
 const AdminCMS = () => {
   const navigate = useNavigate();
@@ -59,6 +84,81 @@ const AdminCMS = () => {
   const { tours, isLoading: toursLoading, createTour, updateTour, deleteTour, fetchAll: fetchTours } = useAdminTours();
   const { services, isLoading: servicesLoading, createService, updateService, deleteService, fetchAll: fetchServices } = useAdminServices();
   const { content, isLoading: contentLoading, fetchAll: fetchContent } = useAdminContent();
+
+  // Categories & Jobs state
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [jobListings, setJobListings] = useState<JobListing[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(true);
+  const [catDialog, setCatDialog] = useState<{ open: boolean; cat: Partial<Category> | null; isNew: boolean }>({ open: false, cat: null, isNew: false });
+  const [jobDialog, setJobDialog] = useState<{ open: boolean; job: Partial<JobListing> | null; isNew: boolean }>({ open: false, job: null, isNew: false });
+
+  useEffect(() => {
+    fetchCategories();
+    fetchJobs();
+  }, []);
+
+  const fetchCategories = async () => {
+    setCategoriesLoading(true);
+    const { data } = await (supabase as any).from('cms_categories').select('*').order('sort_order', { ascending: true });
+    setCategories(data || []);
+    setCategoriesLoading(false);
+  };
+
+  const fetchJobs = async () => {
+    setJobsLoading(true);
+    const { data } = await (supabase as any).from('job_listings').select('*').order('sort_order', { ascending: true });
+    setJobListings(data || []);
+    setJobsLoading(false);
+  };
+
+  const handleSaveCategory = async () => {
+    if (!catDialog.cat?.name) return;
+    setIsSaving(true);
+    try {
+      if (catDialog.isNew) {
+        await (supabase as any).from('cms_categories').insert(catDialog.cat);
+      } else {
+        const { id, ...updates } = catDialog.cat;
+        await (supabase as any).from('cms_categories').update(updates).eq('id', id);
+      }
+      toast({ title: catDialog.isNew ? "Kategorie erstellt" : "Kategorie aktualisiert" });
+      setCatDialog({ open: false, cat: null, isNew: false });
+      fetchCategories();
+    } catch { toast({ title: "Fehler", variant: "destructive" }); }
+    setIsSaving(false);
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    if (!confirm('Kategorie löschen?')) return;
+    await (supabase as any).from('cms_categories').delete().eq('id', id);
+    toast({ title: "Kategorie gelöscht" });
+    fetchCategories();
+  };
+
+  const handleSaveJob = async () => {
+    if (!jobDialog.job?.title) return;
+    setIsSaving(true);
+    try {
+      if (jobDialog.isNew) {
+        await (supabase as any).from('job_listings').insert(jobDialog.job);
+      } else {
+        const { id, ...updates } = jobDialog.job;
+        await (supabase as any).from('job_listings').update(updates).eq('id', id);
+      }
+      toast({ title: jobDialog.isNew ? "Stelle erstellt" : "Stelle aktualisiert" });
+      setJobDialog({ open: false, job: null, isNew: false });
+      fetchJobs();
+    } catch { toast({ title: "Fehler", variant: "destructive" }); }
+    setIsSaving(false);
+  };
+
+  const handleDeleteJob = async (id: string) => {
+    if (!confirm('Stelle löschen?')) return;
+    await (supabase as any).from('job_listings').delete().eq('id', id);
+    toast({ title: "Stelle gelöscht" });
+    fetchJobs();
+  };
   
   // Dialog states
   const [tourDialog, setTourDialog] = useState<{ open: boolean; tour: Partial<PackageTour> | null; isNew: boolean }>({
@@ -101,6 +201,8 @@ const AdminCMS = () => {
     { id: 'overview' as TabType, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'tours' as TabType, label: 'Pauschalreisen', icon: Palmtree },
     { id: 'services' as TabType, label: 'Reisearten', icon: Briefcase },
+    { id: 'categories' as TabType, label: 'Sortiment', icon: Tag },
+    { id: 'jobs' as TabType, label: 'Karriere', icon: UserPlus },
     { id: 'content' as TabType, label: 'CMS Inhalte', icon: FileText },
     { id: 'inquiries' as TabType, label: 'Anfragen', icon: Users, external: true },
     { id: 'legacy' as TabType, label: 'System', icon: Settings, external: true },
@@ -631,6 +733,134 @@ const AdminCMS = () => {
               </div>
             </div>
           )}
+
+          {/* Categories (Sortiment) Tab */}
+          {activeTab === 'categories' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold">Sortiment / Kategorien</h2>
+                  <p className="text-zinc-500">Verwalten Sie Reise-Kategorien und Tags</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={fetchCategories} className="border-zinc-700">
+                    <RefreshCw className="w-4 h-4 mr-2" />Aktualisieren
+                  </Button>
+                  <Button onClick={() => setCatDialog({ open: true, cat: { name: '', slug: '', icon: 'MapPin', sort_order: categories.length, is_active: true }, isNew: true })} className="bg-emerald-600 hover:bg-emerald-700">
+                    <Plus className="w-4 h-4 mr-2" />Neue Kategorie
+                  </Button>
+                </div>
+              </div>
+
+              <Card className="bg-zinc-900 border-zinc-800">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-zinc-800">
+                      <TableHead className="text-zinc-400">Name</TableHead>
+                      <TableHead className="text-zinc-400">Slug</TableHead>
+                      <TableHead className="text-zinc-400">Icon</TableHead>
+                      <TableHead className="text-zinc-400">Reihenfolge</TableHead>
+                      <TableHead className="text-zinc-400">Status</TableHead>
+                      <TableHead className="text-zinc-400 text-right">Aktionen</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {categoriesLoading ? (
+                      <TableRow><TableCell colSpan={6} className="text-center py-8 text-zinc-500">Laden...</TableCell></TableRow>
+                    ) : categories.length === 0 ? (
+                      <TableRow><TableCell colSpan={6} className="text-center py-8 text-zinc-500">Keine Kategorien</TableCell></TableRow>
+                    ) : categories.map(cat => (
+                      <TableRow key={cat.id} className="border-zinc-800">
+                        <TableCell className="font-medium text-white">{cat.name}</TableCell>
+                        <TableCell className="text-zinc-400 font-mono text-xs">{cat.slug}</TableCell>
+                        <TableCell className="text-zinc-400">{cat.icon || '—'}</TableCell>
+                        <TableCell className="text-zinc-400">{cat.sort_order}</TableCell>
+                        <TableCell>
+                          <Badge className={cat.is_active ? 'bg-emerald-600' : 'bg-zinc-600'}>
+                            {cat.is_active ? 'Aktiv' : 'Inaktiv'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => setCatDialog({ open: true, cat: { ...cat }, isNew: false })}>
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button size="sm" variant="ghost" className="text-red-400" onClick={() => handleDeleteCategory(cat.id)}>
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            </div>
+          )}
+
+          {/* Jobs (Karriere) Tab */}
+          {activeTab === 'jobs' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold">Karriere / Stellenanzeigen</h2>
+                  <p className="text-zinc-500">Verwalten Sie offene Stellen auf der Karriere-Seite</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={fetchJobs} className="border-zinc-700">
+                    <RefreshCw className="w-4 h-4 mr-2" />Aktualisieren
+                  </Button>
+                  <Button onClick={() => setJobDialog({ open: true, job: { title: '', department: 'Allgemein', location: 'Düsseldorf', employment_type: 'Vollzeit', description: '', requirements: [], benefits: [], is_active: true, sort_order: jobListings.length }, isNew: true })} className="bg-emerald-600 hover:bg-emerald-700">
+                    <Plus className="w-4 h-4 mr-2" />Neue Stelle
+                  </Button>
+                </div>
+              </div>
+
+              <Card className="bg-zinc-900 border-zinc-800">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-zinc-800">
+                      <TableHead className="text-zinc-400">Titel</TableHead>
+                      <TableHead className="text-zinc-400">Abteilung</TableHead>
+                      <TableHead className="text-zinc-400">Standort</TableHead>
+                      <TableHead className="text-zinc-400">Art</TableHead>
+                      <TableHead className="text-zinc-400">Status</TableHead>
+                      <TableHead className="text-zinc-400 text-right">Aktionen</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {jobsLoading ? (
+                      <TableRow><TableCell colSpan={6} className="text-center py-8 text-zinc-500">Laden...</TableCell></TableRow>
+                    ) : jobListings.length === 0 ? (
+                      <TableRow><TableCell colSpan={6} className="text-center py-8 text-zinc-500">Keine Stellen</TableCell></TableRow>
+                    ) : jobListings.map(job => (
+                      <TableRow key={job.id} className="border-zinc-800">
+                        <TableCell className="font-medium text-white">{job.title}</TableCell>
+                        <TableCell className="text-zinc-400">{job.department}</TableCell>
+                        <TableCell className="text-zinc-400">{job.location}</TableCell>
+                        <TableCell className="text-zinc-400">{job.employment_type}</TableCell>
+                        <TableCell>
+                          <Badge className={job.is_active ? 'bg-emerald-600' : 'bg-zinc-600'}>
+                            {job.is_active ? 'Aktiv' : 'Inaktiv'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => setJobDialog({ open: true, job: { ...job }, isNew: false })}>
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button size="sm" variant="ghost" className="text-red-400" onClick={() => handleDeleteJob(job.id)}>
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            </div>
+          )}
         </div>
       </main>
 
@@ -864,6 +1094,108 @@ const AdminCMS = () => {
             <Button onClick={handleSaveService} disabled={isSaving} className="bg-emerald-600 hover:bg-emerald-700">
               {isSaving ? 'Speichern...' : 'Speichern'}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Category Dialog */}
+      <Dialog open={catDialog.open} onOpenChange={(open) => !open && setCatDialog({ open: false, cat: null, isNew: false })}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
+          <DialogHeader>
+            <DialogTitle>{catDialog.isNew ? 'Neue Kategorie' : 'Kategorie bearbeiten'}</DialogTitle>
+          </DialogHeader>
+          {catDialog.cat && (
+            <div className="space-y-4 py-4">
+              <div>
+                <Label>Name *</Label>
+                <Input value={catDialog.cat.name || ''} onChange={e => setCatDialog(p => ({ ...p, cat: { ...p.cat!, name: e.target.value, slug: p.cat?.slug || e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[äöü]/g, c => ({'ä':'ae','ö':'oe','ü':'ue'}[c] || c)) } }))} className="bg-zinc-800 border-zinc-700 mt-1" />
+              </div>
+              <div>
+                <Label>Slug</Label>
+                <Input value={catDialog.cat.slug || ''} onChange={e => setCatDialog(p => ({ ...p, cat: { ...p.cat!, slug: e.target.value } }))} className="bg-zinc-800 border-zinc-700 mt-1" />
+              </div>
+              <div>
+                <Label>Beschreibung</Label>
+                <Textarea value={catDialog.cat.description || ''} onChange={e => setCatDialog(p => ({ ...p, cat: { ...p.cat!, description: e.target.value } }))} className="bg-zinc-800 border-zinc-700 mt-1" rows={2} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Icon</Label>
+                  <Input value={catDialog.cat.icon || ''} onChange={e => setCatDialog(p => ({ ...p, cat: { ...p.cat!, icon: e.target.value } }))} className="bg-zinc-800 border-zinc-700 mt-1" placeholder="MapPin" />
+                </div>
+                <div>
+                  <Label>Reihenfolge</Label>
+                  <Input type="number" value={catDialog.cat.sort_order ?? 0} onChange={e => setCatDialog(p => ({ ...p, cat: { ...p.cat!, sort_order: parseInt(e.target.value) } }))} className="bg-zinc-800 border-zinc-700 mt-1" />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={catDialog.cat.is_active ?? true} onCheckedChange={checked => setCatDialog(p => ({ ...p, cat: { ...p.cat!, is_active: checked } }))} />
+                <Label>Aktiv</Label>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCatDialog({ open: false, cat: null, isNew: false })} className="border-zinc-700">Abbrechen</Button>
+            <Button onClick={handleSaveCategory} disabled={isSaving} className="bg-emerald-600 hover:bg-emerald-700">{isSaving ? 'Speichern...' : 'Speichern'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Job Dialog */}
+      <Dialog open={jobDialog.open} onOpenChange={(open) => !open && setJobDialog({ open: false, job: null, isNew: false })}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{jobDialog.isNew ? 'Neue Stelle' : 'Stelle bearbeiten'}</DialogTitle>
+          </DialogHeader>
+          {jobDialog.job && (
+            <div className="space-y-4 py-4">
+              <div>
+                <Label>Titel *</Label>
+                <Input value={jobDialog.job.title || ''} onChange={e => setJobDialog(p => ({ ...p, job: { ...p.job!, title: e.target.value } }))} className="bg-zinc-800 border-zinc-700 mt-1" placeholder="z.B. Busfahrer/in (m/w/d)" />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label>Abteilung</Label>
+                  <Input value={jobDialog.job.department || 'Allgemein'} onChange={e => setJobDialog(p => ({ ...p, job: { ...p.job!, department: e.target.value } }))} className="bg-zinc-800 border-zinc-700 mt-1" />
+                </div>
+                <div>
+                  <Label>Standort</Label>
+                  <Input value={jobDialog.job.location || 'Düsseldorf'} onChange={e => setJobDialog(p => ({ ...p, job: { ...p.job!, location: e.target.value } }))} className="bg-zinc-800 border-zinc-700 mt-1" />
+                </div>
+                <div>
+                  <Label>Anstellungsart</Label>
+                  <Select value={jobDialog.job.employment_type || 'Vollzeit'} onValueChange={v => setJobDialog(p => ({ ...p, job: { ...p.job!, employment_type: v } }))}>
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700 mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Vollzeit">Vollzeit</SelectItem>
+                      <SelectItem value="Teilzeit">Teilzeit</SelectItem>
+                      <SelectItem value="Minijob">Minijob</SelectItem>
+                      <SelectItem value="Aushilfe">Aushilfe</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <Label>Beschreibung</Label>
+                <Textarea value={jobDialog.job.description || ''} onChange={e => setJobDialog(p => ({ ...p, job: { ...p.job!, description: e.target.value } }))} className="bg-zinc-800 border-zinc-700 mt-1" rows={3} />
+              </div>
+              <div>
+                <Label>Gehaltsspanne</Label>
+                <Input value={jobDialog.job.salary_range || ''} onChange={e => setJobDialog(p => ({ ...p, job: { ...p.job!, salary_range: e.target.value } }))} className="bg-zinc-800 border-zinc-700 mt-1" placeholder="z.B. 2.500 – 3.200€/Monat" />
+              </div>
+              <div>
+                <Label>Anforderungen (kommagetrennt)</Label>
+                <Textarea value={(jobDialog.job.requirements || []).join(', ')} onChange={e => setJobDialog(p => ({ ...p, job: { ...p.job!, requirements: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } }))} className="bg-zinc-800 border-zinc-700 mt-1" rows={2} placeholder="Führerschein Klasse D, Berufserfahrung" />
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={jobDialog.job.is_active ?? true} onCheckedChange={checked => setJobDialog(p => ({ ...p, job: { ...p.job!, is_active: checked } }))} />
+                <Label>Aktiv</Label>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setJobDialog({ open: false, job: null, isNew: false })} className="border-zinc-700">Abbrechen</Button>
+            <Button onClick={handleSaveJob} disabled={isSaving} className="bg-emerald-600 hover:bg-emerald-700">{isSaving ? 'Speichern...' : 'Speichern'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

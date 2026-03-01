@@ -38,6 +38,7 @@ const AdminSettings = lazy(() => import("./pages/AdminSettings"));
 const AdminRoutes = lazy(() => import("./pages/AdminRoutes"));
 const AdminStops = lazy(() => import("./pages/AdminStops"));
 const AdminBuses = lazy(() => import("./pages/AdminBuses"));
+const KarrierePage = lazy(() => import("./pages/KarrierePage"));
 const WeekendTripsPage = lazy(() => import("./pages/WeekendTripsPage"));
 const WeekendTripDetailPage = lazy(() => import("./pages/WeekendTripDetailPage"));
 const PassengerDataPage = lazy(() => import("./pages/PassengerDataPage"));
@@ -82,6 +83,7 @@ const App = () => (
               <Route path="/imprint" element={<ImprintPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />
+              <Route path="/karriere" element={<KarrierePage />} />
               <Route path="/pauschalreisen/:tourId" element={<TourDetailPage />} />
               <Route path="/reisen/:tourId" element={<TourDetailPage />} />
               <Route path="/reisen/checkout" element={<TourCheckoutPage />} />
