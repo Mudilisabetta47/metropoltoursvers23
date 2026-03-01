@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import CookieBanner from "./components/CookieBanner";
 
@@ -51,6 +51,14 @@ const PageLoader = () => (
   </div>
 );
 
+// Role-based redirect: drivers → ops, others → dashboard
+const AdminRedirect = () => {
+  const { roles, isLoading } = useAuth();
+  if (isLoading) return <PageLoader />;
+  const isDriver = roles.includes('driver') && !roles.includes('admin') && !roles.includes('office') && !roles.includes('agent');
+  return <Navigate to={isDriver ? "/admin/ops" : "/admin/dashboard"} replace />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -77,7 +85,7 @@ const App = () => (
               <Route path="/reisen/:tourId" element={<TourDetailPage />} />
               <Route path="/reisen/checkout" element={<TourCheckoutPage />} />
               <Route path="/tour-checkout" element={<TourCheckoutPage />} />
-              <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="/admin" element={<AdminRedirect />} />
               <Route path="/admin/ops" element={<OperationsDashboard />} />
               <Route path="/admin/inquiries" element={<AdminInquiriesPage />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />

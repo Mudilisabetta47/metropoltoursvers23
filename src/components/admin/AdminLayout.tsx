@@ -35,15 +35,17 @@ interface MenuSection {
 const ALL_STAFF: AppRole[] = ["admin", "office", "agent", "driver"];
 const MANAGEMENT: AppRole[] = ["admin", "office"];
 const ADMIN_ONLY: AppRole[] = ["admin"];
+const BOOKING_STAFF: AppRole[] = ["admin", "office", "agent"];
+const OPS_STAFF: AppRole[] = ["admin", "office", "driver"];
 
 const menuSections: MenuSection[] = [
   {
     label: "Buchungen",
     items: [
-      { path: "/admin/dashboard", label: "Übersicht", icon: LayoutDashboard, allowedRoles: ALL_STAFF },
-      { path: "/admin/tour-bookings", label: "Reise-Buchungen", icon: FileText, allowedRoles: ["admin", "office", "agent"] },
-      { path: "/admin/bus-bookings", label: "Bus-Buchungen", icon: Bus, allowedRoles: ["admin", "office", "agent"] },
-      { path: "/admin/inquiries", label: "Anfragen", icon: Mail, allowedRoles: ["admin", "office", "agent"] },
+      { path: "/admin/dashboard", label: "Übersicht", icon: LayoutDashboard, allowedRoles: BOOKING_STAFF },
+      { path: "/admin/tour-bookings", label: "Reise-Buchungen", icon: FileText, allowedRoles: BOOKING_STAFF },
+      { path: "/admin/bus-bookings", label: "Bus-Buchungen", icon: Bus, allowedRoles: BOOKING_STAFF },
+      { path: "/admin/inquiries", label: "Anfragen", icon: Mail, allowedRoles: BOOKING_STAFF },
     ],
   },
   {
@@ -56,6 +58,7 @@ const menuSections: MenuSection[] = [
   {
     label: "Operativ",
     items: [
+      { path: "/admin/ops", label: "Operations Center", icon: LayoutDashboard, allowedRoles: OPS_STAFF },
       { path: "/admin/departures", label: "Abfahrten", icon: Calendar, allowedRoles: ALL_STAFF },
       { path: "/admin/routes", label: "Routen", icon: Route, allowedRoles: MANAGEMENT },
       { path: "/admin/stops", label: "Haltestellen", icon: MapPin, allowedRoles: MANAGEMENT },
@@ -65,7 +68,7 @@ const menuSections: MenuSection[] = [
   {
     label: "Verwaltung",
     items: [
-      { path: "/admin/customers", label: "Kunden (CRM)", icon: UserCheck, allowedRoles: ["admin", "office", "agent"] },
+      { path: "/admin/customers", label: "Kunden (CRM)", icon: UserCheck, allowedRoles: BOOKING_STAFF },
       { path: "/admin/finances", label: "Finanzen", icon: DollarSign, allowedRoles: MANAGEMENT },
       { path: "/admin/legal", label: "Rechtliches", icon: Shield, allowedRoles: ADMIN_ONLY },
       { path: "/admin/employees", label: "Mitarbeiter", icon: Users, allowedRoles: ADMIN_ONLY },
@@ -76,7 +79,6 @@ const menuSections: MenuSection[] = [
     items: [
       { path: "/admin/templates", label: "E-Mail Vorlagen", icon: Mail, allowedRoles: MANAGEMENT },
       { path: "/admin/settings", label: "Einstellungen", icon: Settings, allowedRoles: ADMIN_ONLY },
-      { path: "/admin/ops", label: "Operations Center", icon: LayoutDashboard, allowedRoles: MANAGEMENT },
     ],
   },
 ];
