@@ -34,13 +34,13 @@ const Header = () => {
     name: "Wochenendtrips",
     path: "/wochenendtrips"
   }, {
-    name: "Service & Info",
+    name: "Hilfe & Kontakt",
     path: "/service"
   }, {
-    name: "Gruppenreisen",
+    name: "Gruppenanfrage",
     path: "/business"
   }, {
-    name: "Meine Buchungen",
+    name: "Meine Reisen",
     path: "/bookings"
   }];
   const isActive = (path: string) => location.pathname === path;
