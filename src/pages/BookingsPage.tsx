@@ -99,6 +99,7 @@ const BookingsPage = () => {
     
     setIsLookingUp(true);
     setGuestBooking(null);
+    setGuestTourBooking(null);
     
     try {
       const { data, error } = await supabase.functions.invoke('lookup-booking', {
@@ -111,7 +112,11 @@ const BookingsPage = () => {
       if (error) throw error;
       
       if (data?.success && data?.booking) {
-        setGuestBooking(data.booking);
+        if (data.type === 'tour') {
+          setGuestTourBooking(data.booking);
+        } else {
+          setGuestBooking(data.booking);
+        }
         toast.success('Buchung gefunden!');
       } else {
         toast.error(data?.error || 'Buchung nicht gefunden. Bitte überprüfen Sie Ihre Angaben.');
@@ -368,17 +373,17 @@ const BookingsPage = () => {
                 
                 <form onSubmit={handleGuestLookup} className="space-y-4">
                   <div>
-                    <Label htmlFor="ticketNumber">Ticketnummer *</Label>
+                    <Label htmlFor="ticketNumber">Buchungs- / Ticketnummer *</Label>
                     <Input
                       id="ticketNumber"
                       value={ticketNumber}
                       onChange={(e) => setTicketNumber(e.target.value.toUpperCase())}
-                      placeholder="TKT-2025-123456"
+                      placeholder="MT-XXXXXXXX oder TKT-2025-123456"
                       className="mt-1 font-mono"
-                      maxLength={16}
+                      maxLength={20}
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Format: TKT-JJJJ-XXXXXX
+                      Format: MT-XXXXXXXX (Reisen) oder TKT-JJJJ-XXXXXX (Bus)
                     </p>
                   </div>
                   
@@ -420,11 +425,72 @@ const BookingsPage = () => {
                 </form>
               </div>
               
-              {/* Guest booking result */}
+              {/* Guest booking result - Bus */}
               {guestBooking && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-foreground">Ihre Buchung</h3>
                   {renderBookingCard(guestBooking, true)}
+                </div>
+              )}
+
+              {/* Guest booking result - Tour */}
+              {guestTourBooking && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground">Ihre Reisebuchung</h3>
+                  <div className="bg-card rounded-xl shadow-card p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <span className={cn(
+                          "px-2 py-0.5 rounded-full text-xs font-medium inline-block mb-1",
+                          guestTourBooking.status === 'confirmed' || guestTourBooking.status === 'paid'
+                            ? "bg-primary/10 text-primary"
+                            : guestTourBooking.status === 'cancelled'
+                            ? "bg-destructive/10 text-destructive"
+                            : "bg-accent/10 text-accent-foreground"
+                        )}>
+                          {guestTourBooking.status === 'confirmed' || guestTourBooking.status === 'paid' ? 'Bestätigt' : 
+                           guestTourBooking.status === 'cancelled' ? 'Storniert' : 'Ausstehend'}
+                        </span>
+                        <div className="text-xs text-muted-foreground font-mono">{guestTourBooking.booking_number}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xl font-bold text-primary">€{guestTourBooking.total_price?.toFixed(2)}</div>
+                        <div className="text-xs text-muted-foreground">{guestTourBooking.participants} Teilnehmer</div>
+                      </div>
+                    </div>
+                    
+                    {guestTourBooking.tour && (
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2 text-foreground font-medium">
+                          <MapPin className="w-4 h-4 text-primary" />
+                          <span>{guestTourBooking.tour.destination}, {guestTourBooking.tour.country}</span>
+                        </div>
+                        {guestTourBooking.tour_date && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Calendar className="w-4 h-4" />
+                            <span>
+                              {format(new Date(guestTourBooking.tour_date.departure_date), "dd.MM.yyyy", { locale: de })} – {format(new Date(guestTourBooking.tour_date.return_date), "dd.MM.yyyy", { locale: de })}
+                              {guestTourBooking.tour_date.duration_days && ` (${guestTourBooking.tour_date.duration_days} Tage)`}
+                            </span>
+                          </div>
+                        )}
+                        {guestTourBooking.tariff && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Ticket className="w-4 h-4" />
+                            <span>Tarif: {guestTourBooking.tariff.name}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Clock className="w-4 h-4" />
+                          <span>Gebucht am {format(new Date(guestTourBooking.created_at), "dd.MM.yyyy, HH:mm", { locale: de })}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="mt-4 pt-4 border-t border-border text-sm text-muted-foreground">
+                      <span>Buchung für: {guestTourBooking.contact_first_name} {guestTourBooking.contact_last_name}</span>
+                    </div>
+                  </div>
                 </div>
               )}
               
