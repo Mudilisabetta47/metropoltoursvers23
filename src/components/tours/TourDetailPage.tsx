@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Loader2, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
+} from "@/components/ui/accordion";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
 
-// Tour Detail Components
 import TourHeroSection from "./TourHeroSection";
 import TourStickySidebar from "./TourStickySidebar";
 import TourTabNavigation from "./TourTabNavigation";
@@ -17,26 +19,16 @@ import TourRoutesSection from "./TourRoutesSection";
 import TourInfoSection from "./TourInfoSection";
 import TourLegalSection from "./TourLegalSection";
 
-// Types
-import { 
-  TourTariff, 
-  TourDate, 
-  TourRoute, 
-  TourInclusion, 
-  TourLegal,
-  TourLuggageAddon,
-  ExtendedPackageTour 
+import {
+  TourTariff, TourDate, TourRoute, TourInclusion, TourLegal, TourLuggageAddon, ExtendedPackageTour
 } from "@/hooks/useTourBuilder";
 
-// Image imports for fallbacks
 import tourCroatia from "@/assets/tour-croatia.jpg";
 import tourSlovenia from "@/assets/tour-slovenia.jpg";
 import tourMontenegro from "@/assets/tour-montenegro.jpg";
 
 const imageMap: Record<string, string> = {
-  'kroatien': tourCroatia,
-  'slowenien': tourSlovenia,
-  'montenegro': tourMontenegro,
+  'kroatien': tourCroatia, 'slowenien': tourSlovenia, 'montenegro': tourMontenegro,
 };
 
 export interface TourDetailData {
@@ -48,6 +40,14 @@ export interface TourDetailData {
   legalSections: TourLegal[];
   luggageAddons: TourLuggageAddon[];
 }
+
+const FAQ_ITEMS = [
+  { q: "Wie funktioniert die Sitzplatzwahl?", a: "Nach Ihrer Buchung können Sie je nach Tarif einen Wunschsitzplatz auswählen. Im Business-Tarif ist die Sitzplatzreservierung inklusive." },
+  { q: "Wie bekomme ich meine Tickets?", a: "Nach erfolgreicher Zahlung erhalten Sie Buchungsbestätigung, Rechnung und Reise-Voucher per E-Mail. Alle Dokumente sind auch in 'Meine Reisen' abrufbar." },
+  { q: "Kann ich kostenlos stornieren?", a: "Je nach Tarif ist eine kostenfreie Stornierung bis 14 Tage vor Abfahrt möglich. Details finden Sie in der Tarifauswahl." },
+  { q: "Ist eine Reiseversicherung enthalten?", a: "Eine Reiseversicherung ist optional buchbar und kann bei der Buchung als Zusatzleistung hinzugefügt werden." },
+  { q: "Was passiert bei Nichterreichen der Mindestteilnehmerzahl?", a: "Sollte die Mindestteilnehmerzahl nicht erreicht werden, informieren wir Sie spätestens 14 Tage vor Abfahrt. Sie erhalten den vollen Reisepreis zurück." },
+];
 
 const TourDetailPage = () => {
   const { tourId } = useParams<{ tourId: string }>();
@@ -62,41 +62,22 @@ const TourDetailPage = () => {
   useEffect(() => {
     const fetchTourData = async () => {
       if (!tourId) return;
-      
       setIsLoading(true);
       try {
-        // First try to find by slug
         let tour = null;
-        let tourError = null;
-
-        // Try slug first
-        const { data: slugMatch, error: slugError } = await supabase
-          .from('package_tours')
-          .select('*')
-          .eq('slug', tourId)
-          .maybeSingle();
+        const { data: slugMatch } = await supabase
+          .from('package_tours').select('*').eq('slug', tourId).maybeSingle();
 
         if (slugMatch) {
           tour = slugMatch;
         } else {
-          // Fallback: try by ID (UUID format)
-          const { data: idMatch, error: idError } = await supabase
-            .from('package_tours')
-            .select('*')
-            .eq('id', tourId)
-            .maybeSingle();
-          
+          const { data: idMatch } = await supabase
+            .from('package_tours').select('*').eq('id', tourId).maybeSingle();
           tour = idMatch;
-          tourError = idError;
         }
 
-        if (!tour) {
-          console.error('Tour not found:', tourError || slugError);
-          setTourData(null);
-          return;
-        }
+        if (!tour) { setTourData(null); return; }
 
-        // Parallel fetches for related data
         const [tariffsRes, datesRes, routesRes, inclusionsRes, legalRes, luggageRes] = await Promise.all([
           supabase.from('tour_tariffs').select('*').eq('tour_id', tour.id).eq('is_active', true).order('sort_order'),
           supabase.from('tour_dates').select('*').eq('tour_id', tour.id).eq('is_active', true).order('departure_date'),
@@ -106,10 +87,8 @@ const TourDetailPage = () => {
           supabase.from('tour_luggage_addons').select('*').eq('tour_id', tour.id).eq('is_active', true),
         ]);
 
-        // Map routes with pickup_stops
         const routesWithStops = (routesRes.data || []).map((route: any) => ({
-          ...route,
-          pickup_stops: route.tour_pickup_stops || [],
+          ...route, pickup_stops: route.tour_pickup_stops || [],
         }));
 
         setTourData({
@@ -122,13 +101,10 @@ const TourDetailPage = () => {
           luggageAddons: (luggageRes.data || []) as TourLuggageAddon[],
         });
 
-        // Set defaults
-        if (datesRes.data && datesRes.data.length > 0) {
-          setSelectedDate(datesRes.data[0] as TourDate);
-        }
-        if (tariffsRes.data && tariffsRes.data.length > 0) {
-          const recommended = tariffsRes.data.find((t: any) => t.is_recommended);
-          setSelectedTariff((recommended || tariffsRes.data[0]) as TourTariff);
+        if (datesRes.data?.[0]) setSelectedDate(datesRes.data[0] as TourDate);
+        if (tariffsRes.data?.length) {
+          const rec = tariffsRes.data.find((t: any) => t.is_recommended);
+          setSelectedTariff((rec || tariffsRes.data[0]) as TourTariff);
         }
       } catch (error) {
         console.error('Error fetching tour:', error);
@@ -136,7 +112,6 @@ const TourDetailPage = () => {
         setIsLoading(false);
       }
     };
-
     fetchTourData();
   }, [tourId]);
 
@@ -168,8 +143,7 @@ const TourDetailPage = () => {
             <h1 className="text-2xl font-bold mb-4">Reise nicht gefunden</h1>
             <p className="text-muted-foreground mb-6">Diese Reise ist leider nicht verfügbar.</p>
             <Button onClick={() => navigate("/")} variant="outline">
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              Zurück zur Startseite
+              <ChevronLeft className="w-4 h-4 mr-2" /> Zurück zur Startseite
             </Button>
           </div>
         </main>
@@ -178,40 +152,35 @@ const TourDetailPage = () => {
     );
   }
 
-  const lowestPrice = tourData.dates.length > 0 
+  const lowestPrice = tourData.dates.length > 0
     ? Math.min(...tourData.dates.map(d => d.price_basic))
     : tourData.tour.price_from;
 
-  const availableSeats = selectedDate 
-    ? selectedDate.total_seats - selectedDate.booked_seats 
+  const availableSeats = selectedDate
+    ? selectedDate.total_seats - selectedDate.booked_seats
     : 0;
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-muted/30">
       <Header />
-      
-      {/* pt-16 lg:pt-20 accounts for fixed header height */}
       <main className="flex-1 pt-16 lg:pt-20">
-        {/* Hero Section */}
-        <TourHeroSection 
+        {/* Hero: Gallery + Title + Reviews */}
+        <TourHeroSection
           tour={tourData.tour}
           heroImage={getHeroImage()}
           lowestPrice={lowestPrice}
         />
 
-        {/* Tab Navigation - Sticky */}
-        <TourTabNavigation 
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
+        {/* Tab Navigation */}
+        <TourTabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
         {/* Main Content */}
-        <div className="container mx-auto px-4 py-8">
+        <div className="max-w-[1240px] mx-auto px-4 py-8">
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Left Content - 2/3 */}
+            {/* Left 2/3 */}
             <div className="lg:col-span-2 space-y-8">
-              {/* Recommendations Cards */}
-              <TourRecommendations 
+              {/* Quick Picks */}
+              <TourRecommendations
                 dates={tourData.dates}
                 tariffs={tourData.tariffs}
                 onSelectDate={setSelectedDate}
@@ -219,47 +188,48 @@ const TourDetailPage = () => {
 
               {/* Tab Content */}
               {activeTab === "leistungen" && (
-                <TourInclusionsSection 
+                <TourInclusionsSection
                   inclusions={tourData.inclusions}
                   tariffs={tourData.tariffs}
                   selectedTariff={selectedTariff}
                   onSelectTariff={setSelectedTariff}
                 />
               )}
-
               {activeTab === "termine" && (
-                <TourDatesSection 
+                <TourDatesSection
                   dates={tourData.dates}
                   tariffs={tourData.tariffs}
                   selectedDate={selectedDate}
                   onSelectDate={setSelectedDate}
                 />
               )}
-
               {activeTab === "route" && (
-                <TourRoutesSection 
-                  routes={tourData.routes}
-                  luggageAddons={tourData.luggageAddons}
-                />
+                <TourRoutesSection routes={tourData.routes} luggageAddons={tourData.luggageAddons} />
               )}
-
               {activeTab === "infos" && (
-                <TourInfoSection 
-                  tour={tourData.tour}
-                />
+                <TourInfoSection tour={tourData.tour} />
+              )}
+              {activeTab === "agb" && (
+                <TourLegalSection legalSections={tourData.legalSections} tariffs={tourData.tariffs} />
               )}
 
-              {activeTab === "agb" && (
-                <TourLegalSection 
-                  legalSections={tourData.legalSections}
-                  tariffs={tourData.tariffs}
-                />
-              )}
+              {/* FAQ */}
+              <section className="scroll-mt-36">
+                <h2 className="text-xl font-bold text-foreground mb-4">Häufige Fragen</h2>
+                <Accordion type="single" collapsible className="space-y-2">
+                  {FAQ_ITEMS.map((item, i) => (
+                    <AccordionItem key={i} value={`faq-${i}`} className="bg-card border border-border rounded-lg px-4">
+                      <AccordionTrigger className="text-left text-foreground hover:no-underline">{item.q}</AccordionTrigger>
+                      <AccordionContent className="text-muted-foreground">{item.a}</AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </section>
             </div>
 
-            {/* Right Sidebar - 1/3 */}
+            {/* Right Sidebar */}
             <div className="lg:col-span-1">
-              <TourStickySidebar 
+              <TourStickySidebar
                 tour={tourData.tour}
                 selectedDate={selectedDate}
                 selectedTariff={selectedTariff}
@@ -274,7 +244,6 @@ const TourDetailPage = () => {
           </div>
         </div>
       </main>
-
       <Footer />
     </div>
   );

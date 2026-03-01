@@ -1,17 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { 
-  Calendar, Users, Bus, Luggage,
-  Minus, Plus, AlertCircle
+  Calendar, Users, Luggage, Shield, Check,
+  Minus, Plus, AlertCircle, Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { format, parseISO } from "date-fns";
@@ -31,34 +27,23 @@ interface TourStickySidebarProps {
 }
 
 const TourStickySidebar = ({
-  tour,
-  selectedDate,
-  selectedTariff,
-  tariffs,
-  participants,
-  availableSeats,
-  lowestPrice,
-  onParticipantsChange,
-  onSelectTariff,
+  tour, selectedDate, selectedTariff, tariffs,
+  participants, availableSeats, lowestPrice,
+  onParticipantsChange, onSelectTariff,
 }: TourStickySidebarProps) => {
   const navigate = useNavigate();
 
   const formatDate = (dateStr: string) => {
-    try {
-      return format(parseISO(dateStr), 'dd.MM.yyyy', { locale: de });
-    } catch {
-      return dateStr;
-    }
+    try { return format(parseISO(dateStr), 'dd.MM.yyyy', { locale: de }); }
+    catch { return dateStr; }
   };
 
   const calculatePrice = () => {
     if (!selectedDate || !selectedTariff) return lowestPrice;
-    
     const basePrice = selectedTariff.slug === 'basic' ? selectedDate.price_basic :
                       selectedTariff.slug === 'smart' ? (selectedDate.price_smart || selectedDate.price_basic) :
                       selectedTariff.slug === 'flex' ? (selectedDate.price_flex || selectedDate.price_basic) :
                       (selectedDate.price_business || selectedDate.price_basic);
-    
     return basePrice + selectedTariff.price_modifier;
   };
 
@@ -66,7 +51,6 @@ const TourStickySidebar = ({
   const totalPrice = pricePerPerson * participants;
 
   const handleBooking = () => {
-    // Navigate directly to tour checkout with selected options
     const params = new URLSearchParams({
       tour: tour.id,
       date: selectedDate?.id || '',
@@ -77,30 +61,26 @@ const TourStickySidebar = ({
   };
 
   return (
-    <div className="sticky top-[calc(theme(spacing.16)+theme(spacing.4))] lg:top-[calc(theme(spacing.20)+theme(spacing.4))]">
-      <Card className="border-2 border-primary/20 shadow-xl overflow-hidden relative z-10">
-        <CardHeader className="bg-gradient-to-br from-primary/5 to-primary/10 border-b pb-4">
-          <h3 className="text-lg font-bold text-foreground">Dein Angebot:</h3>
+    <div className="sticky top-[140px]">
+      <Card className="border-2 border-primary/20 shadow-xl overflow-hidden">
+        <CardHeader className="bg-primary/5 border-b pb-4">
+          <h3 className="text-lg font-bold text-foreground">Dein Angebot</h3>
         </CardHeader>
         
         <CardContent className="p-5 space-y-4">
-          {/* Duration & Date */}
+          {/* Date */}
           <div className="flex items-start gap-3">
             <Calendar className="w-5 h-5 text-primary mt-0.5" />
             <div>
               <p className="font-semibold text-foreground">
                 {selectedDate ? (
-                  <>
-                    {tour.duration_days || selectedDate.duration_days} Tage ab {formatDate(selectedDate.departure_date)}
-                  </>
+                  <>{tour.duration_days || selectedDate.duration_days} Tage ab {formatDate(selectedDate.departure_date)}</>
                 ) : (
                   <>{tour.duration_days} Tage</>
                 )}
               </p>
               {selectedDate && (
-                <p className="text-sm text-muted-foreground">
-                  Rückreise: {formatDate(selectedDate.return_date)}
-                </p>
+                <p className="text-sm text-muted-foreground">Rückreise: {formatDate(selectedDate.return_date)}</p>
               )}
             </div>
           </div>
@@ -112,138 +92,103 @@ const TourStickySidebar = ({
               <p className="font-semibold text-foreground">{participants} Personen</p>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => onParticipantsChange(Math.max(1, participants - 1))}
-                disabled={participants <= 1}
-              >
+              <Button variant="outline" size="icon" className="h-8 w-8"
+                onClick={() => onParticipantsChange(Math.max(1, participants - 1))} disabled={participants <= 1}>
                 <Minus className="w-4 h-4" />
               </Button>
               <span className="w-8 text-center font-semibold">{participants}</span>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
+              <Button variant="outline" size="icon" className="h-8 w-8"
                 onClick={() => onParticipantsChange(Math.min(availableSeats || 10, participants + 1))}
-                disabled={participants >= (availableSeats || 10)}
-              >
+                disabled={participants >= (availableSeats || 10)}>
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
           </div>
 
-          {/* Tariff Selection */}
+          {/* Tariff */}
           <div className="flex items-start gap-3">
             <Luggage className="w-5 h-5 text-primary mt-0.5" />
             <div className="flex-1">
-              <Select
-                value={selectedTariff?.id || ''}
-                onValueChange={(id) => {
-                  const tariff = tariffs.find(t => t.id === id);
-                  if (tariff) onSelectTariff(tariff);
-                }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Tarif wählen" />
-                </SelectTrigger>
+              <Select value={selectedTariff?.id || ''} onValueChange={(id) => {
+                const t = tariffs.find(t => t.id === id);
+                if (t) onSelectTariff(t);
+              }}>
+                <SelectTrigger className="w-full"><SelectValue placeholder="Option wählen" /></SelectTrigger>
                 <SelectContent>
-                  {tariffs.map(tariff => (
-                    <SelectItem key={tariff.id} value={tariff.id}>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{tariff.name}</span>
-                        {tariff.is_recommended && (
-                          <Badge variant="secondary" className="text-xs">Empfohlen</Badge>
-                        )}
-                      </div>
+                  {tariffs.map(t => (
+                    <SelectItem key={t.id} value={t.id}>
+                      <span className="font-medium">{t.name}</span>
+                      {t.is_recommended && <Badge variant="secondary" className="ml-2 text-xs">Empfohlen</Badge>}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               {selectedTariff && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  {selectedTariff.suitcase_included 
-                    ? `Inkl. Koffer bis ${selectedTariff.suitcase_weight_kg || 20}kg`
-                    : 'Nur Handgepäck'}
+                  {selectedTariff.suitcase_included ? `Inkl. Koffer bis ${selectedTariff.suitcase_weight_kg || 20}kg` : 'Nur Handgepäck'}
                 </p>
               )}
             </div>
           </div>
 
-          {/* Bus Icon */}
-          <div className="flex items-center gap-3">
-            <Bus className="w-5 h-5 text-primary" />
-            <p className="text-sm text-foreground">Busreise mit METROPOL TOURS</p>
-          </div>
-
           <Separator />
 
           {/* Price */}
-          <div className="bg-slate-50 rounded-lg p-4">
+          <div className="bg-muted/50 rounded-lg p-4">
             <div className="flex items-end justify-between mb-1">
               <span className="text-sm text-muted-foreground">pro Person ab</span>
               <span className="text-3xl font-bold text-primary">{pricePerPerson.toFixed(0)} €</span>
             </div>
             {participants > 1 && (
               <div className="flex items-end justify-between">
-                <span className="text-sm text-muted-foreground">Gesamtpreis ({participants} Pers.)</span>
+                <span className="text-sm text-muted-foreground">Sie zahlen heute ({participants} Pers.)</span>
                 <span className="text-lg font-semibold text-foreground">{totalPrice.toFixed(0)} €</span>
               </div>
             )}
           </div>
 
-          {/* Availability */}
-          {selectedDate && availableSeats > 0 && (
-            <div className="flex items-center gap-2 text-sm">
-              <div className={`w-2 h-2 rounded-full ${
-                availableSeats > 10 ? 'bg-emerald-500' : 
-                availableSeats > 3 ? 'bg-amber-500' : 'bg-red-500'
-              }`} />
-              <span className={
-                availableSeats > 10 ? 'text-emerald-600' : 
-                availableSeats > 3 ? 'text-amber-600' : 'text-red-600'
-              }>
-                {availableSeats > 10 
-                  ? 'Ausreichend Plätze verfügbar'
-                  : `Nur noch ${availableSeats} Plätze frei!`}
-              </span>
+          {/* Live Availability */}
+          {selectedDate && availableSeats > 0 && availableSeats <= 15 && (
+            <div className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg bg-amber-50 border border-amber-200">
+              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span className="text-amber-800 font-medium">Nur noch {availableSeats} Plätze verfügbar</span>
             </div>
           )}
 
-          {/* CTA Button */}
-          <Button 
-            size="lg" 
-            className="w-full bg-primary hover:bg-primary-dark text-lg font-semibold py-6 shadow-lg"
-            onClick={handleBooking}
-            disabled={!selectedDate}
-          >
+          {/* CTA */}
+          <Button size="lg" className="w-full text-lg font-semibold py-6 shadow-lg"
+            onClick={handleBooking} disabled={!selectedDate}>
             {selectedDate ? 'Jetzt buchen' : 'Termin auswählen'}
           </Button>
 
           {/* Trust Signals */}
-          <div className="text-center text-xs text-muted-foreground">
-            <p>✓ Sichere Zahlung • ✓ Bestpreis-Garantie</p>
+          <div className="space-y-1.5 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Zap className="w-3.5 h-3.5 text-primary" />
+              <span>Sofortbestätigung</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Shield className="w-3.5 h-3.5 text-primary" />
+              <span>Sichere Zahlung (Stripe)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="w-3.5 h-3.5 text-primary" />
+              <span>Bestpreis-Garantie</span>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Early Bird Notice */}
+      {/* Early Bird */}
       {selectedDate?.early_bird_discount_percent && selectedDate.early_bird_discount_percent > 0 && (
         <Card className="mt-4 border-amber-200 bg-amber-50">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
-              <div>
-                <p className="font-semibold text-amber-800">
-                  Frühbucher-Rabatt: {selectedDate.early_bird_discount_percent}%
-                </p>
-                {selectedDate.early_bird_deadline && (
-                  <p className="text-sm text-amber-700">
-                    Gültig bis {formatDate(selectedDate.early_bird_deadline)}
-                  </p>
-                )}
-              </div>
+          <CardContent className="p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="font-semibold text-amber-800">Frühbucher-Rabatt: {selectedDate.early_bird_discount_percent}%</p>
+              {selectedDate.early_bird_deadline && (
+                <p className="text-sm text-amber-700">Gültig bis {formatDate(selectedDate.early_bird_deadline)}</p>
+              )}
             </div>
           </CardContent>
         </Card>

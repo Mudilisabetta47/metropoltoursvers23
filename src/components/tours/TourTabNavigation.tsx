@@ -6,17 +6,16 @@ interface TourTabNavigationProps {
 }
 
 const tabs = [
-  { id: 'leistungen', label: 'Leistungen & Tarife' },
-  { id: 'termine', label: 'Termine & Preise' },
+  { id: 'leistungen', label: 'Optionen & Leistungen' },
+  { id: 'termine', label: 'Verfügbarkeit' },
   { id: 'route', label: 'Route & Zustiege' },
   { id: 'infos', label: 'Infos' },
-  { id: 'agb', label: 'AGB & Reiseschutz' },
+  { id: 'agb', label: 'Storno & Reiseschutz' },
 ];
 
 const TourTabNavigation = ({ activeTab, onTabChange }: TourTabNavigationProps) => {
   const scrollToSection = (tabId: string) => {
     onTabChange(tabId);
-    // Smooth scroll behavior
     const element = document.getElementById(`section-${tabId}`);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -24,8 +23,8 @@ const TourTabNavigation = ({ activeTab, onTabChange }: TourTabNavigationProps) =
   };
 
   return (
-    <nav className="sticky top-16 lg:top-20 z-40 bg-white border-b shadow-sm">
-      <div className="container mx-auto px-4">
+    <nav className="sticky top-16 lg:top-20 z-40 bg-card border-b border-border shadow-sm">
+      <div className="max-w-[1240px] mx-auto px-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide">
             {tabs.map((tab) => (
@@ -45,13 +44,10 @@ const TourTabNavigation = ({ activeTab, onTabChange }: TourTabNavigationProps) =
               </button>
             ))}
           </div>
-          
-          <div className="hidden md:block pl-4 border-l">
-            <Button 
-              onClick={() => scrollToSection('termine')}
-              className="bg-primary hover:bg-primary-dark"
-            >
-              Termine
+
+          <div className="hidden md:block pl-4 border-l border-border">
+            <Button onClick={() => scrollToSection('termine')} size="sm">
+              Verfügbarkeit prüfen
             </Button>
           </div>
         </div>
