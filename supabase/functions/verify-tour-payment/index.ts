@@ -90,7 +90,7 @@ serve(async (req) => {
         const safeBookingNum = escapeHtml(updatedBooking.booking_number);
 
         await resend.emails.send({
-          from: "METROPOL TOURS <onboarding@resend.dev>",
+          from: "METROPOL TOURS <buchungsbestätigung@app.metours.de>",
           to: [updatedBooking.contact_email],
           subject: `Buchungsbestätigung ${safeBookingNum} – ${safeDest}`,
           html: `<!DOCTYPE html><html><head><meta charset="utf-8">
