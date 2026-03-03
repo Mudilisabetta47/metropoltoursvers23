@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.generate-tour-documents]
 verify_jwt = false
+
+[functions.process-ticket-scan]
+verify_jwt = false
