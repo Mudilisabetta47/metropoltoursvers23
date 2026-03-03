@@ -1,49 +1,171 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { 
-  Scan, AlertTriangle, Navigation, MapPin, Clock, 
-  Shield, LogOut, Fuel, Construction, CloudRain,
-  Phone, CheckCircle2, XCircle, Loader2, Send,
-  ChevronRight, Bus
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Html5Qrcode } from "html5-qrcode";
+import {
+  Scan, CheckCircle2, XCircle, AlertTriangle, Loader2,
+  LogOut, Bus, Clock, Camera, CameraOff,
+  History, Shield, List
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
+import { de } from "date-fns/locale";
 
-type DriverTab = "scanner" | "melden" | "status";
+type DriverTab = "scan" | "history";
 
-const INCIDENT_TYPES = [
-  { type: "traffic_jam", label: "Stau", icon: Navigation, color: "text-orange-400 bg-orange-400/10" },
-  { type: "accident", label: "Unfall", icon: AlertTriangle, color: "text-red-400 bg-red-400/10" },
-  { type: "construction", label: "Baustelle", icon: Construction, color: "text-yellow-400 bg-yellow-400/10" },
-  { type: "weather", label: "Wetter", icon: CloudRain, color: "text-blue-400 bg-blue-400/10" },
-  { type: "breakdown", label: "Panne", icon: Bus, color: "text-red-500 bg-red-500/10" },
-  { type: "fuel", label: "Tanken", icon: Fuel, color: "text-emerald-400 bg-emerald-400/10" },
-];
+interface ScanResult {
+  result: string;
+  message: string;
+  color: "green" | "yellow" | "red";
+  passenger?: string;
+  ticket?: any;
+  trip?: any;
+  checked_in_at?: string;
+}
 
 const DriverDashboard = () => {
   const navigate = useNavigate();
-  const { user, isDriver, hasAnyStaffRole, isLoading: authLoading, signOut } = useAuth();
+  const { user, hasAnyStaffRole, isLoading: authLoading, signOut } = useAuth();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<DriverTab>("scanner");
-  
+  const [activeTab, setActiveTab] = useState<DriverTab>("scan");
+
   // Scanner state
-  const [ticketNumber, setTicketNumber] = useState("");
-  const [scanResult, setScanResult] = useState<{ valid: boolean; message: string; passenger?: string } | null>(null);
+  const [manualTicket, setManualTicket] = useState("");
+  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [scanning, setScanning] = useState(false);
+  const [cameraActive, setCameraActive] = useState(false);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const scannerContainerId = "qr-reader";
 
-  // Incident state
-  const [selectedIncident, setSelectedIncident] = useState<string | null>(null);
-  const [incidentDescription, setIncidentDescription] = useState("");
-  const [submittingIncident, setSubmittingIncident] = useState(false);
+  // History state
+  const [scanHistory, setScanHistory] = useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
-  // Quick status
-  const [delayMinutes, setDelayMinutes] = useState("");
+  // Cleanup camera on unmount
+  useEffect(() => {
+    return () => {
+      if (scannerRef.current?.isScanning) {
+        scannerRef.current.stop().catch(() => {});
+      }
+    };
+  }, []);
+
+  const fetchHistory = useCallback(async () => {
+    if (!user) return;
+    setHistoryLoading(true);
+    try {
+      const { data } = await supabase
+        .from("scan_logs")
+        .select("*, tickets(qr_payload, status), bookings(passenger_first_name, passenger_last_name, ticket_number), trips(departure_date, departure_time, routes(name))")
+        .eq("user_id", user.id)
+        .order("scan_time", { ascending: false })
+        .limit(50);
+      setScanHistory(data || []);
+    } catch (err) {
+      console.error("History fetch error:", err);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (activeTab === "history") fetchHistory();
+  }, [activeTab, fetchHistory]);
+
+  const processQrPayload = async (payload: string) => {
+    if (scanning || !payload.trim()) return;
+    setScanning(true);
+    setScanResult(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("process-ticket-scan", {
+        body: { qr_payload: payload.trim() },
+      });
+
+      if (error) throw error;
+      setScanResult(data as ScanResult);
+
+      // Vibrate on mobile for feedback
+      if (navigator.vibrate) {
+        if (data.color === "green") navigator.vibrate(200);
+        else if (data.color === "yellow") navigator.vibrate([100, 50, 100]);
+        else navigator.vibrate([200, 100, 200, 100, 200]);
+      }
+    } catch (err: any) {
+      setScanResult({
+        result: "error",
+        message: "Fehler: " + (err.message || "Unbekannt"),
+        color: "red",
+      });
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  const startCamera = async () => {
+    try {
+      const scanner = new Html5Qrcode(scannerContainerId);
+      scannerRef.current = scanner;
+
+      await scanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => {
+          // On successful scan
+          scanner.stop().then(() => {
+            setCameraActive(false);
+            processQrPayload(decodedText);
+          });
+        },
+        () => {} // ignore errors during scanning
+      );
+      setCameraActive(true);
+    } catch (err: any) {
+      toast({
+        title: "Kamera-Fehler",
+        description: err.message || "Kamera konnte nicht gestartet werden",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const stopCamera = async () => {
+    if (scannerRef.current?.isScanning) {
+      await scannerRef.current.stop();
+    }
+    setCameraActive(false);
+  };
+
+  const getResultStyles = (color: string) => {
+    switch (color) {
+      case "green":
+        return { border: "border-emerald-500/50", bg: "bg-emerald-500/10", text: "text-emerald-300", icon: <CheckCircle2 className="w-12 h-12 text-emerald-400" /> };
+      case "yellow":
+        return { border: "border-amber-500/50", bg: "bg-amber-500/10", text: "text-amber-300", icon: <AlertTriangle className="w-12 h-12 text-amber-400" /> };
+      default:
+        return { border: "border-red-500/50", bg: "bg-red-500/10", text: "text-red-300", icon: <XCircle className="w-12 h-12 text-red-400" /> };
+    }
+  };
+
+  const getHistoryBadge = (result: string) => {
+    switch (result) {
+      case "checked_in":
+        return <Badge className="bg-emerald-500/20 text-emerald-400 text-[10px]">Eingecheckt</Badge>;
+      case "already_checked_in":
+        return <Badge className="bg-amber-500/20 text-amber-400 text-[10px]">Bereits gescannt</Badge>;
+      case "not_found":
+        return <Badge className="bg-red-500/20 text-red-400 text-[10px]">Nicht gefunden</Badge>;
+      case "invalid":
+        return <Badge className="bg-red-500/20 text-red-400 text-[10px]">Ungültig</Badge>;
+      default:
+        return <Badge className="bg-zinc-500/20 text-zinc-400 text-[10px]">{result}</Badge>;
+    }
+  };
 
   if (authLoading) {
     return (
@@ -69,110 +191,22 @@ const DriverDashboard = () => {
     );
   }
 
-  const handleScan = async () => {
-    if (!ticketNumber.trim()) return;
-    setScanning(true);
-    setScanResult(null);
-
-    try {
-      // Look up booking by ticket number
-      const { data: booking, error } = await supabase
-        .from("bookings")
-        .select("id, ticket_number, passenger_first_name, passenger_last_name, status, trip_id")
-        .eq("ticket_number", ticketNumber.trim().toUpperCase())
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (!booking) {
-        setScanResult({ valid: false, message: "Ticket nicht gefunden" });
-      } else if (booking.status === "cancelled") {
-        setScanResult({ valid: false, message: "Ticket storniert" });
-      } else {
-        setScanResult({ 
-          valid: true, 
-          message: "Gültiges Ticket ✓", 
-          passenger: `${booking.passenger_first_name} ${booking.passenger_last_name}` 
-        });
-      }
-
-      // Log scanner event
-      await supabase.from("scanner_events").insert({
-        scanner_user_id: user.id,
-        ticket_number: ticketNumber.trim().toUpperCase(),
-        booking_id: booking?.id || null,
-        result: booking && booking.status !== "cancelled" ? "valid" : "invalid",
-        scan_type: "check_in",
-      });
-
-    } catch (err: any) {
-      setScanResult({ valid: false, message: "Fehler: " + err.message });
-    } finally {
-      setScanning(false);
-    }
-  };
-
-  const handleIncidentSubmit = async () => {
-    if (!selectedIncident) return;
-    setSubmittingIncident(true);
-
-    try {
-      const incidentLabel = INCIDENT_TYPES.find(i => i.type === selectedIncident)?.label || selectedIncident;
-      
-      await supabase.from("incidents").insert({
-        type: selectedIncident,
-        title: `Fahrer-Meldung: ${incidentLabel}`,
-        description: incidentDescription || `${incidentLabel} gemeldet von Fahrer`,
-        severity: ["accident", "breakdown"].includes(selectedIncident) ? "critical" : "warning",
-        source_type: "driver",
-        status: "open",
-      });
-
-      toast({ title: "Meldung gesendet", description: `${incidentLabel} wurde erfolgreich gemeldet.` });
-      setSelectedIncident(null);
-      setIncidentDescription("");
-    } catch (err: any) {
-      toast({ title: "Fehler", description: err.message, variant: "destructive" });
-    } finally {
-      setSubmittingIncident(false);
-    }
-  };
-
-  const handleDelayReport = async () => {
-    if (!delayMinutes) return;
-    try {
-      await supabase.from("incidents").insert({
-        type: "delay",
-        title: `Verspätung: ${delayMinutes} Min.`,
-        description: `Fahrer meldet ${delayMinutes} Minuten Verspätung`,
-        severity: parseInt(delayMinutes) > 30 ? "critical" : "warning",
-        source_type: "driver",
-        status: "open",
-      });
-      toast({ title: "Verspätung gemeldet", description: `${delayMinutes} Minuten Verspätung gemeldet.` });
-      setDelayMinutes("");
-    } catch (err: any) {
-      toast({ title: "Fehler", description: err.message, variant: "destructive" });
-    }
-  };
-
   const tabs = [
-    { id: "scanner" as DriverTab, label: "Scanner", icon: Scan },
-    { id: "melden" as DriverTab, label: "Melden", icon: AlertTriangle },
-    { id: "status" as DriverTab, label: "Status", icon: Clock },
+    { id: "scan" as DriverTab, label: "Scanner", icon: Scan },
+    { id: "history" as DriverTab, label: "Verlauf", icon: History },
   ];
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
       {/* Header */}
-      <header className="bg-zinc-900 border-b border-zinc-800 px-4 py-3 flex items-center justify-between safe-area-top">
+      <header className="bg-zinc-900 border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
             <Bus className="w-4 h-4 text-white" />
           </div>
           <div>
             <h1 className="font-bold text-sm text-white">METROPOL TOURS</h1>
-            <p className="text-[10px] text-zinc-500">Fahrer-App</p>
+            <p className="text-[10px] text-zinc-500">Ticket-Scanner</p>
           </div>
         </div>
         <Button variant="ghost" size="sm" onClick={() => signOut()} className="text-zinc-400 hover:text-white">
@@ -182,180 +216,151 @@ const DriverDashboard = () => {
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto p-4 pb-24">
-        {activeTab === "scanner" && (
-          <div className="space-y-4">
-            <h2 className="text-lg font-bold">Ticket scannen</h2>
-            
+        {activeTab === "scan" && (
+          <div className="space-y-4 max-w-md mx-auto">
+            {/* Camera Scanner */}
+            <div className="relative">
+              <div
+                id={scannerContainerId}
+                className={`w-full rounded-xl overflow-hidden ${cameraActive ? "min-h-[300px]" : "hidden"}`}
+              />
+              {!cameraActive && (
+                <button
+                  onClick={startCamera}
+                  disabled={scanning}
+                  className="w-full flex flex-col items-center justify-center gap-4 py-16 rounded-xl border-2 border-dashed border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 transition-all"
+                >
+                  <div className="w-20 h-20 rounded-full bg-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                    <Camera className="w-10 h-10 text-white" />
+                  </div>
+                  <span className="text-lg font-bold text-emerald-400">SCAN STARTEN</span>
+                  <span className="text-xs text-zinc-500">QR-Code oder Barcode scannen</span>
+                </button>
+              )}
+              {cameraActive && (
+                <Button
+                  onClick={stopCamera}
+                  variant="outline"
+                  className="absolute top-2 right-2 z-10 bg-zinc-900/80 border-zinc-700 text-white"
+                  size="sm"
+                >
+                  <CameraOff className="w-4 h-4 mr-1" /> Stopp
+                </Button>
+              )}
+            </div>
+
+            {/* Manual Input */}
             <div className="flex gap-2">
               <Input
-                placeholder="Ticket-Nr. eingeben (z.B. TKT-2026-...)"
-                value={ticketNumber}
-                onChange={(e) => { setTicketNumber(e.target.value); setScanResult(null); }}
-                onKeyDown={(e) => e.key === "Enter" && handleScan()}
+                placeholder="Ticket-Nr. manuell eingeben..."
+                value={manualTicket}
+                onChange={(e) => { setManualTicket(e.target.value); setScanResult(null); }}
+                onKeyDown={(e) => e.key === "Enter" && processQrPayload(manualTicket)}
                 className="bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500 flex-1"
               />
-              <Button onClick={handleScan} disabled={scanning || !ticketNumber.trim()} className="bg-emerald-600 hover:bg-emerald-700 px-6">
+              <Button
+                onClick={() => processQrPayload(manualTicket)}
+                disabled={scanning || !manualTicket.trim()}
+                className="bg-emerald-600 hover:bg-emerald-700 px-6"
+              >
                 {scanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Scan className="w-4 h-4" />}
               </Button>
             </div>
 
-            {scanResult && (
-              <Card className={`border ${scanResult.valid ? "border-emerald-500/50 bg-emerald-500/10" : "border-red-500/50 bg-red-500/10"}`}>
-                <CardContent className="p-4 flex items-center gap-3">
-                  {scanResult.valid ? (
-                    <CheckCircle2 className="w-10 h-10 text-emerald-400 shrink-0" />
-                  ) : (
-                    <XCircle className="w-10 h-10 text-red-400 shrink-0" />
-                  )}
-                  <div>
-                    <p className={`font-bold text-lg ${scanResult.valid ? "text-emerald-300" : "text-red-300"}`}>
-                      {scanResult.message}
-                    </p>
-                    {scanResult.passenger && (
-                      <p className="text-zinc-300 text-sm">{scanResult.passenger}</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* Scan Result */}
+            {scanResult && (() => {
+              const styles = getResultStyles(scanResult.color);
+              return (
+                <Card className={`border-2 ${styles.border} ${styles.bg} animate-in fade-in duration-300`}>
+                  <CardContent className="p-5">
+                    <div className="flex items-start gap-4">
+                      <div className="shrink-0">{styles.icon}</div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-bold text-xl ${styles.text}`}>{scanResult.message}</p>
+                        {scanResult.passenger && (
+                          <p className="text-zinc-300 text-sm mt-1">👤 {scanResult.passenger}</p>
+                        )}
+                        {scanResult.trip && (
+                          <p className="text-zinc-400 text-xs mt-1">
+                            🚌 {scanResult.trip.route} • {scanResult.trip.date} • {scanResult.trip.time}
+                          </p>
+                        )}
+                        {scanResult.checked_in_at && (
+                          <p className="text-zinc-500 text-xs mt-1">
+                            Eingecheckt: {new Date(scanResult.checked_in_at).toLocaleString("de-DE")}
+                          </p>
+                        )}
+                      </div>
+                    </div>
 
-            <Card className="bg-zinc-900 border-zinc-800">
-              <CardContent className="p-4">
-                <p className="text-zinc-400 text-sm">
-                  💡 Geben Sie die Ticket-Nummer ein oder scannen Sie den QR-Code mit der Kamera-App und kopieren Sie die Nummer.
-                </p>
-              </CardContent>
-            </Card>
+                    <Button
+                      onClick={() => { setScanResult(null); setManualTicket(""); }}
+                      variant="outline"
+                      className="w-full mt-4 border-zinc-600 text-zinc-300 hover:bg-zinc-800"
+                    >
+                      Nächstes Ticket scannen
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })()}
           </div>
         )}
 
-        {activeTab === "melden" && (
-          <div className="space-y-4">
-            <h2 className="text-lg font-bold">Vorfall melden</h2>
-
-            <div className="grid grid-cols-2 gap-3">
-              {INCIDENT_TYPES.map((incident) => (
-                <button
-                  key={incident.type}
-                  onClick={() => setSelectedIncident(selectedIncident === incident.type ? null : incident.type)}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
-                    selectedIncident === incident.type
-                      ? "border-emerald-500 bg-emerald-500/10"
-                      : "border-zinc-800 bg-zinc-900 hover:border-zinc-700"
-                  }`}
-                >
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${incident.color}`}>
-                    <incident.icon className="w-6 h-6" />
-                  </div>
-                  <span className="text-sm font-medium text-zinc-200">{incident.label}</span>
-                </button>
-              ))}
+        {activeTab === "history" && (
+          <div className="space-y-3 max-w-md mx-auto">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">Letzte Scans</h2>
+              <Button variant="ghost" size="sm" onClick={fetchHistory} className="text-zinc-400">
+                <Clock className="w-4 h-4 mr-1" /> Aktualisieren
+              </Button>
             </div>
 
-            {selectedIncident && (
-              <div className="space-y-3">
-                <Textarea
-                  placeholder="Beschreibung (optional)..."
-                  value={incidentDescription}
-                  onChange={(e) => setIncidentDescription(e.target.value)}
-                  className="bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500 min-h-[80px]"
-                />
-                <Button 
-                  onClick={handleIncidentSubmit} 
-                  disabled={submittingIncident}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 h-12 text-base"
-                >
-                  {submittingIncident ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
-                  Meldung senden
-                </Button>
+            {historyLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
+              </div>
+            ) : scanHistory.length === 0 ? (
+              <div className="text-center py-12 text-zinc-500">
+                <List className="w-12 h-12 mx-auto mb-3 text-zinc-700" />
+                <p>Noch keine Scans durchgeführt</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {scanHistory.map((log) => (
+                  <Card key={log.id} className="bg-zinc-900 border-zinc-800">
+                    <CardContent className="p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-white truncate">
+                              {log.qr_payload || log.tickets?.qr_payload || "–"}
+                            </span>
+                            {getHistoryBadge(log.result)}
+                          </div>
+                          <div className="text-xs text-zinc-500 mt-0.5">
+                            {log.bookings && `${log.bookings.passenger_first_name} ${log.bookings.passenger_last_name}`}
+                            {log.trips?.routes?.name && ` • ${log.trips.routes.name}`}
+                          </div>
+                        </div>
+                        <span className="text-[10px] text-zinc-600 shrink-0 ml-2">
+                          {formatDistanceToNow(new Date(log.scan_time), { addSuffix: true, locale: de })}
+                        </span>
+                      </div>
+                      {log.message && (
+                        <p className="text-xs text-zinc-500 mt-1">{log.message}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             )}
           </div>
         )}
-
-        {activeTab === "status" && (
-          <div className="space-y-4">
-            <h2 className="text-lg font-bold">Schnellstatus</h2>
-
-            {/* Delay Report */}
-            <Card className="bg-zinc-900 border-zinc-800">
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-orange-400" />
-                  <h3 className="font-semibold">Verspätung melden</h3>
-                </div>
-                <div className="flex gap-2">
-                  <Input
-                    type="number"
-                    placeholder="Minuten"
-                    value={delayMinutes}
-                    onChange={(e) => setDelayMinutes(e.target.value)}
-                    className="bg-zinc-800 border-zinc-700 text-white w-28"
-                  />
-                  <Button onClick={handleDelayReport} disabled={!delayMinutes} className="bg-orange-600 hover:bg-orange-700 flex-1">
-                    Verspätung melden
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Quick Actions */}
-            <Card className="bg-zinc-900 border-zinc-800">
-              <CardContent className="p-4 space-y-2">
-                <h3 className="font-semibold mb-3">Schnellbefehle</h3>
-                {[
-                  { label: "Pause gestartet", icon: Clock, action: "break_start" },
-                  { label: "Pause beendet", icon: CheckCircle2, action: "break_end" },
-                  { label: "Fahrt gestartet", icon: Navigation, action: "trip_start" },
-                  { label: "Fahrt beendet", icon: MapPin, action: "trip_end" },
-                ].map((cmd) => (
-                  <button
-                    key={cmd.action}
-                    onClick={async () => {
-                      await supabase.from("incidents").insert({
-                        type: cmd.action,
-                        title: cmd.label,
-                        description: `Fahrer-Status: ${cmd.label}`,
-                        severity: "info",
-                        source_type: "driver",
-                        status: "resolved",
-                      });
-                      toast({ title: cmd.label, description: "Status wurde gemeldet." });
-                    }}
-                    className="w-full flex items-center justify-between p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <cmd.icon className="w-5 h-5 text-emerald-400" />
-                      <span className="text-sm font-medium">{cmd.label}</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-zinc-500" />
-                  </button>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Emergency */}
-            <Card className="bg-red-950/30 border-red-900/50">
-              <CardContent className="p-4">
-                <button 
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold transition-colors"
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      window.location.href = "tel:+4942112345";
-                    }
-                  }}
-                >
-                  <Phone className="w-5 h-5" />
-                  Notruf Zentrale
-                </button>
-              </CardContent>
-            </Card>
-          </div>
-        )}
       </main>
 
-      {/* Bottom Tab Bar (mobile-first) */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 flex safe-area-bottom">
+      {/* Bottom Tab Bar */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 flex">
         {tabs.map((tab) => (
           <button
             key={tab.id}
