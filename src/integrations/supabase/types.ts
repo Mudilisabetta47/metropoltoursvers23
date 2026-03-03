@@ -864,6 +864,71 @@ export type Database = {
         }
         Relationships: []
       }
+      scan_logs: {
+        Row: {
+          booking_id: string | null
+          id: string
+          message: string | null
+          qr_payload: string | null
+          result: string
+          scan_time: string
+          ticket_id: string | null
+          trip_id: string | null
+          user_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          id?: string
+          message?: string | null
+          qr_payload?: string | null
+          result?: string
+          scan_time?: string
+          ticket_id?: string | null
+          trip_id?: string | null
+          user_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          id?: string
+          message?: string | null
+          qr_payload?: string | null
+          result?: string
+          scan_time?: string
+          ticket_id?: string | null
+          trip_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_logs_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scan_logs_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_agent_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scan_logs_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scan_logs_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scanner_events: {
         Row: {
           booking_id: string | null
@@ -1163,6 +1228,64 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      tickets: {
+        Row: {
+          booking_id: string | null
+          checked_in_at: string | null
+          checked_in_by: string | null
+          created_at: string
+          id: string
+          qr_payload: string
+          status: string
+          trip_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          booking_id?: string | null
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          created_at?: string
+          id?: string
+          qr_payload: string
+          status?: string
+          trip_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string | null
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          created_at?: string
+          id?: string
+          qr_payload?: string
+          status?: string
+          trip_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tickets_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_agent_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tour_booking_audit: {
         Row: {
@@ -2219,6 +2342,56 @@ export type Database = {
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webhook_logs: {
+        Row: {
+          error_message: string | null
+          event_id: string
+          id: string
+          payload: Json | null
+          response_body: string | null
+          retry_count: number
+          sent_at: string
+          status_code: number | null
+          success: boolean
+          ticket_id: string | null
+          url: string
+        }
+        Insert: {
+          error_message?: string | null
+          event_id?: string
+          id?: string
+          payload?: Json | null
+          response_body?: string | null
+          retry_count?: number
+          sent_at?: string
+          status_code?: number | null
+          success?: boolean
+          ticket_id?: string | null
+          url: string
+        }
+        Update: {
+          error_message?: string | null
+          event_id?: string
+          id?: string
+          payload?: Json | null
+          response_body?: string | null
+          retry_count?: number
+          sent_at?: string
+          status_code?: number | null
+          success?: boolean
+          ticket_id?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_logs_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
             referencedColumns: ["id"]
           },
         ]
