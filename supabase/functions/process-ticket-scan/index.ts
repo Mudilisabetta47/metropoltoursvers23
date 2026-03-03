@@ -2,8 +2,34 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+// In-memory rate limiter (per edge function instance)
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX = 30; // max 30 scans per minute per user
+
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(userId);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(userId, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  entry.count++;
+  return entry.count <= RATE_LIMIT_MAX;
+}
+
+// Input sanitization
+function sanitizePayload(input: string): string | null {
+  if (typeof input !== "string") return null;
+  const trimmed = input.trim();
+  // Max 200 chars, only allow alphanumeric, hyphens, underscores, dots
+  if (trimmed.length === 0 || trimmed.length > 200) return null;
+  if (!/^[a-zA-Z0-9\-_.]+$/.test(trimmed)) return null;
+  return trimmed;
+}
 
 async function hmacSign(secret: string, payload: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -72,7 +98,7 @@ async function sendWebhookWithRetry(
         success: false,
         retry_count: attempt,
         payload,
-        error_message: err.message,
+        error_message: err.message?.slice(0, 500),
       });
 
       if (attempt < maxRetries) {
@@ -82,18 +108,28 @@ async function sendWebhookWithRetry(
   }
 }
 
+function errorResponse(status: number, message: string, extra?: Record<string, unknown>) {
+  return new Response(
+    JSON.stringify({ error: message, ...extra }),
+    { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Only allow POST
+  if (req.method !== "POST") {
+    return errorResponse(405, "Method not allowed");
+  }
+
   try {
+    // 1. Auth: verify JWT via getClaims
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!authHeader?.startsWith("Bearer ")) {
+      return errorResponse(401, "Unauthorized");
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -102,55 +138,87 @@ Deno.serve(async (req) => {
     const webhookUrl = Deno.env.get("WEBHOOK_URL");
     const webhookSecret = Deno.env.get("WEBHOOK_SECRET");
 
-    // Verify user
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user }, error: userError } = await userClient.auth.getUser();
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Invalid auth" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return errorResponse(401, "Invalid or expired token");
+    }
+
+    const userId = claimsData.claims.sub as string;
+    const userEmail = claimsData.claims.email as string;
+
+    // 2. Rate limiting
+    if (!checkRateLimit(userId)) {
+      return errorResponse(429, "Zu viele Anfragen. Bitte warten Sie einen Moment.", {
+        result: "rate_limited",
+        color: "red",
       });
     }
 
+    // 3. Role check: only staff (admin, agent, driver) can scan
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    const { qr_payload } = await req.json();
-    if (!qr_payload || typeof qr_payload !== "string") {
-      return new Response(JSON.stringify({ error: "qr_payload required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+
+    const userRoles = (roles || []).map((r: any) => r.role);
+    const allowedRoles = ["admin", "agent", "driver"];
+    const hasStaffRole = userRoles.some((r: string) => allowedRoles.includes(r));
+
+    if (!hasStaffRole) {
+      return errorResponse(403, "Keine Berechtigung zum Scannen", {
+        result: "forbidden",
+        color: "red",
       });
     }
 
-    // Find ticket by qr_payload
+    // 4. Parse and validate input
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return errorResponse(400, "Ungültiger Request Body");
+    }
+
+    const qrPayload = sanitizePayload(body?.qr_payload);
+    if (!qrPayload) {
+      return errorResponse(400, "Ungültiger QR-Code / Ticket-Nummer", {
+        result: "invalid_input",
+        color: "red",
+      });
+    }
+
+    // 5. Find ticket by qr_payload
     const { data: ticket, error: ticketError } = await supabase
       .from("tickets")
       .select("*, bookings(id, passenger_first_name, passenger_last_name, passenger_email, status, price_paid, trip_id), trips(id, route_id, departure_date, departure_time, routes(name))")
-      .eq("qr_payload", qr_payload.trim())
+      .eq("qr_payload", qrPayload)
       .maybeSingle();
 
     if (ticketError) throw ticketError;
 
-    // Also try matching by ticket_number in bookings if no ticket found
+    // Fallback: try matching by ticket_number in bookings
     let resolvedTicket = ticket;
     if (!resolvedTicket) {
-      // Try finding by ticket_number in bookings table
       const { data: booking } = await supabase
         .from("bookings")
         .select("id, ticket_number, passenger_first_name, passenger_last_name, passenger_email, status, price_paid, trip_id, trips(id, route_id, departure_date, departure_time, routes(name))")
-        .eq("ticket_number", qr_payload.trim().toUpperCase())
+        .eq("ticket_number", qrPayload.toUpperCase())
         .maybeSingle();
 
       if (booking) {
-        // Auto-create ticket record
         const { data: newTicket, error: createErr } = await supabase
           .from("tickets")
           .insert({
             booking_id: booking.id,
             trip_id: booking.trip_id,
-            qr_payload: qr_payload.trim().toUpperCase(),
+            qr_payload: qrPayload.toUpperCase(),
             status: "valid",
           })
           .select("*, bookings(id, passenger_first_name, passenger_last_name, passenger_email, status, price_paid, trip_id), trips(id, route_id, departure_date, departure_time, routes(name))")
@@ -161,10 +229,9 @@ Deno.serve(async (req) => {
     }
 
     if (!resolvedTicket) {
-      // Log failed scan
       await supabase.from("scan_logs").insert({
-        user_id: user.id,
-        qr_payload: qr_payload.trim(),
+        user_id: userId,
+        qr_payload: qrPayload,
         result: "not_found",
         message: "Ticket nicht gefunden",
       });
@@ -178,14 +245,14 @@ Deno.serve(async (req) => {
     const booking = resolvedTicket.bookings;
     const trip = resolvedTicket.trips;
 
-    // Validate
+    // 6. Validate ticket status
     if (resolvedTicket.status === "cancelled" || resolvedTicket.status === "refunded") {
       await supabase.from("scan_logs").insert({
         ticket_id: resolvedTicket.id,
         booking_id: booking?.id,
         trip_id: trip?.id,
-        user_id: user.id,
-        qr_payload: qr_payload.trim(),
+        user_id: userId,
+        qr_payload: qrPayload,
         result: "invalid",
         message: `Ticket ${resolvedTicket.status === "cancelled" ? "storniert" : "erstattet"}`,
       });
@@ -195,7 +262,6 @@ Deno.serve(async (req) => {
           result: "invalid",
           message: resolvedTicket.status === "cancelled" ? "Ticket storniert" : "Ticket erstattet",
           color: "red",
-          ticket: resolvedTicket,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -206,8 +272,8 @@ Deno.serve(async (req) => {
         ticket_id: resolvedTicket.id,
         booking_id: booking?.id,
         trip_id: trip?.id,
-        user_id: user.id,
-        qr_payload: qr_payload.trim(),
+        user_id: userId,
+        qr_payload: qrPayload,
         result: "already_checked_in",
         message: `Bereits eingecheckt um ${resolvedTicket.checked_in_at}`,
       });
@@ -217,51 +283,48 @@ Deno.serve(async (req) => {
           result: "already_checked_in",
           message: "Ticket bereits eingecheckt",
           color: "yellow",
-          ticket: resolvedTicket,
           checked_in_at: resolvedTicket.checked_in_at,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Valid! Check in
+    // 7. Check in!
     const now = new Date().toISOString();
     await supabase
       .from("tickets")
       .update({
         status: "checked_in",
         checked_in_at: now,
-        checked_in_by: user.id,
+        checked_in_by: userId,
         updated_at: now,
       })
       .eq("id", resolvedTicket.id);
 
-    // Log scan
     await supabase.from("scan_logs").insert({
       ticket_id: resolvedTicket.id,
       booking_id: booking?.id,
       trip_id: trip?.id,
-      user_id: user.id,
-      qr_payload: qr_payload.trim(),
+      user_id: userId,
+      qr_payload: qrPayload,
       result: "checked_in",
       message: "Erfolgreich eingecheckt",
     });
 
-    // Also update scanner_events for ops dashboard compatibility
+    // Ops dashboard compatibility
     await supabase.from("scanner_events").insert({
-      scanner_user_id: user.id,
-      ticket_number: qr_payload.trim(),
+      scanner_user_id: userId,
+      ticket_number: qrPayload,
       booking_id: booking?.id,
       result: "valid",
       scan_type: "check_in",
       trip_id: trip?.id,
     });
 
-    // Send webhook (async, don't block response)
+    // 8. Webhook (idempotent, async)
     const eventId = crypto.randomUUID();
 
     if (webhookUrl && webhookSecret) {
-      // Check idempotency
       const { data: existingLog } = await supabase
         .from("webhook_logs")
         .select("id")
@@ -274,10 +337,7 @@ Deno.serve(async (req) => {
           event: "ticket_scanned",
           event_id: eventId,
           scanned_at: now,
-          scanner_user: {
-            id: user.id,
-            email: user.email,
-          },
+          scanner_user: { id: userId, email: userEmail },
           ticket: {
             ticket_id: resolvedTicket.id,
             status: "checked_in",
@@ -288,7 +348,6 @@ Deno.serve(async (req) => {
             booking_id: booking?.id,
             status: booking?.status,
             customer_name: booking ? `${booking.passenger_first_name} ${booking.passenger_last_name}` : null,
-            customer_email: booking?.passenger_email,
             passengers: 1,
             price: booking?.price_paid,
           },
@@ -300,12 +359,12 @@ Deno.serve(async (req) => {
           },
         };
 
-        // Fire and forget with retries
         sendWebhookWithRetry(webhookUrl, webhookSecret, webhookPayload, eventId, resolvedTicket.id, supabase)
           .catch((e) => console.error("Webhook error:", e));
       }
     }
 
+    // 9. Return success (no sensitive data like emails in response)
     return new Response(
       JSON.stringify({
         result: "checked_in",
@@ -327,8 +386,9 @@ Deno.serve(async (req) => {
     );
   } catch (err: any) {
     console.error("Scan error:", err);
+    // Don't leak internal error details
     return new Response(
-      JSON.stringify({ error: err.message, result: "error", color: "red" }),
+      JSON.stringify({ error: "Interner Fehler", result: "error", color: "red" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

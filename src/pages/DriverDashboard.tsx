@@ -18,6 +18,11 @@ import { de } from "date-fns/locale";
 
 type DriverTab = "scan" | "history";
 
+// Bot protection: client-side validation & cooldown
+const QR_PAYLOAD_REGEX = /^[a-zA-Z0-9\-_.]+$/;
+const MAX_PAYLOAD_LENGTH = 200;
+const SCAN_COOLDOWN_MS = 2000;
+
 interface ScanResult {
   result: string;
   message: string;
@@ -40,6 +45,7 @@ const DriverDashboard = () => {
   const [scanning, setScanning] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const lastScanTimeRef = useRef<number>(0);
   const scannerContainerId = "qr-reader";
 
   // History state
@@ -79,12 +85,28 @@ const DriverDashboard = () => {
 
   const processQrPayload = async (payload: string) => {
     if (scanning || !payload.trim()) return;
+
+    // Client-side bot protection: cooldown
+    const now = Date.now();
+    if (now - lastScanTimeRef.current < SCAN_COOLDOWN_MS) {
+      toast({ title: "Bitte warten", description: "Cooldown zwischen Scans aktiv", variant: "destructive" });
+      return;
+    }
+
+    // Input validation
+    const sanitized = payload.trim();
+    if (sanitized.length > MAX_PAYLOAD_LENGTH || !QR_PAYLOAD_REGEX.test(sanitized)) {
+      setScanResult({ result: "invalid_input", message: "Ungültiges Ticket-Format", color: "red" });
+      return;
+    }
+
+    lastScanTimeRef.current = now;
     setScanning(true);
     setScanResult(null);
 
     try {
       const { data, error } = await supabase.functions.invoke("process-ticket-scan", {
-        body: { qr_payload: payload.trim() },
+        body: { qr_payload: sanitized },
       });
 
       if (error) throw error;
