@@ -294,7 +294,7 @@ const TravelAdvisorChat = () => {
                 >
                   <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-3">
                     <p className="text-sm text-foreground leading-relaxed">
-                      Hallo! 👋 Ich bin dein <strong>Reiseberater</strong> von METROPOL TOURS. Wohin soll's gehen?
+                      Hallo! 👋 Ich bin dein <strong>Reiseberater</strong> von METROPOL TOURS. Ich kenne alle aktuellen Angebote, Preise und freien Plätze. Wohin soll's gehen?
                     </p>
                   </div>
 
