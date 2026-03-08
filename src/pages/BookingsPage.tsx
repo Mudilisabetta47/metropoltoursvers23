@@ -151,9 +151,7 @@ const BookingsPage = () => {
       );
       setTourBookings(unique);
 
-      // Also link unlinked bookings to user_id for future
-      const unlinked = (byEmail || []).filter(b => !b.user_id || b.user_id !== user.id);
-      // We can't update via client due to RLS, but the bookings are still visible
+      // Bookings matched by email are now visible to the user
     } catch (error) {
       console.error('Error loading tour bookings:', error);
     }
