@@ -254,7 +254,7 @@ const TravelAdvisorChat = () => {
                   <div className="flex items-center gap-1.5">
                     <span className={cn(
                       "w-2 h-2 rounded-full",
-                      isLoading ? "bg-accent animate-pulse" : "bg-emerald-300"
+                      isLoading ? "bg-accent animate-pulse" : "bg-primary-light"
                     )} />
                     <p className="text-xs text-primary-foreground/70">
                       {isLoading ? "Tippt..." : "Online"}
