@@ -49,12 +49,13 @@ interface TourBooking {
 }
 
 const BookingsPage = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { downloadTicket, isDownloading } = useTicketDownload();
   const [filter, setFilter] = useState<"all" | "confirmed" | "completed" | "cancelled">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedBooking, setExpandedBooking] = useState<string | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [tourBookings, setTourBookings] = useState<TourBooking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   
@@ -69,10 +70,11 @@ const BookingsPage = () => {
   useEffect(() => {
     if (user) {
       loadBookings();
+      loadTourBookings();
     } else {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, profile]);
 
   const loadBookings = async () => {
     setIsLoading(true);
@@ -101,6 +103,59 @@ const BookingsPage = () => {
       toast.error('Fehler beim Laden der Buchungen');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadTourBookings = async () => {
+    if (!user) return;
+    
+    const userEmail = profile?.email || user.email;
+    if (!userEmail) return;
+
+    try {
+      // Load by user_id OR by matching email
+      const { data: byUserId } = await supabase
+        .from('tour_bookings')
+        .select(`
+          id, booking_number, status, contact_first_name, contact_last_name, 
+          contact_email, participants, total_price, created_at,
+          tour:package_tours(destination, country),
+          tour_date:tour_dates(departure_date, return_date, duration_days),
+          tariff:tour_tariffs(name)
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      const { data: byEmail } = await supabase
+        .from('tour_bookings')
+        .select(`
+          id, booking_number, status, contact_first_name, contact_last_name, 
+          contact_email, participants, total_price, created_at,
+          tour:package_tours(destination, country),
+          tour_date:tour_dates(departure_date, return_date, duration_days),
+          tariff:tour_tariffs(name)
+        `)
+        .eq('contact_email', userEmail.toLowerCase())
+        .order('created_at', { ascending: false });
+
+      // Merge and deduplicate by id
+      const allBookings = [...(byUserId || []), ...(byEmail || [])];
+      const uniqueMap = new Map<string, TourBooking>();
+      for (const b of allBookings) {
+        if (!uniqueMap.has(b.id)) {
+          uniqueMap.set(b.id, b as unknown as TourBooking);
+        }
+      }
+      const unique = Array.from(uniqueMap.values()).sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      setTourBookings(unique);
+
+      // Also link unlinked bookings to user_id for future
+      const unlinked = (byEmail || []).filter(b => !b.user_id || b.user_id !== user.id);
+      // We can't update via client due to RLS, but the bookings are still visible
+    } catch (error) {
+      console.error('Error loading tour bookings:', error);
     }
   };
 
