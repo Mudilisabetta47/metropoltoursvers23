@@ -625,12 +625,94 @@ const BookingsPage = () => {
             </div>
           </div>
 
-          {/* Bookings List */}
-          {filteredBookings.length > 0 ? (
-            <div className="space-y-4">
+          {/* Bus Bookings List */}
+          {filteredBookings.length > 0 && (
+            <div className="space-y-4 mb-8">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <Bus className="w-5 h-5 text-primary" />
+                Busfahrten
+              </h2>
               {filteredBookings.map((booking) => renderBookingCard(booking))}
             </div>
-          ) : (
+          )}
+
+          {/* Tour Bookings List */}
+          {tourBookings.length > 0 && (
+            <div className="space-y-4 mb-8">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-primary" />
+                Pauschalreisen
+              </h2>
+              {tourBookings
+                .filter(tb => {
+                  if (filter === "all") return true;
+                  if (filter === "confirmed") return tb.status === "confirmed" || tb.status === "paid";
+                  return tb.status === filter;
+                })
+                .filter(tb => {
+                  if (!searchQuery) return true;
+                  const q = searchQuery.toLowerCase();
+                  return (
+                    tb.booking_number.toLowerCase().includes(q) ||
+                    tb.contact_first_name.toLowerCase().includes(q) ||
+                    tb.contact_last_name.toLowerCase().includes(q) ||
+                    tb.tour?.destination?.toLowerCase().includes(q) ||
+                    tb.tour?.country?.toLowerCase().includes(q)
+                  );
+                })
+                .map((tb) => {
+                  const statusConfig = tb.status === 'confirmed' || tb.status === 'paid'
+                    ? { label: "Bestätigt", className: "bg-primary/10 text-primary" }
+                    : tb.status === 'cancelled'
+                    ? { label: "Storniert", className: "bg-destructive/10 text-destructive" }
+                    : { label: "Ausstehend", className: "bg-accent/10 text-accent-foreground" };
+
+                  return (
+                    <div key={tb.id} className="bg-card rounded-xl shadow-card p-4 lg:p-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                          {tb.tour_date && (
+                            <div className="w-14 h-14 bg-primary/10 rounded-xl flex flex-col items-center justify-center">
+                              <span className="text-lg font-bold text-primary">
+                                {format(new Date(tb.tour_date.departure_date), "dd")}
+                              </span>
+                              <span className="text-xs text-primary uppercase">
+                                {format(new Date(tb.tour_date.departure_date), "MMM", { locale: de })}
+                              </span>
+                            </div>
+                          )}
+                          <div>
+                            <div className={cn("px-2 py-0.5 rounded-full text-xs font-medium inline-block mb-1", statusConfig.className)}>
+                              {statusConfig.label}
+                            </div>
+                            <div className="text-xs text-muted-foreground font-mono">{tb.booking_number}</div>
+                            <div className="text-sm font-medium text-foreground mt-1">
+                              {tb.tour?.destination}{tb.tour?.country ? `, ${tb.tour.country}` : ''}
+                            </div>
+                            {tb.tour_date && (
+                              <div className="text-xs text-muted-foreground mt-0.5">
+                                {format(new Date(tb.tour_date.departure_date), "dd.MM.yyyy")} – {format(new Date(tb.tour_date.return_date), "dd.MM.yyyy")}
+                                {tb.tour_date.duration_days ? ` (${tb.tour_date.duration_days} Tage)` : ''}
+                              </div>
+                            )}
+                            {tb.tariff && (
+                              <div className="text-xs text-muted-foreground">Tarif: {tb.tariff.name}</div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xl font-bold text-primary">€{tb.total_price?.toFixed(2)}</div>
+                          <div className="text-xs text-muted-foreground">{tb.participants} Teilnehmer</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+
+          {/* Empty state */}
+          {filteredBookings.length === 0 && tourBookings.length === 0 && (
             <div className="text-center py-16 bg-card rounded-xl shadow-card">
               <Bus className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-foreground mb-2">Keine Buchungen gefunden</h3>
