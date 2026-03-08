@@ -116,6 +116,7 @@ const App = () => (
           </Suspense>
         </BrowserRouter>
         <CookieBanner />
+        <TravelAdvisorChat />
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
