@@ -188,7 +188,7 @@ const TravelAdvisorChat = () => {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed bottom-6 right-6 z-50"
+            className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-[9999]"
           >
             {/* Teaser tooltip */}
             <AnimatePresence>
@@ -237,8 +237,8 @@ const TravelAdvisorChat = () => {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className={cn(
-              "fixed z-50",
-              "bottom-4 right-4 w-[calc(100%-2rem)] sm:w-[400px] h-[min(600px,85vh)]",
+              "fixed z-[9999]",
+              "bottom-0 right-0 w-full sm:bottom-4 sm:right-4 sm:w-[400px] h-[min(600px,100vh)] sm:h-[min(600px,85vh)]",
               "bg-card rounded-2xl shadow-2xl border border-border",
               "flex flex-col overflow-hidden"
             )}
