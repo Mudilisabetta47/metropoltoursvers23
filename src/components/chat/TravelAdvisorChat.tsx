@@ -10,10 +10,10 @@ type Msg = { role: "user" | "assistant"; content: string };
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/travel-advisor`;
 
 const QUICK_PROMPTS = [
-  { icon: "🏖️", label: "Strandurlaub", prompt: "Welche Reiseziele eignen sich für einen Strandurlaub?" },
-  { icon: "🏔️", label: "Natur & Berge", prompt: "Ich möchte Natur und Berge erleben. Was empfehlt ihr?" },
-  { icon: "🏛️", label: "Kultur erleben", prompt: "Welche Ziele sind gut für Kultur- und Geschichtsinteressierte?" },
-  { icon: "💰", label: "Günstig reisen", prompt: "Was sind eure günstigsten Angebote?" },
+  { icon: "🔥", label: "Aktuelle Angebote", prompt: "Welche aktuellen Reiseangebote habt ihr? Zeig mir die besten Deals!" },
+  { icon: "🏖️", label: "Strandurlaub", prompt: "Welche Reiseziele eignen sich für einen Strandurlaub? Zeig mir konkrete Angebote mit Preisen." },
+  { icon: "🏛️", label: "Kultur & Städte", prompt: "Ich möchte Kultur und Städte erleben. Welche Reisen habt ihr dafür?" },
+  { icon: "💰", label: "Günstigste Reise", prompt: "Was ist eure günstigste Reise? Zeig mir das beste Preis-Leistungs-Verhältnis." },
 ];
 
 const TravelAdvisorChat = () => {
