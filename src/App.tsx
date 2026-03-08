@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import CookieBanner from "./components/CookieBanner";
+import TravelAdvisorChat from "./components/chat/TravelAdvisorChat";
 
 // Lazy-loaded pages for code splitting
 const SearchPage = lazy(() => import("./pages/SearchPage"));
