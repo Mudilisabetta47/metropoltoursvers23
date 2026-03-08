@@ -33,6 +33,21 @@ interface Booking {
   seat: { seat_number: string };
 }
 
+interface TourBooking {
+  id: string;
+  booking_number: string;
+  status: string;
+  contact_first_name: string;
+  contact_last_name: string;
+  contact_email: string;
+  participants: number;
+  total_price: number;
+  created_at: string;
+  tour?: { destination: string; country: string } | null;
+  tour_date?: { departure_date: string; return_date: string; duration_days: number | null } | null;
+  tariff?: { name: string } | null;
+}
+
 const BookingsPage = () => {
   const { user } = useAuth();
   const { downloadTicket, isDownloading } = useTicketDownload();
