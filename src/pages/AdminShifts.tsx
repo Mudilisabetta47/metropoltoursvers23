@@ -347,7 +347,7 @@ const AdminShifts = () => {
                   <div className="space-y-1.5">
                     {dayShifts.map(shift => {
                       const roleConf = getRoleConfig(shift.role);
-                      const statusConf = getStatusConfig(shift.status);
+                      
                       const startTime = shift.shift_start ? format(new Date(shift.shift_start), "HH:mm") : "–";
                       const endTime = shift.shift_end ? format(new Date(shift.shift_end), "HH:mm") : "–";
                       const busName = getBusName(shift.assigned_bus_id);
