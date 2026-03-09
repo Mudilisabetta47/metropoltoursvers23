@@ -139,22 +139,16 @@ const AdminInquiriesPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-muted/30">
-      <Header />
-      <main className="flex-1 container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">CRM — Anfragen & Leads</h1>
-            <p className="text-sm text-muted-foreground">Vertriebspipeline und Anfragenverwaltung</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={fetchInquiries} variant="outline" size="sm" disabled={isLoading}>
-              <RefreshCw className={`w-4 h-4 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
-              Aktualisieren
-            </Button>
-          </div>
-        </div>
+    <AdminLayout
+      title="CRM — Anfragen & Leads"
+      subtitle="Vertriebspipeline und Anfragenverwaltung"
+      actions={
+        <Button onClick={fetchInquiries} variant="outline" size="sm" disabled={isLoading}>
+          <RefreshCw className={`w-4 h-4 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
+          Aktualisieren
+        </Button>
+      }
+    >
 
         {/* KPI Strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
