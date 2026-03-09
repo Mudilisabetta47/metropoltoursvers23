@@ -517,40 +517,70 @@ const AdminShifts = () => {
             margin: 10mm;
           }
           
-          /* Reset dark theme for print */
-          body {
+          /* Force light mode for print */
+          :root, body, html, .dark {
             background: white !important;
             color: black !important;
+            color-scheme: light !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
           }
           
-          /* Make all text visible */
-          * {
+          /* Override all dark mode colors */
+          *, *::before, *::after {
             visibility: visible !important;
+            background-color: transparent !important;
+            color: black !important;
+            border-color: #999 !important;
+            box-shadow: none !important;
+          }
+          
+          /* Keep table header background */
+          th {
+            background-color: #f3f4f6 !important;
+            color: black !important;
+            font-weight: 600 !important;
+          }
+
+          /* Shift cells keep subtle bg */
+          td .rounded {
+            border: 1px solid #ccc !important;
+            padding: 2px 4px !important;
           }
           
           /* Hide sidebar and non-print elements */
-          aside {
-            display: none !important;
-          }
-          
-          .print\\:hidden {
+          aside, nav, header, .print\\:hidden {
             display: none !important;
           }
           
           .hidden.print\\:block {
             display: block !important;
+            color: black !important;
+          }
+          
+          /* Print header styling */
+          .hidden.print\\:block h1,
+          .hidden.print\\:block h2,
+          .hidden.print\\:block p {
+            color: black !important;
+          }
+          
+          main {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
           }
           
           table {
             width: 100% !important;
             border-collapse: collapse !important;
+            background: white !important;
           }
           
           th, td {
             border: 1px solid #999 !important;
             padding: 4px 6px !important;
+            background: white !important;
           }
         }
       `}</style>
