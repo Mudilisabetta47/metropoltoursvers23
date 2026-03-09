@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, FileText, Bus, Users, DollarSign, Shield,
   UserCheck, Settings, LogOut, Map, Mail, Calendar, Route,
-  MapPin, ChevronDown
+  MapPin, ChevronDown, Calculator
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
