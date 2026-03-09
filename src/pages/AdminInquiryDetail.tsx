@@ -68,7 +68,7 @@ const AdminInquiryDetail = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [internalNote, setInternalNote] = useState("");
   const [activityNote, setActivityNote] = useState("");
-  const [nextAction, setNextAction] = useState("");
+  
 
   useEffect(() => {
     if (inquiryId) fetchInquiry();

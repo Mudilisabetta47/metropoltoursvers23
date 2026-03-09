@@ -62,7 +62,7 @@ const AdminInquiriesPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"pipeline" | "table">("pipeline");
+  
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
 
