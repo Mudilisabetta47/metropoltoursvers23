@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useCommandActions } from "@/hooks/useOperations";
 import { 
   Zap, Ban, Clock, UserCheck, Send, RefreshCw,
-  CheckCircle, Loader2
+  CheckCircle, Loader2, AlertTriangle, MapPin, BarChart3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
