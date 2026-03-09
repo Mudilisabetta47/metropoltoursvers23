@@ -549,10 +549,10 @@ const AdminShifts = () => {
               </div>
               <div>
                 <Label className="text-zinc-400">Fahrzeug (optional)</Label>
-                <Select value={form.assigned_bus_id} onValueChange={v => setForm(f => ({ ...f, assigned_bus_id: v }))}>
+                <Select value={form.assigned_bus_id || "none"} onValueChange={v => setForm(f => ({ ...f, assigned_bus_id: v === "none" ? "" : v }))}>
                   <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder="Keins" /></SelectTrigger>
                   <SelectContent className="bg-zinc-800 border-zinc-700">
-                    <SelectItem value="" className="text-white">– Kein Fahrzeug –</SelectItem>
+                    <SelectItem value="none" className="text-white">– Kein Fahrzeug –</SelectItem>
                     {buses.map(b => (
                       <SelectItem key={b.id} value={b.id} className="text-white">
                         {b.name} ({b.license_plate})
