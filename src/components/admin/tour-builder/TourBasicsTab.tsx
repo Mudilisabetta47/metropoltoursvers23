@@ -30,10 +30,12 @@ const categories = [
   'Kulturreise', 'Wellness', 'Familienurlaub'
 ];
 
-const countries = [
+const defaultCountries = [
   'Kroatien', 'Slowenien', 'Montenegro', 'Bosnien-Herzegowina',
   'Serbien', 'Albanien', 'Nordmazedonien', 'Kosovo',
-  'Griechenland', 'Italien', 'Österreich'
+  'Griechenland', 'Italien', 'Österreich', 'Deutschland',
+  'Spanien', 'Portugal', 'Frankreich', 'Niederlande', 'Belgien',
+  'Schweiz', 'Ungarn', 'Tschechien', 'Polen', 'Türkei'
 ];
 
 const TourBasicsTab = ({ tour, onChange }: TourBasicsTabProps) => {
