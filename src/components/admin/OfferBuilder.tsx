@@ -202,19 +202,18 @@ const OfferBuilder = ({
       });
       if (error) throw error;
 
-      // Download the PDF
-      if (data?.pdf) {
-        const binary = atob(data.pdf);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        const blob = new Blob([bytes], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Angebot_${destination.replace(/\s+/g, '_')}_${customerName.replace(/\s+/g, '_')}.pdf`;
-        a.click();
-        URL.revokeObjectURL(url);
-        toast({ title: "PDF heruntergeladen" });
+      // Open HTML in new window for printing/saving as PDF
+      if (data?.html) {
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(data.html);
+          printWindow.document.close();
+          // Auto-trigger print dialog after a short delay
+          setTimeout(() => {
+            printWindow.print();
+          }, 500);
+          toast({ title: "Angebot geöffnet", description: "Drucken Sie das Angebot oder speichern Sie es als PDF." });
+        }
       }
     } catch (error) {
       console.error('PDF error:', error);
