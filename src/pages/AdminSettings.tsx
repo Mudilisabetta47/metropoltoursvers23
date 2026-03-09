@@ -1,176 +1,520 @@
 import { useState } from "react";
-import { Settings, Save, CreditCard, Mail, Building2 } from "lucide-react";
+import {
+  Save, CreditCard, Mail, Building2, Route, Users,
+  Bell, FileText, Activity, Truck, Shield, UserCheck
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { useToast } from "@/hooks/use-toast";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { cn } from "@/lib/utils";
+
+type SettingsSection =
+  | "general"
+  | "booking"
+  | "routes"
+  | "finance"
+  | "crm"
+  | "staff"
+  | "notifications"
+  | "templates"
+  | "operations"
+  | "vehicles";
+
+const sections: { key: SettingsSection; label: string; icon: any; description: string }[] = [
+  { key: "general", label: "Allgemein", icon: Building2, description: "Firmendaten & Grundeinstellungen" },
+  { key: "booking", label: "Buchung", icon: FileText, description: "Buchungssystem & Regeln" },
+  { key: "routes", label: "Routen & Fahrten", icon: Route, description: "Strecken, Haltestellen, Preise" },
+  { key: "finance", label: "Finanzen", icon: CreditCard, description: "Preise, Rabatte, Rechnungen" },
+  { key: "crm", label: "Kunden / CRM", icon: UserCheck, description: "Kundenverwaltung & Datenschutz" },
+  { key: "staff", label: "Mitarbeiter & Rollen", icon: Users, description: "Rollen, Rechte, Sicherheit" },
+  { key: "notifications", label: "Benachrichtigungen", icon: Bell, description: "E-Mail, SMS, Eskalation" },
+  { key: "templates", label: "Vorlagen", icon: Mail, description: "E-Mail- & Dokumentvorlagen" },
+  { key: "operations", label: "Leitstand / Ops", icon: Activity, description: "Tracking, Scanner, Alarme" },
+  { key: "vehicles", label: "Fahrzeuge", icon: Truck, description: "Flotte, Wartung, Disposition" },
+];
+
+/* ─── Field row helper ─── */
+const Field = ({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) => (
+  <div className="space-y-1.5">
+    <Label className="text-xs text-zinc-400">{label}</Label>
+    {children}
+    {hint && <p className="text-[10px] text-zinc-600">{hint}</p>}
+  </div>
+);
+
+const SectionCard = ({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) => (
+  <Card className="bg-[#151920] border-[#252b38]">
+    <CardHeader className="pb-3">
+      <CardTitle className="text-sm text-zinc-200">{title}</CardTitle>
+      {description && <CardDescription className="text-xs text-zinc-500">{description}</CardDescription>}
+    </CardHeader>
+    <CardContent className="space-y-4">{children}</CardContent>
+  </Card>
+);
+
+const SaveButton = ({ onClick }: { onClick: () => void }) => (
+  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-8 text-xs" onClick={onClick}>
+    <Save className="w-3 h-3 mr-1" /> Speichern
+  </Button>
+);
 
 const AdminSettings = () => {
   const { toast } = useToast();
+  const [activeSection, setActiveSection] = useState<SettingsSection>("general");
 
-  const [companyInfo, setCompanyInfo] = useState({
-    name: "METROPOL TOURS GmbH",
-    address: "Musterstraße 1, 12345 Berlin",
-    phone: "+49 30 123456",
-    email: "info@metours.de",
-    website: "www.metours.de",
-    tax_id: "DE123456789",
-    register: "HRB 12345, Amtsgericht Berlin",
-    ceo: "Max Mustermann",
+  /* ─── State for all sections ─── */
+  const [general, setGeneral] = useState({
+    name: "METROPOL TOURS GmbH", address: "Musterstraße 1, 12345 Berlin",
+    phone: "+49 30 123456", email: "info@metours.de", website: "www.metours.de",
+    tax_id: "DE123456789", register: "HRB 12345, Amtsgericht Berlin", ceo: "Max Mustermann",
+    timezone: "Europe/Berlin", language: "de", currency: "EUR", date_format: "DD.MM.YYYY",
   });
 
-  const [bankInfo, setBankInfo] = useState({
-    bank_name: "Deutsche Bank",
-    iban: "DE89 3704 0044 0532 0130 00",
-    bic: "COBADEFFXXX",
-    account_holder: "METROPOL TOURS GmbH",
+  const [booking, setBooking] = useState({
+    prefix: "TRB", auto_confirm: false, manual_approval: true, min_participants: "1",
+    max_participants: "50", booking_deadline_hours: "24", free_cancel_hours: "48",
+    waitlist: false, instant_confirm: false, reservation_timeout_min: "15",
+    auto_status_change: true,
   });
 
-  const [emailSettings, setEmailSettings] = useState({
-    sender_email: "booking@app.metours.de",
-    sender_name: "METROPOL TOURS",
-    reply_to: "info@metours.de",
-    bcc_admin: "",
+  const [routeSettings, setRouteSettings] = useState({
+    default_vehicle_type: "Reisebus", default_capacity: "50", buffer_minutes: "15",
+    default_pause_minutes: "30", seasonal_pricing: false, surcharge_enabled: true,
   });
 
-  const [bookingSettings, setBookingSettings] = useState({
-    booking_prefix: "TRB",
-    invoice_prefix: "RE",
-    payment_deadline_days: "7",
-    auto_confirm_stripe: true,
-    auto_send_confirmation: true,
-    tax_rate: "19",
+  const [finance, setFinance] = useState({
+    default_price: "49.00", child_discount: "50", senior_discount: "10", group_discount: "15",
+    coupons_enabled: true, cancel_fee_percent: "20", deposit_required: false, deposit_percent: "30",
+    invoice_prefix: "RE", dunning_enabled: true, dunning_days_1: "7", dunning_days_2: "14",
+    dunning_days_3: "21", tax_rate: "19", auto_invoice: true,
+    pricing_by_distance: true, pricing_by_season: false, pricing_by_occupancy: true,
+  });
+
+  const [crm, setCrm] = useState({
+    required_fields: "name,email,phone", business_customers: true, customer_groups: true,
+    blacklist: true, auto_customer_number: true, notes_enabled: true, documents_enabled: true,
+    gdpr_consent: true, newsletter_optin: false,
+  });
+
+  const [staff, setStaff] = useState({
+    two_factor: false, session_timeout_min: "480", password_min_length: "8",
+    password_require_special: true,
+  });
+
+  const [notifications, setNotifications] = useState({
+    email_new_booking: true, email_cancel: true, email_payment_overdue: true,
+    email_delay: false, email_incident: true, daily_summary: true,
+    sms_enabled: false, whatsapp_enabled: false,
+    escalation_enabled: true, escalation_delay_min: "30",
+  });
+
+  const [templates, setTemplates] = useState({
+    footer_text: "METROPOL TOURS GmbH · www.metours.de",
+    signature: "Ihr METROPOL TOURS Team",
+  });
+
+  const [ops, setOps] = useState({
+    refresh_interval: "30", live_tracking: true, scanner_monitoring: true,
+    delay_warn_min: "10", delay_critical_min: "30", gps_timeout_min: "5",
+    vehicle_offline_min: "15",
+  });
+
+  const [vehicles, setVehicles] = useState({
+    number_prefix: "MT-", default_seats: "50", maintenance_interval_km: "15000",
+    tuev_reminder_days: "30",
   });
 
   const handleSave = (section: string) => {
     toast({ title: `✅ ${section} gespeichert` });
   };
 
+  const inputCls = "bg-[#1a1f2a] border-[#2a3040] text-zinc-100 h-9 text-sm";
+
+  /* ─── Section renderers ─── */
+  const renderGeneral = () => (
+    <div className="space-y-4">
+      <SectionCard title="Firmendaten" description="Stammdaten des Unternehmens für Rechnungen und Impressum">
+        <div className="grid md:grid-cols-2 gap-3">
+          <Field label="Firmenname"><Input value={general.name} onChange={e => setGeneral(p => ({ ...p, name: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Geschäftsführer"><Input value={general.ceo} onChange={e => setGeneral(p => ({ ...p, ceo: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Adresse"><Input value={general.address} onChange={e => setGeneral(p => ({ ...p, address: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Telefon"><Input value={general.phone} onChange={e => setGeneral(p => ({ ...p, phone: e.target.value }))} className={inputCls} /></Field>
+          <Field label="E-Mail"><Input value={general.email} onChange={e => setGeneral(p => ({ ...p, email: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Website"><Input value={general.website} onChange={e => setGeneral(p => ({ ...p, website: e.target.value }))} className={inputCls} /></Field>
+          <Field label="USt-ID / Steuernummer"><Input value={general.tax_id} onChange={e => setGeneral(p => ({ ...p, tax_id: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Handelsregister"><Input value={general.register} onChange={e => setGeneral(p => ({ ...p, register: e.target.value }))} className={inputCls} /></Field>
+        </div>
+        <SaveButton onClick={() => handleSave("Firmendaten")} />
+      </SectionCard>
+
+      <SectionCard title="Regionale Einstellungen" description="Zeitzone, Sprache, Währung und Datumsformat">
+        <div className="grid md:grid-cols-2 gap-3">
+          <Field label="Zeitzone">
+            <Select value={general.timezone} onValueChange={v => setGeneral(p => ({ ...p, timezone: v }))}>
+              <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="Europe/Berlin">Europe/Berlin (MEZ)</SelectItem><SelectItem value="Europe/Vienna">Europe/Vienna</SelectItem><SelectItem value="Europe/Zurich">Europe/Zurich</SelectItem></SelectContent>
+            </Select>
+          </Field>
+          <Field label="Sprache">
+            <Select value={general.language} onValueChange={v => setGeneral(p => ({ ...p, language: v }))}>
+              <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="de">Deutsch</SelectItem><SelectItem value="en">English</SelectItem></SelectContent>
+            </Select>
+          </Field>
+          <Field label="Währung">
+            <Select value={general.currency} onValueChange={v => setGeneral(p => ({ ...p, currency: v }))}>
+              <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="EUR">EUR (€)</SelectItem><SelectItem value="CHF">CHF</SelectItem></SelectContent>
+            </Select>
+          </Field>
+          <Field label="Datumsformat">
+            <Select value={general.date_format} onValueChange={v => setGeneral(p => ({ ...p, date_format: v }))}>
+              <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="DD.MM.YYYY">DD.MM.YYYY</SelectItem><SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem></SelectContent>
+            </Select>
+          </Field>
+        </div>
+        <SaveButton onClick={() => handleSave("Regionale Einstellungen")} />
+      </SectionCard>
+    </div>
+  );
+
+  const renderBooking = () => (
+    <div className="space-y-4">
+      <SectionCard title="Buchungsnummern & Ablauf" description="Automatische Nummernvergabe und Buchungsprozess">
+        <div className="grid md:grid-cols-2 gap-3">
+          <Field label="Buchungsnr.-Prefix" hint="z. B. TRB-2026-000001"><Input value={booking.prefix} onChange={e => setBooking(p => ({ ...p, prefix: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Reservierungs-Timeout (Min.)" hint="Wie lange bleibt eine Reservierung offen"><Input type="number" value={booking.reservation_timeout_min} onChange={e => setBooking(p => ({ ...p, reservation_timeout_min: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Buchungsfrist vor Abfahrt (Std.)"><Input type="number" value={booking.booking_deadline_hours} onChange={e => setBooking(p => ({ ...p, booking_deadline_hours: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Kostenlose Stornierung bis (Std.)"><Input type="number" value={booking.free_cancel_hours} onChange={e => setBooking(p => ({ ...p, free_cancel_hours: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Min. Teilnehmer"><Input type="number" value={booking.min_participants} onChange={e => setBooking(p => ({ ...p, min_participants: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Max. Teilnehmer"><Input type="number" value={booking.max_participants} onChange={e => setBooking(p => ({ ...p, max_participants: e.target.value }))} className={inputCls} /></Field>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Automatisierung" description="Bestätigungs- und Statusregeln">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Sofortbestätigung (ohne manuelle Prüfung)</Label><Switch checked={booking.instant_confirm} onCheckedChange={v => setBooking(p => ({ ...p, instant_confirm: v }))} /></div>
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Manuelle Freigabe erforderlich</Label><Switch checked={booking.manual_approval} onCheckedChange={v => setBooking(p => ({ ...p, manual_approval: v }))} /></div>
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Warteliste aktivieren</Label><Switch checked={booking.waitlist} onCheckedChange={v => setBooking(p => ({ ...p, waitlist: v }))} /></div>
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Automatische Statuswechsel</Label><Switch checked={booking.auto_status_change} onCheckedChange={v => setBooking(p => ({ ...p, auto_status_change: v }))} /></div>
+        </div>
+        <SaveButton onClick={() => handleSave("Buchungseinstellungen")} />
+      </SectionCard>
+    </div>
+  );
+
+  const renderRoutes = () => (
+    <div className="space-y-4">
+      <SectionCard title="Standard-Einstellungen" description="Voreinstellungen für neue Routen und Fahrten">
+        <div className="grid md:grid-cols-2 gap-3">
+          <Field label="Standard-Fahrzeugtyp"><Input value={routeSettings.default_vehicle_type} onChange={e => setRouteSettings(p => ({ ...p, default_vehicle_type: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Standard-Kapazität (Plätze)"><Input type="number" value={routeSettings.default_capacity} onChange={e => setRouteSettings(p => ({ ...p, default_capacity: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Fahrplan-Pufferzeit (Min.)"><Input type="number" value={routeSettings.buffer_minutes} onChange={e => setRouteSettings(p => ({ ...p, buffer_minutes: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Standard-Pausenzeit (Min.)"><Input type="number" value={routeSettings.default_pause_minutes} onChange={e => setRouteSettings(p => ({ ...p, default_pause_minutes: e.target.value }))} className={inputCls} /></Field>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Preisregeln" description="Saisonpreise und Sonderzuschläge">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Saisonpreise aktivieren</Label><Switch checked={routeSettings.seasonal_pricing} onCheckedChange={v => setRouteSettings(p => ({ ...p, seasonal_pricing: v }))} /></div>
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Sonderzuschläge aktivieren</Label><Switch checked={routeSettings.surcharge_enabled} onCheckedChange={v => setRouteSettings(p => ({ ...p, surcharge_enabled: v }))} /></div>
+        </div>
+        <SaveButton onClick={() => handleSave("Routen-Einstellungen")} />
+      </SectionCard>
+    </div>
+  );
+
+  const renderFinance = () => (
+    <div className="space-y-4">
+      <SectionCard title="Preise & Rabatte" description="Standardpreise, Ermäßigungen und Gutscheine">
+        <div className="grid md:grid-cols-2 gap-3">
+          <Field label="Standardpreis (€)"><Input type="number" value={finance.default_price} onChange={e => setFinance(p => ({ ...p, default_price: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Kinderrabatt (%)"><Input type="number" value={finance.child_discount} onChange={e => setFinance(p => ({ ...p, child_discount: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Seniorenrabatt (%)"><Input type="number" value={finance.senior_discount} onChange={e => setFinance(p => ({ ...p, senior_discount: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Gruppenrabatt (%)"><Input type="number" value={finance.group_discount} onChange={e => setFinance(p => ({ ...p, group_discount: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Stornogebühr (%)"><Input type="number" value={finance.cancel_fee_percent} onChange={e => setFinance(p => ({ ...p, cancel_fee_percent: e.target.value }))} className={inputCls} /></Field>
+          <Field label="MwSt-Satz (%)"><Input type="number" value={finance.tax_rate} onChange={e => setFinance(p => ({ ...p, tax_rate: e.target.value }))} className={inputCls} /></Field>
+        </div>
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Gutscheincodes erlauben</Label><Switch checked={finance.coupons_enabled} onCheckedChange={v => setFinance(p => ({ ...p, coupons_enabled: v }))} /></div>
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Anzahlung erforderlich</Label><Switch checked={finance.deposit_required} onCheckedChange={v => setFinance(p => ({ ...p, deposit_required: v }))} /></div>
+          {finance.deposit_required && (
+            <Field label="Anzahlung (%)"><Input type="number" value={finance.deposit_percent} onChange={e => setFinance(p => ({ ...p, deposit_percent: e.target.value }))} className={inputCls} /></Field>
+          )}
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Rechnungen & Mahnwesen" description="Rechnungsnummern, automatische Rechnungen und Mahnstufen">
+        <div className="grid md:grid-cols-2 gap-3">
+          <Field label="Rechnungsnr.-Prefix" hint="z. B. RE-2026-000001"><Input value={finance.invoice_prefix} onChange={e => setFinance(p => ({ ...p, invoice_prefix: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Mahnstufe 1 nach (Tagen)"><Input type="number" value={finance.dunning_days_1} onChange={e => setFinance(p => ({ ...p, dunning_days_1: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Mahnstufe 2 nach (Tagen)"><Input type="number" value={finance.dunning_days_2} onChange={e => setFinance(p => ({ ...p, dunning_days_2: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Mahnstufe 3 nach (Tagen)"><Input type="number" value={finance.dunning_days_3} onChange={e => setFinance(p => ({ ...p, dunning_days_3: e.target.value }))} className={inputCls} /></Field>
+        </div>
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Mahnwesen aktivieren</Label><Switch checked={finance.dunning_enabled} onCheckedChange={v => setFinance(p => ({ ...p, dunning_enabled: v }))} /></div>
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Automatische Rechnungserstellung</Label><Switch checked={finance.auto_invoice} onCheckedChange={v => setFinance(p => ({ ...p, auto_invoice: v }))} /></div>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Preislogik" description="Dynamische Preisanpassung nach verschiedenen Kriterien">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Preis nach Strecke (Distanz)</Label><Switch checked={finance.pricing_by_distance} onCheckedChange={v => setFinance(p => ({ ...p, pricing_by_distance: v }))} /></div>
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Preis nach Saison</Label><Switch checked={finance.pricing_by_season} onCheckedChange={v => setFinance(p => ({ ...p, pricing_by_season: v }))} /></div>
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Preis nach Auslastung</Label><Switch checked={finance.pricing_by_occupancy} onCheckedChange={v => setFinance(p => ({ ...p, pricing_by_occupancy: v }))} /></div>
+        </div>
+        <SaveButton onClick={() => handleSave("Finanz-Einstellungen")} />
+      </SectionCard>
+    </div>
+  );
+
+  const renderCRM = () => (
+    <div className="space-y-4">
+      <SectionCard title="Kundenverwaltung" description="Pflichtfelder, Kundengruppen und Kundennummern">
+        <div className="grid md:grid-cols-2 gap-3">
+          <Field label="Pflichtfelder" hint="Kommagetrennt: name, email, phone"><Input value={crm.required_fields} onChange={e => setCrm(p => ({ ...p, required_fields: e.target.value }))} className={inputCls} /></Field>
+        </div>
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Firmenkunden erlauben</Label><Switch checked={crm.business_customers} onCheckedChange={v => setCrm(p => ({ ...p, business_customers: v }))} /></div>
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Kundengruppen aktivieren</Label><Switch checked={crm.customer_groups} onCheckedChange={v => setCrm(p => ({ ...p, customer_groups: v }))} /></div>
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Automatische Kundennummer</Label><Switch checked={crm.auto_customer_number} onCheckedChange={v => setCrm(p => ({ ...p, auto_customer_number: v }))} /></div>
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Blacklist / Sperrliste</Label><Switch checked={crm.blacklist} onCheckedChange={v => setCrm(p => ({ ...p, blacklist: v }))} /></div>
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Notizfelder am Kunden</Label><Switch checked={crm.notes_enabled} onCheckedChange={v => setCrm(p => ({ ...p, notes_enabled: v }))} /></div>
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Dokumente am Kunden speichern</Label><Switch checked={crm.documents_enabled} onCheckedChange={v => setCrm(p => ({ ...p, documents_enabled: v }))} /></div>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Datenschutz" description="DSGVO-Einwilligung und Newsletter">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Datenschutz-Einwilligung erforderlich</Label><Switch checked={crm.gdpr_consent} onCheckedChange={v => setCrm(p => ({ ...p, gdpr_consent: v }))} /></div>
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Newsletter-Opt-in anbieten</Label><Switch checked={crm.newsletter_optin} onCheckedChange={v => setCrm(p => ({ ...p, newsletter_optin: v }))} /></div>
+        </div>
+        <SaveButton onClick={() => handleSave("CRM-Einstellungen")} />
+      </SectionCard>
+    </div>
+  );
+
+  const renderStaff = () => {
+    const roles = [
+      { name: "Admin", desc: "Vollzugriff auf alle Bereiche" },
+      { name: "Office / Disposition", desc: "Buchungen, Routen, Finanzen" },
+      { name: "Buchhaltung", desc: "Rechnungen, Zahlungen, Berichte" },
+      { name: "Kundenservice / Agent", desc: "Buchungen, Kunden, Anfragen" },
+      { name: "Fahrer / Scanner", desc: "Ops-Dashboard, Ticket-Scan" },
+    ];
+
+    return (
+      <div className="space-y-4">
+        <SectionCard title="Rollen & Berechtigungen" description="Vordefinierte Rollen und deren Zugriffsrechte">
+          <div className="space-y-2">
+            {roles.map(r => (
+              <div key={r.name} className="flex items-center justify-between py-2 px-3 rounded bg-[#1a1f2a] border border-[#2a3040]">
+                <div>
+                  <p className="text-xs font-medium text-zinc-200">{r.name}</p>
+                  <p className="text-[10px] text-zinc-500">{r.desc}</p>
+                </div>
+                <Shield className="w-3.5 h-3.5 text-zinc-600" />
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-zinc-600">Rollenzuweisung erfolgt unter Mitarbeiter → Mitarbeiter verwalten</p>
+        </SectionCard>
+
+        <SectionCard title="Sicherheit" description="Passwortregeln, 2FA und Sitzungsdauer">
+          <div className="grid md:grid-cols-2 gap-3">
+            <Field label="Min. Passwortlänge"><Input type="number" value={staff.password_min_length} onChange={e => setStaff(p => ({ ...p, password_min_length: e.target.value }))} className={inputCls} /></Field>
+            <Field label="Sitzungs-Timeout (Min.)" hint="Automatische Abmeldung nach Inaktivität"><Input type="number" value={staff.session_timeout_min} onChange={e => setStaff(p => ({ ...p, session_timeout_min: e.target.value }))} className={inputCls} /></Field>
+          </div>
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">2-Faktor-Authentifizierung</Label><Switch checked={staff.two_factor} onCheckedChange={v => setStaff(p => ({ ...p, two_factor: v }))} /></div>
+            <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Sonderzeichen im Passwort erforderlich</Label><Switch checked={staff.password_require_special} onCheckedChange={v => setStaff(p => ({ ...p, password_require_special: v }))} /></div>
+          </div>
+          <SaveButton onClick={() => handleSave("Mitarbeiter-Einstellungen")} />
+        </SectionCard>
+      </div>
+    );
+  };
+
+  const renderNotifications = () => (
+    <div className="space-y-4">
+      <SectionCard title="E-Mail-Benachrichtigungen" description="Automatische E-Mails bei Buchungsereignissen">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Neue Buchung</Label><Switch checked={notifications.email_new_booking} onCheckedChange={v => setNotifications(p => ({ ...p, email_new_booking: v }))} /></div>
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Stornierung</Label><Switch checked={notifications.email_cancel} onCheckedChange={v => setNotifications(p => ({ ...p, email_cancel: v }))} /></div>
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Zahlungsverzug</Label><Switch checked={notifications.email_payment_overdue} onCheckedChange={v => setNotifications(p => ({ ...p, email_payment_overdue: v }))} /></div>
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Verspätung</Label><Switch checked={notifications.email_delay} onCheckedChange={v => setNotifications(p => ({ ...p, email_delay: v }))} /></div>
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Vorfall / Störung</Label><Switch checked={notifications.email_incident} onCheckedChange={v => setNotifications(p => ({ ...p, email_incident: v }))} /></div>
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Tägliche Zusammenfassung</Label><Switch checked={notifications.daily_summary} onCheckedChange={v => setNotifications(p => ({ ...p, daily_summary: v }))} /></div>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Zusätzliche Kanäle" description="SMS und WhatsApp (optional)">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">SMS-Benachrichtigungen</Label><Switch checked={notifications.sms_enabled} onCheckedChange={v => setNotifications(p => ({ ...p, sms_enabled: v }))} /></div>
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">WhatsApp-Benachrichtigungen</Label><Switch checked={notifications.whatsapp_enabled} onCheckedChange={v => setNotifications(p => ({ ...p, whatsapp_enabled: v }))} /></div>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Eskalation" description="Automatische Weiterleitung bei kritischen Ereignissen">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Eskalation aktivieren</Label><Switch checked={notifications.escalation_enabled} onCheckedChange={v => setNotifications(p => ({ ...p, escalation_enabled: v }))} /></div>
+          {notifications.escalation_enabled && (
+            <Field label="Eskalation nach (Min.)" hint="Wenn keine Reaktion innerhalb dieser Zeit"><Input type="number" value={notifications.escalation_delay_min} onChange={e => setNotifications(p => ({ ...p, escalation_delay_min: e.target.value }))} className={inputCls} /></Field>
+          )}
+        </div>
+        <SaveButton onClick={() => handleSave("Benachrichtigungen")} />
+      </SectionCard>
+    </div>
+  );
+
+  const renderTemplates = () => {
+    const templateList = [
+      { name: "Buchungsbestätigung", slug: "booking_confirmation", active: true },
+      { name: "Rechnung", slug: "invoice", active: true },
+      { name: "Stornobestätigung", slug: "cancellation", active: true },
+      { name: "Angebotsvorlage", slug: "offer", active: false },
+      { name: "Erinnerung vor Abfahrt", slug: "departure_reminder", active: true },
+      { name: "Zahlungsaufforderung", slug: "payment_request", active: true },
+      { name: "Interne Benachrichtigung", slug: "internal_notification", active: false },
+    ];
+
+    return (
+      <div className="space-y-4">
+        <SectionCard title="E-Mail-Vorlagen" description="Vorlagen für automatische E-Mails – bearbeiten unter E-Mail-Vorlagen">
+          <div className="space-y-1.5">
+            {templateList.map(t => (
+              <div key={t.slug} className="flex items-center justify-between py-2 px-3 rounded bg-[#1a1f2a] border border-[#2a3040]">
+                <div className="flex items-center gap-2">
+                  <div className={cn("w-1.5 h-1.5 rounded-full", t.active ? "bg-emerald-500" : "bg-zinc-600")} />
+                  <p className="text-xs text-zinc-200">{t.name}</p>
+                </div>
+                <span className="text-[10px] text-zinc-600 font-mono">{`{${t.slug}}`}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-zinc-600">Platzhalter: {"{Kundenname}"}, {"{Buchungsnummer}"}, {"{Route}"}, {"{Abfahrt}"}, {"{Betrag}"}</p>
+        </SectionCard>
+
+        <SectionCard title="PDF-Layout & Signatur" description="Footer und Signatur für Dokumente">
+          <div className="space-y-3">
+            <Field label="Footer-Text"><Input value={templates.footer_text} onChange={e => setTemplates(p => ({ ...p, footer_text: e.target.value }))} className={inputCls} /></Field>
+            <Field label="E-Mail-Signatur"><Input value={templates.signature} onChange={e => setTemplates(p => ({ ...p, signature: e.target.value }))} className={inputCls} /></Field>
+          </div>
+          <SaveButton onClick={() => handleSave("Vorlagen")} />
+        </SectionCard>
+      </div>
+    );
+  };
+
+  const renderOperations = () => (
+    <div className="space-y-4">
+      <SectionCard title="Live-Tracking & Monitoring" description="Echtzeit-Überwachung und Aktualisierung">
+        <div className="grid md:grid-cols-2 gap-3">
+          <Field label="Aktualisierungsintervall (Sek.)"><Input type="number" value={ops.refresh_interval} onChange={e => setOps(p => ({ ...p, refresh_interval: e.target.value }))} className={inputCls} /></Field>
+          <Field label="GPS-Timeout (Min.)" hint="Fahrzeug gilt als offline"><Input type="number" value={ops.gps_timeout_min} onChange={e => setOps(p => ({ ...p, gps_timeout_min: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Fahrzeug offline nach (Min.)"><Input type="number" value={ops.vehicle_offline_min} onChange={e => setOps(p => ({ ...p, vehicle_offline_min: e.target.value }))} className={inputCls} /></Field>
+        </div>
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Live-Tracking aktivieren</Label><Switch checked={ops.live_tracking} onCheckedChange={v => setOps(p => ({ ...p, live_tracking: v }))} /></div>
+          <div className="flex items-center justify-between"><Label className="text-xs text-zinc-300">Scanner-Überwachung</Label><Switch checked={ops.scanner_monitoring} onCheckedChange={v => setOps(p => ({ ...p, scanner_monitoring: v }))} /></div>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Verspätung & Alarme" description="Schwellwerte für Warnungen und Eskalation">
+        <div className="grid md:grid-cols-2 gap-3">
+          <Field label="Warnung ab (Min. Verspätung)">
+            <Input type="number" value={ops.delay_warn_min} onChange={e => setOps(p => ({ ...p, delay_warn_min: e.target.value }))} className={inputCls} />
+          </Field>
+          <Field label="Kritisch ab (Min. Verspätung)">
+            <Input type="number" value={ops.delay_critical_min} onChange={e => setOps(p => ({ ...p, delay_critical_min: e.target.value }))} className={inputCls} />
+          </Field>
+        </div>
+        <div className="pt-2 flex gap-3">
+          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500" /><span className="text-[10px] text-zinc-400">Normal</span></div>
+          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-amber-500" /><span className="text-[10px] text-zinc-400">Warnung</span></div>
+          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-orange-500" /><span className="text-[10px] text-zinc-400">Kritisch</span></div>
+          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-500" /><span className="text-[10px] text-zinc-400">Akut</span></div>
+        </div>
+        <SaveButton onClick={() => handleSave("Leitstand-Einstellungen")} />
+      </SectionCard>
+    </div>
+  );
+
+  const renderVehicles = () => (
+    <div className="space-y-4">
+      <SectionCard title="Fahrzeugnummern & Standards" description="Kennzeichen-Logik, Standard-Sitzplätze und Typen">
+        <div className="grid md:grid-cols-2 gap-3">
+          <Field label="Fahrzeugnr.-Prefix" hint="z. B. MT-001"><Input value={vehicles.number_prefix} onChange={e => setVehicles(p => ({ ...p, number_prefix: e.target.value }))} className={inputCls} /></Field>
+          <Field label="Standard-Sitzplätze"><Input type="number" value={vehicles.default_seats} onChange={e => setVehicles(p => ({ ...p, default_seats: e.target.value }))} className={inputCls} /></Field>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Wartung & Prüftermine" description="Automatische Erinnerungen für TÜV und Wartung">
+        <div className="grid md:grid-cols-2 gap-3">
+          <Field label="Wartungsintervall (km)"><Input type="number" value={vehicles.maintenance_interval_km} onChange={e => setVehicles(p => ({ ...p, maintenance_interval_km: e.target.value }))} className={inputCls} /></Field>
+          <Field label="TÜV-Erinnerung vor (Tagen)"><Input type="number" value={vehicles.tuev_reminder_days} onChange={e => setVehicles(p => ({ ...p, tuev_reminder_days: e.target.value }))} className={inputCls} /></Field>
+        </div>
+        <SaveButton onClick={() => handleSave("Fahrzeug-Einstellungen")} />
+      </SectionCard>
+    </div>
+  );
+
+  const renderMap: Record<SettingsSection, () => JSX.Element> = {
+    general: renderGeneral, booking: renderBooking, routes: renderRoutes,
+    finance: renderFinance, crm: renderCRM, staff: renderStaff,
+    notifications: renderNotifications, templates: renderTemplates,
+    operations: renderOperations, vehicles: renderVehicles,
+  };
+
+  const activeInfo = sections.find(s => s.key === activeSection)!;
+
   return (
-    <AdminLayout title="Einstellungen" subtitle="System, E-Mail, Bankdaten, Buchungsregeln">
-      <Tabs defaultValue="company" className="space-y-4">
-        <TabsList className="bg-zinc-900 border border-zinc-800">
-          <TabsTrigger value="company" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-            <Building2 className="w-3 h-3 mr-1" /> Firma
-          </TabsTrigger>
-          <TabsTrigger value="bank" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-            <CreditCard className="w-3 h-3 mr-1" /> Bankdaten
-          </TabsTrigger>
-          <TabsTrigger value="email" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-            <Mail className="w-3 h-3 mr-1" /> E-Mail
-          </TabsTrigger>
-          <TabsTrigger value="booking" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-            <Settings className="w-3 h-3 mr-1" /> Buchung
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Company */}
-        <TabsContent value="company">
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardHeader><CardTitle className="text-sm text-zinc-400">Firmendaten</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                {Object.entries(companyInfo).map(([key, val]) => (
-                  <div key={key}>
-                    <Label className="text-zinc-400 text-xs capitalize">{key.replace(/_/g, " ")}</Label>
-                    <Input
-                      value={val}
-                      onChange={(e) => setCompanyInfo(prev => ({ ...prev, [key]: e.target.value }))}
-                      className="bg-zinc-800 border-zinc-700 text-white"
-                    />
-                  </div>
-                ))}
-              </div>
-              <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => handleSave("Firmendaten")}>
-                <Save className="w-3 h-3 mr-1" /> Speichern
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Bank */}
-        <TabsContent value="bank">
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardHeader><CardTitle className="text-sm text-zinc-400">Bankverbindung</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-xs text-zinc-500">Diese Daten erscheinen auf Rechnungen und Zahlungsinfos.</p>
-              <div className="grid md:grid-cols-2 gap-4">
-                {Object.entries(bankInfo).map(([key, val]) => (
-                  <div key={key}>
-                    <Label className="text-zinc-400 text-xs capitalize">{key.replace(/_/g, " ")}</Label>
-                    <Input
-                      value={val}
-                      onChange={(e) => setBankInfo(prev => ({ ...prev, [key]: e.target.value }))}
-                      className="bg-zinc-800 border-zinc-700 text-white"
-                    />
-                  </div>
-                ))}
-              </div>
-              <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => handleSave("Bankdaten")}>
-                <Save className="w-3 h-3 mr-1" /> Speichern
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Email */}
-        <TabsContent value="email">
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardHeader><CardTitle className="text-sm text-zinc-400">E-Mail Einstellungen</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                {Object.entries(emailSettings).map(([key, val]) => (
-                  <div key={key}>
-                    <Label className="text-zinc-400 text-xs capitalize">{key.replace(/_/g, " ")}</Label>
-                    <Input
-                      value={val}
-                      onChange={(e) => setEmailSettings(prev => ({ ...prev, [key]: e.target.value }))}
-                      className="bg-zinc-800 border-zinc-700 text-white"
-                    />
-                  </div>
-                ))}
-              </div>
-              <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => handleSave("E-Mail")}>
-                <Save className="w-3 h-3 mr-1" /> Speichern
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Booking Rules */}
-        <TabsContent value="booking">
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardHeader><CardTitle className="text-sm text-zinc-400">Buchungsregeln</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-zinc-400 text-xs">Buchungsnr. Prefix</Label>
-                  <Input value={bookingSettings.booking_prefix} onChange={(e) => setBookingSettings(prev => ({ ...prev, booking_prefix: e.target.value }))} className="bg-zinc-800 border-zinc-700 text-white" />
+    <AdminLayout title="Einstellungen" subtitle="System-, Buchungs- und Betriebskonfiguration">
+      <div className="flex gap-4 min-h-[calc(100vh-140px)]">
+        {/* Settings sidebar */}
+        <nav className="w-56 shrink-0 space-y-0.5">
+          {sections.map(s => {
+            const isActive = s.key === activeSection;
+            return (
+              <button
+                key={s.key}
+                onClick={() => setActiveSection(s.key)}
+                className={cn(
+                  "w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-left transition-colors",
+                  isActive
+                    ? "bg-emerald-600/15 text-emerald-400 border-l-2 border-emerald-500"
+                    : "text-zinc-400 hover:bg-[#1a1f2a] hover:text-zinc-200"
+                )}
+              >
+                <s.icon className="w-3.5 h-3.5 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-medium truncate">{s.label}</p>
+                  {isActive && <p className="text-[10px] text-zinc-500 truncate">{s.description}</p>}
                 </div>
-                <div>
-                  <Label className="text-zinc-400 text-xs">Rechnungsnr. Prefix</Label>
-                  <Input value={bookingSettings.invoice_prefix} onChange={(e) => setBookingSettings(prev => ({ ...prev, invoice_prefix: e.target.value }))} className="bg-zinc-800 border-zinc-700 text-white" />
-                </div>
-                <div>
-                  <Label className="text-zinc-400 text-xs">Zahlungsfrist (Tage)</Label>
-                  <Input type="number" value={bookingSettings.payment_deadline_days} onChange={(e) => setBookingSettings(prev => ({ ...prev, payment_deadline_days: e.target.value }))} className="bg-zinc-800 border-zinc-700 text-white" />
-                </div>
-                <div>
-                  <Label className="text-zinc-400 text-xs">MwSt-Satz (%)</Label>
-                  <Input type="number" value={bookingSettings.tax_rate} onChange={(e) => setBookingSettings(prev => ({ ...prev, tax_rate: e.target.value }))} className="bg-zinc-800 border-zinc-700 text-white" />
-                </div>
-              </div>
-              <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => handleSave("Buchungsregeln")}>
-                <Save className="w-3 h-3 mr-1" /> Speichern
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="mb-4">
+            <h3 className="text-sm font-medium text-zinc-200 flex items-center gap-1.5">
+              <activeInfo.icon className="w-4 h-4 text-emerald-400" />
+              {activeInfo.label}
+            </h3>
+            <p className="text-xs text-zinc-500 mt-0.5">{activeInfo.description}</p>
+          </div>
+          {renderMap[activeSection]()}
+        </div>
+      </div>
     </AdminLayout>
   );
 };
