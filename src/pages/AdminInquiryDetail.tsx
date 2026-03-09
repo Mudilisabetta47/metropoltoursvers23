@@ -79,6 +79,7 @@ const AdminInquiryDetail = () => {
   const [notes, setNotes] = useState<CustomerNote[]>([]);
   const [isSavingNote, setIsSavingNote] = useState(false);
   const [statusHistory, setStatusHistory] = useState<Array<{ status: string; timestamp: string }>>([]);
+  const [showOfferBuilder, setShowOfferBuilder] = useState(false);
 
   useEffect(() => {
     if (inquiryId) fetchInquiry();
