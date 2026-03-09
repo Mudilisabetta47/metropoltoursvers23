@@ -300,9 +300,7 @@ const AdminInquiriesPage = () => {
             </div>
           )}
         </Card>
-      </main>
-      <Footer />
-    </div>
+    </AdminLayout>
   );
 };
 
