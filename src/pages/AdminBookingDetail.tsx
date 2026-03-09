@@ -193,13 +193,45 @@ const AdminBookingDetail = () => {
     setProcessing("cancel");
     try {
       const reason = cancelForm.reason === "other" ? cancelForm.customReason : cancelForm.reason;
-      const feeAmount = cancelForm.applyFee ? (booking.total_price * cancelForm.feePercent / 100) : 0;
-      await supabase.from("tour_bookings").update({ status: "cancelled", internal_notes: `${booking.internal_notes || ""}\n[STORNO] Grund: ${reason}${feeAmount > 0 ? ` | Gebühr: ${feeAmount.toFixed(2)}€` : ""}`.trim() }).eq("id", booking.id);
-      await logAudit("CANCELLATION", "status", booking.status, `cancelled (${reason}, Gebühr: ${feeAmount.toFixed(2)}€)`);
-      const totalPaidNow = payments.reduce((s, p) => s + Number(p.amount), 0);
-      if (totalPaidNow > 0) { const refundAmount = Math.max(0, totalPaidNow - feeAmount); if (refundAmount > 0) { await supabase.from("tour_payment_entries").insert({ booking_id: booking.id, amount: -refundAmount, method: "refund", note: `Storno-Erstattung (Grund: ${reason})`, recorded_by: user?.id }); await logAudit("REFUND_CREATED", "amount", null, `-${refundAmount.toFixed(2)}€`); } }
-      toast({ title: "✅ Buchung storniert" }); setCancelModal(false); loadBooking();
-    } catch { toast({ title: "Fehler", variant: "destructive" }); } finally { setProcessing(null); }
+      const hasStripePayment = !!booking.stripe_payment_intent_id && !!booking.paid_at;
+
+      // Use edge function for cancellation with automatic Stripe refund
+      const { data, error } = await supabase.functions.invoke("cancel-tour-booking", {
+        body: {
+          bookingId: booking.id,
+          reason,
+          refundType: hasStripePayment ? "full" : undefined,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      // Also record local payment entry for non-Stripe refunds
+      if (!hasStripePayment) {
+        const feeAmount = cancelForm.applyFee ? (booking.total_price * cancelForm.feePercent / 100) : 0;
+        const totalPaidNow = payments.reduce((s, p) => s + Number(p.amount), 0);
+        if (totalPaidNow > 0) {
+          const refundAmount = Math.max(0, totalPaidNow - feeAmount);
+          if (refundAmount > 0) {
+            await supabase.from("tour_payment_entries").insert({
+              booking_id: booking.id, amount: -refundAmount, method: "refund",
+              note: `Storno-Erstattung (Grund: ${reason})`, recorded_by: user?.id,
+            });
+          }
+        }
+      }
+
+      const msg = data?.refundAmount > 0
+        ? `✅ Buchung storniert & ${data.refundAmount.toFixed(2)}€ über Stripe zurückerstattet`
+        : "✅ Buchung storniert";
+      toast({ title: msg });
+      setCancelModal(false);
+      loadBooking();
+    } catch (err: any) {
+      console.error("Cancellation error:", err);
+      toast({ title: "Fehler bei Stornierung", description: err.message, variant: "destructive" });
+    } finally { setProcessing(null); }
   };
 
   const handleRefund = async () => {
