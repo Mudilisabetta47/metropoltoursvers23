@@ -127,9 +127,21 @@ const CommandCenter = () => {
         case 'send_notification':
           await logCommand('SEND_NOTIFICATION', 'broadcast', null, { message: formData.message });
           break;
+        case 'emergency_stop':
+          await logCommand('EMERGENCY_STOP', 'trip', formData.tripId || null, { reason: formData.reason });
+          break;
+        case 'route_change':
+          await logCommand('ROUTE_CHANGE', 'trip', formData.tripId || null, { 
+            newRoute: formData.newRoute, reason: formData.reason 
+          });
+          break;
+        case 'capacity_alert':
+          await logCommand('CAPACITY_ALERT', 'trip', formData.tripId || null, { 
+            type: formData.alertType, details: formData.details 
+          });
+          break;
         case 'system_refresh':
           await logCommand('SYSTEM_REFRESH', 'system', null, {});
-          // Trigger page reload after brief delay
           setTimeout(() => window.location.reload(), 1000);
           break;
       }
