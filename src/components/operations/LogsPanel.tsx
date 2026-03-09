@@ -1,7 +1,7 @@
 import { useAuditLogs, useCommandLogs } from "@/hooks/useOperations";
 import { 
   FileText, Zap, AlertCircle, CheckCircle, 
-  Clock, Database, User, RefreshCw
+  Database, User, RefreshCw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
