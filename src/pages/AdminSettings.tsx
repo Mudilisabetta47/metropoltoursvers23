@@ -1,8 +1,7 @@
 import { useState } from "react";
 import {
-  Settings, Save, CreditCard, Mail, Building2, Route, Users,
-  Bell, FileText, Activity, Truck, Shield, Clock, Globe,
-  Receipt, UserCheck, AlertTriangle, Gauge, ChevronRight
+  Save, CreditCard, Mail, Building2, Route, Users,
+  Bell, FileText, Activity, Truck, Shield, UserCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
