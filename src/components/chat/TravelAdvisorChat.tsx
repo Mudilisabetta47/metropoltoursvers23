@@ -182,6 +182,8 @@ const TravelAdvisorChat = () => {
     setIsLoading(false);
   };
 
+  if (isAdmin) return null;
+
   return (
     <>
       {/* Chat Toggle Button */}
