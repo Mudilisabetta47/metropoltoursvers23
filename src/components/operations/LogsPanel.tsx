@@ -7,8 +7,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format, formatDistanceToNow } from "date-fns";
-import { de } from "date-fns/locale";
+import { format } from "date-fns";
 
 const LogsPanel = () => {
   const { logs: auditLogs, isLoading: auditLoading } = useAuditLogs(30);

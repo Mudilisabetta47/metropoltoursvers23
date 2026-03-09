@@ -23,7 +23,7 @@ type TabType = 'overview' | 'map' | 'incidents' | 'employees' | 'scanner' | 'com
 
 const OperationsDashboard = () => {
   const navigate = useNavigate();
-  const { user, isAdmin, isOffice, isLoading: authLoading, signOut } = useAuth();
+  const { user, isAdmin, isOffice, isLoading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
