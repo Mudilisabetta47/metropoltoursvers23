@@ -18,6 +18,11 @@ const QUICK_PROMPTS = [
 ];
 
 const TravelAdvisorChat = () => {
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith("/admin") || location.pathname.startsWith("/operations") || location.pathname.startsWith("/driver");
+
+  if (isAdmin) return null;
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
