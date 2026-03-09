@@ -113,21 +113,18 @@ const AdminInquiriesPage = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1 flex items-center justify-center">
+      <AdminLayout title="Anfragen">
+        <div className="flex items-center justify-center py-24">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-        </main>
-        <Footer />
-      </div>
+        </div>
+      </AdminLayout>
     );
   }
 
   if (!user || (!isAdmin && !isAgent)) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1 flex items-center justify-center">
+      <AdminLayout title="Anfragen">
+        <div className="flex items-center justify-center py-24">
           <Card className="max-w-md w-full mx-4">
             <CardContent className="pt-6 text-center">
               <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
@@ -136,9 +133,8 @@ const AdminInquiriesPage = () => {
               <Button onClick={() => navigate("/auth")}>Anmelden</Button>
             </CardContent>
           </Card>
-        </main>
-        <Footer />
-      </div>
+        </div>
+      </AdminLayout>
     );
   }
 
