@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 import { 
-  Bus, Facebook, Instagram, Youtube, Mail, Phone, MapPin, 
+  Facebook, Instagram, Youtube, Mail, Phone, MapPin, 
   Clock, CreditCard, Shield, Award, Headphones
 } from "lucide-react";
+import { Logo } from "@/components/brand/Logo";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
