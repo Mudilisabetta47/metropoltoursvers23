@@ -163,16 +163,16 @@ export default function AuthPage() {
           {/* Slogan */}
           <div className="space-y-6">
             <h1 className="text-4xl xl:text-5xl font-bold leading-tight">
-              Entdecke den Balkan
+              Entdecke Europa
             </h1>
             <p className="text-lg text-primary-foreground/90 max-w-md">
-              Erleben Sie unvergessliche Reisen durch Kroatien, Montenegro, Albanien und mehr. 
-              Komfortabel, sicher und zu fairen Preisen.
+              Erleben Sie unvergessliche Reisen quer durch Europa. 
+              Busreisen, Pauschalangebote und individuelle Touren – komfortabel, sicher und zu fairen Preisen.
             </p>
             
             {/* Features */}
             <div className="flex flex-col gap-3 pt-4">
-              {['Über 50 Reiseziele', 'Sichere Online-Buchung', '24/7 Kundenservice'].map((feature) => (
+              {['Europaweite Reiseziele', 'Attraktive Pauschalangebote', 'Sichere Online-Buchung'].map((feature) => (
                 <div key={feature} className="flex items-center gap-2 text-primary-foreground/90">
                   <CheckCircle className="w-5 h-5 text-primary-foreground" />
                   <span>{feature}</span>
