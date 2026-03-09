@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Mail, Phone, Users, Calendar, Euro, Clock,
-  CheckCircle, XCircle, AlertCircle, FileText, MessageSquare,
+  CheckCircle, XCircle, FileText, MessageSquare,
   ClipboardList, History, User, MapPin, Send, PhoneCall,
-  Briefcase, Tag, Star, ArrowRight, Plus, ExternalLink
+  Briefcase, Tag, Star, ArrowRight, Plus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
