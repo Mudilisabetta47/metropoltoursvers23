@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, Map, AlertTriangle, Users, Scan, 
-  Zap, FileText, LogOut, ChevronLeft, ChevronRight,
+  Zap, FileText, ChevronLeft, ChevronRight,
   Globe, Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
