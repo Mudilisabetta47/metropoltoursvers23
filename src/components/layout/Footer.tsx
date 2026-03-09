@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 import { 
-  Bus, Facebook, Instagram, Youtube, Mail, Phone, MapPin, 
+  Facebook, Instagram, Youtube, Mail, Phone, MapPin, 
   Clock, CreditCard, Shield, Award, Headphones
 } from "lucide-react";
+import { Logo } from "@/components/brand/Logo";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -83,13 +84,8 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 lg:gap-10">
           {/* Brand Column */}
           <div className="lg:col-span-2">
-            <Link to="/" className="flex items-center gap-2 mb-4" aria-label="METROPOL TOURS Startseite">
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-                <Bus className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-bold">
-                Metropol <span className="text-primary">Tours</span>
-              </span>
+            <Link to="/" className="inline-block mb-4 group" aria-label="METROPOL TOURS Startseite">
+              <Logo size="md" />
             </Link>
             <p className="text-muted-foreground text-sm mb-6 max-w-sm">
               Ihr zuverlässiger Partner für komfortable Busreisen in ganz Europa. 

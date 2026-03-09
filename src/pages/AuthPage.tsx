@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bus, Mail, Lock, User, Eye, EyeOff, Shield, CheckCircle } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Shield, CheckCircle } from 'lucide-react';
+import { LogoLight } from '@/components/brand/Logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+
 import { z } from 'zod';
 import { motion } from 'framer-motion';
 import heroImage from '@/assets/hero-group-travel.jpg';
@@ -150,14 +151,8 @@ export default function AuthPage() {
         
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-between p-12 text-primary-foreground">
-          {/* Logo */}
-          <a href="/" className="inline-flex items-center gap-3 group w-fit">
-            <div className="w-12 h-12 bg-background/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-transform group-hover:scale-105">
-              <Bus className="w-7 h-7" />
-            </div>
-            <span className="text-2xl font-bold">
-              Metropol Tours
-            </span>
+          <a href="/" className="inline-block group">
+            <LogoLight size="lg" />
           </a>
           
           {/* Slogan */}
@@ -204,13 +199,8 @@ export default function AuthPage() {
           />
           <div className="absolute inset-0 bg-gradient-to-b from-primary/80 to-primary/60" />
           <div className="relative z-10 flex items-center justify-center h-full">
-            <a href="/" className="inline-flex items-center gap-2">
-              <div className="w-10 h-10 bg-background/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                <Bus className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-bold text-primary-foreground">
-                Metropol Tours
-              </span>
+            <a href="/" className="inline-block group">
+              <LogoLight size="md" />
             </a>
           </div>
         </div>

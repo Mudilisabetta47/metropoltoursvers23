@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Bus, User, LogOut, ChevronRight } from "lucide-react";
+import { Menu, X, User, LogOut, ChevronRight } from "lucide-react";
+import { Logo } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -52,16 +53,8 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className={cn("flex items-center justify-between transition-all duration-300", isScrolled ? "h-16" : "h-18 lg:h-20")}>
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className={cn("bg-primary rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-105 group-hover:shadow-md", isScrolled ? "w-9 h-9" : "w-10 h-10")}>
-              <Bus className={cn("text-primary-foreground transition-all", isScrolled ? "w-5 h-5" : "w-6 h-6")} />
-            </div>
-            <div className="flex flex-col">
-              <span className={cn("font-bold text-foreground leading-tight transition-all", isScrolled ? "text-lg" : "text-xl")}>
-                METROPOL <span className="text-primary">TOURS</span>
-              </span>
-              
-            </div>
+          <Link to="/" className="group">
+            <Logo size={isScrolled ? 'sm' : 'md'} />
           </Link>
 
           {/* Desktop Navigation */}
