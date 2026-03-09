@@ -125,9 +125,7 @@ const AdminInquiryDetail = () => {
   const updatedAgo = formatDistanceToNow(new Date(inquiry.updated_at), { locale: de, addSuffix: true });
 
   return (
-    <div className="min-h-screen flex flex-col bg-muted/30">
-      <Header />
-      <main className="flex-1 container mx-auto px-4 py-6">
+    <AdminLayout title={`Anfrage ${inquiry.inquiry_number}`} subtitle={`${inquiry.first_name} ${inquiry.last_name} — ${inquiry.destination}`}>
         {/* Back + Breadcrumb */}
         <div className="flex items-center gap-3 mb-4">
           <Button variant="ghost" size="sm" onClick={() => navigate('/admin/inquiries')}>
