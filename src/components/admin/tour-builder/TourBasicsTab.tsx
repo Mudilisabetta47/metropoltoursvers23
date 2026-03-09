@@ -108,10 +108,10 @@ const TourBasicsTab = ({ tour, onChange }: TourBasicsTabProps) => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold mb-1 bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">
+        <h2 className="text-2xl font-bold mb-1 text-white">
           Basis-Informationen
         </h2>
-        <p className="text-zinc-500">Grundlegende Daten zur Reise</p>
+        <p className="text-zinc-400">Grundlegende Daten zur Reise</p>
       </div>
 
       {/* Main Info */}
