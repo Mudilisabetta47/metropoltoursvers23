@@ -156,13 +156,6 @@ Deno.serve(async (req) => {
 </body>
 </html>`;
 
-    // Convert HTML to PDF using a simple approach
-    // We'll return the HTML as base64 for client-side PDF generation
-    // or use the jsPDF approach
-    const encoder = new TextEncoder();
-    const htmlBytes = encoder.encode(html);
-    const base64Html = btoa(String.fromCharCode(...htmlBytes));
-
     // Update offer status
     await supabase
       .from("tour_offers")
@@ -170,7 +163,7 @@ Deno.serve(async (req) => {
       .eq("id", offerId);
 
     return new Response(
-      JSON.stringify({ pdf: base64Html, html, contentType: "text/html" }),
+      JSON.stringify({ html }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
