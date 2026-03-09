@@ -259,6 +259,103 @@ const CommandCenter = () => {
             </div>
           </div>
         );
+      case 'emergency_stop':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <p className="text-red-300 text-sm font-medium">⚠️ Notfall-Befehl – nur bei akuter Gefahr verwenden</p>
+            </div>
+            <div>
+              <Label>Trip ID</Label>
+              <Input
+                value={formData.tripId || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, tripId: e.target.value }))}
+                placeholder="UUID der Fahrt"
+                className="bg-zinc-800 border-zinc-700 mt-1"
+              />
+            </div>
+            <div>
+              <Label>Grund</Label>
+              <Textarea
+                value={formData.reason || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, reason: e.target.value }))}
+                placeholder="Beschreibung des Notfalls..."
+                className="bg-zinc-800 border-zinc-700 mt-1"
+                rows={3}
+              />
+            </div>
+          </div>
+        );
+      case 'route_change':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Trip ID</Label>
+              <Input
+                value={formData.tripId || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, tripId: e.target.value }))}
+                placeholder="UUID der Fahrt"
+                className="bg-zinc-800 border-zinc-700 mt-1"
+              />
+            </div>
+            <div>
+              <Label>Neue Route / Umleitung</Label>
+              <Input
+                value={formData.newRoute || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, newRoute: e.target.value }))}
+                placeholder="z.B. A7 statt A1, Halt Hamburg-Süd entfällt"
+                className="bg-zinc-800 border-zinc-700 mt-1"
+              />
+            </div>
+            <div>
+              <Label>Grund</Label>
+              <Textarea
+                value={formData.reason || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, reason: e.target.value }))}
+                placeholder="Warum wird die Route geändert?"
+                className="bg-zinc-800 border-zinc-700 mt-1"
+                rows={2}
+              />
+            </div>
+          </div>
+        );
+      case 'capacity_alert':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Trip ID</Label>
+              <Input
+                value={formData.tripId || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, tripId: e.target.value }))}
+                placeholder="UUID der Fahrt"
+                className="bg-zinc-800 border-zinc-700 mt-1"
+              />
+            </div>
+            <div>
+              <Label>Alert-Typ</Label>
+              <select
+                value={formData.alertType || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, alertType: e.target.value }))}
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-white mt-1"
+              >
+                <option value="">Bitte wählen...</option>
+                <option value="overbooking">Überbuchung</option>
+                <option value="extra_bus">Zusatzbus anfordern</option>
+                <option value="low_occupancy">Niedrige Auslastung</option>
+              </select>
+            </div>
+            <div>
+              <Label>Details</Label>
+              <Textarea
+                value={formData.details || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, details: e.target.value }))}
+                placeholder="Weitere Details zur Kapazitätssituation..."
+                className="bg-zinc-800 border-zinc-700 mt-1"
+                rows={2}
+              />
+            </div>
+          </div>
+        );
       case 'system_refresh':
         return (
           <div className="p-4 bg-zinc-800 rounded-lg text-center">
