@@ -17,8 +17,7 @@ import {
 } from "@/components/ui/select";
 
 import { useToast } from "@/hooks/use-toast";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+import AdminLayout from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format, formatDistanceToNow } from "date-fns";
@@ -113,13 +112,11 @@ const AdminInquiryDetail = () => {
 
   if (isLoading || !inquiry) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1 flex items-center justify-center">
+      <AdminLayout title="Anfrage laden...">
+        <div className="flex items-center justify-center py-24">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
-        </main>
-        <Footer />
-      </div>
+        </div>
+      </AdminLayout>
     );
   }
 
@@ -128,9 +125,7 @@ const AdminInquiryDetail = () => {
   const updatedAgo = formatDistanceToNow(new Date(inquiry.updated_at), { locale: de, addSuffix: true });
 
   return (
-    <div className="min-h-screen flex flex-col bg-muted/30">
-      <Header />
-      <main className="flex-1 container mx-auto px-4 py-6">
+    <AdminLayout title={`Anfrage ${inquiry.inquiry_number}`} subtitle={`${inquiry.first_name} ${inquiry.last_name} — ${inquiry.destination}`}>
         {/* Back + Breadcrumb */}
         <div className="flex items-center gap-3 mb-4">
           <Button variant="ghost" size="sm" onClick={() => navigate('/admin/inquiries')}>
@@ -568,9 +563,7 @@ const AdminInquiryDetail = () => {
           <span>Aktualisiert: {format(new Date(inquiry.updated_at), 'dd.MM.yyyy HH:mm', { locale: de })}</span>
           <span>ID: {inquiry.id}</span>
         </div>
-      </main>
-      <Footer />
-    </div>
+    </AdminLayout>
   );
 };
 

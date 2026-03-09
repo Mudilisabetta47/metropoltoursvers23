@@ -15,8 +15,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+import AdminLayout from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
@@ -114,21 +113,18 @@ const AdminInquiriesPage = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1 flex items-center justify-center">
+      <AdminLayout title="Anfragen">
+        <div className="flex items-center justify-center py-24">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-        </main>
-        <Footer />
-      </div>
+        </div>
+      </AdminLayout>
     );
   }
 
   if (!user || (!isAdmin && !isAgent)) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1 flex items-center justify-center">
+      <AdminLayout title="Anfragen">
+        <div className="flex items-center justify-center py-24">
           <Card className="max-w-md w-full mx-4">
             <CardContent className="pt-6 text-center">
               <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
@@ -137,29 +133,22 @@ const AdminInquiriesPage = () => {
               <Button onClick={() => navigate("/auth")}>Anmelden</Button>
             </CardContent>
           </Card>
-        </main>
-        <Footer />
-      </div>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-muted/30">
-      <Header />
-      <main className="flex-1 container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">CRM — Anfragen & Leads</h1>
-            <p className="text-sm text-muted-foreground">Vertriebspipeline und Anfragenverwaltung</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={fetchInquiries} variant="outline" size="sm" disabled={isLoading}>
-              <RefreshCw className={`w-4 h-4 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
-              Aktualisieren
-            </Button>
-          </div>
-        </div>
+    <AdminLayout
+      title="CRM — Anfragen & Leads"
+      subtitle="Vertriebspipeline und Anfragenverwaltung"
+      actions={
+        <Button onClick={fetchInquiries} variant="outline" size="sm" disabled={isLoading}>
+          <RefreshCw className={`w-4 h-4 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
+          Aktualisieren
+        </Button>
+      }
+    >
 
         {/* KPI Strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
@@ -311,9 +300,7 @@ const AdminInquiriesPage = () => {
             </div>
           )}
         </Card>
-      </main>
-      <Footer />
-    </div>
+    </AdminLayout>
   );
 };
 
