@@ -3,13 +3,11 @@ import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, parseISO }
 import { de } from "date-fns/locale";
 import {
   Plus, Loader2, ChevronLeft, ChevronRight, Calendar, Clock,
-  Bus, User, Trash2, Copy, Users
+  Bus, Trash2, Copy, Printer
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -47,18 +45,18 @@ interface BusOption {
 }
 
 const SHIFT_ROLES = [
-  { value: "driver", label: "Fahrer", color: "bg-amber-600" },
-  { value: "guide", label: "Reiseleiter", color: "bg-blue-600" },
-  { value: "office", label: "Büro", color: "bg-purple-600" },
-  { value: "support", label: "Support", color: "bg-teal-600" },
+  { value: "driver", label: "Fahrer", short: "F" },
+  { value: "guide", label: "Reiseleiter", short: "RL" },
+  { value: "office", label: "Büro", short: "B" },
+  { value: "support", label: "Support", short: "S" },
 ];
 
 const SHIFT_STATUSES = [
-  { value: "scheduled", label: "Geplant", color: "bg-zinc-600" },
-  { value: "confirmed", label: "Bestätigt", color: "bg-emerald-600" },
-  { value: "in_progress", label: "Im Dienst", color: "bg-blue-600" },
-  { value: "completed", label: "Abgeschlossen", color: "bg-green-600" },
-  { value: "cancelled", label: "Abgesagt", color: "bg-red-600" },
+  { value: "scheduled", label: "Geplant" },
+  { value: "confirmed", label: "Bestätigt" },
+  { value: "in_progress", label: "Im Dienst" },
+  { value: "completed", label: "Abgeschlossen" },
+  { value: "cancelled", label: "Abgesagt" },
 ];
 
 const AdminShifts = () => {
@@ -108,7 +106,6 @@ const AdminShifts = () => {
       supabase.from("buses").select("id, name, license_plate").eq("is_active", true),
     ]);
 
-    // Build employee list from non-customer roles
     const userRoles: Record<string, string[]> = {};
     (rolesRes.data || []).forEach((r: any) => {
       if (r.role === "customer") return;
@@ -137,10 +134,10 @@ const AdminShifts = () => {
     setIsLoading(false);
   };
 
-  const openNew = (date?: Date) => {
+  const openNew = (date?: Date, employeeId?: string) => {
     setEditingShift(null);
     setForm({
-      user_id: "",
+      user_id: employeeId || "",
       shift_date: date ? format(date, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
       shift_start: "06:00",
       shift_end: "18:00",
@@ -230,7 +227,6 @@ const AdminShifts = () => {
     });
 
     toast({ title: "Schicht dupliziert", description: `Kopiert auf ${format(parseISO(nextDate), "dd.MM.yyyy")}` });
-    // If duplicated into current week, reload
     if (parseISO(nextDate) >= currentWeek && parseISO(nextDate) <= weekEnd) {
       loadData();
     }
@@ -246,239 +242,339 @@ const AdminShifts = () => {
   const getBusName = (busId: string | null) => {
     if (!busId) return null;
     const bus = buses.find(b => b.id === busId);
-    return bus ? `${bus.name} (${bus.license_plate})` : null;
+    return bus ? bus.name : null;
   };
 
-  const getRoleConfig = (role: string) => SHIFT_ROLES.find(r => r.value === role) || SHIFT_ROLES[0];
-  const getStatusConfig = (status: string) => SHIFT_STATUSES.find(s => s.value === status) || SHIFT_STATUSES[0];
+  const getRoleShort = (role: string) => SHIFT_ROLES.find(r => r.value === role)?.short || "?";
 
-  const shiftsForDay = (date: Date) =>
-    shifts.filter(s => isSameDay(parseISO(s.shift_date), date));
+  // Get all employees that have shifts this week + all employees for the table
+  const activeEmployeeIds = useMemo(() => {
+    const ids = new Set(shifts.map(s => s.user_id));
+    return employees.filter(e => ids.has(e.user_id));
+  }, [shifts, employees]);
 
-  // Stats
-  const totalShifts = shifts.length;
-  const uniqueEmployees = new Set(shifts.map(s => s.user_id)).size;
-  const driverShifts = shifts.filter(s => s.role === "driver").length;
-  const openShifts = shifts.filter(s => s.status === "scheduled").length;
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const kwNumber = format(currentWeek, "w", { locale: de });
 
   return (
     <AdminLayout
-      title="Dienstpläne"
-      subtitle={`KW ${format(currentWeek, "w", { locale: de })} — ${format(currentWeek, "dd.MM.", { locale: de })} bis ${format(weekEnd, "dd.MM.yyyy", { locale: de })}`}
+      title="Dienstplan"
+      subtitle={`KW ${kwNumber} — ${format(currentWeek, "dd.MM.", { locale: de })} bis ${format(weekEnd, "dd.MM.yyyy", { locale: de })}`}
       actions={
-        <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => openNew()}>
-          <Plus className="w-3 h-3 mr-1" /> Neue Schicht
-        </Button>
+        <div className="flex gap-2 print:hidden">
+          <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300" onClick={handlePrint}>
+            <Printer className="w-3 h-3 mr-1" /> Drucken
+          </Button>
+          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => openNew()}>
+            <Plus className="w-3 h-3 mr-1" /> Neue Schicht
+          </Button>
+        </div>
       }
     >
       {isLoading ? (
         <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-emerald-400" /></div>
       ) : (
-        <div className="space-y-5">
-          {/* KPI Row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[
-              { label: "Schichten", value: totalShifts, icon: Calendar, color: "text-emerald-400" },
-              { label: "Mitarbeiter", value: uniqueEmployees, icon: Users, color: "text-blue-400" },
-              { label: "Fahrer-Schichten", value: driverShifts, icon: Bus, color: "text-amber-400" },
-              { label: "Offen", value: openShifts, icon: Clock, color: "text-zinc-400" },
-            ].map(kpi => (
-              <Card key={kpi.label} className="bg-zinc-900 border-zinc-800">
-                <CardContent className="pt-4 pb-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className={`text-2xl font-bold ${kpi.color}`}>{kpi.value}</div>
-                      <div className="text-xs text-zinc-500">{kpi.label}</div>
-                    </div>
-                    <kpi.icon className={`w-5 h-5 ${kpi.color} opacity-40`} />
-                  </div>
-                </CardContent>
-              </Card>
+        <div className="space-y-4">
+          {/* Week Navigation — hidden on print */}
+          <div className="flex items-center justify-between print:hidden">
+            <Button variant="ghost" size="sm" className="text-zinc-400" onClick={() => setCurrentWeek(w => subWeeks(w, 1))}>
+              <ChevronLeft className="w-4 h-4 mr-1" /> Vorherige
+            </Button>
+            <Button variant="ghost" size="sm" className="text-zinc-400" onClick={() => setCurrentWeek(startOfWeek(new Date(), { weekStartsOn: 1 }))}>
+              Aktuelle Woche
+            </Button>
+            <Button variant="ghost" size="sm" className="text-zinc-400" onClick={() => setCurrentWeek(w => addWeeks(w, 1))}>
+              Nächste <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
+
+          {/* ===== PRINT HEADER — only visible on print ===== */}
+          <div className="hidden print:block mb-4">
+            <div className="text-center border-b-2 border-black pb-3 mb-4">
+              <h1 className="text-2xl font-bold text-black">METROPOL TOURS — Dienstplan</h1>
+              <p className="text-lg text-black mt-1">
+                Kalenderwoche {kwNumber} | {format(currentWeek, "dd.MM.yyyy")} – {format(weekEnd, "dd.MM.yyyy")}
+              </p>
+              <p className="text-sm text-gray-500 mt-1">Erstellt am {format(new Date(), "dd.MM.yyyy, HH:mm", { locale: de })} Uhr</p>
+            </div>
+          </div>
+
+          {/* ===== MAIN TABLE — the office-style Dienstplan ===== */}
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-sm print:text-xs" id="shift-table">
+              {/* Table Header */}
+              <thead>
+                <tr>
+                  <th className="border border-zinc-700 print:border-gray-400 bg-zinc-800 print:bg-gray-100 text-left px-3 py-2 text-zinc-300 print:text-black font-semibold w-44 print:w-32">
+                    Mitarbeiter
+                  </th>
+                  {weekDays.map(day => {
+                    const isToday = isSameDay(day, new Date());
+                    return (
+                      <th
+                        key={day.toISOString()}
+                        className={`border border-zinc-700 print:border-gray-400 px-2 py-2 text-center font-semibold min-w-[120px] print:min-w-[80px] ${
+                          isToday
+                            ? "bg-emerald-900/40 print:bg-yellow-50 text-emerald-300 print:text-black"
+                            : "bg-zinc-800 print:bg-gray-100 text-zinc-300 print:text-black"
+                        }`}
+                      >
+                        <div className="text-xs uppercase">{format(day, "EEE", { locale: de })}</div>
+                        <div className="text-base print:text-sm">{format(day, "dd.MM.")}</div>
+                      </th>
+                    );
+                  })}
+                  <th className="border border-zinc-700 print:border-gray-400 bg-zinc-800 print:bg-gray-100 px-2 py-2 text-center text-zinc-300 print:text-black font-semibold w-20">
+                    Σ Std.
+                  </th>
+                </tr>
+              </thead>
+
+              {/* Table Body — one row per employee */}
+              <tbody>
+                {activeEmployeeIds.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="border border-zinc-700 print:border-gray-400 text-center py-8 text-zinc-500 print:text-gray-400">
+                      Keine Schichten in dieser Woche. Klicke auf „Neue Schicht" um loszulegen.
+                    </td>
+                  </tr>
+                ) : (
+                  activeEmployeeIds.map((emp, empIdx) => {
+                    const empShifts = shifts.filter(s => s.user_id === emp.user_id);
+                    const totalHours = empShifts.reduce((sum, s) => {
+                      if (!s.shift_start || !s.shift_end) return sum;
+                      const diff = (new Date(s.shift_end).getTime() - new Date(s.shift_start).getTime()) / 3600000;
+                      return sum + (diff > 0 ? diff : 0);
+                    }, 0);
+
+                    return (
+                      <tr key={emp.user_id} className={empIdx % 2 === 0 ? "bg-zinc-900/50 print:bg-white" : "bg-zinc-900 print:bg-gray-50"}>
+                        {/* Employee name cell */}
+                        <td className="border border-zinc-700 print:border-gray-400 px-3 py-2 font-medium text-white print:text-black whitespace-nowrap">
+                          <div className="flex items-center justify-between">
+                            <span>{getEmployeeName(emp.user_id)}</span>
+                            <span className="text-[10px] text-zinc-500 print:text-gray-500 ml-1">
+                              {emp.roles.filter(r => r !== "customer").map(r => getRoleShort(r === "admin" ? "office" : r)).join("/")}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Day cells */}
+                        {weekDays.map(day => {
+                          const dayShifts = empShifts.filter(s => isSameDay(parseISO(s.shift_date), day));
+                          const isToday = isSameDay(day, new Date());
+
+                          return (
+                            <td
+                              key={day.toISOString()}
+                              className={`border border-zinc-700 print:border-gray-400 px-1 py-1 align-top cursor-pointer hover:bg-zinc-800 print:hover:bg-transparent transition-colors ${
+                                isToday ? "bg-emerald-950/10 print:bg-yellow-50/50" : ""
+                              }`}
+                              onClick={() => {
+                                if (dayShifts.length === 0) openNew(day, emp.user_id);
+                              }}
+                            >
+                              {dayShifts.length > 0 ? (
+                                <div className="space-y-1">
+                                  {dayShifts.map(shift => {
+                                    const startTime = shift.shift_start ? format(new Date(shift.shift_start), "HH:mm") : "–";
+                                    const endTime = shift.shift_end ? format(new Date(shift.shift_end), "HH:mm") : "–";
+                                    const busName = getBusName(shift.assigned_bus_id);
+                                    const roleShort = getRoleShort(shift.role);
+                                    const isCancelled = shift.status === "cancelled";
+
+                                    return (
+                                      <div
+                                        key={shift.id}
+                                        className={`group relative rounded px-1.5 py-1 text-[11px] print:text-[9px] leading-tight cursor-pointer border transition-colors ${
+                                          isCancelled
+                                            ? "bg-red-950/30 border-red-800/50 print:bg-red-50 print:border-red-300 line-through opacity-60"
+                                            : shift.status === "confirmed"
+                                            ? "bg-emerald-950/30 border-emerald-800/50 print:bg-green-50 print:border-green-300"
+                                            : "bg-zinc-800 border-zinc-700 print:bg-white print:border-gray-300"
+                                        }`}
+                                        onClick={(e) => { e.stopPropagation(); openEdit(shift); }}
+                                      >
+                                        {/* Time range */}
+                                        <div className="font-mono font-semibold text-white print:text-black">
+                                          {startTime}–{endTime}
+                                        </div>
+                                        {/* Role badge */}
+                                        <div className="text-zinc-400 print:text-gray-600">
+                                          [{roleShort}]
+                                          {busName && <span className="ml-1">🚌 {busName}</span>}
+                                        </div>
+                                        {/* Notes */}
+                                        {shift.notes && (
+                                          <div className="text-zinc-500 print:text-gray-500 italic truncate max-w-[100px] print:max-w-none">
+                                            {shift.notes}
+                                          </div>
+                                        )}
+                                        {/* Hover actions — hidden on print */}
+                                        <div className="hidden group-hover:flex gap-1 absolute -top-2 -right-1 print:hidden">
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); duplicateShift(shift); }}
+                                            className="w-5 h-5 rounded bg-zinc-700 hover:bg-blue-600 flex items-center justify-center"
+                                            title="In nächste Woche kopieren"
+                                          >
+                                            <Copy className="w-2.5 h-2.5 text-white" />
+                                          </button>
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); deleteShift(shift.id); }}
+                                            className="w-5 h-5 rounded bg-zinc-700 hover:bg-red-600 flex items-center justify-center"
+                                            title="Löschen"
+                                          >
+                                            <Trash2 className="w-2.5 h-2.5 text-white" />
+                                          </button>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <div className="text-center text-zinc-700 print:text-gray-300 py-2 text-lg print:hidden">
+                                  +
+                                </div>
+                              )}
+                            </td>
+                          );
+                        })}
+
+                        {/* Total hours cell */}
+                        <td className="border border-zinc-700 print:border-gray-400 px-2 py-2 text-center font-mono font-bold text-emerald-400 print:text-black">
+                          {totalHours.toFixed(1)}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+
+                {/* Summary row */}
+                {activeEmployeeIds.length > 0 && (
+                  <tr className="bg-zinc-800 print:bg-gray-200 font-semibold">
+                    <td className="border border-zinc-700 print:border-gray-400 px-3 py-2 text-zinc-300 print:text-black">
+                      Gesamt
+                    </td>
+                    {weekDays.map(day => {
+                      const dayCount = shifts.filter(s => isSameDay(parseISO(s.shift_date), day) && s.status !== "cancelled").length;
+                      return (
+                        <td key={day.toISOString()} className="border border-zinc-700 print:border-gray-400 px-2 py-2 text-center text-zinc-400 print:text-black">
+                          {dayCount > 0 ? `${dayCount} Schicht${dayCount !== 1 ? "en" : ""}` : "–"}
+                        </td>
+                      );
+                    })}
+                    <td className="border border-zinc-700 print:border-gray-400 px-2 py-2 text-center font-mono text-emerald-400 print:text-black">
+                      {shifts
+                        .filter(s => s.status !== "cancelled")
+                        .reduce((sum, s) => {
+                          if (!s.shift_start || !s.shift_end) return sum;
+                          const diff = (new Date(s.shift_end).getTime() - new Date(s.shift_start).getTime()) / 3600000;
+                          return sum + (diff > 0 ? diff : 0);
+                        }, 0)
+                        .toFixed(1)}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Legend — visible on both screen and print */}
+          <div className="flex flex-wrap gap-4 text-xs text-zinc-500 print:text-gray-600 mt-2 print:mt-4">
+            <span className="font-semibold">Legende:</span>
+            {SHIFT_ROLES.map(r => (
+              <span key={r.value}>[{r.short}] = {r.label}</span>
             ))}
           </div>
 
-          {/* Week Navigation */}
-          <div className="flex items-center justify-between">
-            <Button variant="ghost" size="sm" className="text-zinc-400" onClick={() => setCurrentWeek(w => subWeeks(w, 1))}>
-              <ChevronLeft className="w-4 h-4 mr-1" /> Vorherige Woche
-            </Button>
-            <Button variant="ghost" size="sm" className="text-zinc-400" onClick={() => setCurrentWeek(startOfWeek(new Date(), { weekStartsOn: 1 }))}>
-              Heute
-            </Button>
-            <Button variant="ghost" size="sm" className="text-zinc-400" onClick={() => setCurrentWeek(w => addWeeks(w, 1))}>
-              Nächste Woche <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
+          {/* Print footer */}
+          <div className="hidden print:block mt-8 pt-4 border-t border-gray-300">
+            <div className="flex justify-between text-xs text-gray-500">
+              <span>METROPOL TOURS GmbH — Dienstplan KW {kwNumber}</span>
+              <span>Unterschrift Disponent: ________________________</span>
+            </div>
           </div>
-
-          {/* Weekly Calendar Grid */}
-          <div className="grid grid-cols-7 gap-2">
-            {weekDays.map(day => {
-              const dayShifts = shiftsForDay(day);
-              const isToday = isSameDay(day, new Date());
-
-              return (
-                <div
-                  key={day.toISOString()}
-                  className={`min-h-[180px] rounded-lg border p-2 transition-colors ${
-                    isToday
-                      ? "bg-emerald-950/20 border-emerald-800/50"
-                      : "bg-zinc-900/50 border-zinc-800"
-                  }`}
-                >
-                  {/* Day Header */}
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <div className={`text-xs font-medium ${isToday ? "text-emerald-400" : "text-zinc-500"}`}>
-                        {format(day, "EEE", { locale: de })}
-                      </div>
-                      <div className={`text-lg font-bold ${isToday ? "text-emerald-300" : "text-white"}`}>
-                        {format(day, "dd")}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => openNew(day)}
-                      className="w-6 h-6 rounded-md bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-500 hover:text-emerald-400 transition-colors"
-                    >
-                      <Plus className="w-3 h-3" />
-                    </button>
-                  </div>
-
-                  {/* Shifts */}
-                  <div className="space-y-1.5">
-                    {dayShifts.map(shift => {
-                      const roleConf = getRoleConfig(shift.role);
-                      
-                      const startTime = shift.shift_start ? format(new Date(shift.shift_start), "HH:mm") : "–";
-                      const endTime = shift.shift_end ? format(new Date(shift.shift_end), "HH:mm") : "–";
-                      const busName = getBusName(shift.assigned_bus_id);
-
-                      return (
-                        <div
-                          key={shift.id}
-                          className="group bg-zinc-800/80 hover:bg-zinc-800 rounded-md p-1.5 cursor-pointer border border-zinc-700/50 hover:border-zinc-600 transition-all"
-                          onClick={() => openEdit(shift)}
-                        >
-                          <div className="flex items-center gap-1 mb-0.5">
-                            <div className={`w-1.5 h-1.5 rounded-full ${roleConf.color}`} />
-                            <span className="text-[11px] font-medium text-white truncate">
-                              {getEmployeeName(shift.user_id)}
-                            </span>
-                          </div>
-                          <div className="text-[10px] text-zinc-400 flex items-center gap-1">
-                            <Clock className="w-2.5 h-2.5" />
-                            {startTime}–{endTime}
-                          </div>
-                          {busName && (
-                            <div className="text-[10px] text-zinc-500 flex items-center gap-1 mt-0.5">
-                              <Bus className="w-2.5 h-2.5" />
-                              <span className="truncate">{busName}</span>
-                            </div>
-                          )}
-                          {/* Hover Actions */}
-                          <div className="hidden group-hover:flex gap-0.5 mt-1">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); duplicateShift(shift); }}
-                              className="p-0.5 text-zinc-500 hover:text-blue-400"
-                              title="Duplizieren (nächste Woche)"
-                            >
-                              <Copy className="w-3 h-3" />
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); deleteShift(shift.id); }}
-                              className="p-0.5 text-zinc-500 hover:text-red-400"
-                              title="Löschen"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    {dayShifts.length === 0 && (
-                      <div className="text-[10px] text-zinc-600 text-center py-3">Keine Schichten</div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Employee Overview for the week */}
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm text-zinc-400 flex items-center gap-2">
-                <Users className="w-4 h-4" /> Wochenübersicht Mitarbeiter
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {employees.filter(e => shifts.some(s => s.user_id === e.user_id)).map(emp => {
-                  const empShifts = shifts.filter(s => s.user_id === emp.user_id);
-                  const totalHours = empShifts.reduce((sum, s) => {
-                    if (!s.shift_start || !s.shift_end) return sum;
-                    const diff = (new Date(s.shift_end).getTime() - new Date(s.shift_start).getTime()) / 3600000;
-                    return sum + (diff > 0 ? diff : 0);
-                  }, 0);
-
-                  return (
-                    <div key={emp.user_id} className="flex items-center justify-between py-1.5 border-b border-zinc-800 last:border-0">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-zinc-800 flex items-center justify-center">
-                          <User className="w-3.5 h-3.5 text-zinc-400" />
-                        </div>
-                        <div>
-                          <div className="text-sm text-white font-medium">{getEmployeeName(emp.user_id)}</div>
-                          <div className="text-[10px] text-zinc-500">{emp.email}</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <div className="text-sm font-mono text-emerald-400">{totalHours.toFixed(1)}h</div>
-                          <div className="text-[10px] text-zinc-500">{empShifts.length} Schicht{empShifts.length !== 1 ? "en" : ""}</div>
-                        </div>
-                        {/* Day dots */}
-                        <div className="flex gap-0.5">
-                          {weekDays.map(day => {
-                            const hasShift = empShifts.some(s => isSameDay(parseISO(s.shift_date), day));
-                            return (
-                              <div
-                                key={day.toISOString()}
-                                className={`w-3 h-3 rounded-sm ${hasShift ? "bg-emerald-600" : "bg-zinc-800"}`}
-                                title={format(day, "EEEE dd.MM.", { locale: de })}
-                              />
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-                {shifts.length === 0 && (
-                  <div className="text-center text-zinc-500 py-4 text-sm">Keine Schichten in dieser Woche</div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
         </div>
       )}
 
-      {/* Edit/Create Modal */}
+      {/* ===== PRINT STYLES ===== */}
+      <style>{`
+        @media print {
+          /* Hide everything except our content */
+          body * { visibility: hidden; }
+          #shift-table, #shift-table * { visibility: visible; }
+          
+          /* Actually, let's do it properly with the print classes */
+          aside, header, .print\\:hidden { display: none !important; }
+          main { margin: 0 !important; padding: 0 !important; }
+          
+          /* Make the page use the full width */
+          @page {
+            size: landscape;
+            margin: 10mm;
+          }
+          
+          /* Reset dark theme for print */
+          body {
+            background: white !important;
+            color: black !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          
+          /* Make all text visible */
+          * {
+            visibility: visible !important;
+          }
+          
+          /* Hide sidebar and non-print elements */
+          aside {
+            display: none !important;
+          }
+          
+          .print\\:hidden {
+            display: none !important;
+          }
+          
+          .hidden.print\\:block {
+            display: block !important;
+          }
+          
+          table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+          }
+          
+          th, td {
+            border: 1px solid #999 !important;
+            padding: 4px 6px !important;
+          }
+        }
+      `}</style>
+
+      {/* ===== CREATE/EDIT MODAL ===== */}
       <Dialog open={editModal} onOpenChange={setEditModal}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-md">
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5 text-emerald-400" />
-              {editingShift ? "Schicht bearbeiten" : "Neue Schicht"}
+              {editingShift ? "Schicht bearbeiten" : "Neue Schicht anlegen"}
             </DialogTitle>
           </DialogHeader>
+
           <div className="space-y-4">
+            {/* Employee */}
             <div>
-              <Label className="text-zinc-400">Mitarbeiter</Label>
-              <Select value={form.user_id} onValueChange={v => setForm(f => ({ ...f, user_id: v }))}>
-                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+              <Label className="text-zinc-400 text-xs uppercase tracking-wider">Mitarbeiter *</Label>
+              <Select value={form.user_id || "unset"} onValueChange={v => setForm(f => ({ ...f, user_id: v === "unset" ? "" : v }))}>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
                   <SelectValue placeholder="Mitarbeiter wählen..." />
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-zinc-700 max-h-60">
+                  <SelectItem value="unset" className="text-zinc-500">– Bitte wählen –</SelectItem>
                   {employees.map(emp => (
                     <SelectItem key={emp.user_id} value={emp.user_id} className="text-white">
                       {emp.first_name || emp.last_name
@@ -491,20 +587,21 @@ const AdminShifts = () => {
               </Select>
             </div>
 
+            {/* Date + Role row */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-zinc-400">Datum</Label>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Datum *</Label>
                 <Input
                   type="date"
                   value={form.shift_date}
                   onChange={e => setForm(f => ({ ...f, shift_date: e.target.value }))}
-                  className="bg-zinc-800 border-zinc-700 text-white"
+                  className="bg-zinc-800 border-zinc-700 text-white mt-1"
                 />
               </div>
               <div>
-                <Label className="text-zinc-400">Rolle</Label>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Funktion</Label>
                 <Select value={form.role} onValueChange={v => setForm(f => ({ ...f, role: v }))}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent className="bg-zinc-800 border-zinc-700">
                     {SHIFT_ROLES.map(r => (
                       <SelectItem key={r.value} value={r.value} className="text-white">{r.label}</SelectItem>
@@ -514,32 +611,38 @@ const AdminShifts = () => {
               </div>
             </div>
 
+            {/* Time row */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-zinc-400">Beginn</Label>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider flex items-center gap-1">
+                  <Clock className="w-3 h-3" /> Dienstbeginn
+                </Label>
                 <Input
                   type="time"
                   value={form.shift_start}
                   onChange={e => setForm(f => ({ ...f, shift_start: e.target.value }))}
-                  className="bg-zinc-800 border-zinc-700 text-white"
+                  className="bg-zinc-800 border-zinc-700 text-white mt-1 font-mono text-lg"
                 />
               </div>
               <div>
-                <Label className="text-zinc-400">Ende</Label>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider flex items-center gap-1">
+                  <Clock className="w-3 h-3" /> Dienstende
+                </Label>
                 <Input
                   type="time"
                   value={form.shift_end}
                   onChange={e => setForm(f => ({ ...f, shift_end: e.target.value }))}
-                  className="bg-zinc-800 border-zinc-700 text-white"
+                  className="bg-zinc-800 border-zinc-700 text-white mt-1 font-mono text-lg"
                 />
               </div>
             </div>
 
+            {/* Status + Bus row */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-zinc-400">Status</Label>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Status</Label>
                 <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v }))}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent className="bg-zinc-800 border-zinc-700">
                     {SHIFT_STATUSES.map(s => (
                       <SelectItem key={s.value} value={s.value} className="text-white">{s.label}</SelectItem>
@@ -548,9 +651,11 @@ const AdminShifts = () => {
                 </Select>
               </div>
               <div>
-                <Label className="text-zinc-400">Fahrzeug (optional)</Label>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider flex items-center gap-1">
+                  <Bus className="w-3 h-3" /> Fahrzeug
+                </Label>
                 <Select value={form.assigned_bus_id || "none"} onValueChange={v => setForm(f => ({ ...f, assigned_bus_id: v === "none" ? "" : v }))}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder="Keins" /></SelectTrigger>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1"><SelectValue placeholder="Keins" /></SelectTrigger>
                   <SelectContent className="bg-zinc-800 border-zinc-700">
                     <SelectItem value="none" className="text-white">– Kein Fahrzeug –</SelectItem>
                     {buses.map(b => (
@@ -563,18 +668,19 @@ const AdminShifts = () => {
               </div>
             </div>
 
+            {/* Notes */}
             <div>
-              <Label className="text-zinc-400">Notizen</Label>
+              <Label className="text-zinc-400 text-xs uppercase tracking-wider">Bemerkungen</Label>
               <Textarea
                 value={form.notes}
                 onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                className="bg-zinc-800 border-zinc-700 text-white min-h-[60px]"
-                placeholder="z.B. Sonderfahrt nach Zagreb, Vertretung für..."
+                className="bg-zinc-800 border-zinc-700 text-white min-h-[60px] mt-1"
+                placeholder="z.B. Sonderfahrt Zagreb, Vertretung für M. Müller..."
               />
             </div>
           </div>
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 mt-2">
             {editingShift && (
               <Button variant="ghost" className="text-red-400 hover:text-red-300 mr-auto" onClick={() => { deleteShift(editingShift.id); setEditModal(false); }}>
                 <Trash2 className="w-3 h-3 mr-1" /> Löschen
@@ -582,7 +688,7 @@ const AdminShifts = () => {
             )}
             <Button variant="ghost" onClick={() => setEditModal(false)} className="text-zinc-400">Abbrechen</Button>
             <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={saveShift}>
-              {editingShift ? "Speichern" : "Erstellen"}
+              {editingShift ? "Speichern" : "Schicht anlegen"}
             </Button>
           </DialogFooter>
         </DialogContent>
