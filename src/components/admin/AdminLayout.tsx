@@ -199,9 +199,9 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
+      <main className="flex-1 overflow-auto min-w-0">
+        <div className="p-4 lg:p-6 max-w-[1800px]">
+          <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="text-2xl font-bold text-white">{title}</h2>
               {subtitle && <p className="text-zinc-500 text-sm">{subtitle}</p>}
