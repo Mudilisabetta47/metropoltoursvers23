@@ -58,6 +58,7 @@ const menuSections: MenuSection[] = [
     items: [
       { path: "/admin/ops", label: "Leitstand", icon: LayoutDashboard, allowedRoles: OPS_STAFF },
       { path: "/admin/departures", label: "Fahrten", icon: Calendar, allowedRoles: ALL_STAFF },
+      { path: "/admin/shifts", label: "Dienstpläne", icon: ClipboardList, allowedRoles: MANAGEMENT },
       { path: "/admin/tour-builder", label: "Reisen", icon: Map, allowedRoles: MANAGEMENT },
     ],
   },
