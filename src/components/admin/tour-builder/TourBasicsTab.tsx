@@ -151,16 +151,19 @@ const TourBasicsTab = ({ tour, onChange }: TourBasicsTabProps) => {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="country" className="text-zinc-300 text-sm font-medium">Land</Label>
-              <Select value={tour?.country || ''} onValueChange={(v) => onChange('country', v)}>
-                <SelectTrigger className="bg-zinc-800/60 border-zinc-600/50 text-white">
-                  <SelectValue placeholder="Land auswählen..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {countries.map(country => (
-                    <SelectItem key={country} value={country}>{country}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                id="country"
+                list="country-suggestions"
+                value={tour?.country || ''}
+                onChange={(e) => onChange('country', e.target.value)}
+                placeholder="Land eingeben oder auswählen..."
+                className="bg-zinc-800/60 border-zinc-600/50 focus:border-emerald-500/50 focus:ring-emerald-500/20 text-white placeholder:text-zinc-500"
+              />
+              <datalist id="country-suggestions">
+                {defaultCountries.map(c => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="category" className="text-zinc-300 text-sm font-medium">Kategorie</Label>
