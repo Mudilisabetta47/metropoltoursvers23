@@ -138,7 +138,7 @@ const TourLegalTab = ({ tourId, sections, onCreate, onUpdate, onDelete }: TourLe
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-white">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold mb-2">Rechtliches</h2>
