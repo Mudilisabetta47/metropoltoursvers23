@@ -40,13 +40,13 @@ interface PackageTourInquiry {
 }
 
 const pipelineStages = [
-  { key: "pending", label: "Neu", color: "bg-yellow-500", textColor: "text-yellow-800 bg-yellow-50 border-yellow-200" },
-  { key: "qualified", label: "Qualifiziert", color: "bg-blue-500", textColor: "text-blue-800 bg-blue-50 border-blue-200" },
-  { key: "offer_sent", label: "Angebot", color: "bg-indigo-500", textColor: "text-indigo-800 bg-indigo-50 border-indigo-200" },
-  { key: "contacted", label: "Nachfassen", color: "bg-purple-500", textColor: "text-purple-800 bg-purple-50 border-purple-200" },
-  { key: "confirmed", label: "Bestätigt", color: "bg-green-500", textColor: "text-green-800 bg-green-50 border-green-200" },
-  { key: "converted", label: "Buchung", color: "bg-emerald-500", textColor: "text-emerald-800 bg-emerald-50 border-emerald-200" },
-  { key: "cancelled", label: "Verloren", color: "bg-red-500", textColor: "text-red-800 bg-red-50 border-red-200" },
+  { key: "pending", label: "Neu", color: "bg-yellow-500", activeBg: "bg-yellow-500/20 text-yellow-300 border-yellow-500/40" },
+  { key: "qualified", label: "Qualifiziert", color: "bg-blue-500", activeBg: "bg-blue-500/20 text-blue-300 border-blue-500/40" },
+  { key: "offer_sent", label: "Angebot", color: "bg-indigo-500", activeBg: "bg-indigo-500/20 text-indigo-300 border-indigo-500/40" },
+  { key: "contacted", label: "Nachfassen", color: "bg-purple-500", activeBg: "bg-purple-500/20 text-purple-300 border-purple-500/40" },
+  { key: "confirmed", label: "Bestätigt", color: "bg-green-500", activeBg: "bg-green-500/20 text-green-300 border-green-500/40" },
+  { key: "converted", label: "Buchung", color: "bg-emerald-500", activeBg: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" },
+  { key: "cancelled", label: "Verloren", color: "bg-red-500", activeBg: "bg-red-500/20 text-red-300 border-red-500/40" },
 ];
 
 const getStageConfig = (status: string) =>
@@ -115,7 +115,7 @@ const AdminInquiriesPage = () => {
     return (
       <AdminLayout title="Anfragen">
         <div className="flex items-center justify-center py-24">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-400" />
         </div>
       </AdminLayout>
     );
@@ -125,11 +125,11 @@ const AdminInquiriesPage = () => {
     return (
       <AdminLayout title="Anfragen">
         <div className="flex items-center justify-center py-24">
-          <Card className="max-w-md w-full mx-4">
+          <Card className="max-w-md w-full mx-4 bg-zinc-900 border-zinc-800">
             <CardContent className="pt-6 text-center">
-              <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <h1 className="text-2xl font-bold mb-2">Zugriff verweigert</h1>
-              <p className="text-muted-foreground mb-6">Admin- oder Agenten-Rechte erforderlich.</p>
+              <Shield className="w-16 h-16 mx-auto mb-4 text-zinc-500" />
+              <h1 className="text-2xl font-bold mb-2 text-white">Zugriff verweigert</h1>
+              <p className="text-zinc-400 mb-6">Admin- oder Agenten-Rechte erforderlich.</p>
               <Button onClick={() => navigate("/auth")}>Anmelden</Button>
             </CardContent>
           </Card>
@@ -143,32 +143,31 @@ const AdminInquiriesPage = () => {
       title="CRM — Anfragen & Leads"
       subtitle="Vertriebspipeline und Anfragenverwaltung"
       actions={
-        <Button onClick={fetchInquiries} variant="outline" size="sm" disabled={isLoading}>
+        <Button onClick={fetchInquiries} variant="outline" size="sm" disabled={isLoading} className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
           <RefreshCw className={`w-4 h-4 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
           Aktualisieren
         </Button>
       }
     >
-
         {/* KPI Strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           {[
-            { label: "Gesamt", value: stats.total, sub: "Anfragen" },
-            { label: "Offen", value: stats.open, sub: "in Bearbeitung", accent: "text-yellow-600" },
-            { label: "Gewonnen", value: stats.confirmed, sub: "bestätigt/konvertiert", accent: "text-green-600" },
-            { label: "Pipeline-Wert", value: `${stats.pipeline.toLocaleString('de-DE')}€`, sub: "ohne Stornos", accent: "text-primary" },
+            { label: "Gesamt", value: stats.total, sub: "Anfragen", accent: "text-white" },
+            { label: "Offen", value: stats.open, sub: "in Bearbeitung", accent: "text-yellow-400" },
+            { label: "Gewonnen", value: stats.confirmed, sub: "bestätigt/konvertiert", accent: "text-emerald-400" },
+            { label: "Pipeline-Wert", value: `${stats.pipeline.toLocaleString('de-DE')}€`, sub: "ohne Stornos", accent: "text-blue-400" },
           ].map((kpi, i) => (
-            <Card key={i}>
+            <Card key={i} className="bg-zinc-900 border-zinc-800">
               <CardContent className="pt-4 pb-3">
-                <div className={`text-2xl font-bold ${kpi.accent || ''}`}>{kpi.value}</div>
-                <div className="text-xs text-muted-foreground">{kpi.label} · {kpi.sub}</div>
+                <div className={`text-2xl font-bold ${kpi.accent}`}>{kpi.value}</div>
+                <div className="text-xs text-zinc-500">{kpi.label} · {kpi.sub}</div>
               </CardContent>
             </Card>
           ))}
         </div>
 
         {/* Pipeline Visualization */}
-        <Card className="mb-6">
+        <Card className="mb-6 bg-zinc-900 border-zinc-800">
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-1 overflow-x-auto">
               {pipelineStages.map((stage, i) => {
@@ -178,13 +177,15 @@ const AdminInquiriesPage = () => {
                     key={stage.key}
                     onClick={() => setStatusFilter(statusFilter === stage.key ? "all" : stage.key)}
                     className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium border transition-all whitespace-nowrap
-                      ${statusFilter === stage.key ? stage.textColor + ' ring-2 ring-offset-1 ring-primary/30' : 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted'}
+                      ${statusFilter === stage.key
+                        ? stage.activeBg + ' ring-2 ring-offset-1 ring-offset-zinc-900 ring-emerald-500/30'
+                        : 'bg-zinc-800/50 text-zinc-400 border-transparent hover:bg-zinc-800 hover:text-zinc-300'}
                     `}
                   >
                     <div className={`w-2 h-2 rounded-full ${stage.color}`} />
                     {stage.label}
                     <span className="text-[10px] opacity-70">({count})</span>
-                    {i < pipelineStages.length - 1 && <ArrowRight className="w-3 h-3 text-muted-foreground/40 ml-1" />}
+                    {i < pipelineStages.length - 1 && <ArrowRight className="w-3 h-3 text-zinc-600 ml-1" />}
                   </button>
                 );
               })}
@@ -195,16 +196,16 @@ const AdminInquiriesPage = () => {
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-3 mb-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
             <Input
               placeholder="Suche: Nr., Name, Destination, E-Mail..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              className="pl-10"
+              className="pl-10 bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500"
             />
           </div>
           <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
-            <SelectTrigger className="w-full md:w-48">
+            <SelectTrigger className="w-full md:w-48 bg-zinc-900 border-zinc-700 text-zinc-300">
               <SelectValue placeholder="Alle Status" />
             </SelectTrigger>
             <SelectContent>
@@ -217,27 +218,27 @@ const AdminInquiriesPage = () => {
         </div>
 
         {/* Table */}
-        <Card>
+        <Card className="bg-zinc-900 border-zinc-800">
           <CardContent className="p-0">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400" />
               </div>
             ) : paginatedInquiries.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">Keine Anfragen gefunden</div>
+              <div className="text-center py-12 text-zinc-500">Keine Anfragen gefunden</div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="text-xs">
-                      <TableHead className="w-32">Anfrage-Nr.</TableHead>
-                      <TableHead>Kunde</TableHead>
-                      <TableHead>Destination</TableHead>
-                      <TableHead className="text-center">Pax</TableHead>
-                      <TableHead className="text-right">Wert</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Reisedatum</TableHead>
-                      <TableHead>Eingang</TableHead>
+                    <TableRow className="border-zinc-800">
+                      <TableHead className="text-zinc-400 w-32">Anfrage-Nr.</TableHead>
+                      <TableHead className="text-zinc-400">Kunde</TableHead>
+                      <TableHead className="text-zinc-400">Destination</TableHead>
+                      <TableHead className="text-zinc-400 text-center">Pax</TableHead>
+                      <TableHead className="text-zinc-400 text-right">Wert</TableHead>
+                      <TableHead className="text-zinc-400">Status</TableHead>
+                      <TableHead className="text-zinc-400">Reisedatum</TableHead>
+                      <TableHead className="text-zinc-400">Eingang</TableHead>
                       <TableHead className="w-12" />
                     </TableRow>
                   </TableHeader>
@@ -247,33 +248,31 @@ const AdminInquiriesPage = () => {
                       return (
                         <TableRow
                           key={inq.id}
-                          className="cursor-pointer hover:bg-muted/50 transition-colors"
+                          className="cursor-pointer border-zinc-800 hover:bg-zinc-800/50 transition-colors"
                           onClick={() => navigate(`/admin/inquiries/${inq.id}`)}
                         >
-                          <TableCell className="font-mono text-xs">{inq.inquiry_number}</TableCell>
+                          <TableCell className="font-mono text-xs text-zinc-400">{inq.inquiry_number}</TableCell>
                           <TableCell>
-                            <div className="text-sm font-medium">{inq.first_name} {inq.last_name}</div>
-                            <div className="text-xs text-muted-foreground">{inq.email}</div>
+                            <div className="text-sm font-medium text-white">{inq.first_name} {inq.last_name}</div>
+                            <div className="text-xs text-zinc-500">{inq.email}</div>
                           </TableCell>
-                          <TableCell className="font-medium text-sm">{inq.destination}</TableCell>
-                          <TableCell className="text-center">
-                            <span className="text-sm">{inq.participants}</span>
-                          </TableCell>
-                          <TableCell className="text-right font-semibold text-sm">
+                          <TableCell className="font-medium text-sm text-zinc-200">{inq.destination}</TableCell>
+                          <TableCell className="text-center text-zinc-300">{inq.participants}</TableCell>
+                          <TableCell className="text-right font-semibold text-sm text-white">
                             {inq.total_price.toLocaleString('de-DE')}€
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline" className={`${stage.textColor} text-[10px] px-2`}>
+                            <Badge className={`${stage.activeBg} text-[10px] px-2 border`}>
                               <div className={`w-1.5 h-1.5 rounded-full ${stage.color} mr-1.5`} />
                               {stage.label}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">{inq.departure_date}</TableCell>
-                          <TableCell className="text-xs text-muted-foreground">
+                          <TableCell className="text-xs text-zinc-500">{inq.departure_date}</TableCell>
+                          <TableCell className="text-xs text-zinc-500">
                             {format(new Date(inq.created_at), 'dd.MM.yy', { locale: de })}
                           </TableCell>
                           <TableCell>
-                            <Eye className="w-4 h-4 text-muted-foreground" />
+                            <Eye className="w-4 h-4 text-zinc-500" />
                           </TableCell>
                         </TableRow>
                       );
@@ -285,15 +284,15 @@ const AdminInquiriesPage = () => {
           </CardContent>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t">
-              <span className="text-xs text-muted-foreground">
+            <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-800">
+              <span className="text-xs text-zinc-500">
                 Seite {currentPage} von {totalPages} ({filteredInquiries.length} Ergebnisse)
               </span>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
+                <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="border-zinc-700 text-zinc-400">
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+                <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="border-zinc-700 text-zinc-400">
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
