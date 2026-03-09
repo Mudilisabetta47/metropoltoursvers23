@@ -40,6 +40,7 @@ const AdminSettings = lazy(() => import("./pages/AdminSettings"));
 const AdminRoutes = lazy(() => import("./pages/AdminRoutes"));
 const AdminStops = lazy(() => import("./pages/AdminStops"));
 const AdminBuses = lazy(() => import("./pages/AdminBuses"));
+const AdminShifts = lazy(() => import("./pages/AdminShifts"));
 const AdminCostEstimate = lazy(() => import("./pages/AdminCostEstimate"));
 const KarrierePage = lazy(() => import("./pages/KarrierePage"));
 const WeekendTripsPage = lazy(() => import("./pages/WeekendTripsPage"));
