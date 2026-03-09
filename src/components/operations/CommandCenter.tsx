@@ -376,7 +376,7 @@ const CommandCenter = () => {
         <h2 className="text-lg font-bold text-white">Command Center</h2>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
         {commands.map((cmd) => (
           <button
             key={cmd.id}
