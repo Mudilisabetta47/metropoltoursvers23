@@ -7,6 +7,7 @@ import {
   Briefcase, Tag, Star, ArrowRight, Plus, Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import OfferBuilder from "@/components/admin/OfferBuilder";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -78,6 +79,7 @@ const AdminInquiryDetail = () => {
   const [notes, setNotes] = useState<CustomerNote[]>([]);
   const [isSavingNote, setIsSavingNote] = useState(false);
   const [statusHistory, setStatusHistory] = useState<Array<{ status: string; timestamp: string }>>([]);
+  const [showOfferBuilder, setShowOfferBuilder] = useState(false);
 
   useEffect(() => {
     if (inquiryId) fetchInquiry();
@@ -203,27 +205,8 @@ const AdminInquiryDetail = () => {
     toast({ title: "Weiterleitung zur Buchungsverwaltung" });
   };
 
-  const handleCreateOffer = async () => {
-    if (!inquiry) return;
-    // Move status to offer_sent and save note
-    await updateStatus('offer_sent');
-    // Open email with offer template
-    const subject = encodeURIComponent(`Ihr Reiseangebot ${inquiry.inquiry_number} — ${inquiry.destination}`);
-    const body = encodeURIComponent(
-      `Sehr geehrte/r ${inquiry.first_name} ${inquiry.last_name},\n\n` +
-      `vielen Dank für Ihre Anfrage zu unserer Reise nach ${inquiry.destination}.\n\n` +
-      `Gerne unterbreiten wir Ihnen folgendes Angebot:\n\n` +
-      `Reiseziel: ${inquiry.destination}\n` +
-      `Reisedatum: ${inquiry.departure_date}\n` +
-      `Teilnehmer: ${inquiry.participants}\n` +
-      `Gesamtpreis: ${inquiry.total_price.toLocaleString('de-DE')}€\n\n` +
-      `Leistungen im Preis enthalten:\n` +
-      `- Busfahrt hin und zurück\n` +
-      `- Übernachtung mit Frühstück\n\n` +
-      `Bei Fragen stehen wir Ihnen gerne zur Verfügung.\n\n` +
-      `Mit freundlichen Grüßen\nMetropol Tours`
-    );
-    window.location.href = `mailto:${inquiry.email}?subject=${subject}&body=${body}`;
+  const handleCreateOffer = () => {
+    setShowOfferBuilder(true);
   };
 
   const handleSendMessage = async (messageText: string) => {
@@ -612,42 +595,64 @@ const AdminInquiryDetail = () => {
 
           {/* ===== ANGEBOTE ===== */}
           <TabsContent value="offers">
-            <Card className="bg-zinc-900 border-zinc-800">
-              <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                <CardTitle className="text-sm font-semibold text-zinc-400 uppercase tracking-wide">Angebote</CardTitle>
-                <Button size="sm" variant="outline" className="text-xs border-zinc-700 text-zinc-300 hover:bg-zinc-800" onClick={handleCreateOffer}>
-                  <Plus className="w-3 h-3 mr-1" /> Neues Angebot
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {notes.filter(n => n.note.includes('Status geändert: → Angebot')).length > 0 ? (
-                  <div className="space-y-3">
-                    {notes.filter(n => n.note.includes('Angebot') || n.note.includes('offer')).map(n => (
-                      <div key={n.id} className="flex items-start gap-3 py-2 border-b border-dashed border-zinc-800 last:border-0">
-                        <div className="w-2 h-2 rounded-full bg-indigo-500 mt-1.5 flex-shrink-0" />
-                        <div>
-                          <div className="text-sm text-zinc-200">{n.note}</div>
-                          <div className="text-xs text-zinc-500">
-                            {format(new Date(n.created_at), 'dd.MM.yyyy HH:mm', { locale: de })}
+            {showOfferBuilder ? (
+              <Card className="bg-zinc-900 border-zinc-800">
+                <CardContent className="pt-5">
+                  <OfferBuilder
+                    inquiryId={inquiry.id}
+                    customerName={`${inquiry.first_name} ${inquiry.last_name}`}
+                    customerEmail={inquiry.email}
+                    destination={inquiry.destination}
+                    departureDate={inquiry.departure_date}
+                    participants={inquiry.participants}
+                    totalPrice={inquiry.total_price}
+                    tourId={inquiry.tour_id}
+                    onClose={() => setShowOfferBuilder(false)}
+                    onOfferSaved={() => fetchNotes(inquiry.email)}
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="bg-zinc-900 border-zinc-800">
+                <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                  <CardTitle className="text-sm font-semibold text-zinc-400 uppercase tracking-wide">Angebote</CardTitle>
+                  <Button size="sm" variant="outline" className="text-xs border-zinc-700 text-zinc-300 hover:bg-zinc-800" onClick={handleCreateOffer}>
+                    <Plus className="w-3 h-3 mr-1" /> Neues Angebot
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {notes.filter(n => n.note.includes('[Angebot]')).length > 0 ? (
+                    <div className="space-y-3">
+                      {notes.filter(n => n.note.includes('[Angebot]')).map(n => (
+                        <div key={n.id} className="flex items-start gap-3 py-2 border-b border-dashed border-zinc-800 last:border-0">
+                          <div className="w-2 h-2 rounded-full bg-indigo-500 mt-1.5 flex-shrink-0" />
+                          <div>
+                            <div className="text-sm text-zinc-200">{n.note.replace('[Angebot] ', '')}</div>
+                            <div className="text-xs text-zinc-500">
+                              {format(new Date(n.created_at), 'dd.MM.yyyy HH:mm', { locale: de })}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 text-zinc-500">
-                    <FileText className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                    <p className="text-sm font-medium text-zinc-400">Noch keine Angebote erstellt</p>
-                    <p className="text-xs mt-1">Erstellen Sie ein individuelles Angebot für diese Anfrage.</p>
-                    <div className="mt-4 flex justify-center gap-2">
-                      <Button size="sm" className="text-xs bg-emerald-600 hover:bg-emerald-700" onClick={handleCreateOffer}>
-                        <FileText className="w-3 h-3 mr-1" /> Angebot erstellen
+                      ))}
+                      <Button size="sm" className="text-xs bg-emerald-600 hover:bg-emerald-700 mt-3" onClick={handleCreateOffer}>
+                        <Plus className="w-3 h-3 mr-1" /> Weiteres Angebot
                       </Button>
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  ) : (
+                    <div className="text-center py-12 text-zinc-500">
+                      <FileText className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                      <p className="text-sm font-medium text-zinc-400">Noch keine Angebote erstellt</p>
+                      <p className="text-xs mt-1">Kalkulieren Sie ein individuelles Angebot mit Einzelpositionen.</p>
+                      <div className="mt-4 flex justify-center gap-2">
+                        <Button size="sm" className="text-xs bg-emerald-600 hover:bg-emerald-700" onClick={handleCreateOffer}>
+                          <FileText className="w-3 h-3 mr-1" /> Angebot kalkulieren
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* ===== HISTORIE ===== */}

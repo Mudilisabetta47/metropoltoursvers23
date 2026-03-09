@@ -1964,6 +1964,118 @@ export type Database = {
           },
         ]
       }
+      tour_offer_items: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          offer_id: string
+          quantity: number
+          sort_order: number
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          offer_id: string
+          quantity?: number
+          sort_order?: number
+          total_price?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          offer_id?: string
+          quantity?: number
+          sort_order?: number
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tour_offer_items_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "tour_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tour_offers: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_email: string
+          customer_name: string
+          departure_date: string | null
+          destination: string
+          discount_amount: number | null
+          discount_percent: number | null
+          id: string
+          inquiry_id: string | null
+          notes: string | null
+          offer_number: string
+          participants: number
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_email: string
+          customer_name: string
+          departure_date?: string | null
+          destination: string
+          discount_amount?: number | null
+          discount_percent?: number | null
+          id?: string
+          inquiry_id?: string | null
+          notes?: string | null
+          offer_number?: string
+          participants?: number
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_email?: string
+          customer_name?: string
+          departure_date?: string | null
+          destination?: string
+          discount_amount?: number | null
+          discount_percent?: number | null
+          id?: string
+          inquiry_id?: string | null
+          notes?: string | null
+          offer_number?: string
+          participants?: number
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tour_offers_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "package_tour_inquiries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tour_payment_entries: {
         Row: {
           amount: number
