@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bus, Mail, Lock, User, Eye, EyeOff, Shield, CheckCircle } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Shield, CheckCircle } from 'lucide-react';
+import { Logo, LogoLight } from '@/components/brand/Logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
