@@ -259,7 +259,7 @@ const TourBasicsTab = ({ tour, onChange }: TourBasicsTabProps) => {
               <Badge
                 key={index}
                 variant="secondary"
-                className="bg-zinc-800/80 text-zinc-200 px-3 py-1.5 flex items-center gap-2 border border-zinc-700/50"
+                className="bg-amber-500/20 text-amber-100 px-3 py-1.5 flex items-center gap-2 border border-amber-500/30"
               >
                 {highlight}
                 <button onClick={() => removeHighlight(index)} className="hover:text-red-400 transition-colors">
