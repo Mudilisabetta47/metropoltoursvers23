@@ -205,27 +205,8 @@ const AdminInquiryDetail = () => {
     toast({ title: "Weiterleitung zur Buchungsverwaltung" });
   };
 
-  const handleCreateOffer = async () => {
-    if (!inquiry) return;
-    // Move status to offer_sent and save note
-    await updateStatus('offer_sent');
-    // Open email with offer template
-    const subject = encodeURIComponent(`Ihr Reiseangebot ${inquiry.inquiry_number} — ${inquiry.destination}`);
-    const body = encodeURIComponent(
-      `Sehr geehrte/r ${inquiry.first_name} ${inquiry.last_name},\n\n` +
-      `vielen Dank für Ihre Anfrage zu unserer Reise nach ${inquiry.destination}.\n\n` +
-      `Gerne unterbreiten wir Ihnen folgendes Angebot:\n\n` +
-      `Reiseziel: ${inquiry.destination}\n` +
-      `Reisedatum: ${inquiry.departure_date}\n` +
-      `Teilnehmer: ${inquiry.participants}\n` +
-      `Gesamtpreis: ${inquiry.total_price.toLocaleString('de-DE')}€\n\n` +
-      `Leistungen im Preis enthalten:\n` +
-      `- Busfahrt hin und zurück\n` +
-      `- Übernachtung mit Frühstück\n\n` +
-      `Bei Fragen stehen wir Ihnen gerne zur Verfügung.\n\n` +
-      `Mit freundlichen Grüßen\nMetropol Tours`
-    );
-    window.location.href = `mailto:${inquiry.email}?subject=${subject}&body=${body}`;
+  const handleCreateOffer = () => {
+    setShowOfferBuilder(true);
   };
 
   const handleSendMessage = async (messageText: string) => {
