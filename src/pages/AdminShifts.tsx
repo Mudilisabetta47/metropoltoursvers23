@@ -3,7 +3,7 @@ import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, parseISO }
 import { de } from "date-fns/locale";
 import {
   Plus, Loader2, ChevronLeft, ChevronRight, Calendar, Clock,
-  Bus, User, Trash2, Edit2, Copy, Users
+  Bus, User, Trash2, Copy, Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
