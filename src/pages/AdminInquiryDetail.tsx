@@ -563,7 +563,6 @@ const AdminInquiryDetail = () => {
           <span>Aktualisiert: {format(new Date(inquiry.updated_at), 'dd.MM.yyyy HH:mm', { locale: de })}</span>
           <span>ID: {inquiry.id}</span>
         </div>
-      </div>
     </AdminLayout>
   );
 };
