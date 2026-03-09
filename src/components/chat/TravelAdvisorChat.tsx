@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Loader2, Sparkles, MapPin, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
