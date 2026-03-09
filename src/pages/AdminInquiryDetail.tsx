@@ -17,8 +17,7 @@ import {
 } from "@/components/ui/select";
 
 import { useToast } from "@/hooks/use-toast";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+import AdminLayout from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format, formatDistanceToNow } from "date-fns";
