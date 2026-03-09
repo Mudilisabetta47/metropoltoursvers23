@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Loader2, Sparkles, MapPin, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,8 @@ const QUICK_PROMPTS = [
 ];
 
 const TravelAdvisorChat = () => {
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith("/admin") || location.pathname.startsWith("/operations") || location.pathname.startsWith("/driver");
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -178,6 +181,8 @@ const TravelAdvisorChat = () => {
     setMessages([]);
     setIsLoading(false);
   };
+
+  if (isAdmin) return null;
 
   return (
     <>
