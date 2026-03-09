@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Bus, Mail, Lock, User, Phone, Eye, EyeOff, Building2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Bus, Mail, Lock, User, Eye, EyeOff, Shield, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,22 +8,19 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { z } from 'zod';
+import { motion } from 'framer-motion';
+import heroImage from '@/assets/hero-group-travel.jpg';
 
 const emailSchema = z.string().email('Bitte geben Sie eine gültige E-Mail-Adresse ein');
 const passwordSchema = z.string().min(6, 'Passwort muss mindestens 6 Zeichen haben');
 
 type AuthMode = 'login' | 'register';
-type UserType = 'customer' | 'agent';
 
 export default function AuthPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { user, signIn, signUp, isLoading } = useAuth();
   
   const [mode, setMode] = useState<AuthMode>('login');
-  const [userType, setUserType] = useState<UserType>(
-    searchParams.get('type') === 'agent' ? 'agent' : 'customer'
-  );
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -32,7 +29,6 @@ export default function AuthPage() {
     password: '',
     firstName: '',
     lastName: '',
-    phone: ''
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -114,7 +110,7 @@ export default function AuthPage() {
           return;
         }
         
-        toast.success('Konto erfolgreich erstellt! Sie können sich jetzt anmelden.');
+        toast.success('Konto erfolgreich erstellt! Bitte bestätigen Sie Ihre E-Mail-Adresse.');
         setMode('login');
       }
     } catch (error) {
@@ -127,217 +123,271 @@ export default function AuthPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-muted/30">
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
+    <div className="min-h-screen flex flex-col lg:flex-row">
+      {/* Left Side - Visual Panel (hidden on mobile, shown on lg+) */}
+      <motion.div 
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        className="hidden lg:flex lg:w-1/2 relative overflow-hidden"
+      >
+        {/* Background Image */}
+        <img 
+          src={heroImage} 
+          alt="Reisen durch den Balkan" 
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/70 to-primary/50" />
+        
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-between p-12 text-primary-foreground">
           {/* Logo */}
-          <div className="text-center mb-8">
-            <a href="/" className="inline-flex items-center gap-2 group">
-              <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center transition-transform group-hover:scale-105">
-                <Bus className="w-7 h-7 text-primary-foreground" />
+          <a href="/" className="inline-flex items-center gap-3 group w-fit">
+            <div className="w-12 h-12 bg-background/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-transform group-hover:scale-105">
+              <Bus className="w-7 h-7" />
+            </div>
+            <span className="text-2xl font-bold">
+              Metropol Tours
+            </span>
+          </a>
+          
+          {/* Slogan */}
+          <div className="space-y-6">
+            <h1 className="text-4xl xl:text-5xl font-bold leading-tight">
+              Entdecke den Balkan
+            </h1>
+            <p className="text-lg text-primary-foreground/90 max-w-md">
+              Erleben Sie unvergessliche Reisen durch Kroatien, Montenegro, Albanien und mehr. 
+              Komfortabel, sicher und zu fairen Preisen.
+            </p>
+            
+            {/* Features */}
+            <div className="flex flex-col gap-3 pt-4">
+              {['Über 50 Reiseziele', 'Sichere Online-Buchung', '24/7 Kundenservice'].map((feature) => (
+                <div key={feature} className="flex items-center gap-2 text-primary-foreground/90">
+                  <CheckCircle className="w-5 h-5 text-primary-foreground" />
+                  <span>{feature}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Bottom Attribution */}
+          <p className="text-sm text-primary-foreground/60">
+            © {new Date().getFullYear()} Metropol Tours. Alle Rechte vorbehalten.
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Right Side - Form Panel */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2, ease: 'easeOut' }}
+        className="flex-1 flex flex-col bg-background"
+      >
+        {/* Mobile Header with Image */}
+        <div className="lg:hidden relative h-40 overflow-hidden">
+          <img 
+            src={heroImage} 
+            alt="Reisen" 
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/80 to-primary/60" />
+          <div className="relative z-10 flex items-center justify-center h-full">
+            <a href="/" className="inline-flex items-center gap-2">
+              <div className="w-10 h-10 bg-background/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                <Bus className="w-6 h-6 text-primary-foreground" />
               </div>
-              <span className="text-2xl font-bold text-foreground">
-                Metropol <span className="text-primary">Tours</span>
+              <span className="text-xl font-bold text-primary-foreground">
+                Metropol Tours
               </span>
             </a>
           </div>
+        </div>
 
-          {/* Card */}
-          <div className="bg-card rounded-2xl shadow-elevated p-6 lg:p-8">
-            {/* User Type Toggle (subtle for agent access) */}
-            <div className="flex justify-center mb-6">
-              <div className="inline-flex bg-muted rounded-lg p-1">
-                <button
-                  type="button"
-                  onClick={() => setUserType('customer')}
-                  className={cn(
-                    'px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2',
-                    userType === 'customer'
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
+        {/* Form Container */}
+        <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
+          <div className="w-full max-w-md">
+            {/* Form Card with Glassmorphism */}
+            <div className="bg-card/80 backdrop-blur-sm rounded-2xl shadow-xl border border-border/50 p-8">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold text-foreground">
+                  {mode === 'login' ? 'Willkommen zurück' : 'Konto erstellen'}
+                </h2>
+                <p className="text-muted-foreground mt-2">
+                  {mode === 'login' 
+                    ? 'Melden Sie sich an, um fortzufahren'
+                    : 'Registrieren Sie sich für ein neues Konto'}
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {mode === 'register' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName" className="text-foreground">Vorname</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          id="firstName"
+                          value={formData.firstName}
+                          onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                          placeholder="Max"
+                          className="pl-10 h-12 rounded-xl bg-background border-input"
+                        />
+                      </div>
+                      {errors.firstName && (
+                        <p className="text-sm text-destructive">{errors.firstName}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName" className="text-foreground">Nachname</Label>
+                      <Input
+                        id="lastName"
+                        value={formData.lastName}
+                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                        placeholder="Mustermann"
+                        className="h-12 rounded-xl bg-background border-input"
+                      />
+                      {errors.lastName && (
+                        <p className="text-sm text-destructive">{errors.lastName}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-foreground">E-Mail-Adresse</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="max@beispiel.de"
+                      className="pl-10 h-12 rounded-xl bg-background border-input"
+                    />
+                  </div>
+                  {errors.email && (
+                    <p className="text-sm text-destructive">{errors.email}</p>
                   )}
-                >
-                  <User className="w-4 h-4" />
-                  Kunde
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setUserType('agent')}
-                  className={cn(
-                    'px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2',
-                    userType === 'agent'
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="text-foreground">Passwort</Label>
+                    {mode === 'login' && (
+                      <button
+                        type="button"
+                        className="text-sm text-primary hover:underline"
+                        onClick={() => toast.info('Passwort-Reset kommt bald!')}
+                      >
+                        Passwort vergessen?
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      placeholder="••••••••"
+                      className="pl-10 pr-10 h-12 rounded-xl bg-background border-input"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {errors.password && (
+                    <p className="text-sm text-destructive">{errors.password}</p>
                   )}
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full h-12 rounded-xl text-base font-medium"
+                  disabled={isSubmitting}
                 >
-                  <Building2 className="w-4 h-4" />
-                  Agentur
-                </button>
+                  {isSubmitting ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-foreground" />
+                  ) : mode === 'login' ? (
+                    'Anmelden'
+                  ) : (
+                    'Registrieren'
+                  )}
+                </Button>
+              </form>
+
+              <div className="mt-6 text-center">
+                <p className="text-sm text-muted-foreground">
+                  {mode === 'login' ? (
+                    <>
+                      Noch kein Konto?{' '}
+                      <button
+                        type="button"
+                        onClick={() => setMode('register')}
+                        className="text-primary hover:underline font-medium"
+                      >
+                        Jetzt registrieren
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      Bereits registriert?{' '}
+                      <button
+                        type="button"
+                        onClick={() => setMode('login')}
+                        className="text-primary hover:underline font-medium"
+                      >
+                        Anmelden
+                      </button>
+                    </>
+                  )}
+                </p>
               </div>
             </div>
 
-            <h1 className="text-2xl font-bold text-foreground text-center mb-2">
-              {mode === 'login' ? 'Anmelden' : 'Registrieren'}
-            </h1>
-            <p className="text-muted-foreground text-center mb-6">
-              {mode === 'login' 
-                ? userType === 'agent' 
-                  ? 'Melden Sie sich als Agentur an'
-                  : 'Melden Sie sich mit Ihrem Konto an'
-                : 'Erstellen Sie ein neues Konto'}
-            </p>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {mode === 'register' && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="firstName">Vorname *</Label>
-                    <Input
-                      id="firstName"
-                      value={formData.firstName}
-                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                      placeholder="Max"
-                      className="mt-1"
-                    />
-                    {errors.firstName && (
-                      <p className="text-sm text-destructive mt-1">{errors.firstName}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="lastName">Nachname *</Label>
-                    <Input
-                      id="lastName"
-                      value={formData.lastName}
-                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                      placeholder="Mustermann"
-                      className="mt-1"
-                    />
-                    {errors.lastName && (
-                      <p className="text-sm text-destructive mt-1">{errors.lastName}</p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <Label htmlFor="email">E-Mail *</Label>
-                <div className="relative mt-1">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="max@beispiel.de"
-                    className="pl-10"
-                  />
-                </div>
-                {errors.email && (
-                  <p className="text-sm text-destructive mt-1">{errors.email}</p>
-                )}
+            {/* Trust Badges */}
+            <div className="mt-6 flex items-center justify-center gap-6 text-muted-foreground">
+              <div className="flex items-center gap-2 text-sm">
+                <Shield className="w-4 h-4" />
+                <span>Sichere Verbindung</span>
               </div>
-
-              <div>
-                <Label htmlFor="password">Passwort *</Label>
-                <div className="relative mt-1">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="••••••••"
-                    className="pl-10 pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                {errors.password && (
-                  <p className="text-sm text-destructive mt-1">{errors.password}</p>
-                )}
+              <div className="flex items-center gap-2 text-sm">
+                <Lock className="w-4 h-4" />
+                <span>Datenschutz</span>
               </div>
+            </div>
 
-              {mode === 'register' && (
-                <div>
-                  <Label htmlFor="phone">Telefon (optional)</Label>
-                  <div className="relative mt-1">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="+49 123 456789"
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground" />
-                ) : mode === 'login' ? (
-                  'Anmelden'
-                ) : (
-                  'Registrieren'
-                )}
-              </Button>
-            </form>
-
+            {/* Back to Home */}
             <div className="mt-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                {mode === 'login' ? (
-                  <>
-                    Noch kein Konto?{' '}
-                    <button
-                      type="button"
-                      onClick={() => setMode('register')}
-                      className="text-primary hover:underline font-medium"
-                    >
-                      Jetzt registrieren
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    Bereits registriert?{' '}
-                    <button
-                      type="button"
-                      onClick={() => setMode('login')}
-                      className="text-primary hover:underline font-medium"
-                    >
-                      Anmelden
-                    </button>
-                  </>
-                )}
-              </p>
+              <a 
+                href="/" 
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                ← Zurück zur Startseite
+              </a>
             </div>
-          </div>
-
-          {/* Back to home */}
-          <div className="text-center mt-6">
-            <a href="/" className="text-sm text-muted-foreground hover:text-foreground">
-              ← Zurück zur Startseite
-            </a>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
