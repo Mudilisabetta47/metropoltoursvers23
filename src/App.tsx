@@ -23,6 +23,7 @@ const TermsPage = lazy(() => import("./pages/TermsPage"));
 const TourDetailPage = lazy(() => import("./components/tours/TourDetailPage"));
 const TourCheckoutPage = lazy(() => import("./pages/TourCheckoutPage"));
 const AdminInquiriesPage = lazy(() => import("./pages/AdminInquiriesPage"));
+const AdminInquiryDetail = lazy(() => import("./pages/AdminInquiryDetail"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminCMS = lazy(() => import("./pages/AdminCMS"));
 const AdminTourBuilder = lazy(() => import("./pages/AdminTourBuilder"));
