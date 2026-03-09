@@ -151,14 +151,8 @@ export default function AuthPage() {
         
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-between p-12 text-primary-foreground">
-          {/* Logo */}
-          <a href="/" className="inline-flex items-center gap-3 group w-fit">
-            <div className="w-12 h-12 bg-background/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-transform group-hover:scale-105">
-              <Bus className="w-7 h-7" />
-            </div>
-            <span className="text-2xl font-bold">
-              Metropol Tours
-            </span>
+          <a href="/" className="inline-block group">
+            <LogoLight size="lg" />
           </a>
           
           {/* Slogan */}
