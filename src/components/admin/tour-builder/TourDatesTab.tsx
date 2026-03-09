@@ -156,7 +156,7 @@ const TourDatesTab = ({ tourId, dates, tariffs, onCreate, onUpdate, onDelete }: 
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-white">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold mb-2">Termine & Preise</h2>

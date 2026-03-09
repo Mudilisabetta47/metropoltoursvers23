@@ -51,7 +51,7 @@ const TourSEOTab = ({ tour, onChange, validationErrors, onPublish }: TourSEOTabP
   const isPublishable = validationGroups.required.length === 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-white">
       <div>
         <h2 className="text-2xl font-bold mb-2">SEO & Veröffentlichung</h2>
         <p className="text-zinc-500">Suchmaschinenoptimierung und finale Prüfung</p>
