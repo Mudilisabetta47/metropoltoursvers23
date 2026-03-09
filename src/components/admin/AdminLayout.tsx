@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, FileText, Bus, Users, DollarSign, Shield,
   UserCheck, Settings, LogOut, Map, Mail, Calendar, Route,
-  MapPin, ChevronDown, Calculator
+  MapPin, ChevronDown, Calculator, Truck, ClipboardList
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -24,7 +24,7 @@ interface MenuItem {
   path: string;
   label: string;
   icon: any;
-  allowedRoles: AppRole[]; // which roles can see this item
+  allowedRoles: AppRole[];
 }
 
 interface MenuSection {
@@ -40,45 +40,55 @@ const OPS_STAFF: AppRole[] = ["admin", "office"];
 
 const menuSections: MenuSection[] = [
   {
-    label: "Buchungen",
+    label: "Dashboard",
     items: [
       { path: "/admin/dashboard", label: "Übersicht", icon: LayoutDashboard, allowedRoles: BOOKING_STAFF },
-      { path: "/admin/tour-bookings", label: "Reise-Buchungen", icon: FileText, allowedRoles: BOOKING_STAFF },
+    ],
+  },
+  {
+    label: "Buchungen",
+    items: [
+      { path: "/admin/tour-bookings", label: "Buchungen", icon: FileText, allowedRoles: BOOKING_STAFF },
       { path: "/admin/bus-bookings", label: "Bus-Buchungen", icon: Bus, allowedRoles: BOOKING_STAFF },
       { path: "/admin/inquiries", label: "Anfragen", icon: Mail, allowedRoles: BOOKING_STAFF },
     ],
   },
   {
-    label: "Reisen",
+    label: "Disposition",
     items: [
-      { path: "/admin/tour-builder", label: "Reisen verwalten", icon: Map, allowedRoles: MANAGEMENT },
-      { path: "/admin/cms", label: "CMS / Inhalte", icon: FileText, allowedRoles: MANAGEMENT },
+      { path: "/admin/ops", label: "Leitstand", icon: LayoutDashboard, allowedRoles: OPS_STAFF },
+      { path: "/admin/departures", label: "Fahrten", icon: Calendar, allowedRoles: ALL_STAFF },
+      { path: "/admin/tour-builder", label: "Reisen", icon: Map, allowedRoles: MANAGEMENT },
     ],
   },
   {
-    label: "Operativ",
+    label: "Stammdaten",
     items: [
-      { path: "/admin/ops", label: "Operations Center", icon: LayoutDashboard, allowedRoles: OPS_STAFF },
-      { path: "/admin/departures", label: "Abfahrten", icon: Calendar, allowedRoles: ALL_STAFF },
       { path: "/admin/routes", label: "Routen", icon: Route, allowedRoles: MANAGEMENT },
       { path: "/admin/stops", label: "Haltestellen", icon: MapPin, allowedRoles: MANAGEMENT },
-      { path: "/admin/buses", label: "Busse", icon: Bus, allowedRoles: MANAGEMENT },
+      { path: "/admin/buses", label: "Fahrzeuge", icon: Truck, allowedRoles: MANAGEMENT },
     ],
   },
   {
-    label: "Verwaltung",
+    label: "CRM",
     items: [
-      { path: "/admin/customers", label: "Kunden (CRM)", icon: UserCheck, allowedRoles: BOOKING_STAFF },
-      { path: "/admin/finances", label: "Finanzen", icon: DollarSign, allowedRoles: MANAGEMENT },
-      { path: "/admin/cost-estimate", label: "Kostenvoranschlag", icon: Calculator, allowedRoles: MANAGEMENT },
-      { path: "/admin/legal", label: "Rechtliches", icon: Shield, allowedRoles: ADMIN_ONLY },
-      { path: "/admin/employees", label: "Mitarbeiter", icon: Users, allowedRoles: ADMIN_ONLY },
+      { path: "/admin/customers", label: "Kunden", icon: UserCheck, allowedRoles: BOOKING_STAFF },
+    ],
+  },
+  {
+    label: "Finanzen",
+    items: [
+      { path: "/admin/finances", label: "Buchhaltung", icon: DollarSign, allowedRoles: MANAGEMENT },
+      { path: "/admin/cost-estimate", label: "Kalkulation", icon: Calculator, allowedRoles: MANAGEMENT },
     ],
   },
   {
     label: "System",
     items: [
+      { path: "/admin/cms", label: "Inhalte", icon: ClipboardList, allowedRoles: MANAGEMENT },
       { path: "/admin/templates", label: "E-Mail Vorlagen", icon: Mail, allowedRoles: MANAGEMENT },
+      { path: "/admin/legal", label: "Rechtliches", icon: Shield, allowedRoles: ADMIN_ONLY },
+      { path: "/admin/employees", label: "Mitarbeiter", icon: Users, allowedRoles: ADMIN_ONLY },
       { path: "/admin/settings", label: "Einstellungen", icon: Settings, allowedRoles: ADMIN_ONLY },
     ],
   },
@@ -94,14 +104,13 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
     setCollapsedSections(prev => ({ ...prev, [label]: !prev[label] }));
   };
 
-  // Filter menu items by role
   const canAccess = (allowedRoles: AppRole[]) => {
     return roles.some(r => allowedRoles.includes(r));
   };
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0f1218] flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-emerald-400" />
       </div>
     );
@@ -109,8 +118,8 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
 
   if (!user || !hasAnyStaffRole) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <Card className="max-w-md w-full mx-4 bg-zinc-900 border-zinc-800">
+      <div className="min-h-screen bg-[#0f1218] flex items-center justify-center">
+        <Card className="max-w-md w-full mx-4 bg-[#1a1f2a] border-[#2a3040]">
           <CardContent className="pt-6 text-center">
             <Shield className="w-16 h-16 mx-auto mb-4 text-zinc-600" />
             <h1 className="text-2xl font-bold mb-2 text-white">Zugang erforderlich</h1>
@@ -124,17 +133,16 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
     );
   }
 
-  // Get role label
   const roleLabel = roles.includes("admin") ? "Admin" :
     roles.includes("office") ? "Office" :
     roles.includes("agent") ? "Agent" :
     roles.includes("driver") ? "Fahrer" : "Staff";
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex">
-      {/* Sidebar */}
-      <aside className="w-52 bg-zinc-900 border-r border-zinc-800 flex flex-col shrink-0 sticky top-0 h-screen overflow-hidden">
-        <div className="p-4 border-b border-zinc-800">
+    <div className="min-h-screen bg-[#0f1218] text-zinc-100 flex">
+      {/* Sidebar - Softer anthracite */}
+      <aside className="w-52 bg-[#151920] border-r border-[#252b38] flex flex-col shrink-0 sticky top-0 h-screen overflow-hidden">
+        <div className="p-4 border-b border-[#252b38]">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
               <Settings className="w-4 h-4 text-white" />
@@ -148,7 +156,6 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
 
         <nav className="flex-1 p-2 overflow-y-auto">
           {menuSections.map((section) => {
-            // Filter items by role
             const visibleItems = section.items.filter(item => canAccess(item.allowedRoles));
             if (visibleItems.length === 0) return null;
 
@@ -171,8 +178,8 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
                       className={cn(
                         "w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-sm transition-colors mb-0.5",
                         isActive
-                          ? "bg-emerald-600/20 text-emerald-400"
-                          : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                          ? "bg-emerald-600/15 text-emerald-400 border-l-2 border-emerald-500"
+                          : "text-zinc-400 hover:bg-[#1e2430] hover:text-zinc-200"
                       )}
                     >
                       <item.icon className="w-3.5 h-3.5" />
@@ -185,12 +192,12 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
           })}
         </nav>
 
-        <div className="p-3 border-t border-zinc-800">
+        <div className="p-3 border-t border-[#252b38]">
           <div className="text-[10px] text-zinc-500 mb-1.5 truncate">{user?.email}</div>
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-start text-zinc-400 hover:text-white hover:bg-zinc-800 h-7 text-xs"
+            className="w-full justify-start text-zinc-400 hover:text-white hover:bg-[#1e2430] h-7 text-xs"
             onClick={() => signOut()}
           >
             <LogOut className="w-3 h-3 mr-1.5" />
@@ -204,7 +211,7 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
         <div className="p-4 lg:p-6 max-w-[1800px]">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-2xl font-bold text-white">{title}</h2>
+              <h2 className="text-xl font-semibold text-white">{title}</h2>
               {subtitle && <p className="text-zinc-500 text-sm">{subtitle}</p>}
             </div>
             {actions}

@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   Route, Bus, Calendar, Plus, RefreshCw, FileText, Users, 
-  AlertCircle, Clock, Euro, CheckCircle, XCircle, TrendingUp,
-  ChevronRight, Filter, Download, ArrowUpRight, ArrowDownRight
+  AlertCircle, Clock, Euro, CheckCircle, TrendingUp,
+  ChevronRight, ArrowUpRight, ArrowDownRight
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { de } from "date-fns/locale";
