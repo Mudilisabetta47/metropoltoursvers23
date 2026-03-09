@@ -61,7 +61,7 @@ const AdminInquiryDetail = () => {
   const { inquiryId } = useParams<{ inquiryId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, isAdmin } = useAuth();
+  useAuth();
 
   const [inquiry, setInquiry] = useState<Inquiry | null>(null);
   const [isLoading, setIsLoading] = useState(true);
