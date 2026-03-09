@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, FileText, Bus, Users, DollarSign, Shield,
   UserCheck, Settings, LogOut, Map, Mail, Calendar, Route,
-  MapPin, ChevronDown
+  MapPin, ChevronDown, Calculator
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -70,6 +70,7 @@ const menuSections: MenuSection[] = [
     items: [
       { path: "/admin/customers", label: "Kunden (CRM)", icon: UserCheck, allowedRoles: BOOKING_STAFF },
       { path: "/admin/finances", label: "Finanzen", icon: DollarSign, allowedRoles: MANAGEMENT },
+      { path: "/admin/cost-estimate", label: "Kostenvoranschlag", icon: Calculator, allowedRoles: MANAGEMENT },
       { path: "/admin/legal", label: "Rechtliches", icon: Shield, allowedRoles: ADMIN_ONLY },
       { path: "/admin/employees", label: "Mitarbeiter", icon: Users, allowedRoles: ADMIN_ONLY },
     ],
