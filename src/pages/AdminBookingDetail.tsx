@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import {
   CheckCircle2, XCircle, Mail, FileText, RefreshCw,
   Loader2, Users, CreditCard, FileCheck, MessageSquare,
-  History, Send, Plus, Eye, Shield, AlertTriangle, ArrowLeftRight, RotateCcw
+  History, Send, Plus, Eye, Shield, AlertTriangle, ArrowLeftRight, RotateCcw,
+  Phone, Globe, Tag, Clock, User, Clipboard, MapPin, Luggage, CheckSquare
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -23,79 +24,72 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import AutomationPanel from "@/components/admin/AutomationPanel";
+import { cn } from "@/lib/utils";
 
 interface TourBooking {
-  id: string;
-  booking_number: string;
-  contact_first_name: string;
-  contact_last_name: string;
-  contact_email: string;
-  contact_phone: string | null;
-  participants: number;
-  passenger_details: any[];
-  base_price: number;
-  pickup_surcharge: number;
-  total_price: number;
-  discount_amount: number | null;
-  discount_code: string | null;
-  status: string;
-  booking_type: string;
-  payment_method: string | null;
-  payment_reference: string | null;
-  paid_at: string | null;
-  created_at: string;
-  updated_at: string;
-  customer_notes: string | null;
-  internal_notes: string | null;
-  tour_id: string;
-  tour_date_id: string;
-  tariff_id: string;
-  pickup_stop_id: string | null;
-  luggage_addons: any;
-  stripe_session_id: string | null;
-  stripe_payment_intent_id: string | null;
+  id: string; booking_number: string; contact_first_name: string; contact_last_name: string;
+  contact_email: string; contact_phone: string | null; participants: number; passenger_details: any[];
+  base_price: number; pickup_surcharge: number; total_price: number; discount_amount: number | null;
+  discount_code: string | null; status: string; booking_type: string; payment_method: string | null;
+  payment_reference: string | null; paid_at: string | null; created_at: string; updated_at: string;
+  customer_notes: string | null; internal_notes: string | null; tour_id: string; tour_date_id: string;
+  tariff_id: string; pickup_stop_id: string | null; luggage_addons: any;
+  stripe_session_id: string | null; stripe_payment_intent_id: string | null;
 }
+interface PaymentEntry { id: string; amount: number; method: string; reference: string | null; note: string | null; recorded_by: string | null; recorded_at: string; }
+interface AuditEntry { id: string; action: string; field_name: string | null; old_value: string | null; new_value: string | null; performed_by_email: string | null; created_at: string; }
+interface DocumentSend { id: string; document_type: string; recipient_email: string; status: string; error_message: string | null; created_at: string; }
+interface InsuranceData { id: string; provider: string | null; product: string | null; policy_number: string | null; policy_status: string; price: number | null; is_active: boolean; notes: string | null; policy_pdf_url: string | null; }
 
-interface PaymentEntry {
-  id: string;
-  amount: number;
-  method: string;
-  reference: string | null;
-  note: string | null;
-  recorded_by: string | null;
-  recorded_at: string;
-}
+/* ─── Helpers ─── */
+const fmt = (n: number) => n.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+const Row = ({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) => (
+  <div className={cn("flex justify-between py-1.5 border-b border-[#1e2430] last:border-0", className)}>
+    <span className="text-xs text-zinc-500">{label}</span>
+    <span className="text-xs text-zinc-200 text-right max-w-[60%]">{children}</span>
+  </div>
+);
 
-interface AuditEntry {
-  id: string;
-  action: string;
-  field_name: string | null;
-  old_value: string | null;
-  new_value: string | null;
-  performed_by_email: string | null;
-  created_at: string;
-}
+const StatusBadge = ({ status }: { status: string }) => {
+  const map: Record<string, { label: string; cls: string }> = {
+    confirmed: { label: "Bestätigt", cls: "bg-emerald-500/20 text-emerald-300 border border-emerald-600/40" },
+    pending: { label: "Offen", cls: "bg-amber-500/20 text-amber-300 border border-amber-600/40" },
+    cancelled: { label: "Storniert", cls: "bg-red-500/20 text-red-300 border border-red-600/40" },
+    draft: { label: "Entwurf", cls: "bg-zinc-500/20 text-zinc-300 border border-zinc-600/40" },
+    processing: { label: "In Bearbeitung", cls: "bg-blue-500/20 text-blue-300 border border-blue-600/40" },
+  };
+  const m = map[status] || { label: status, cls: "bg-zinc-600/20 text-zinc-300 border border-zinc-600/40" };
+  return <Badge className={cn("text-[10px] px-2 py-0.5 font-medium", m.cls)}>{m.label}</Badge>;
+};
 
-interface DocumentSend {
-  id: string;
-  document_type: string;
-  recipient_email: string;
-  status: string;
-  error_message: string | null;
-  created_at: string;
-}
+const PayBadge = ({ status }: { status: string }) => {
+  const map: Record<string, { label: string; cls: string }> = {
+    bezahlt: { label: "Bezahlt", cls: "bg-emerald-500/20 text-emerald-300 border border-emerald-600/40" },
+    teil: { label: "Teilzahlung", cls: "bg-amber-500/20 text-amber-300 border border-amber-600/40" },
+    offen: { label: "Offen", cls: "bg-red-500/20 text-red-300 border border-red-600/40" },
+    erstattet: { label: "Erstattet", cls: "bg-orange-500/20 text-orange-300 border border-orange-600/40" },
+  };
+  const m = map[status] || { label: status, cls: "bg-zinc-600/20 text-zinc-300 border border-zinc-600/40" };
+  return <Badge className={cn("text-[10px] px-2 py-0.5 font-medium", m.cls)}>{m.label}</Badge>;
+};
 
-interface InsuranceData {
-  id: string;
-  provider: string | null;
-  product: string | null;
-  policy_number: string | null;
-  policy_status: string;
-  price: number | null;
-  is_active: boolean;
-  notes: string | null;
-  policy_pdf_url: string | null;
-}
+const ConsentBadge = ({ accepted, label }: { accepted: boolean; label: string }) => (
+  <span className={cn("inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border", accepted ? "bg-emerald-500/10 text-emerald-400 border-emerald-600/30" : "bg-zinc-700/30 text-zinc-500 border-zinc-600/30")}>
+    {accepted ? <CheckCircle2 className="w-2.5 h-2.5" /> : <XCircle className="w-2.5 h-2.5" />} {label}
+  </span>
+);
+
+const SectionCard = ({ title, actions, children }: { title: string; actions?: React.ReactNode; children: React.ReactNode }) => (
+  <Card className="bg-[#151920] border-[#252b38]">
+    <CardHeader className="pb-2">
+      <div className="flex items-center justify-between">
+        <CardTitle className="text-xs text-zinc-400 uppercase tracking-wider">{title}</CardTitle>
+        {actions}
+      </div>
+    </CardHeader>
+    <CardContent>{children}</CardContent>
+  </Card>
+);
 
 const AdminBookingDetail = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
@@ -114,25 +108,17 @@ const AdminBookingDetail = () => {
   const [insurance, setInsurance] = useState<InsuranceData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
+  const [internalNotes, setInternalNotes] = useState("");
+  const [internalTags, setInternalTags] = useState<string[]>([]);
 
   const [paymentModal, setPaymentModal] = useState(false);
-  const [paymentForm, setPaymentForm] = useState({
-    amount: 0, method: "bank_transfer", reference: "", note: "", sendEmail: true,
-  });
-
-  // Cancellation modal state
+  const [paymentForm, setPaymentForm] = useState({ amount: 0, method: "bank_transfer", reference: "", note: "", sendEmail: true });
   const [cancelModal, setCancelModal] = useState(false);
-  const [cancelForm, setCancelForm] = useState({
-    reason: "customer_request", customReason: "", applyFee: true, feePercent: 20,
-  });
-
-  // Refund modal state
+  const [cancelForm, setCancelForm] = useState({ reason: "customer_request", customReason: "", applyFee: true, feePercent: 20 });
   const [refundModal, setRefundModal] = useState(false);
   const [refundForm, setRefundForm] = useState({ amount: 0, note: "" });
 
-  useEffect(() => {
-    if (!authLoading && user && isAdmin && bookingId) loadBooking();
-  }, [bookingId, user, isAdmin, authLoading]);
+  useEffect(() => { if (!authLoading && user && isAdmin && bookingId) loadBooking(); }, [bookingId, user, isAdmin, authLoading]);
 
   const loadBooking = async () => {
     if (!bookingId) return;
@@ -141,6 +127,11 @@ const AdminBookingDetail = () => {
       const { data: b, error } = await supabase.from("tour_bookings").select("*").eq("id", bookingId).single();
       if (error) throw error;
       setBooking(b as TourBooking);
+      setInternalNotes(b.internal_notes || "");
+
+      // Parse tags from internal_notes
+      const tagMatch = (b.internal_notes || "").match(/\[TAGS:(.*?)\]/);
+      if (tagMatch) setInternalTags(tagMatch[1].split(",").map((t: string) => t.trim()).filter(Boolean));
 
       const [tourRes, dateRes, tariffRes, pickupRes, paymentsRes, auditRes, docsRes, insuranceRes] = await Promise.all([
         supabase.from("package_tours").select("destination, location, country, duration_days, image_url").eq("id", b.tour_id).single(),
@@ -152,32 +143,17 @@ const AdminBookingDetail = () => {
         supabase.from("tour_document_sends").select("*").eq("booking_id", bookingId).order("created_at", { ascending: false }),
         supabase.from("tour_booking_insurance").select("*").eq("booking_id", bookingId).maybeSingle(),
       ]);
-
-      setTourInfo(tourRes.data);
-      setDateInfo(dateRes.data);
-      setTariffInfo(tariffRes.data);
-      setPickupInfo(pickupRes.data);
-      setPayments((paymentsRes.data || []) as PaymentEntry[]);
-      setAuditLog((auditRes.data || []) as AuditEntry[]);
-      setDocSends((docsRes.data || []) as DocumentSend[]);
-      setInsurance(insuranceRes.data as InsuranceData | null);
-
+      setTourInfo(tourRes.data); setDateInfo(dateRes.data); setTariffInfo(tariffRes.data); setPickupInfo(pickupRes.data);
+      setPayments((paymentsRes.data || []) as PaymentEntry[]); setAuditLog((auditRes.data || []) as AuditEntry[]);
+      setDocSends((docsRes.data || []) as DocumentSend[]); setInsurance(insuranceRes.data as InsuranceData | null);
       const paid = (paymentsRes.data || []).reduce((s: number, p: any) => s + Number(p.amount), 0);
       setPaymentForm(f => ({ ...f, amount: Math.max(0, b.total_price - paid) }));
-    } catch (err) {
-      console.error(err);
-      toast({ title: "Buchung nicht gefunden", variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
+    } catch (err) { console.error(err); toast({ title: "Buchung nicht gefunden", variant: "destructive" }); }
+    finally { setIsLoading(false); }
   };
 
   const logAudit = async (action: string, fieldName?: string, oldVal?: string, newVal?: string) => {
-    await supabase.from("tour_booking_audit").insert({
-      booking_id: bookingId!, action, field_name: fieldName || null,
-      old_value: oldVal || null, new_value: newVal || null,
-      performed_by: user?.id, performed_by_email: user?.email || null,
-    });
+    await supabase.from("tour_booking_audit").insert({ booking_id: bookingId!, action, field_name: fieldName || null, old_value: oldVal || null, new_value: newVal || null, performed_by: user?.id, performed_by_email: user?.email || null });
   };
 
   const updateBookingStatus = async (newStatus: string) => {
@@ -190,20 +166,15 @@ const AdminBookingDetail = () => {
       const { error } = await supabase.from("tour_bookings").update(updateData).eq("id", booking.id);
       if (error) throw error;
       await logAudit("STATUS_CHANGE", "status", oldStatus, newStatus);
-      toast({ title: `Status auf "${newStatus}" geändert` });
-      loadBooking();
-    } catch { toast({ title: "Fehler", variant: "destructive" }); }
-    finally { setProcessing(null); }
+      toast({ title: `Status auf „${newStatus}" geändert` }); loadBooking();
+    } catch { toast({ title: "Fehler", variant: "destructive" }); } finally { setProcessing(null); }
   };
 
   const handlePaymentReceived = async () => {
     if (!booking) return;
     setProcessing("payment");
     try {
-      await supabase.from("tour_payment_entries").insert({
-        booking_id: booking.id, amount: paymentForm.amount, method: paymentForm.method,
-        reference: paymentForm.reference || null, note: paymentForm.note || null, recorded_by: user?.id,
-      });
+      await supabase.from("tour_payment_entries").insert({ booking_id: booking.id, amount: paymentForm.amount, method: paymentForm.method, reference: paymentForm.reference || null, note: paymentForm.note || null, recorded_by: user?.id });
       const totalPaidNow = payments.reduce((s, p) => s + Number(p.amount), 0) + paymentForm.amount;
       const isFullyPaid = totalPaidNow >= booking.total_price;
       const updateData: any = { payment_method: paymentForm.method, payment_reference: paymentForm.reference || booking.payment_reference };
@@ -211,16 +182,10 @@ const AdminBookingDetail = () => {
       await supabase.from("tour_bookings").update(updateData).eq("id", booking.id);
       await logAudit("PAYMENT_RECEIVED", "amount", null, `${paymentForm.amount}€ via ${paymentForm.method}`);
       if (paymentForm.sendEmail && isFullyPaid) {
-        try {
-          await supabase.functions.invoke("send-booking-confirmation", { body: { bookingId: booking.id } });
-          await supabase.from("tour_document_sends").insert({ booking_id: booking.id, document_type: "payment_confirmation", recipient_email: booking.contact_email, status: "sent", sent_by: user?.id });
-          toast({ title: "✅ Zahlung erfasst & Bestätigung gesendet" });
-        } catch { toast({ title: "✅ Zahlung erfasst (Mail fehlgeschlagen)" }); }
+        try { await supabase.functions.invoke("send-booking-confirmation", { body: { bookingId: booking.id } }); await supabase.from("tour_document_sends").insert({ booking_id: booking.id, document_type: "payment_confirmation", recipient_email: booking.contact_email, status: "sent", sent_by: user?.id }); toast({ title: "✅ Zahlung erfasst & Bestätigung gesendet" }); } catch { toast({ title: "✅ Zahlung erfasst (Mail fehlgeschlagen)" }); }
       } else { toast({ title: "✅ Zahlung erfasst" }); }
-      setPaymentModal(false);
-      loadBooking();
-    } catch (err) { console.error(err); toast({ title: "Fehler", variant: "destructive" }); }
-    finally { setProcessing(null); }
+      setPaymentModal(false); loadBooking();
+    } catch (err) { console.error(err); toast({ title: "Fehler", variant: "destructive" }); } finally { setProcessing(null); }
   };
 
   const handleCancellation = async () => {
@@ -229,48 +194,22 @@ const AdminBookingDetail = () => {
     try {
       const reason = cancelForm.reason === "other" ? cancelForm.customReason : cancelForm.reason;
       const feeAmount = cancelForm.applyFee ? (booking.total_price * cancelForm.feePercent / 100) : 0;
-      
-      await supabase.from("tour_bookings").update({
-        status: "cancelled",
-        internal_notes: `${booking.internal_notes || ""}\n[STORNO] Grund: ${reason}${feeAmount > 0 ? ` | Gebühr: ${feeAmount.toFixed(2)}€` : ""}`.trim(),
-      }).eq("id", booking.id);
-      
+      await supabase.from("tour_bookings").update({ status: "cancelled", internal_notes: `${booking.internal_notes || ""}\n[STORNO] Grund: ${reason}${feeAmount > 0 ? ` | Gebühr: ${feeAmount.toFixed(2)}€` : ""}`.trim() }).eq("id", booking.id);
       await logAudit("CANCELLATION", "status", booking.status, `cancelled (${reason}, Gebühr: ${feeAmount.toFixed(2)}€)`);
-      
-      // If payments exist and fee < total paid, create refund record
       const totalPaidNow = payments.reduce((s, p) => s + Number(p.amount), 0);
-      if (totalPaidNow > 0) {
-        const refundAmount = Math.max(0, totalPaidNow - feeAmount);
-        if (refundAmount > 0) {
-          await supabase.from("tour_payment_entries").insert({
-            booking_id: booking.id, amount: -refundAmount, method: "refund",
-            note: `Storno-Erstattung (Grund: ${reason})`, recorded_by: user?.id,
-          });
-          await logAudit("REFUND_CREATED", "amount", null, `-${refundAmount.toFixed(2)}€`);
-        }
-      }
-      
-      toast({ title: "✅ Buchung storniert" });
-      setCancelModal(false);
-      loadBooking();
-    } catch { toast({ title: "Fehler", variant: "destructive" }); }
-    finally { setProcessing(null); }
+      if (totalPaidNow > 0) { const refundAmount = Math.max(0, totalPaidNow - feeAmount); if (refundAmount > 0) { await supabase.from("tour_payment_entries").insert({ booking_id: booking.id, amount: -refundAmount, method: "refund", note: `Storno-Erstattung (Grund: ${reason})`, recorded_by: user?.id }); await logAudit("REFUND_CREATED", "amount", null, `-${refundAmount.toFixed(2)}€`); } }
+      toast({ title: "✅ Buchung storniert" }); setCancelModal(false); loadBooking();
+    } catch { toast({ title: "Fehler", variant: "destructive" }); } finally { setProcessing(null); }
   };
 
   const handleRefund = async () => {
     if (!booking) return;
     setProcessing("refund");
     try {
-      await supabase.from("tour_payment_entries").insert({
-        booking_id: booking.id, amount: -refundForm.amount, method: "refund",
-        note: refundForm.note || "Manuelle Erstattung", recorded_by: user?.id,
-      });
+      await supabase.from("tour_payment_entries").insert({ booking_id: booking.id, amount: -refundForm.amount, method: "refund", note: refundForm.note || "Manuelle Erstattung", recorded_by: user?.id });
       await logAudit("REFUND_CREATED", "amount", null, `-${refundForm.amount.toFixed(2)}€ (${refundForm.note})`);
-      toast({ title: "✅ Erstattung erfasst" });
-      setRefundModal(false);
-      loadBooking();
-    } catch { toast({ title: "Fehler", variant: "destructive" }); }
-    finally { setProcessing(null); }
+      toast({ title: "✅ Erstattung erfasst" }); setRefundModal(false); loadBooking();
+    } catch { toast({ title: "Fehler", variant: "destructive" }); } finally { setProcessing(null); }
   };
 
   const sendEmail = async (type: string) => {
@@ -280,37 +219,33 @@ const AdminBookingDetail = () => {
       await supabase.functions.invoke("send-booking-confirmation", { body: { bookingId: booking.id } });
       await supabase.from("tour_document_sends").insert({ booking_id: booking.id, document_type: type, recipient_email: booking.contact_email, status: "sent", sent_by: user?.id });
       await logAudit("EMAIL_SENT", "document_type", null, type);
-      toast({ title: "✅ E-Mail gesendet" });
-      loadBooking();
-    } catch { toast({ title: "Fehler beim Senden", variant: "destructive" }); }
-    finally { setProcessing(null); }
+      toast({ title: "✅ E-Mail gesendet" }); loadBooking();
+    } catch { toast({ title: "Fehler beim Senden", variant: "destructive" }); } finally { setProcessing(null); }
   };
 
   const regenerateDocuments = async () => {
     if (!booking) return;
     setProcessing("regen");
-    try {
-      await supabase.functions.invoke("generate-tour-documents", { body: { bookingId: booking.id, documentType: "all" } });
-      await logAudit("DOCUMENTS_REGENERATED");
-      toast({ title: "✅ Dokumente neu generiert" });
-    } catch { toast({ title: "Fehler", variant: "destructive" }); }
-    finally { setProcessing(null); }
+    try { await supabase.functions.invoke("generate-tour-documents", { body: { bookingId: booking.id, documentType: "all" } }); await logAudit("DOCUMENTS_REGENERATED"); toast({ title: "✅ Dokumente neu generiert" }); } catch { toast({ title: "Fehler", variant: "destructive" }); } finally { setProcessing(null); }
   };
 
   const saveInsurance = async (data: Partial<InsuranceData>) => {
     if (!booking) return;
     setProcessing("insurance");
     try {
-      if (insurance) {
-        await supabase.from("tour_booking_insurance").update(data).eq("id", insurance.id);
-      } else {
-        await supabase.from("tour_booking_insurance").insert({ booking_id: booking.id, ...data });
-      }
+      if (insurance) { await supabase.from("tour_booking_insurance").update(data).eq("id", insurance.id); } else { await supabase.from("tour_booking_insurance").insert({ booking_id: booking.id, ...data }); }
       await logAudit("INSURANCE_UPDATED", "policy_status", insurance?.policy_status, data.policy_status);
-      toast({ title: "✅ Versicherung aktualisiert" });
-      loadBooking();
+      toast({ title: "✅ Versicherung aktualisiert" }); loadBooking();
+    } catch { toast({ title: "Fehler", variant: "destructive" }); } finally { setProcessing(null); }
+  };
+
+  const saveInternalNotes = async () => {
+    if (!booking) return;
+    try {
+      await supabase.from("tour_bookings").update({ internal_notes: internalNotes }).eq("id", booking.id);
+      await logAudit("NOTES_UPDATED", "internal_notes");
+      toast({ title: "✅ Notizen gespeichert" });
     } catch { toast({ title: "Fehler", variant: "destructive" }); }
-    finally { setProcessing(null); }
   };
 
   if (authLoading || isLoading || !booking) {
@@ -328,468 +263,561 @@ const AdminBookingDetail = () => {
   const passengers: any[] = Array.isArray(booking.passenger_details) ? booking.passenger_details : [];
   const missingPassengerData = passengers.length < booking.participants || passengers.some((p: any) => !p.firstName && !p.first_name);
   const hasInsurance = insurance && insurance.is_active;
+  const daysSinceBooking = Math.floor((Date.now() - new Date(booking.created_at).getTime()) / 86400000);
+
+  // Parse consent from customer_notes
+  const parseConsent = () => {
+    try {
+      if (!booking.customer_notes) return { agb: false, datenschutz: false, reiseinfos: false, timestamp: null };
+      const parsed = JSON.parse(booking.customer_notes);
+      return { agb: !!parsed.agb_accepted, datenschutz: !!parsed.privacy_accepted || !!parsed.datenschutz, reiseinfos: !!parsed.travel_info_accepted || !!parsed.reiseinfos, timestamp: parsed.timestamp || parsed.accepted_at || null };
+    } catch {
+      return { agb: false, datenschutz: false, reiseinfos: false, timestamp: null, raw: booking.customer_notes };
+    }
+  };
+  const consent = parseConsent();
 
   const warnings: { text: string; severity: "warning" | "error" }[] = [];
   if (missingPassengerData) warnings.push({ text: "Passagierdaten unvollständig", severity: "warning" });
-  if (!hasInsurance && booking.status !== "cancelled") warnings.push({ text: "Keine Versicherung", severity: "warning" });
-  if (paymentStatus === "offen" && booking.status === "pending") {
-    const daysSinceBooking = Math.floor((Date.now() - new Date(booking.created_at).getTime()) / 86400000);
-    if (daysSinceBooking > 3) warnings.push({ text: `Zahlung seit ${daysSinceBooking} Tagen offen`, severity: "error" });
-  }
+  if (!hasInsurance && booking.status !== "cancelled") warnings.push({ text: "Keine Versicherung hinterlegt", severity: "warning" });
+  if (paymentStatus === "offen" && booking.status === "pending" && daysSinceBooking > 3) warnings.push({ text: `Zahlung seit ${daysSinceBooking} Tagen offen`, severity: "error" });
+  if (docSends.length === 0 && booking.status !== "cancelled") warnings.push({ text: "Noch keine Dokumente versendet", severity: "warning" });
+  if (booking.status === "pending" && daysSinceBooking > 7) warnings.push({ text: "Buchung seit über 7 Tagen unbestätigt", severity: "error" });
 
-  const getStatusColor = (s: string) => {
-    switch (s) { case "confirmed": return "bg-emerald-600"; case "pending": return "bg-amber-600"; case "cancelled": return "bg-red-600"; default: return "bg-zinc-600"; }
-  };
-  const getPaymentStatusColor = (s: string) => {
-    switch (s) { case "bezahlt": return "bg-emerald-600"; case "teil": return "bg-amber-600"; case "offen": return "bg-red-500"; default: return "bg-zinc-600"; }
-  };
+  const bookingSource = booking.stripe_session_id ? "Website (Stripe)" : booking.booking_type === "request" ? "Anfrage" : booking.booking_type === "manual" ? "Manuell" : "Website";
+  const luggageAddons = Array.isArray(booking.luggage_addons) ? booking.luggage_addons : [];
 
   return (
     <AdminLayout
       title={`Buchung ${booking.booking_number}`}
-      subtitle={`${booking.contact_first_name} ${booking.contact_last_name} • ${tourInfo?.destination || ''}`}
+      subtitle={`${booking.contact_first_name} ${booking.contact_last_name} · ${tourInfo?.destination || ""}`}
       actions={<Button variant="ghost" size="sm" onClick={loadBooking} className="text-zinc-400"><RefreshCw className="w-4 h-4" /></Button>}
     >
-      {/* ===== COMMAND CENTER HEADER (fixed look) ===== */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 mb-4 space-y-3">
-        {/* Row 1: Status indicators */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-zinc-500 uppercase tracking-wider">Status</span>
-            <Badge className={getStatusColor(booking.status)}>
-              {booking.status === "confirmed" ? "Bestätigt" : booking.status === "pending" ? "Offen" : booking.status === "cancelled" ? "Storniert" : booking.status}
-            </Badge>
+      {/* ══════ WARNINGS ══════ */}
+      {warnings.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-2">
+          {warnings.map((w, i) => (
+            <div key={i} className={cn("flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium border", w.severity === "error" ? "bg-red-500/10 text-red-400 border-red-600/30" : "bg-amber-500/10 text-amber-400 border-amber-600/30")}>
+              <AlertTriangle className="w-3 h-3" /> {w.text}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ══════ COMMAND CENTER HEADER ══════ */}
+      <div className="bg-[#151920] border border-[#252b38] rounded-lg p-4 mb-4 space-y-3">
+        {/* Row 1: Key status indicators */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Buchung</span>
+            <span className="text-xs font-mono text-emerald-400">{booking.booking_number}</span>
           </div>
-          <Separator orientation="vertical" className="h-5 bg-zinc-700" />
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-zinc-500 uppercase tracking-wider">Zahlung</span>
-            <Badge className={getPaymentStatusColor(paymentStatus)}>
-              {paymentStatus === "bezahlt" ? `✓ ${netPaid.toFixed(2)}€` : paymentStatus === "teil" ? `${netPaid.toFixed(2)}€ / ${booking.total_price.toFixed(2)}€` : `0€ / ${booking.total_price.toFixed(2)}€`}
-            </Badge>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Status</span>
+            <StatusBadge status={booking.status} />
           </div>
-          <Separator orientation="vertical" className="h-5 bg-zinc-700" />
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-zinc-500 uppercase tracking-wider">Check-in</span>
-            <Badge className="bg-zinc-700">0/{booking.participants}</Badge>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Zahlung</span>
+            <PayBadge status={paymentStatus} />
           </div>
-          <Separator orientation="vertical" className="h-5 bg-zinc-700" />
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-zinc-500 uppercase tracking-wider">Dokumente</span>
-            <Badge className={docSends.length > 0 ? "bg-emerald-600" : "bg-zinc-700"}>{docSends.length}x</Badge>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Check-in</span>
+            <Badge className="bg-zinc-700/50 text-zinc-300 text-[10px] border border-zinc-600/40">0/{booking.participants}</Badge>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Dokumente</span>
+            <Badge className={cn("text-[10px] border", docSends.length > 0 ? "bg-emerald-500/20 text-emerald-300 border-emerald-600/40" : "bg-zinc-700/50 text-zinc-400 border-zinc-600/40")}>{docSends.length}x versendet</Badge>
           </div>
           {totalRefunded > 0 && (
-            <>
-              <Separator orientation="vertical" className="h-5 bg-zinc-700" />
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-zinc-500 uppercase tracking-wider">Erstattung</span>
-                <Badge className="bg-orange-600">{totalRefunded.toFixed(2)}€</Badge>
-              </div>
-            </>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Erstattung</span>
+              <Badge className="bg-orange-500/20 text-orange-300 text-[10px] border border-orange-600/40">{fmt(totalRefunded)}</Badge>
+            </div>
           )}
         </div>
 
-        {/* Warnings */}
-        {warnings.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {warnings.map((w, i) => (
-              <div key={i} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${w.severity === "error" ? "bg-red-500/20 text-red-400" : "bg-amber-500/20 text-amber-400"}`}>
-                <AlertTriangle className="w-3 h-3" /> {w.text}
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Row 2: Meta info */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-zinc-500">
+          <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Erstellt: {format(new Date(booking.created_at), "dd.MM.yyyy HH:mm", { locale: de })} ({formatDistanceToNow(new Date(booking.created_at), { locale: de, addSuffix: true })})</span>
+          <span className="flex items-center gap-1"><Globe className="w-3 h-3" /> Quelle: {bookingSource}</span>
+          <span className="flex items-center gap-1"><User className="w-3 h-3" /> Typ: {booking.booking_type === "request" ? "Anfrage" : "Direktbuchung"}</span>
+          {booking.paid_at && <span className="flex items-center gap-1"><CreditCard className="w-3 h-3" /> Bezahlt: {format(new Date(booking.paid_at), "dd.MM.yyyy HH:mm", { locale: de })}</span>}
+          <span className="flex items-center gap-1"><Tag className="w-3 h-3" /> Tarif: {tariffInfo?.name || "–"}</span>
+        </div>
 
-        {/* Quick Action Buttons */}
-        <div className="flex flex-wrap gap-2">
+        {/* Row 3: Quick Actions */}
+        <div className="flex flex-wrap gap-2 pt-1">
           {booking.status === "pending" && (
-            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setPaymentModal(true)} disabled={!!processing}>
-              <CreditCard className="w-3 h-3 mr-1" /> Zahlung erhalten
-            </Button>
+            <>
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-7 text-xs" onClick={() => setPaymentModal(true)} disabled={!!processing}><CreditCard className="w-3 h-3 mr-1" /> Zahlung erfassen</Button>
+              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 h-7 text-xs" onClick={() => updateBookingStatus("confirmed")} disabled={!!processing}><CheckCircle2 className="w-3 h-3 mr-1" /> Bestätigen</Button>
+            </>
           )}
-          {booking.status === "pending" && (
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => updateBookingStatus("confirmed")} disabled={!!processing}>
-              <CheckCircle2 className="w-3 h-3 mr-1" /> Bestätigen
-            </Button>
-          )}
-          <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300" onClick={() => sendEmail("booking_confirmation")} disabled={!!processing}>
-            <Mail className="w-3 h-3 mr-1" /> PDF senden
-          </Button>
-          <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300" onClick={regenerateDocuments} disabled={!!processing}>
-            <FileText className="w-3 h-3 mr-1" /> PDF neu
-          </Button>
+          <Button size="sm" variant="outline" className="border-[#2a3040] text-zinc-300 h-7 text-xs" onClick={() => sendEmail("booking_confirmation")} disabled={!!processing}><Mail className="w-3 h-3 mr-1" /> PDF senden</Button>
+          <Button size="sm" variant="outline" className="border-[#2a3040] text-zinc-300 h-7 text-xs" onClick={regenerateDocuments} disabled={!!processing}><FileText className="w-3 h-3 mr-1" /> PDF neu</Button>
           {booking.status !== "cancelled" && (
             <>
-              <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300" disabled={!!processing}>
-                <ArrowLeftRight className="w-3 h-3 mr-1" /> Umbuchen
-              </Button>
-              <Button size="sm" variant="outline" className="border-orange-800 text-orange-400 hover:bg-orange-950" onClick={() => {
-                setRefundForm({ amount: netPaid, note: "" });
-                setRefundModal(true);
-              }} disabled={!!processing || netPaid <= 0}>
-                <RotateCcw className="w-3 h-3 mr-1" /> Erstattung
-              </Button>
-              <Button size="sm" variant="destructive" onClick={() => {
-                setCancelForm({ reason: "customer_request", customReason: "", applyFee: true, feePercent: tariffInfo?.cancellation_fee_percent || 20 });
-                setCancelModal(true);
-              }} disabled={!!processing}>
-                <XCircle className="w-3 h-3 mr-1" /> Stornieren
-              </Button>
+              <Button size="sm" variant="outline" className="border-[#2a3040] text-zinc-300 h-7 text-xs" disabled={!!processing}><ArrowLeftRight className="w-3 h-3 mr-1" /> Umbuchen</Button>
+              <Button size="sm" variant="outline" className="border-orange-800/50 text-orange-400 hover:bg-orange-950/30 h-7 text-xs" onClick={() => { setRefundForm({ amount: netPaid, note: "" }); setRefundModal(true); }} disabled={!!processing || netPaid <= 0}><RotateCcw className="w-3 h-3 mr-1" /> Erstattung</Button>
+              <Button size="sm" variant="destructive" className="h-7 text-xs" onClick={() => { setCancelForm({ reason: "customer_request", customReason: "", applyFee: true, feePercent: tariffInfo?.cancellation_fee_percent || 20 }); setCancelModal(true); }} disabled={!!processing}><XCircle className="w-3 h-3 mr-1" /> Stornieren</Button>
             </>
           )}
         </div>
       </div>
 
-      {/* ===== TABS ===== */}
+      {/* ══════ TABS ══════ */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="bg-zinc-900 border border-zinc-800 flex-wrap h-auto">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"><Eye className="w-3 h-3 mr-1" /> Übersicht</TabsTrigger>
-          <TabsTrigger value="guests" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"><Users className="w-3 h-3 mr-1" /> Gäste</TabsTrigger>
-          <TabsTrigger value="payments" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"><CreditCard className="w-3 h-3 mr-1" /> Zahlungen</TabsTrigger>
-          <TabsTrigger value="insurance" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"><Shield className="w-3 h-3 mr-1" /> Versicherung</TabsTrigger>
-          <TabsTrigger value="documents" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"><FileCheck className="w-3 h-3 mr-1" /> Dokumente</TabsTrigger>
-          <TabsTrigger value="communication" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"><MessageSquare className="w-3 h-3 mr-1" /> Kommunikation</TabsTrigger>
-          <TabsTrigger value="automation" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"><Mail className="w-3 h-3 mr-1" /> Automationen</TabsTrigger>
-          <TabsTrigger value="audit" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"><History className="w-3 h-3 mr-1" /> Änderungen</TabsTrigger>
+        <TabsList className="bg-[#151920] border border-[#252b38] flex-wrap h-auto gap-0.5 p-1">
+          {[
+            { value: "overview", icon: Eye, label: "Übersicht" },
+            { value: "guests", icon: Users, label: "Reisende" },
+            { value: "payments", icon: CreditCard, label: "Zahlungen" },
+            { value: "documents", icon: FileCheck, label: "Dokumente" },
+            { value: "communication", icon: MessageSquare, label: "Kommunikation" },
+            { value: "checkin", icon: CheckSquare, label: "Check-in" },
+            { value: "automation", icon: Mail, label: "Automationen" },
+            { value: "audit", icon: History, label: "Änderungen" },
+            { value: "internal", icon: Clipboard, label: "Intern" },
+          ].map(tab => (
+            <TabsTrigger key={tab.value} value={tab.value} className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white text-xs gap-1">
+              <tab.icon className="w-3 h-3" /> {tab.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
-        {/* OVERVIEW */}
+        {/* ─── OVERVIEW ─── */}
         <TabsContent value="overview">
-          <div className="grid md:grid-cols-2 gap-4">
-            <Card className="bg-zinc-900 border-zinc-800">
-              <CardHeader><CardTitle className="text-sm text-zinc-400">Kontaktdaten</CardTitle></CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-zinc-500">Name</span><span className="text-white font-medium">{booking.contact_first_name} {booking.contact_last_name}</span></div>
-                <div className="flex justify-between"><span className="text-zinc-500">E-Mail</span><span className="text-white">{booking.contact_email}</span></div>
-                <div className="flex justify-between"><span className="text-zinc-500">Telefon</span><span className="text-white">{booking.contact_phone || "–"}</span></div>
-              </CardContent>
-            </Card>
-            <Card className="bg-zinc-900 border-zinc-800">
-              <CardHeader><CardTitle className="text-sm text-zinc-400">Reisedetails</CardTitle></CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-zinc-500">Reiseziel</span><span className="text-white font-medium">{tourInfo?.destination}</span></div>
-                <div className="flex justify-between"><span className="text-zinc-500">Ort</span><span className="text-white">{tourInfo?.location}, {tourInfo?.country}</span></div>
-                <div className="flex justify-between"><span className="text-zinc-500">Hinreise</span><span className="text-white">{dateInfo ? format(new Date(dateInfo.departure_date), "dd.MM.yyyy") : "–"}</span></div>
-                <div className="flex justify-between"><span className="text-zinc-500">Rückreise</span><span className="text-white">{dateInfo ? format(new Date(dateInfo.return_date), "dd.MM.yyyy") : "–"}</span></div>
-                <div className="flex justify-between"><span className="text-zinc-500">Tarif</span><span className="text-white">{tariffInfo?.name}</span></div>
-                <div className="flex justify-between"><span className="text-zinc-500">Teilnehmer</span><span className="text-white">{booking.participants}</span></div>
-                {pickupInfo && <div className="flex justify-between"><span className="text-zinc-500">Zustieg</span><span className="text-white">{pickupInfo.city} ({pickupInfo.departure_time?.slice(0,5)} Uhr)</span></div>}
-              </CardContent>
-            </Card>
-            <Card className="bg-zinc-900 border-zinc-800">
-              <CardHeader><CardTitle className="text-sm text-zinc-400">Preisberechnung</CardTitle></CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-zinc-500">Grundpreis</span><span className="text-white">{booking.base_price.toFixed(2)}€</span></div>
-                {booking.pickup_surcharge > 0 && <div className="flex justify-between"><span className="text-zinc-500">Zustiegs-Aufpreis</span><span className="text-white">+{booking.pickup_surcharge.toFixed(2)}€</span></div>}
-                {booking.discount_amount && booking.discount_amount > 0 && <div className="flex justify-between"><span className="text-zinc-500">Rabatt ({booking.discount_code})</span><span className="text-emerald-400">-{booking.discount_amount.toFixed(2)}€</span></div>}
-                <Separator className="bg-zinc-700" />
-                <div className="flex justify-between font-bold"><span className="text-zinc-300">Gesamt</span><span className="text-emerald-400 text-lg">{booking.total_price.toFixed(2)}€</span></div>
-                <div className="flex justify-between"><span className="text-zinc-500">Bezahlt</span><span className={netPaid >= booking.total_price ? "text-emerald-400" : "text-amber-400"}>{netPaid.toFixed(2)}€</span></div>
-                {openAmount > 0 && <div className="flex justify-between"><span className="text-zinc-500">Offen</span><span className="text-red-400">{openAmount.toFixed(2)}€</span></div>}
-                {totalRefunded > 0 && <div className="flex justify-between"><span className="text-zinc-500">Erstattet</span><span className="text-orange-400">-{totalRefunded.toFixed(2)}€</span></div>}
-              </CardContent>
-            </Card>
-            <Card className="bg-zinc-900 border-zinc-800">
-              <CardHeader><CardTitle className="text-sm text-zinc-400">Interne Notizen</CardTitle></CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div><span className="text-zinc-500 block mb-1">Kundennotiz:</span><span className="text-white">{booking.customer_notes || "–"}</span></div>
-                <div><span className="text-zinc-500 block mb-1">Interne Notiz:</span><span className="text-white whitespace-pre-line">{booking.internal_notes || "–"}</span></div>
-                <div className="flex justify-between"><span className="text-zinc-500">Erstellt</span><span className="text-white">{format(new Date(booking.created_at), "dd.MM.yyyy HH:mm", { locale: de })}</span></div>
-                {booking.paid_at && <div className="flex justify-between"><span className="text-zinc-500">Bezahlt am</span><span className="text-emerald-400">{format(new Date(booking.paid_at), "dd.MM.yyyy HH:mm", { locale: de })}</span></div>}
-              </CardContent>
-            </Card>
+          <div className="grid md:grid-cols-3 gap-4">
+            {/* Col 1: Customer */}
+            <SectionCard title="Kontaktdaten">
+              <div className="space-y-0">
+                <Row label="Name"><span className="font-medium">{booking.contact_first_name} {booking.contact_last_name}</span></Row>
+                <Row label="E-Mail">{booking.contact_email}</Row>
+                <Row label="Telefon">{booking.contact_phone || "–"}</Row>
+                <Row label="Buchungstyp">{booking.booking_type === "request" ? "Anfrage" : "Direktbuchung"}</Row>
+                <Row label="Quelle">{bookingSource}</Row>
+              </div>
+              <div className="mt-3 space-y-1.5">
+                <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Einwilligungen</p>
+                <div className="flex flex-wrap gap-1">
+                  <ConsentBadge accepted={consent.agb} label="AGB" />
+                  <ConsentBadge accepted={consent.datenschutz} label="Datenschutz" />
+                  <ConsentBadge accepted={consent.reiseinfos} label="Reiseinfos" />
+                </div>
+                {consent.timestamp && <p className="text-[10px] text-zinc-600">Akzeptiert: {typeof consent.timestamp === "string" ? consent.timestamp : ""}</p>}
+                {(consent as any).raw && <p className="text-[10px] text-zinc-500 italic mt-1">{(consent as any).raw}</p>}
+              </div>
+            </SectionCard>
+
+            {/* Col 2: Travel details */}
+            <SectionCard title="Reisedetails">
+              <div className="space-y-0">
+                <Row label="Reiseziel"><span className="font-medium">{tourInfo?.destination}</span></Row>
+                <Row label="Ort / Land">{tourInfo?.location}, {tourInfo?.country}</Row>
+                <Row label="Hinreise">{dateInfo ? format(new Date(dateInfo.departure_date), "dd.MM.yyyy", { locale: de }) : "–"}</Row>
+                <Row label="Rückreise">{dateInfo ? format(new Date(dateInfo.return_date), "dd.MM.yyyy", { locale: de }) : "–"}</Row>
+                <Row label="Dauer">{dateInfo?.duration_days || tourInfo?.duration_days || "–"} Tage</Row>
+                <Row label="Tarif">{tariffInfo?.name || "–"}</Row>
+                <Row label="Teilnehmer">{booking.participants} Person(en)</Row>
+                {pickupInfo && <Row label="Zustieg"><span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-emerald-400" />{pickupInfo.city} – {pickupInfo.location_name} ({pickupInfo.departure_time?.slice(0, 5)} Uhr)</span></Row>}
+                <Row label="Auslastung">{dateInfo ? `${dateInfo.booked_seats}/${dateInfo.total_seats} Plätze` : "–"}</Row>
+              </div>
+              {/* Luggage */}
+              <div className="mt-3 space-y-1">
+                <p className="text-[10px] text-zinc-500 uppercase tracking-wider flex items-center gap-1"><Luggage className="w-3 h-3" /> Gepäck</p>
+                <div className="text-xs text-zinc-300">
+                  {tariffInfo?.suitcase_included ? <span className="text-emerald-400">✓ Koffer inkl. ({tariffInfo.suitcase_weight_kg || "–"} kg)</span> : <span className="text-zinc-500">Nur Handgepäck</span>}
+                </div>
+                {luggageAddons.length > 0 && luggageAddons.map((l: any, i: number) => (
+                  <div key={i} className="text-xs text-zinc-400">+ {l.name || "Zusatzgepäck"} ({fmt(l.price || 0)})</div>
+                ))}
+              </div>
+              {/* Cancellation rules */}
+              <div className="mt-3 space-y-1">
+                <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Stornoregeln</p>
+                <div className="text-xs text-zinc-300">
+                  {tariffInfo?.is_refundable
+                    ? <span className="text-emerald-400">Erstattbar bis {tariffInfo.cancellation_days} Tage vor Abfahrt ({tariffInfo.cancellation_fee_percent}% Gebühr)</span>
+                    : <span className="text-red-400">Nicht erstattbar</span>
+                  }
+                </div>
+              </div>
+            </SectionCard>
+
+            {/* Col 3: Price breakdown */}
+            <SectionCard title="Preisberechnung">
+              <div className="space-y-0">
+                <Row label="Grundpreis">{fmt(booking.base_price)}</Row>
+                {booking.pickup_surcharge > 0 && <Row label="Zustiegs-Zuschlag">+ {fmt(booking.pickup_surcharge)}</Row>}
+                {luggageAddons.length > 0 && luggageAddons.map((l: any, i: number) => (
+                  <Row key={i} label={`Gepäck: ${l.name || "Zusatz"}`}>+ {fmt(l.price || 0)}</Row>
+                ))}
+                {insurance?.is_active && insurance.price && <Row label="Versicherung">+ {fmt(insurance.price)}</Row>}
+                {booking.discount_amount && booking.discount_amount > 0 && (
+                  <Row label={`Rabatt${booking.discount_code ? ` (${booking.discount_code})` : ""}`} className="text-emerald-400">- {fmt(booking.discount_amount)}</Row>
+                )}
+                <div className="border-t border-[#2a3040] my-1" />
+                <Row label="Gesamtbetrag" className="font-bold"><span className="text-emerald-400 text-sm font-bold">{fmt(booking.total_price)}</span></Row>
+                <div className="border-t border-[#2a3040] my-1" />
+                <Row label="Bezahlt"><span className={netPaid >= booking.total_price ? "text-emerald-400" : "text-amber-400"}>{fmt(netPaid)}</span></Row>
+                {openAmount > 0 && <Row label="Offen"><span className="text-red-400 font-medium">{fmt(openAmount)}</span></Row>}
+                {totalRefunded > 0 && <Row label="Erstattet"><span className="text-orange-400">- {fmt(totalRefunded)}</span></Row>}
+              </div>
+              <div className="mt-3 text-[10px] text-zinc-600">
+                Zahlungsart: {booking.payment_method === "bank_transfer" ? "Überweisung" : booking.payment_method === "stripe" ? "Stripe" : booking.payment_method === "cash" ? "Bar" : booking.payment_method || "–"}
+                {booking.payment_reference && <> · Ref: {booking.payment_reference}</>}
+              </div>
+            </SectionCard>
           </div>
         </TabsContent>
 
-        {/* GUESTS */}
+        {/* ─── GUESTS ─── */}
         <TabsContent value="guests">
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm text-zinc-400">Passagiere ({passengers.length}/{booking.participants})</CardTitle>
-                {missingPassengerData && <Badge className="bg-amber-600">Daten unvollständig</Badge>}
-              </div>
-            </CardHeader>
-            <CardContent>
-              {passengers.length === 0 ? (
-                <p className="text-zinc-500 text-sm py-4 text-center">Keine Passagierdaten hinterlegt</p>
-              ) : (
+          <SectionCard title={`Reisende (${passengers.length}/${booking.participants})`} actions={missingPassengerData && <Badge className="bg-amber-500/20 text-amber-300 text-[10px] border border-amber-600/40">Daten unvollständig</Badge>}>
+            {passengers.length === 0 ? (
+              <p className="text-zinc-500 text-sm py-6 text-center">Keine Passagierdaten hinterlegt</p>
+            ) : (
+              <Table>
+                <TableHeader><TableRow className="border-[#252b38]">
+                  <TableHead className="text-zinc-400 text-xs">#</TableHead>
+                  <TableHead className="text-zinc-400 text-xs">Vorname</TableHead>
+                  <TableHead className="text-zinc-400 text-xs">Nachname</TableHead>
+                  <TableHead className="text-zinc-400 text-xs">Geburtsdatum</TableHead>
+                  <TableHead className="text-zinc-400 text-xs">Hinweise</TableHead>
+                  <TableHead className="text-zinc-400 text-xs">Check-in</TableHead>
+                  <TableHead className="text-zinc-400 text-xs">Status</TableHead>
+                </TableRow></TableHeader>
+                <TableBody>
+                  {passengers.map((p: any, i: number) => {
+                    const hasData = (p.firstName || p.first_name) && (p.lastName || p.last_name);
+                    return (
+                      <TableRow key={i} className={cn("border-[#252b38]", i % 2 === 0 ? "bg-[#151920]" : "bg-[#1a1f2a]")}>
+                        <TableCell className="text-zinc-500 text-xs">{i + 1}</TableCell>
+                        <TableCell className="text-zinc-200 text-xs">{p.firstName || p.first_name || "–"}</TableCell>
+                        <TableCell className="text-zinc-200 text-xs">{p.lastName || p.last_name || "–"}</TableCell>
+                        <TableCell className="text-zinc-400 text-xs">{p.birthDate || p.birth_date || "–"}</TableCell>
+                        <TableCell className="text-zinc-400 text-xs">{p.notes || p.special_needs || "–"}</TableCell>
+                        <TableCell><Badge className="bg-zinc-700/50 text-zinc-400 text-[10px] border border-zinc-600/40">Offen</Badge></TableCell>
+                        <TableCell>{hasData ? <Badge className="bg-emerald-500/20 text-emerald-300 text-[10px] border border-emerald-600/40">✓ Vollständig</Badge> : <Badge className="bg-amber-500/20 text-amber-300 text-[10px] border border-amber-600/40">Fehlt</Badge>}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </SectionCard>
+        </TabsContent>
+
+        {/* ─── PAYMENTS ─── */}
+        <TabsContent value="payments">
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              {[
+                { label: "Sollbetrag", value: fmt(booking.total_price), cls: "text-zinc-100" },
+                { label: "Eingegangen", value: fmt(totalPaid), cls: "text-emerald-400" },
+                { label: "Erstattet", value: fmt(totalRefunded), cls: "text-orange-400" },
+                { label: "Offen", value: fmt(openAmount), cls: openAmount > 0 ? "text-red-400" : "text-emerald-400" },
+                { label: "Zahlungsstatus", value: "", badge: paymentStatus },
+              ].map((kpi, i) => (
+                <Card key={i} className="bg-[#151920] border-[#252b38]">
+                  <CardContent className="pt-3 pb-2 px-3">
+                    <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">{kpi.label}</div>
+                    {kpi.badge ? <PayBadge status={kpi.badge} /> : <div className={cn("text-lg font-bold", kpi.cls)}>{kpi.value}</div>}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <SectionCard title="Zahlungseingänge & Erstattungen" actions={
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-7 text-xs" onClick={() => setPaymentModal(true)}><Plus className="w-3 h-3 mr-1" /> Zahlung erfassen</Button>
+            }>
+              {payments.length === 0 ? <p className="text-zinc-500 text-sm py-4 text-center">Noch keine Zahlungseingänge</p> : (
                 <Table>
-                  <TableHeader><TableRow className="border-zinc-800">
-                    <TableHead className="text-zinc-400">#</TableHead>
-                    <TableHead className="text-zinc-400">Vorname</TableHead>
-                    <TableHead className="text-zinc-400">Nachname</TableHead>
-                    <TableHead className="text-zinc-400">Geburtsdatum</TableHead>
-                    <TableHead className="text-zinc-400">Notizen</TableHead>
-                    <TableHead className="text-zinc-400">Status</TableHead>
+                  <TableHeader><TableRow className="border-[#252b38]">
+                    <TableHead className="text-zinc-400 text-xs">Datum</TableHead>
+                    <TableHead className="text-zinc-400 text-xs">Betrag</TableHead>
+                    <TableHead className="text-zinc-400 text-xs">Art</TableHead>
+                    <TableHead className="text-zinc-400 text-xs">Referenz</TableHead>
+                    <TableHead className="text-zinc-400 text-xs">Notiz</TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
-                    {passengers.map((p: any, i: number) => {
-                      const hasData = (p.firstName || p.first_name) && (p.lastName || p.last_name);
-                      return (
-                        <TableRow key={i} className="border-zinc-800">
-                          <TableCell className="text-zinc-500">{i + 1}</TableCell>
-                          <TableCell className="text-white">{p.firstName || p.first_name || "–"}</TableCell>
-                          <TableCell className="text-white">{p.lastName || p.last_name || "–"}</TableCell>
-                          <TableCell className="text-zinc-300">{p.birthDate || p.birth_date || "–"}</TableCell>
-                          <TableCell className="text-zinc-400">{p.notes || "–"}</TableCell>
-                          <TableCell>{hasData ? <Badge className="bg-emerald-600 text-xs">✓</Badge> : <Badge className="bg-amber-600 text-xs">Fehlt</Badge>}</TableCell>
-                        </TableRow>
-                      );
-                    })}
+                    {payments.map((p, i) => (
+                      <TableRow key={p.id} className={cn("border-[#252b38]", i % 2 === 0 ? "bg-[#151920]" : "bg-[#1a1f2a]")}>
+                        <TableCell className="text-zinc-300 text-xs">{format(new Date(p.recorded_at), "dd.MM.yy HH:mm", { locale: de })}</TableCell>
+                        <TableCell className={cn("font-semibold text-xs", Number(p.amount) < 0 ? "text-orange-400" : "text-emerald-400")}>{Number(p.amount) < 0 ? "" : "+"}{fmt(Number(p.amount))}</TableCell>
+                        <TableCell className="text-zinc-300 text-xs">{p.method === "bank_transfer" ? "Überweisung" : p.method === "cash" ? "Bar" : p.method === "refund" ? "Erstattung" : p.method === "stripe" ? "Stripe" : p.method}</TableCell>
+                        <TableCell className="text-zinc-400 text-xs font-mono">{p.reference || "–"}</TableCell>
+                        <TableCell className="text-zinc-400 text-xs">{p.note || "–"}</TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* PAYMENTS */}
-        <TabsContent value="payments">
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card className="bg-zinc-900 border-zinc-800"><CardContent className="pt-4"><div className="text-xs text-zinc-500 mb-1">Sollbetrag</div><div className="text-2xl font-bold text-white">{booking.total_price.toFixed(2)}€</div></CardContent></Card>
-              <Card className="bg-zinc-900 border-zinc-800"><CardContent className="pt-4"><div className="text-xs text-zinc-500 mb-1">Eingegangen</div><div className="text-2xl font-bold text-emerald-400">{totalPaid.toFixed(2)}€</div></CardContent></Card>
-              <Card className="bg-zinc-900 border-zinc-800"><CardContent className="pt-4"><div className="text-xs text-zinc-500 mb-1">Erstattet</div><div className="text-2xl font-bold text-orange-400">{totalRefunded.toFixed(2)}€</div></CardContent></Card>
-              <Card className="bg-zinc-900 border-zinc-800"><CardContent className="pt-4"><div className="text-xs text-zinc-500 mb-1">Offen</div><div className={`text-2xl font-bold ${openAmount > 0 ? "text-red-400" : "text-emerald-400"}`}>{openAmount.toFixed(2)}€</div></CardContent></Card>
-            </div>
-            <Card className="bg-zinc-900 border-zinc-800">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm text-zinc-400">Zahlungseingänge & Erstattungen</CardTitle>
-                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setPaymentModal(true)}><Plus className="w-3 h-3 mr-1" /> Zahlung erfassen</Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {payments.length === 0 ? <p className="text-zinc-500 text-sm py-4 text-center">Noch keine Zahlungseingänge</p> : (
-                  <Table>
-                    <TableHeader><TableRow className="border-zinc-800">
-                      <TableHead className="text-zinc-400">Datum</TableHead><TableHead className="text-zinc-400">Betrag</TableHead><TableHead className="text-zinc-400">Methode</TableHead><TableHead className="text-zinc-400">Referenz</TableHead><TableHead className="text-zinc-400">Notiz</TableHead>
-                    </TableRow></TableHeader>
-                    <TableBody>
-                      {payments.map((p) => (
-                        <TableRow key={p.id} className="border-zinc-800">
-                          <TableCell className="text-zinc-300">{format(new Date(p.recorded_at), "dd.MM.yy HH:mm", { locale: de })}</TableCell>
-                          <TableCell className={`font-semibold ${Number(p.amount) < 0 ? "text-orange-400" : "text-emerald-400"}`}>{Number(p.amount) < 0 ? "" : "+"}{Number(p.amount).toFixed(2)}€</TableCell>
-                          <TableCell className="text-zinc-300">{p.method === "bank_transfer" ? "Überweisung" : p.method === "cash" ? "Bar" : p.method === "refund" ? "Erstattung" : p.method}</TableCell>
-                          <TableCell className="text-zinc-400">{p.reference || "–"}</TableCell>
-                          <TableCell className="text-zinc-400">{p.note || "–"}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
+            </SectionCard>
           </div>
         </TabsContent>
 
-        {/* INSURANCE */}
-        <TabsContent value="insurance">
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm text-zinc-400">Reiseversicherung</CardTitle>
-                {!insurance && (
-                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => saveInsurance({ is_active: true, policy_status: "requested" })} disabled={!!processing}>
-                    <Plus className="w-3 h-3 mr-1" /> Versicherung anlegen
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              {!insurance ? (
-                <p className="text-zinc-500 text-sm py-4 text-center">Keine Versicherung für diese Buchung hinterlegt</p>
-              ) : (
-                <div className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div><Label className="text-zinc-400 text-xs">Anbieter</Label><Input defaultValue={insurance.provider || ""} className="bg-zinc-800 border-zinc-700 text-white mt-1" placeholder="z.B. Europäische Reiseversicherung" onBlur={(e) => saveInsurance({ provider: e.target.value })} /></div>
-                    <div><Label className="text-zinc-400 text-xs">Produkt</Label><Input defaultValue={insurance.product || ""} className="bg-zinc-800 border-zinc-700 text-white mt-1" placeholder="z.B. Reiserücktritt Plus" onBlur={(e) => saveInsurance({ product: e.target.value })} /></div>
-                    <div><Label className="text-zinc-400 text-xs">Policennummer</Label><Input defaultValue={insurance.policy_number || ""} className="bg-zinc-800 border-zinc-700 text-white mt-1" placeholder="POL-..." onBlur={(e) => saveInsurance({ policy_number: e.target.value })} /></div>
-                    <div><Label className="text-zinc-400 text-xs">Preis (€)</Label><Input type="number" defaultValue={insurance.price || 0} className="bg-zinc-800 border-zinc-700 text-white mt-1" onBlur={(e) => saveInsurance({ price: parseFloat(e.target.value) || 0 })} /></div>
-                    <div><Label className="text-zinc-400 text-xs">Policenstatus</Label>
-                      <Select defaultValue={insurance.policy_status} onValueChange={(v) => saveInsurance({ policy_status: v })}>
-                        <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1"><SelectValue /></SelectTrigger>
-                        <SelectContent className="bg-zinc-800 border-zinc-700">
-                          <SelectItem value="not_requested" className="text-white">Nicht angefragt</SelectItem>
-                          <SelectItem value="requested" className="text-white">Angefragt</SelectItem>
-                          <SelectItem value="active" className="text-white">Aktiv</SelectItem>
-                          <SelectItem value="expired" className="text-white">Abgelaufen</SelectItem>
-                          <SelectItem value="cancelled" className="text-white">Storniert</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div><Label className="text-zinc-400 text-xs">Notizen</Label><Textarea defaultValue={insurance.notes || ""} className="bg-zinc-800 border-zinc-700 text-white mt-1" rows={2} onBlur={(e) => saveInsurance({ notes: e.target.value })} /></div>
-                  </div>
-                  <Badge className={insurance.policy_status === "active" ? "bg-emerald-600" : insurance.policy_status === "requested" ? "bg-amber-600" : "bg-zinc-600"}>
-                    Status: {insurance.policy_status === "active" ? "Aktiv" : insurance.policy_status === "requested" ? "Angefragt" : insurance.policy_status === "not_requested" ? "Nicht angefragt" : insurance.policy_status}
-                  </Badge>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* DOCUMENTS */}
+        {/* ─── DOCUMENTS ─── */}
         <TabsContent value="documents">
           <div className="space-y-4">
-            <Card className="bg-zinc-900 border-zinc-800">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm text-zinc-400">System-generierte Dokumente</CardTitle>
-                  <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300" onClick={regenerateDocuments} disabled={processing === "regen"}>
-                    {processing === "regen" ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <RefreshCw className="w-3 h-3 mr-1" />} Alle neu generieren
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 gap-3">
-                  {["Buchungsbestätigung", "Rechnung", "Hotel-Voucher", "Reiseplan"].map((doc) => (
-                    <div key={doc} className="bg-zinc-800 rounded-lg p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <FileText className="w-5 h-5 text-emerald-400" />
-                        <div><div className="text-sm font-medium text-white">{doc}</div><div className="text-xs text-zinc-500">PDF • Auto-generiert</div></div>
+            <SectionCard title="Dokumente generieren & versenden" actions={
+              <Button size="sm" variant="outline" className="border-[#2a3040] text-zinc-300 h-7 text-xs" onClick={regenerateDocuments} disabled={processing === "regen"}>
+                {processing === "regen" ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <RefreshCw className="w-3 h-3 mr-1" />} Alle neu generieren
+              </Button>
+            }>
+              <div className="grid md:grid-cols-2 gap-2">
+                {[
+                  { name: "Buchungsbestätigung", type: "booking_confirmation", desc: "PDF mit Buchungsdetails" },
+                  { name: "Rechnung", type: "invoice", desc: "Rechnung inkl. MwSt." },
+                  { name: "Hotel-Voucher", type: "voucher", desc: "Hotelgutschein" },
+                  { name: "Reiseplan", type: "travel_plan", desc: "Seniorenfreundlicher Plan (16pt)" },
+                ].map(doc => {
+                  const sent = docSends.find(d => d.document_type === doc.type);
+                  return (
+                    <div key={doc.type} className="bg-[#1a1f2a] border border-[#2a3040] rounded-lg p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <FileText className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <div>
+                          <div className="text-xs font-medium text-zinc-200">{doc.name}</div>
+                          <div className="text-[10px] text-zinc-500">{doc.desc}</div>
+                        </div>
                       </div>
-                      <Button size="sm" variant="ghost" className="text-zinc-400 hover:text-white h-8 w-8 p-0" onClick={() => sendEmail(doc.toLowerCase())} disabled={!!processing}>
-                        <Send className="w-3 h-3" />
-                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        {sent && <Badge className="bg-emerald-500/20 text-emerald-300 text-[10px] border border-emerald-600/40">✓</Badge>}
+                        <Button size="sm" variant="ghost" className="text-zinc-400 hover:text-white h-7 w-7 p-0" onClick={() => sendEmail(doc.type)} disabled={!!processing}>
+                          <Send className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-zinc-900 border-zinc-800">
-              <CardHeader><CardTitle className="text-sm text-zinc-400">Versandverlauf</CardTitle></CardHeader>
-              <CardContent>
-                {docSends.length === 0 ? <p className="text-zinc-500 text-sm py-4 text-center">Noch keine Dokumente versendet</p> : (
-                  <Table>
-                    <TableHeader><TableRow className="border-zinc-800">
-                      <TableHead className="text-zinc-400">Zeitpunkt</TableHead><TableHead className="text-zinc-400">Dokument</TableHead><TableHead className="text-zinc-400">Empfänger</TableHead><TableHead className="text-zinc-400">Status</TableHead><TableHead className="text-zinc-400"></TableHead>
-                    </TableRow></TableHeader>
-                    <TableBody>
-                      {docSends.map((d) => (
-                        <TableRow key={d.id} className="border-zinc-800">
-                          <TableCell className="text-zinc-300">{format(new Date(d.created_at), "dd.MM.yy HH:mm", { locale: de })}</TableCell>
-                          <TableCell className="text-white">{d.document_type}</TableCell>
-                          <TableCell className="text-zinc-400">{d.recipient_email}</TableCell>
-                          <TableCell><Badge className={d.status === "sent" ? "bg-emerald-600" : d.status === "failed" ? "bg-red-600" : "bg-zinc-600"}>{d.status === "sent" ? "✓ Gesendet" : d.status === "failed" ? "✗ Fehler" : d.status}</Badge></TableCell>
-                          <TableCell>
-                            <Button size="sm" variant="ghost" className="text-zinc-500 h-7 text-xs" onClick={() => sendEmail(d.document_type)} disabled={!!processing}>
-                              <RefreshCw className="w-3 h-3 mr-1" /> Erneut
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
+                  );
+                })}
+              </div>
+            </SectionCard>
+
+            <SectionCard title="Versandverlauf">
+              {docSends.length === 0 ? <p className="text-zinc-500 text-sm py-4 text-center">Noch keine Dokumente versendet</p> : (
+                <Table>
+                  <TableHeader><TableRow className="border-[#252b38]">
+                    <TableHead className="text-zinc-400 text-xs">Zeitpunkt</TableHead>
+                    <TableHead className="text-zinc-400 text-xs">Dokument</TableHead>
+                    <TableHead className="text-zinc-400 text-xs">Empfänger</TableHead>
+                    <TableHead className="text-zinc-400 text-xs">Status</TableHead>
+                    <TableHead className="text-zinc-400 text-xs"></TableHead>
+                  </TableRow></TableHeader>
+                  <TableBody>
+                    {docSends.map((d, i) => (
+                      <TableRow key={d.id} className={cn("border-[#252b38]", i % 2 === 0 ? "bg-[#151920]" : "bg-[#1a1f2a]")}>
+                        <TableCell className="text-zinc-300 text-xs">{format(new Date(d.created_at), "dd.MM.yy HH:mm", { locale: de })}</TableCell>
+                        <TableCell className="text-zinc-200 text-xs">{d.document_type}</TableCell>
+                        <TableCell className="text-zinc-400 text-xs">{d.recipient_email}</TableCell>
+                        <TableCell>
+                          <Badge className={cn("text-[10px] border", d.status === "sent" ? "bg-emerald-500/20 text-emerald-300 border-emerald-600/40" : "bg-red-500/20 text-red-300 border-red-600/40")}>{d.status === "sent" ? "✓ Gesendet" : d.status === "failed" ? "✗ Fehler" : d.status}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button size="sm" variant="ghost" className="text-zinc-500 h-6 text-[10px]" onClick={() => sendEmail(d.document_type)} disabled={!!processing}><RefreshCw className="w-2.5 h-2.5 mr-1" /> Erneut</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </SectionCard>
           </div>
         </TabsContent>
 
-        {/* COMMUNICATION */}
+        {/* ─── COMMUNICATION ─── */}
         <TabsContent value="communication">
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardHeader><CardTitle className="text-sm text-zinc-400">Quick Actions</CardTitle></CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-3">
+          <div className="space-y-4">
+            <SectionCard title="Schnellaktionen">
+              <div className="grid md:grid-cols-2 gap-2">
                 {[
-                  { label: "Zahlungsinfos erneut senden", type: "payment_info", icon: CreditCard },
-                  { label: "Buchungsbestätigung erneut senden", type: "booking_confirmation", icon: CheckCircle2 },
-                  { label: "Reiseinfos senden (Treffpunkt, Uhrzeit)", type: "travel_info", icon: Mail },
-                  { label: "Ticket/QR erneut senden", type: "ticket_resend", icon: FileText },
+                  { label: "Zahlungsinfos senden", type: "payment_info", icon: CreditCard },
+                  { label: "Buchungsbestätigung senden", type: "booking_confirmation", icon: CheckCircle2 },
+                  { label: "Reiseinfos senden (Treffpunkt, Uhrzeit)", type: "travel_info", icon: MapPin },
+                  { label: "Ticket / QR-Code erneut senden", type: "ticket_resend", icon: FileText },
                 ].map((action) => (
-                  <Button key={action.type} variant="outline" className="border-zinc-700 text-zinc-300 justify-start h-auto py-3" onClick={() => sendEmail(action.type)} disabled={!!processing}>
-                    {processing === action.type ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <action.icon className="w-4 h-4 mr-2" />}
+                  <Button key={action.type} variant="outline" className="border-[#2a3040] text-zinc-300 justify-start h-auto py-2.5 text-xs" onClick={() => sendEmail(action.type)} disabled={!!processing}>
+                    {processing === action.type ? <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" /> : <action.icon className="w-3.5 h-3.5 mr-2 shrink-0" />}
                     {action.label}
                   </Button>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-zinc-900 border-zinc-800 mt-4">
-            <CardHeader><CardTitle className="text-sm text-zinc-400">E-Mail Verlauf</CardTitle></CardHeader>
-            <CardContent>
-              {docSends.length === 0 ? <p className="text-zinc-500 text-sm py-4 text-center">Keine E-Mails gesendet</p> : (
-                <div className="space-y-2">
-                  {docSends.map((d) => (
-                    <div key={d.id} className="bg-zinc-800 rounded-lg p-3 flex items-center justify-between">
-                      <div><div className="text-sm text-white">{d.document_type}</div><div className="text-xs text-zinc-500">{format(new Date(d.created_at), "dd.MM.yyyy HH:mm", { locale: de })} → {d.recipient_email}</div></div>
-                      <div className="flex items-center gap-2">
-                        <Badge className={d.status === "sent" ? "bg-emerald-600" : "bg-red-600"}>{d.status === "sent" ? "✓ Gesendet" : "Fehler"}</Badge>
-                        <Button size="sm" variant="ghost" className="text-zinc-500 h-7 text-xs" onClick={() => sendEmail(d.document_type)} disabled={!!processing}>
-                          <RefreshCw className="w-3 h-3" />
-                        </Button>
+            </SectionCard>
+
+            <SectionCard title="Kommunikations-Timeline">
+              {docSends.length === 0 ? <p className="text-zinc-500 text-sm py-4 text-center">Keine Kommunikation protokolliert</p> : (
+                <div className="relative pl-4 space-y-0">
+                  <div className="absolute left-1.5 top-2 bottom-2 w-px bg-[#2a3040]" />
+                  {[...docSends].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map((d) => (
+                    <div key={d.id} className="relative flex items-start gap-3 py-2.5">
+                      <div className={cn("absolute left-[-10px] top-3.5 w-2 h-2 rounded-full border-2", d.status === "sent" ? "bg-emerald-500 border-emerald-400" : "bg-red-500 border-red-400")} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs text-zinc-200">{d.document_type.replace(/_/g, " ")}</span>
+                          <span className="text-[10px] text-zinc-600">{format(new Date(d.created_at), "dd.MM.yy HH:mm", { locale: de })}</span>
+                        </div>
+                        <p className="text-[10px] text-zinc-500">→ {d.recipient_email} · {d.status === "sent" ? "Zugestellt" : `Fehler: ${d.error_message || "Unbekannt"}`}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </SectionCard>
+          </div>
         </TabsContent>
 
-        {/* AUTOMATION */}
+        {/* ─── CHECK-IN ─── */}
+        <TabsContent value="checkin">
+          <div className="space-y-4">
+            <div className="grid md:grid-cols-3 gap-3">
+              <Card className="bg-[#151920] border-[#252b38]"><CardContent className="pt-3 pb-2 px-3">
+                <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Check-in Status</div>
+                <div className="text-lg font-bold text-zinc-100">0 / {booking.participants}</div>
+                <p className="text-[10px] text-zinc-500">Kein Passagier eingecheckt</p>
+              </CardContent></Card>
+              <Card className="bg-[#151920] border-[#252b38]"><CardContent className="pt-3 pb-2 px-3">
+                <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Boarding-Status</div>
+                <Badge className="bg-zinc-700/50 text-zinc-300 text-[10px] border border-zinc-600/40">Nicht gestartet</Badge>
+              </CardContent></Card>
+              <Card className="bg-[#151920] border-[#252b38]"><CardContent className="pt-3 pb-2 px-3">
+                <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Ticket-Gültigkeit</div>
+                <Badge className={cn("text-[10px] border", booking.status === "confirmed" ? "bg-emerald-500/20 text-emerald-300 border-emerald-600/40" : "bg-zinc-700/50 text-zinc-400 border-zinc-600/40")}>{booking.status === "confirmed" ? "Gültig" : "Nicht aktiviert"}</Badge>
+              </CardContent></Card>
+            </div>
+
+            <SectionCard title="Passagier-Check-in">
+              <Table>
+                <TableHeader><TableRow className="border-[#252b38]">
+                  <TableHead className="text-zinc-400 text-xs">#</TableHead>
+                  <TableHead className="text-zinc-400 text-xs">Name</TableHead>
+                  <TableHead className="text-zinc-400 text-xs">Check-in</TableHead>
+                  <TableHead className="text-zinc-400 text-xs">Eingecheckt von</TableHead>
+                  <TableHead className="text-zinc-400 text-xs">Zeitpunkt</TableHead>
+                  <TableHead className="text-zinc-400 text-xs">Boarding</TableHead>
+                </TableRow></TableHeader>
+                <TableBody>
+                  {(passengers.length > 0 ? passengers : Array.from({ length: booking.participants }, (_, i) => ({ index: i }))).map((p: any, i: number) => (
+                    <TableRow key={i} className={cn("border-[#252b38]", i % 2 === 0 ? "bg-[#151920]" : "bg-[#1a1f2a]")}>
+                      <TableCell className="text-zinc-500 text-xs">{i + 1}</TableCell>
+                      <TableCell className="text-zinc-200 text-xs">{(p.firstName || p.first_name || "") + " " + (p.lastName || p.last_name || "") || "–"}</TableCell>
+                      <TableCell><Badge className="bg-zinc-700/50 text-zinc-400 text-[10px] border border-zinc-600/40">Offen</Badge></TableCell>
+                      <TableCell className="text-zinc-500 text-xs">–</TableCell>
+                      <TableCell className="text-zinc-500 text-xs">–</TableCell>
+                      <TableCell><Badge className="bg-zinc-700/50 text-zinc-400 text-[10px] border border-zinc-600/40">–</Badge></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </SectionCard>
+
+            <SectionCard title="Scan-Historie">
+              <p className="text-zinc-500 text-sm py-4 text-center">Keine Scan-Ereignisse für diese Buchung</p>
+            </SectionCard>
+          </div>
+        </TabsContent>
+
+        {/* ─── AUTOMATION ─── */}
         <TabsContent value="automation">
-          <AutomationPanel
-            bookingId={booking.id}
-            bookingStatus={booking.status}
-            paidAt={booking.paid_at}
-            contactEmail={booking.contact_email}
-            passengerDetails={booking.passenger_details}
-            participants={booking.participants}
-          />
+          <AutomationPanel bookingId={booking.id} bookingStatus={booking.status} paidAt={booking.paid_at} contactEmail={booking.contact_email} passengerDetails={booking.passenger_details} participants={booking.participants} />
         </TabsContent>
 
-        {/* AUDIT LOG */}
+        {/* ─── AUDIT ─── */}
         <TabsContent value="audit">
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardHeader><CardTitle className="text-sm text-zinc-400">Änderungsverlauf</CardTitle></CardHeader>
-            <CardContent>
-              {auditLog.length === 0 ? <p className="text-zinc-500 text-sm py-4 text-center">Keine Änderungen protokolliert</p> : (
-                <div className="space-y-2">
-                  {auditLog.map((entry) => (
-                    <div key={entry.id} className="bg-zinc-800 rounded-lg p-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="text-sm font-medium text-white">{entry.action.replace(/_/g, " ")}</div>
-                        <div className="text-xs text-zinc-500">{format(new Date(entry.created_at), "dd.MM.yy HH:mm", { locale: de })}</div>
-                      </div>
-                      <div className="text-xs text-zinc-400">
-                        {entry.performed_by_email && <span>von {entry.performed_by_email}</span>}
-                        {entry.field_name && <span> • Feld: {entry.field_name}</span>}
-                        {entry.old_value && <span> • Vorher: <span className="text-red-400">{entry.old_value}</span></span>}
-                        {entry.new_value && <span> • Nachher: <span className="text-emerald-400">{entry.new_value}</span></span>}
-                      </div>
-                    </div>
+          <SectionCard title="Änderungsverlauf">
+            {auditLog.length === 0 ? <p className="text-zinc-500 text-sm py-4 text-center">Keine Änderungen protokolliert</p> : (
+              <Table>
+                <TableHeader><TableRow className="border-[#252b38]">
+                  <TableHead className="text-zinc-400 text-xs">Zeitpunkt</TableHead>
+                  <TableHead className="text-zinc-400 text-xs">Aktion</TableHead>
+                  <TableHead className="text-zinc-400 text-xs">Feld</TableHead>
+                  <TableHead className="text-zinc-400 text-xs">Vorher</TableHead>
+                  <TableHead className="text-zinc-400 text-xs">Nachher</TableHead>
+                  <TableHead className="text-zinc-400 text-xs">Benutzer</TableHead>
+                </TableRow></TableHeader>
+                <TableBody>
+                  {auditLog.map((entry, i) => (
+                    <TableRow key={entry.id} className={cn("border-[#252b38]", i % 2 === 0 ? "bg-[#151920]" : "bg-[#1a1f2a]")}>
+                      <TableCell className="text-zinc-300 text-xs font-mono">{format(new Date(entry.created_at), "dd.MM.yy HH:mm", { locale: de })}</TableCell>
+                      <TableCell className="text-zinc-200 text-xs">{entry.action.replace(/_/g, " ")}</TableCell>
+                      <TableCell className="text-zinc-400 text-xs">{entry.field_name || "–"}</TableCell>
+                      <TableCell className="text-red-400 text-xs">{entry.old_value || "–"}</TableCell>
+                      <TableCell className="text-emerald-400 text-xs">{entry.new_value || "–"}</TableCell>
+                      <TableCell className="text-zinc-500 text-xs">{entry.performed_by_email || "System"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </SectionCard>
+        </TabsContent>
+
+        {/* ─── INTERNAL ─── */}
+        <TabsContent value="internal">
+          <div className="grid md:grid-cols-2 gap-4">
+            <SectionCard title="Interne Notizen">
+              <Textarea value={internalNotes} onChange={e => setInternalNotes(e.target.value)} className="bg-[#1a1f2a] border-[#2a3040] text-zinc-100 text-xs min-h-[120px]" placeholder="Interne Anmerkungen zur Buchung..." />
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-7 text-xs mt-2" onClick={saveInternalNotes}><Save className="w-3 h-3 mr-1" /> Speichern</Button>
+            </SectionCard>
+
+            <div className="space-y-4">
+              <SectionCard title="Interne Tags">
+                <div className="flex flex-wrap gap-1.5">
+                  {["VIP", "Problemfall", "Rückruf", "Gruppenreise", "Kulanz", "Reklamation", "Neukunde", "Firmenkunde"].map(tag => (
+                    <button key={tag} onClick={() => setInternalTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])}
+                      className={cn("text-[10px] px-2 py-1 rounded-full border transition-colors", internalTags.includes(tag) ? "bg-emerald-500/20 text-emerald-300 border-emerald-600/40" : "bg-[#1a1f2a] text-zinc-500 border-[#2a3040] hover:text-zinc-300")}>
+                      {tag}
+                    </button>
                   ))}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </SectionCard>
+
+              <SectionCard title="Versicherung">
+                {!insurance ? (
+                  <div className="text-center py-3">
+                    <p className="text-zinc-500 text-xs mb-2">Keine Versicherung hinterlegt</p>
+                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-7 text-xs" onClick={() => saveInsurance({ is_active: true, policy_status: "requested" })} disabled={!!processing}><Plus className="w-3 h-3 mr-1" /> Versicherung anlegen</Button>
+                  </div>
+                ) : (
+                  <div className="space-y-0">
+                    <Row label="Anbieter">{insurance.provider || "–"}</Row>
+                    <Row label="Produkt">{insurance.product || "–"}</Row>
+                    <Row label="Policennr.">{insurance.policy_number || "–"}</Row>
+                    <Row label="Preis">{insurance.price ? fmt(insurance.price) : "–"}</Row>
+                    <Row label="Status">
+                      <Badge className={cn("text-[10px] border", insurance.policy_status === "active" ? "bg-emerald-500/20 text-emerald-300 border-emerald-600/40" : insurance.policy_status === "requested" ? "bg-amber-500/20 text-amber-300 border-amber-600/40" : "bg-zinc-700/50 text-zinc-400 border-zinc-600/40")}>
+                        {insurance.policy_status === "active" ? "Aktiv" : insurance.policy_status === "requested" ? "Angefragt" : insurance.policy_status}
+                      </Badge>
+                    </Row>
+                  </div>
+                )}
+              </SectionCard>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
 
-      {/* ===== PAYMENT MODAL ===== */}
+      {/* ══════ MODALS ══════ */}
+      {/* Payment Modal */}
       <Dialog open={paymentModal} onOpenChange={setPaymentModal}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
+        <DialogContent className="bg-[#151920] border-[#252b38] text-white">
           <DialogHeader><DialogTitle>Zahlung erfassen</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div><Label className="text-zinc-400">Betrag (€)</Label><Input type="number" step="0.01" value={paymentForm.amount} onChange={(e) => setPaymentForm(f => ({ ...f, amount: parseFloat(e.target.value) || 0 }))} className="bg-zinc-800 border-zinc-700 text-white" /></div>
-            <div><Label className="text-zinc-400">Zahlungsart</Label>
+          <div className="space-y-3">
+            <div><Label className="text-zinc-400 text-xs">Betrag (€)</Label><Input type="number" step="0.01" value={paymentForm.amount} onChange={(e) => setPaymentForm(f => ({ ...f, amount: parseFloat(e.target.value) || 0 }))} className="bg-[#1a1f2a] border-[#2a3040] text-white" /></div>
+            <div><Label className="text-zinc-400 text-xs">Zahlungsart</Label>
               <Select value={paymentForm.method} onValueChange={(v) => setPaymentForm(f => ({ ...f, method: v }))}>
-                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700">
+                <SelectTrigger className="bg-[#1a1f2a] border-[#2a3040] text-white"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-[#1a1f2a] border-[#2a3040]">
                   <SelectItem value="bank_transfer" className="text-white">Überweisung</SelectItem>
                   <SelectItem value="cash" className="text-white">Bar</SelectItem>
                   <SelectItem value="stripe" className="text-white">Stripe</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div><Label className="text-zinc-400">Referenz</Label><Input value={paymentForm.reference} onChange={(e) => setPaymentForm(f => ({ ...f, reference: e.target.value }))} className="bg-zinc-800 border-zinc-700 text-white" placeholder="z.B. Kontoauszug 15.03" /></div>
-            <div><Label className="text-zinc-400">Notiz</Label><Textarea value={paymentForm.note} onChange={(e) => setPaymentForm(f => ({ ...f, note: e.target.value }))} className="bg-zinc-800 border-zinc-700 text-white" /></div>
+            <div><Label className="text-zinc-400 text-xs">Referenz</Label><Input value={paymentForm.reference} onChange={(e) => setPaymentForm(f => ({ ...f, reference: e.target.value }))} className="bg-[#1a1f2a] border-[#2a3040] text-white" placeholder="z.B. Kontoauszug 15.03" /></div>
+            <div><Label className="text-zinc-400 text-xs">Notiz</Label><Textarea value={paymentForm.note} onChange={(e) => setPaymentForm(f => ({ ...f, note: e.target.value }))} className="bg-[#1a1f2a] border-[#2a3040] text-white" /></div>
             <div className="flex items-center gap-2">
               <input type="checkbox" id="sendEmailCheckbox" checked={paymentForm.sendEmail} onChange={(e) => setPaymentForm(f => ({ ...f, sendEmail: e.target.checked }))} className="rounded border-zinc-600" />
-              <Label htmlFor="sendEmailCheckbox" className="text-zinc-400 text-sm cursor-pointer">Bestätigungs-E-Mail senden</Label>
+              <Label htmlFor="sendEmailCheckbox" className="text-zinc-400 text-xs cursor-pointer">Bestätigungs-E-Mail senden</Label>
             </div>
           </div>
           <DialogFooter>
@@ -801,17 +829,17 @@ const AdminBookingDetail = () => {
         </DialogContent>
       </Dialog>
 
-      {/* ===== CANCELLATION MODAL ===== */}
+      {/* Cancellation Modal */}
       <Dialog open={cancelModal} onOpenChange={setCancelModal}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
+        <DialogContent className="bg-[#151920] border-[#252b38] text-white">
           <DialogHeader><DialogTitle className="text-red-400">Buchung stornieren</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div><Label className="text-zinc-400">Stornogrund</Label>
+          <div className="space-y-3">
+            <div><Label className="text-zinc-400 text-xs">Stornogrund</Label>
               <Select value={cancelForm.reason} onValueChange={(v) => setCancelForm(f => ({ ...f, reason: v }))}>
-                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700">
+                <SelectTrigger className="bg-[#1a1f2a] border-[#2a3040] text-white"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-[#1a1f2a] border-[#2a3040]">
                   <SelectItem value="customer_request" className="text-white">Kundenwunsch</SelectItem>
-                  <SelectItem value="no_payment" className="text-white">Keine Zahlung eingegangen</SelectItem>
+                  <SelectItem value="no_payment" className="text-white">Keine Zahlung</SelectItem>
                   <SelectItem value="tour_cancelled" className="text-white">Reise abgesagt</SelectItem>
                   <SelectItem value="medical" className="text-white">Krankheit / Notfall</SelectItem>
                   <SelectItem value="duplicate" className="text-white">Doppelbuchung</SelectItem>
@@ -819,25 +847,23 @@ const AdminBookingDetail = () => {
                 </SelectContent>
               </Select>
             </div>
-            {cancelForm.reason === "other" && (
-              <div><Label className="text-zinc-400">Grund (Freitext)</Label><Input value={cancelForm.customReason} onChange={(e) => setCancelForm(f => ({ ...f, customReason: e.target.value }))} className="bg-zinc-800 border-zinc-700 text-white" /></div>
-            )}
+            {cancelForm.reason === "other" && <div><Label className="text-zinc-400 text-xs">Grund (Freitext)</Label><Input value={cancelForm.customReason} onChange={(e) => setCancelForm(f => ({ ...f, customReason: e.target.value }))} className="bg-[#1a1f2a] border-[#2a3040] text-white" /></div>}
             <div className="flex items-center gap-2">
               <input type="checkbox" id="applyFeeCheckbox" checked={cancelForm.applyFee} onChange={(e) => setCancelForm(f => ({ ...f, applyFee: e.target.checked }))} className="rounded border-zinc-600" />
-              <Label htmlFor="applyFeeCheckbox" className="text-zinc-400 text-sm cursor-pointer">Stornogebühr anwenden</Label>
+              <Label htmlFor="applyFeeCheckbox" className="text-zinc-400 text-xs cursor-pointer">Stornogebühr anwenden</Label>
             </div>
             {cancelForm.applyFee && (
-              <div className="grid grid-cols-2 gap-4">
-                <div><Label className="text-zinc-400">Gebühr (%)</Label><Input type="number" value={cancelForm.feePercent} onChange={(e) => setCancelForm(f => ({ ...f, feePercent: parseInt(e.target.value) || 0 }))} className="bg-zinc-800 border-zinc-700 text-white" /></div>
-                <div><Label className="text-zinc-400">Gebühr (€)</Label><div className="bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-white mt-1">{(booking.total_price * cancelForm.feePercent / 100).toFixed(2)}€</div></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label className="text-zinc-400 text-xs">Gebühr (%)</Label><Input type="number" value={cancelForm.feePercent} onChange={(e) => setCancelForm(f => ({ ...f, feePercent: parseInt(e.target.value) || 0 }))} className="bg-[#1a1f2a] border-[#2a3040] text-white" /></div>
+                <div><Label className="text-zinc-400 text-xs">Gebühr (€)</Label><div className="bg-[#1a1f2a] border border-[#2a3040] rounded-md px-3 py-2 text-white mt-1 text-sm">{fmt(booking.total_price * cancelForm.feePercent / 100)}</div></div>
               </div>
             )}
             {netPaid > 0 && (
-              <div className="bg-zinc-800 rounded-lg p-3 text-sm">
-                <div className="flex justify-between"><span className="text-zinc-400">Bereits bezahlt</span><span className="text-white">{netPaid.toFixed(2)}€</span></div>
-                <div className="flex justify-between"><span className="text-zinc-400">Stornogebühr</span><span className="text-red-400">{cancelForm.applyFee ? (booking.total_price * cancelForm.feePercent / 100).toFixed(2) : "0.00"}€</span></div>
-                <Separator className="bg-zinc-700 my-2" />
-                <div className="flex justify-between font-bold"><span className="text-zinc-300">Erstattung</span><span className="text-emerald-400">{Math.max(0, netPaid - (cancelForm.applyFee ? booking.total_price * cancelForm.feePercent / 100 : 0)).toFixed(2)}€</span></div>
+              <div className="bg-[#1a1f2a] border border-[#2a3040] rounded-lg p-3 text-xs space-y-1">
+                <div className="flex justify-between"><span className="text-zinc-400">Bereits bezahlt</span><span className="text-zinc-200">{fmt(netPaid)}</span></div>
+                <div className="flex justify-between"><span className="text-zinc-400">Stornogebühr</span><span className="text-red-400">{fmt(cancelForm.applyFee ? booking.total_price * cancelForm.feePercent / 100 : 0)}</span></div>
+                <Separator className="bg-[#2a3040]" />
+                <div className="flex justify-between font-bold"><span className="text-zinc-300">Erstattung</span><span className="text-emerald-400">{fmt(Math.max(0, netPaid - (cancelForm.applyFee ? booking.total_price * cancelForm.feePercent / 100 : 0)))}</span></div>
               </div>
             )}
           </div>
@@ -850,13 +876,13 @@ const AdminBookingDetail = () => {
         </DialogContent>
       </Dialog>
 
-      {/* ===== REFUND MODAL ===== */}
+      {/* Refund Modal */}
       <Dialog open={refundModal} onOpenChange={setRefundModal}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
+        <DialogContent className="bg-[#151920] border-[#252b38] text-white">
           <DialogHeader><DialogTitle className="text-orange-400">Erstattung erfassen</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div><Label className="text-zinc-400">Betrag (€)</Label><Input type="number" step="0.01" value={refundForm.amount} onChange={(e) => setRefundForm(f => ({ ...f, amount: parseFloat(e.target.value) || 0 }))} className="bg-zinc-800 border-zinc-700 text-white" /></div>
-            <div><Label className="text-zinc-400">Notiz</Label><Textarea value={refundForm.note} onChange={(e) => setRefundForm(f => ({ ...f, note: e.target.value }))} className="bg-zinc-800 border-zinc-700 text-white" placeholder="Grund für Erstattung" /></div>
+          <div className="space-y-3">
+            <div><Label className="text-zinc-400 text-xs">Betrag (€)</Label><Input type="number" step="0.01" value={refundForm.amount} onChange={(e) => setRefundForm(f => ({ ...f, amount: parseFloat(e.target.value) || 0 }))} className="bg-[#1a1f2a] border-[#2a3040] text-white" /></div>
+            <div><Label className="text-zinc-400 text-xs">Notiz</Label><Textarea value={refundForm.note} onChange={(e) => setRefundForm(f => ({ ...f, note: e.target.value }))} className="bg-[#1a1f2a] border-[#2a3040] text-white" placeholder="Grund für Erstattung" /></div>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setRefundModal(false)} className="text-zinc-400">Abbrechen</Button>
