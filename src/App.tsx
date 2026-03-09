@@ -23,6 +23,7 @@ const TermsPage = lazy(() => import("./pages/TermsPage"));
 const TourDetailPage = lazy(() => import("./components/tours/TourDetailPage"));
 const TourCheckoutPage = lazy(() => import("./pages/TourCheckoutPage"));
 const AdminInquiriesPage = lazy(() => import("./pages/AdminInquiriesPage"));
+const AdminInquiryDetail = lazy(() => import("./pages/AdminInquiryDetail"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminCMS = lazy(() => import("./pages/AdminCMS"));
 const AdminTourBuilder = lazy(() => import("./pages/AdminTourBuilder"));
@@ -94,6 +95,7 @@ const App = () => (
               <Route path="/admin/ops" element={<OperationsDashboard />} />
               <Route path="/admin/driver" element={<DriverDashboard />} />
               <Route path="/admin/inquiries" element={<AdminInquiriesPage />} />
+              <Route path="/admin/inquiries/:inquiryId" element={<AdminInquiryDetail />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin/booking/:bookingId" element={<AdminBookingDetail />} />
               <Route path="/admin/customers" element={<AdminCustomers />} />
