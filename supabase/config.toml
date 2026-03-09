@@ -35,3 +35,9 @@ verify_jwt = false
 
 [functions.generate-tour-description]
 verify_jwt = false
+
+[functions.process-email-automations]
+verify_jwt = false
+
+[functions.cancel-tour-booking]
+verify_jwt = false
