@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useCommandActions } from "@/hooks/useOperations";
 import { 
   Zap, Ban, Clock, UserCheck, Send, RefreshCw,
-  CheckCircle, Loader2
+  CheckCircle, Loader2, AlertTriangle, MapPin, BarChart3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,7 @@ const commands: CommandAction[] = [
     id: 'cancel_trip',
     icon: <Ban className="w-5 h-5" />,
     label: 'Fahrt abbrechen',
-    description: 'Eine aktive Fahrt abbrechen',
+    description: 'Eine aktive Fahrt stornieren',
     color: 'text-red-400',
     bgColor: 'bg-red-500/10 hover:bg-red-500/20',
   },
@@ -40,15 +40,15 @@ const commands: CommandAction[] = [
     id: 'report_delay',
     icon: <Clock className="w-5 h-5" />,
     label: 'Verspätung melden',
-    description: 'Verspätung für eine Fahrt melden',
+    description: 'Verspätung für eine Fahrt eintragen',
     color: 'text-amber-400',
     bgColor: 'bg-amber-500/10 hover:bg-amber-500/20',
   },
   {
     id: 'reassign_driver',
     icon: <UserCheck className="w-5 h-5" />,
-    label: 'Fahrer neu zuweisen',
-    description: 'Einen Fahrer einem anderen Bus zuweisen',
+    label: 'Fahrer zuweisen',
+    description: 'Fahrer einem anderen Bus zuweisen',
     color: 'text-blue-400',
     bgColor: 'bg-blue-500/10 hover:bg-blue-500/20',
   },
@@ -59,6 +59,30 @@ const commands: CommandAction[] = [
     description: 'Nachricht an Mitarbeiter senden',
     color: 'text-purple-400',
     bgColor: 'bg-purple-500/10 hover:bg-purple-500/20',
+  },
+  {
+    id: 'emergency_stop',
+    icon: <AlertTriangle className="w-5 h-5" />,
+    label: 'Notfall-Stopp',
+    description: 'Sofortige Fahrtunterbrechung melden',
+    color: 'text-red-500',
+    bgColor: 'bg-red-600/10 hover:bg-red-600/20',
+  },
+  {
+    id: 'route_change',
+    icon: <MapPin className="w-5 h-5" />,
+    label: 'Routenänderung',
+    description: 'Umleitung oder Haltestellenänderung',
+    color: 'text-orange-400',
+    bgColor: 'bg-orange-500/10 hover:bg-orange-500/20',
+  },
+  {
+    id: 'capacity_alert',
+    icon: <BarChart3 className="w-5 h-5" />,
+    label: 'Kapazitäts-Alert',
+    description: 'Überbuchung oder Zusatzbus anfordern',
+    color: 'text-cyan-400',
+    bgColor: 'bg-cyan-500/10 hover:bg-cyan-500/20',
   },
   {
     id: 'system_refresh',
@@ -103,9 +127,21 @@ const CommandCenter = () => {
         case 'send_notification':
           await logCommand('SEND_NOTIFICATION', 'broadcast', null, { message: formData.message });
           break;
+        case 'emergency_stop':
+          await logCommand('EMERGENCY_STOP', 'trip', formData.tripId || null, { reason: formData.reason });
+          break;
+        case 'route_change':
+          await logCommand('ROUTE_CHANGE', 'trip', formData.tripId || null, { 
+            newRoute: formData.newRoute, reason: formData.reason 
+          });
+          break;
+        case 'capacity_alert':
+          await logCommand('CAPACITY_ALERT', 'trip', formData.tripId || null, { 
+            type: formData.alertType, details: formData.details 
+          });
+          break;
         case 'system_refresh':
           await logCommand('SYSTEM_REFRESH', 'system', null, {});
-          // Trigger page reload after brief delay
           setTimeout(() => window.location.reload(), 1000);
           break;
       }
@@ -223,6 +259,103 @@ const CommandCenter = () => {
             </div>
           </div>
         );
+      case 'emergency_stop':
+        return (
+          <div className="space-y-4">
+            <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <p className="text-red-300 text-sm font-medium">⚠️ Notfall-Befehl – nur bei akuter Gefahr verwenden</p>
+            </div>
+            <div>
+              <Label>Trip ID</Label>
+              <Input
+                value={formData.tripId || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, tripId: e.target.value }))}
+                placeholder="UUID der Fahrt"
+                className="bg-zinc-800 border-zinc-700 mt-1"
+              />
+            </div>
+            <div>
+              <Label>Grund</Label>
+              <Textarea
+                value={formData.reason || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, reason: e.target.value }))}
+                placeholder="Beschreibung des Notfalls..."
+                className="bg-zinc-800 border-zinc-700 mt-1"
+                rows={3}
+              />
+            </div>
+          </div>
+        );
+      case 'route_change':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Trip ID</Label>
+              <Input
+                value={formData.tripId || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, tripId: e.target.value }))}
+                placeholder="UUID der Fahrt"
+                className="bg-zinc-800 border-zinc-700 mt-1"
+              />
+            </div>
+            <div>
+              <Label>Neue Route / Umleitung</Label>
+              <Input
+                value={formData.newRoute || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, newRoute: e.target.value }))}
+                placeholder="z.B. A7 statt A1, Halt Hamburg-Süd entfällt"
+                className="bg-zinc-800 border-zinc-700 mt-1"
+              />
+            </div>
+            <div>
+              <Label>Grund</Label>
+              <Textarea
+                value={formData.reason || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, reason: e.target.value }))}
+                placeholder="Warum wird die Route geändert?"
+                className="bg-zinc-800 border-zinc-700 mt-1"
+                rows={2}
+              />
+            </div>
+          </div>
+        );
+      case 'capacity_alert':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Trip ID</Label>
+              <Input
+                value={formData.tripId || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, tripId: e.target.value }))}
+                placeholder="UUID der Fahrt"
+                className="bg-zinc-800 border-zinc-700 mt-1"
+              />
+            </div>
+            <div>
+              <Label>Alert-Typ</Label>
+              <select
+                value={formData.alertType || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, alertType: e.target.value }))}
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-white mt-1"
+              >
+                <option value="">Bitte wählen...</option>
+                <option value="overbooking">Überbuchung</option>
+                <option value="extra_bus">Zusatzbus anfordern</option>
+                <option value="low_occupancy">Niedrige Auslastung</option>
+              </select>
+            </div>
+            <div>
+              <Label>Details</Label>
+              <Textarea
+                value={formData.details || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, details: e.target.value }))}
+                placeholder="Weitere Details zur Kapazitätssituation..."
+                className="bg-zinc-800 border-zinc-700 mt-1"
+                rows={2}
+              />
+            </div>
+          </div>
+        );
       case 'system_refresh':
         return (
           <div className="p-4 bg-zinc-800 rounded-lg text-center">
@@ -243,7 +376,7 @@ const CommandCenter = () => {
         <h2 className="text-lg font-bold text-white">Command Center</h2>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
         {commands.map((cmd) => (
           <button
             key={cmd.id}

@@ -30,10 +30,12 @@ const categories = [
   'Kulturreise', 'Wellness', 'Familienurlaub'
 ];
 
-const countries = [
+const defaultCountries = [
   'Kroatien', 'Slowenien', 'Montenegro', 'Bosnien-Herzegowina',
   'Serbien', 'Albanien', 'Nordmazedonien', 'Kosovo',
-  'Griechenland', 'Italien', 'Österreich'
+  'Griechenland', 'Italien', 'Österreich', 'Deutschland',
+  'Spanien', 'Portugal', 'Frankreich', 'Niederlande', 'Belgien',
+  'Schweiz', 'Ungarn', 'Tschechien', 'Polen', 'Türkei'
 ];
 
 const TourBasicsTab = ({ tour, onChange }: TourBasicsTabProps) => {
@@ -106,10 +108,10 @@ const TourBasicsTab = ({ tour, onChange }: TourBasicsTabProps) => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold mb-1 bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">
+        <h2 className="text-2xl font-bold mb-1 text-white">
           Basis-Informationen
         </h2>
-        <p className="text-zinc-500">Grundlegende Daten zur Reise</p>
+        <p className="text-zinc-400">Grundlegende Daten zur Reise</p>
       </div>
 
       {/* Main Info */}
@@ -149,16 +151,19 @@ const TourBasicsTab = ({ tour, onChange }: TourBasicsTabProps) => {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="country" className="text-zinc-300 text-sm font-medium">Land</Label>
-              <Select value={tour?.country || ''} onValueChange={(v) => onChange('country', v)}>
-                <SelectTrigger className="bg-zinc-800/60 border-zinc-600/50 text-white">
-                  <SelectValue placeholder="Land auswählen..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {countries.map(country => (
-                    <SelectItem key={country} value={country}>{country}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                id="country"
+                list="country-suggestions"
+                value={tour?.country || ''}
+                onChange={(e) => onChange('country', e.target.value)}
+                placeholder="Land eingeben oder auswählen..."
+                className="bg-zinc-800/60 border-zinc-600/50 focus:border-emerald-500/50 focus:ring-emerald-500/20 text-white placeholder:text-zinc-500"
+              />
+              <datalist id="country-suggestions">
+                {defaultCountries.map(c => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="category" className="text-zinc-300 text-sm font-medium">Kategorie</Label>
@@ -254,7 +259,7 @@ const TourBasicsTab = ({ tour, onChange }: TourBasicsTabProps) => {
               <Badge
                 key={index}
                 variant="secondary"
-                className="bg-zinc-800/80 text-zinc-200 px-3 py-1.5 flex items-center gap-2 border border-zinc-700/50"
+                className="bg-amber-500/20 text-amber-100 px-3 py-1.5 flex items-center gap-2 border border-amber-500/30"
               >
                 {highlight}
                 <button onClick={() => removeHighlight(index)} className="hover:text-red-400 transition-colors">
@@ -352,7 +357,7 @@ const TourBasicsTab = ({ tour, onChange }: TourBasicsTabProps) => {
               <Badge
                 key={index}
                 variant="outline"
-                className="border-zinc-600/50 text-zinc-300 px-3 py-1.5 flex items-center gap-2"
+                className="border-purple-500/40 text-purple-200 px-3 py-1.5 flex items-center gap-2 bg-purple-500/10"
               >
                 {tag}
                 <button onClick={() => removeTag(index)} className="hover:text-red-400 transition-colors">
