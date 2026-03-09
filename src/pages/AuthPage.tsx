@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+
 import { z } from 'zod';
 import { motion } from 'framer-motion';
 import heroImage from '@/assets/hero-group-travel.jpg';
