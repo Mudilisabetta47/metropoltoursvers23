@@ -280,7 +280,7 @@ export function useTourBuilder(tourId?: string) {
   const [inclusions, setInclusions] = useState<TourInclusion[]>([]);
   const [legal, setLegal] = useState<TourLegal[]>([]);
   const [extras, setExtras] = useState<TourExtra[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(!!tourId);
   const [isSaving, setIsSaving] = useState(false);
 
   // Fetch all tour data
