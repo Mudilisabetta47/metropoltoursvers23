@@ -154,13 +154,30 @@ const AdminTourBuilder = () => {
     }
   };
 
-  if (isLoading && tourId) {
+  if (tourId && isLoading) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-10 h-10 animate-spin text-emerald-500" />
           <p className="text-zinc-500 text-sm">Reise wird geladen...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (tourId && !currentTour) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
+        <Card className="max-w-md w-full bg-zinc-900/80 border-zinc-700/50 backdrop-blur">
+          <CardContent className="pt-6 text-center space-y-4">
+            <AlertCircle className="w-12 h-12 mx-auto text-red-400" />
+            <h2 className="text-xl font-semibold text-white">Reise konnte nicht geladen werden</h2>
+            <p className="text-zinc-400 text-sm">Bitte öffnen Sie die Reise erneut aus dem Admin-Bereich.</p>
+            <Button onClick={() => navigate('/admin/cms')} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              Zurück zur Übersicht
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
