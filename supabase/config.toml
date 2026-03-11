@@ -41,3 +41,9 @@ verify_jwt = false
 
 [functions.cancel-tour-booking]
 verify_jwt = false
+
+[functions.create-paypal-order]
+verify_jwt = false
+
+[functions.capture-paypal-order]
+verify_jwt = false

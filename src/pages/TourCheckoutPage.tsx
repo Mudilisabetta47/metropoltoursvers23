@@ -28,6 +28,8 @@ import {
   Shield,
   Clock,
   CheckCircle2,
+  CreditCard,
+  Wallet,
   Banknote,
   Copy,
 } from "lucide-react";
@@ -62,6 +64,7 @@ import {
   ExtendedPackageTour,
 } from "@/hooks/useTourBuilder";
 
+type PaymentMethod = "bank_transfer" | "stripe" | "paypal";
 type CheckoutStep = "summary" | "passengers" | "payment" | "confirmation";
 
 interface PassengerInfo {
@@ -122,6 +125,7 @@ const TourCheckoutPage = () => {
   const [selectedExtras, setSelectedExtras] = useState<Record<string, number>>({});
   const [selectedAddons, setSelectedAddons] = useState<Record<string, number>>({});
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("bank_transfer");
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [agreeTravelInfo, setAgreeTravelInfo] = useState(false);
   const [bookingNumber, setBookingNumber] = useState<string | null>(null);
@@ -188,6 +192,35 @@ const TourCheckoutPage = () => {
         await loadTourData();
       };
       verifyAndLoadBooking();
+      return;
+    }
+    // PayPal return
+    if (paymentStatus === "paypal_success" && tourId) {
+      const paypalOrderId = searchParams.get("paypal_order_id") || searchParams.get("token");
+      const capturePayPal = async () => {
+        setIsLoading(true);
+        try {
+          if (paypalOrderId) {
+            const { data: captureData, error: captureError } = await supabase.functions.invoke('capture-paypal-order', {
+              body: { orderId: paypalOrderId }
+            });
+            if (captureError) console.error("PayPal capture error:", captureError);
+            if (captureData?.success && captureData?.bookingId) {
+              setBookingId(captureData.bookingId);
+              setBookingNumber(captureData.bookingNumber || "");
+              setCurrentStep("confirmation");
+              // Generate documents
+              supabase.functions.invoke('generate-tour-documents', {
+                body: { bookingId: captureData.bookingId }
+              }).catch(err => console.error("Doc gen error:", err));
+            }
+          }
+        } catch (err) {
+          console.error("PayPal capture error:", err);
+        }
+        await loadTourData();
+      };
+      capturePayPal();
       return;
     }
     if (paymentStatus === "success" && tourId) {
@@ -415,7 +448,7 @@ const TourCheckoutPage = () => {
           base_price: pricePerPerson, pickup_surcharge: pickupSurcharge * participants,
           luggage_addons: luggageAddonsData, total_price: totalPrice,
           discount_code: appliedCoupon?.code || null, discount_amount: discountAmount || null,
-          payment_method: "bank_transfer", status: "pending", booking_type: "direct",
+          payment_method: selectedPaymentMethod, status: "pending", booking_type: "direct",
           customer_notes: JSON.stringify({
             consent_agb: consentTimestamp,
             consent_privacy: consentTimestamp,
@@ -430,6 +463,30 @@ const TourCheckoutPage = () => {
         .update({ booked_seats: selectedDate!.booked_seats + participants })
         .eq("id", selectedDate!.id);
 
+      // Route based on payment method
+      if (selectedPaymentMethod === "stripe") {
+        const { data: stripeData, error: stripeError } = await supabase.functions.invoke("create-tour-payment", {
+          body: { bookingId: bookingData.id, couponCode: appliedCoupon?.code || null },
+        });
+        if (stripeError || !stripeData?.url) {
+          throw new Error(stripeData?.error || "Stripe-Zahlung konnte nicht erstellt werden");
+        }
+        window.location.href = stripeData.url;
+        return;
+      }
+
+      if (selectedPaymentMethod === "paypal") {
+        const { data: paypalData, error: paypalError } = await supabase.functions.invoke("create-paypal-order", {
+          body: { bookingId: bookingData.id, couponCode: appliedCoupon?.code || null },
+        });
+        if (paypalError || !paypalData?.approveUrl) {
+          throw new Error(paypalData?.error || "PayPal-Zahlung konnte nicht erstellt werden");
+        }
+        window.location.href = paypalData.approveUrl;
+        return;
+      }
+
+      // Bank transfer flow
       setBookingNumber(bookingData.booking_number);
       setBookingId(bookingData.id);
       setCurrentStep("confirmation");
@@ -892,37 +949,104 @@ const TourCheckoutPage = () => {
                 </Card>
               )}
 
-              {/* Step 3: Payment – Bank Transfer */}
+              {/* Step 3: Payment */}
               {currentStep === "payment" && (
                 <div className="space-y-5">
-                  {/* Payment Method */}
+                  {/* Payment Method Selection */}
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
-                        <Banknote className="w-5 h-5 text-primary" />
-                        Zahlung per Überweisung
+                        <Wallet className="w-5 h-5 text-primary" />
+                        Zahlungsart wählen
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-5">
-                      <div className="p-5 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl space-y-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Banknote className="w-5 h-5 text-primary" />
+                    <CardContent className="space-y-3">
+                      {[
+                        { key: "bank_transfer" as PaymentMethod, icon: Banknote, label: "Überweisung", desc: "Zahlung per Banküberweisung" },
+                        { key: "stripe" as PaymentMethod, icon: CreditCard, label: "Kreditkarte", desc: "Visa, Mastercard, AMEX & mehr" },
+                        { key: "paypal" as PaymentMethod, icon: Wallet, label: "PayPal", desc: "Schnell & sicher mit PayPal bezahlen" },
+                      ].map((method) => (
+                        <div
+                          key={method.key}
+                          onClick={() => setSelectedPaymentMethod(method.key)}
+                          className={cn(
+                            "flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all",
+                            selectedPaymentMethod === method.key
+                              ? "border-primary bg-primary/5 shadow-sm"
+                              : "border-border hover:border-primary/40 hover:bg-muted/30"
+                          )}
+                        >
+                          <div className={cn(
+                            "w-10 h-10 rounded-full flex items-center justify-center",
+                            selectedPaymentMethod === method.key ? "bg-primary/10" : "bg-muted"
+                          )}>
+                            <method.icon className={cn("w-5 h-5", selectedPaymentMethod === method.key ? "text-primary" : "text-muted-foreground")} />
                           </div>
-                          <div>
-                            <p className="font-semibold text-foreground">Zahlungsart: Überweisung</p>
-                            <p className="text-sm text-muted-foreground">
-                              Du erhältst nach der Buchung eine E-Mail mit unseren Bankdaten und dem Verwendungszweck.
-                            </p>
+                          <div className="flex-1">
+                            <p className="font-semibold text-foreground">{method.label}</p>
+                            <p className="text-sm text-muted-foreground">{method.desc}</p>
+                          </div>
+                          <div className={cn(
+                            "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                            selectedPaymentMethod === method.key ? "border-primary" : "border-muted-foreground/30"
+                          )}>
+                            {selectedPaymentMethod === method.key && (
+                              <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                            )}
                           </div>
                         </div>
-                        <div className="p-3 bg-card rounded-lg border border-border/50 text-sm">
-                          <p className="text-muted-foreground">
-                            Deine Buchung wird nach Zahlungseingang bestätigt und automatisch freigegeben.
-                            Du erhältst dann eine zweite E-Mail mit deinen vollständigen Reiseunterlagen.
-                          </p>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  {/* Payment Info */}
+                  <Card>
+                    <CardContent className="p-5 space-y-5">
+                      {selectedPaymentMethod === "bank_transfer" && (
+                        <div className="p-5 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <Banknote className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-foreground">Überweisung</p>
+                              <p className="text-sm text-muted-foreground">
+                                Du erhältst nach der Buchung eine E-Mail mit den Bankdaten und dem Verwendungszweck.
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      )}
+                      {selectedPaymentMethod === "stripe" && (
+                        <div className="p-5 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <CreditCard className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-foreground">Kreditkarte</p>
+                              <p className="text-sm text-muted-foreground">
+                                Du wirst nach dem Klick auf „Jetzt buchen" zur sicheren Stripe-Zahlungsseite weitergeleitet.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {selectedPaymentMethod === "paypal" && (
+                        <div className="p-5 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <Wallet className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-foreground">PayPal</p>
+                              <p className="text-sm text-muted-foreground">
+                                Du wirst nach dem Klick auf „Jetzt buchen" zu PayPal weitergeleitet. Die Buchung wird sofort bestätigt.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Booking Summary */}
                       <div className="p-4 bg-muted/30 rounded-xl space-y-2 text-sm">
@@ -1188,12 +1312,18 @@ const TourCheckoutPage = () => {
                         {isProcessing ? (
                           <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Buchung wird erstellt...
+                            {selectedPaymentMethod === "stripe" ? "Weiterleitung zu Stripe..." :
+                             selectedPaymentMethod === "paypal" ? "Weiterleitung zu PayPal..." :
+                             "Buchung wird erstellt..."}
                           </>
                         ) : currentStep === "payment" ? (
                           <>
-                            <CheckCircle2 className="w-4 h-4 mr-2" />
-                            Jetzt verbindlich buchen
+                            {selectedPaymentMethod === "paypal" ? <Wallet className="w-4 h-4 mr-2" /> :
+                             selectedPaymentMethod === "stripe" ? <CreditCard className="w-4 h-4 mr-2" /> :
+                             <CheckCircle2 className="w-4 h-4 mr-2" />}
+                            {selectedPaymentMethod === "bank_transfer" ? "Jetzt verbindlich buchen" :
+                             selectedPaymentMethod === "stripe" ? "Jetzt mit Kreditkarte zahlen" :
+                             "Jetzt mit PayPal zahlen"}
                           </>
                         ) : (
                           "Weiter"
@@ -1210,8 +1340,10 @@ const TourCheckoutPage = () => {
                       {/* Trust Elements */}
                       <div className="space-y-2 pt-2">
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Banknote className="w-3.5 h-3.5 text-primary shrink-0" />
-                          <span>Zahlung per Überweisung</span>
+                          {selectedPaymentMethod === "paypal" ? <Wallet className="w-3.5 h-3.5 text-primary shrink-0" /> :
+                           selectedPaymentMethod === "stripe" ? <CreditCard className="w-3.5 h-3.5 text-primary shrink-0" /> :
+                           <Banknote className="w-3.5 h-3.5 text-primary shrink-0" />}
+                          <span>{selectedPaymentMethod === "paypal" ? "PayPal" : selectedPaymentMethod === "stripe" ? "Kreditkarte" : "Überweisung"}</span>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Shield className="w-3.5 h-3.5 text-primary shrink-0" />
