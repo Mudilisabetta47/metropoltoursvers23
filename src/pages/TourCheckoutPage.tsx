@@ -64,7 +64,7 @@ import {
   ExtendedPackageTour,
 } from "@/hooks/useTourBuilder";
 
-type PaymentMethod = "bank_transfer" | "stripe" | "paypal";
+type PaymentMethod = "paypal";
 type CheckoutStep = "summary" | "passengers" | "payment" | "confirmation";
 
 interface PassengerInfo {
@@ -463,18 +463,7 @@ const TourCheckoutPage = () => {
         .update({ booked_seats: selectedDate!.booked_seats + participants })
         .eq("id", selectedDate!.id);
 
-      // Route based on payment method
-      if (selectedPaymentMethod === "stripe") {
-        const { data: stripeData, error: stripeError } = await supabase.functions.invoke("create-tour-payment", {
-          body: { bookingId: bookingData.id, couponCode: appliedCoupon?.code || null },
-        });
-        if (stripeError || !stripeData?.url) {
-          throw new Error(stripeData?.error || "Stripe-Zahlung konnte nicht erstellt werden");
-        }
-        window.location.href = stripeData.url;
-        return;
-      }
-
+      // Route to PayPal payment
       if (selectedPaymentMethod === "paypal") {
         const { data: paypalData, error: paypalError } = await supabase.functions.invoke("create-paypal-order", {
           body: { bookingId: bookingData.id, couponCode: appliedCoupon?.code || null },
@@ -963,7 +952,6 @@ const TourCheckoutPage = () => {
                     <CardContent className="space-y-3">
                       {[
                         { key: "paypal" as PaymentMethod, icon: Wallet, label: "PayPal", desc: "Schnell & sicher mit PayPal bezahlen" },
-                        { key: "stripe" as PaymentMethod, icon: CreditCard, label: "Kreditkarte", desc: "Visa, Mastercard, AMEX & mehr" },
                       ].map((method) => (
                         <div
                           key={method.key}
@@ -1001,21 +989,6 @@ const TourCheckoutPage = () => {
                   {/* Payment Info */}
                   <Card>
                     <CardContent className="p-5 space-y-5">
-                      {selectedPaymentMethod === "stripe" && (
-                        <div className="p-5 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl space-y-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                              <CreditCard className="w-5 h-5 text-primary" />
-                            </div>
-                            <div>
-                              <p className="font-semibold text-foreground">Kreditkarte</p>
-                              <p className="text-sm text-muted-foreground">
-                                Du wirst nach dem Klick auf „Jetzt buchen" zur sicheren Stripe-Zahlungsseite weitergeleitet.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
                       {selectedPaymentMethod === "paypal" && (
                         <div className="p-5 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl space-y-3">
                           <div className="flex items-center gap-3">
@@ -1296,18 +1269,12 @@ const TourCheckoutPage = () => {
                         {isProcessing ? (
                           <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            {selectedPaymentMethod === "stripe" ? "Weiterleitung zu Stripe..." :
-                             selectedPaymentMethod === "paypal" ? "Weiterleitung zu PayPal..." :
-                             "Buchung wird erstellt..."}
+                            Weiterleitung zu PayPal...
                           </>
                         ) : currentStep === "payment" ? (
                           <>
-                            {selectedPaymentMethod === "paypal" ? <Wallet className="w-4 h-4 mr-2" /> :
-                             selectedPaymentMethod === "stripe" ? <CreditCard className="w-4 h-4 mr-2" /> :
-                             <CheckCircle2 className="w-4 h-4 mr-2" />}
-                            {selectedPaymentMethod === "bank_transfer" ? "Jetzt verbindlich buchen" :
-                             selectedPaymentMethod === "stripe" ? "Jetzt mit Kreditkarte zahlen" :
-                             "Jetzt mit PayPal zahlen"}
+                            <Wallet className="w-4 h-4 mr-2" />
+                            Jetzt mit PayPal zahlen
                           </>
                         ) : (
                           "Weiter"
