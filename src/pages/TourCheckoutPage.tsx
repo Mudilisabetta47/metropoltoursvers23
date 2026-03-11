@@ -1340,8 +1340,10 @@ const TourCheckoutPage = () => {
                       {/* Trust Elements */}
                       <div className="space-y-2 pt-2">
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Banknote className="w-3.5 h-3.5 text-primary shrink-0" />
-                          <span>Zahlung per Überweisung</span>
+                          {selectedPaymentMethod === "paypal" ? <Wallet className="w-3.5 h-3.5 text-primary shrink-0" /> :
+                           selectedPaymentMethod === "stripe" ? <CreditCard className="w-3.5 h-3.5 text-primary shrink-0" /> :
+                           <Banknote className="w-3.5 h-3.5 text-primary shrink-0" />}
+                          <span>{selectedPaymentMethod === "paypal" ? "PayPal" : selectedPaymentMethod === "stripe" ? "Kreditkarte" : "Überweisung"}</span>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Shield className="w-3.5 h-3.5 text-primary shrink-0" />
