@@ -949,37 +949,104 @@ const TourCheckoutPage = () => {
                 </Card>
               )}
 
-              {/* Step 3: Payment – Bank Transfer */}
+              {/* Step 3: Payment */}
               {currentStep === "payment" && (
                 <div className="space-y-5">
-                  {/* Payment Method */}
+                  {/* Payment Method Selection */}
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
-                        <Banknote className="w-5 h-5 text-primary" />
-                        Zahlung per Überweisung
+                        <Wallet className="w-5 h-5 text-primary" />
+                        Zahlungsart wählen
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-5">
-                      <div className="p-5 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl space-y-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Banknote className="w-5 h-5 text-primary" />
+                    <CardContent className="space-y-3">
+                      {[
+                        { key: "bank_transfer" as PaymentMethod, icon: Banknote, label: "Überweisung", desc: "Zahlung per Banküberweisung" },
+                        { key: "stripe" as PaymentMethod, icon: CreditCard, label: "Kreditkarte", desc: "Visa, Mastercard, AMEX & mehr" },
+                        { key: "paypal" as PaymentMethod, icon: Wallet, label: "PayPal", desc: "Schnell & sicher mit PayPal bezahlen" },
+                      ].map((method) => (
+                        <div
+                          key={method.key}
+                          onClick={() => setSelectedPaymentMethod(method.key)}
+                          className={cn(
+                            "flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all",
+                            selectedPaymentMethod === method.key
+                              ? "border-primary bg-primary/5 shadow-sm"
+                              : "border-border hover:border-primary/40 hover:bg-muted/30"
+                          )}
+                        >
+                          <div className={cn(
+                            "w-10 h-10 rounded-full flex items-center justify-center",
+                            selectedPaymentMethod === method.key ? "bg-primary/10" : "bg-muted"
+                          )}>
+                            <method.icon className={cn("w-5 h-5", selectedPaymentMethod === method.key ? "text-primary" : "text-muted-foreground")} />
                           </div>
-                          <div>
-                            <p className="font-semibold text-foreground">Zahlungsart: Überweisung</p>
-                            <p className="text-sm text-muted-foreground">
-                              Du erhältst nach der Buchung eine E-Mail mit unseren Bankdaten und dem Verwendungszweck.
-                            </p>
+                          <div className="flex-1">
+                            <p className="font-semibold text-foreground">{method.label}</p>
+                            <p className="text-sm text-muted-foreground">{method.desc}</p>
+                          </div>
+                          <div className={cn(
+                            "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                            selectedPaymentMethod === method.key ? "border-primary" : "border-muted-foreground/30"
+                          )}>
+                            {selectedPaymentMethod === method.key && (
+                              <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                            )}
                           </div>
                         </div>
-                        <div className="p-3 bg-card rounded-lg border border-border/50 text-sm">
-                          <p className="text-muted-foreground">
-                            Deine Buchung wird nach Zahlungseingang bestätigt und automatisch freigegeben.
-                            Du erhältst dann eine zweite E-Mail mit deinen vollständigen Reiseunterlagen.
-                          </p>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  {/* Payment Info */}
+                  <Card>
+                    <CardContent className="p-5 space-y-5">
+                      {selectedPaymentMethod === "bank_transfer" && (
+                        <div className="p-5 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <Banknote className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-foreground">Überweisung</p>
+                              <p className="text-sm text-muted-foreground">
+                                Du erhältst nach der Buchung eine E-Mail mit den Bankdaten und dem Verwendungszweck.
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      )}
+                      {selectedPaymentMethod === "stripe" && (
+                        <div className="p-5 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <CreditCard className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-foreground">Kreditkarte</p>
+                              <p className="text-sm text-muted-foreground">
+                                Du wirst nach dem Klick auf „Jetzt buchen" zur sicheren Stripe-Zahlungsseite weitergeleitet.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {selectedPaymentMethod === "paypal" && (
+                        <div className="p-5 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <Wallet className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-foreground">PayPal</p>
+                              <p className="text-sm text-muted-foreground">
+                                Du wirst nach dem Klick auf „Jetzt buchen" zu PayPal weitergeleitet. Die Buchung wird sofort bestätigt.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Booking Summary */}
                       <div className="p-4 bg-muted/30 rounded-xl space-y-2 text-sm">
