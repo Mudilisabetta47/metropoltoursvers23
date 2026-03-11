@@ -962,9 +962,8 @@ const TourCheckoutPage = () => {
                     </CardHeader>
                     <CardContent className="space-y-3">
                       {[
-                        { key: "bank_transfer" as PaymentMethod, icon: Banknote, label: "Überweisung", desc: "Zahlung per Banküberweisung" },
-                        { key: "stripe" as PaymentMethod, icon: CreditCard, label: "Kreditkarte", desc: "Visa, Mastercard, AMEX & mehr" },
                         { key: "paypal" as PaymentMethod, icon: Wallet, label: "PayPal", desc: "Schnell & sicher mit PayPal bezahlen" },
+                        { key: "stripe" as PaymentMethod, icon: CreditCard, label: "Kreditkarte", desc: "Visa, Mastercard, AMEX & mehr" },
                       ].map((method) => (
                         <div
                           key={method.key}
