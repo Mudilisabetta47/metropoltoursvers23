@@ -463,18 +463,7 @@ const TourCheckoutPage = () => {
         .update({ booked_seats: selectedDate!.booked_seats + participants })
         .eq("id", selectedDate!.id);
 
-      // Route based on payment method
-      if (selectedPaymentMethod === "stripe") {
-        const { data: stripeData, error: stripeError } = await supabase.functions.invoke("create-tour-payment", {
-          body: { bookingId: bookingData.id, couponCode: appliedCoupon?.code || null },
-        });
-        if (stripeError || !stripeData?.url) {
-          throw new Error(stripeData?.error || "Stripe-Zahlung konnte nicht erstellt werden");
-        }
-        window.location.href = stripeData.url;
-        return;
-      }
-
+      // Route to PayPal payment
       if (selectedPaymentMethod === "paypal") {
         const { data: paypalData, error: paypalError } = await supabase.functions.invoke("create-paypal-order", {
           body: { bookingId: bookingData.id, couponCode: appliedCoupon?.code || null },
