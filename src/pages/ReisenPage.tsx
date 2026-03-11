@@ -509,7 +509,7 @@ const ReisenPage = () => {
                           onClick={() => navigate(`/reisen/${tour.slug || tour.id}`)}
                         >
                           <img
-                            src={getImageSrc(tour.image_url, tour.destination)}
+                            src={getImageSrc(tour.image_url, tour.hero_image_url, tour.destination)}
                             alt={tour.destination}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             loading="lazy"
