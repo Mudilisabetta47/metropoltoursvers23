@@ -85,6 +85,7 @@ const App = () => (
               <Route path="/wochenendtrips" element={<WeekendTripsPage />} />
               <Route path="/wochenendtrips/:destination" element={<WeekendTripDetailPage />} />
               <Route path="/auth" element={<AuthPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/imprint" element={<ImprintPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />
