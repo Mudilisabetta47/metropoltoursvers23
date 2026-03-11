@@ -47,6 +47,7 @@ const WeekendTripsPage = lazy(() => import("./pages/WeekendTripsPage"));
 const WeekendTripDetailPage = lazy(() => import("./pages/WeekendTripDetailPage"));
 const PassengerDataPage = lazy(() => import("./pages/PassengerDataPage"));
 const DriverDashboard = lazy(() => import("./pages/DriverDashboard"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
