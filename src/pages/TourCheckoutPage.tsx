@@ -28,6 +28,8 @@ import {
   Shield,
   Clock,
   CheckCircle2,
+  CreditCard,
+  Wallet,
   Banknote,
   Copy,
 } from "lucide-react";
