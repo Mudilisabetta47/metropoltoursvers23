@@ -323,48 +323,99 @@ const TourBasicsTab = ({ tour, onChange }: TourBasicsTabProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-5">
-          <div className="space-y-1.5">
-            <Label htmlFor="hero_image" className="text-zinc-300 text-sm font-medium">Hero-Bild URL</Label>
-            <Input
-              id="hero_image"
-              value={tour?.hero_image_url || ''}
-              onChange={(e) => onChange('hero_image_url', e.target.value)}
-              placeholder="https://..."
-              className="bg-zinc-800/60 border-zinc-600/50 text-white placeholder:text-zinc-500"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="image_url" className="text-zinc-300 text-sm font-medium">Vorschaubild URL</Label>
-            <Input
-              id="image_url"
-              value={tour?.image_url || ''}
-              onChange={(e) => onChange('image_url', e.target.value)}
-              placeholder="https://..."
-              className="bg-zinc-800/60 border-zinc-600/50 text-white placeholder:text-zinc-500"
-            />
-          </div>
-          {(tour?.hero_image_url || tour?.image_url) && (
-            <div className="grid grid-cols-2 gap-4">
-              {tour?.hero_image_url && (
-                <div>
-                  <p className="text-xs text-zinc-500 mb-2">Hero-Vorschau</p>
+          {/* Hidden file inputs */}
+          <input type="file" ref={heroInputRef} accept="image/*" className="hidden"
+            onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0], 'hero')} />
+          <input type="file" ref={previewInputRef} accept="image/*" className="hidden"
+            onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0], 'preview')} />
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* Hero Image */}
+            <div className="space-y-2">
+              <Label className="text-zinc-300 text-sm font-medium">Hero-Bild</Label>
+              {tour?.hero_image_url ? (
+                <div className="relative group">
                   <div className="aspect-video bg-zinc-800 rounded-lg overflow-hidden border border-zinc-700/50">
                     <img src={tour.hero_image_url} alt="Hero" className="w-full h-full object-cover"
                       onError={(e) => (e.target as HTMLImageElement).style.display = 'none'} />
                   </div>
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+                    <Button size="sm" variant="secondary" onClick={() => heroInputRef.current?.click()}
+                      disabled={uploading === 'hero'}>
+                      {uploading === 'hero' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Ändern
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => onChange('hero_image_url', null)}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
+              ) : (
+                <button onClick={() => heroInputRef.current?.click()}
+                  disabled={uploading === 'hero'}
+                  className="w-full aspect-video bg-zinc-800/60 border-2 border-dashed border-zinc-600/50 rounded-lg flex flex-col items-center justify-center gap-2 hover:border-blue-500/50 hover:bg-zinc-800 transition-colors cursor-pointer">
+                  {uploading === 'hero' ? (
+                    <Loader2 className="w-6 h-6 text-zinc-400 animate-spin" />
+                  ) : (
+                    <>
+                      <Upload className="w-6 h-6 text-zinc-500" />
+                      <span className="text-xs text-zinc-500">Hero-Bild hochladen</span>
+                    </>
+                  )}
+                </button>
               )}
-              {tour?.image_url && (
-                <div>
-                  <p className="text-xs text-zinc-500 mb-2">Vorschaubild</p>
+            </div>
+
+            {/* Preview Image */}
+            <div className="space-y-2">
+              <Label className="text-zinc-300 text-sm font-medium">Vorschaubild</Label>
+              {tour?.image_url ? (
+                <div className="relative group">
                   <div className="aspect-video bg-zinc-800 rounded-lg overflow-hidden border border-zinc-700/50">
                     <img src={tour.image_url} alt="Preview" className="w-full h-full object-cover"
                       onError={(e) => (e.target as HTMLImageElement).style.display = 'none'} />
                   </div>
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+                    <Button size="sm" variant="secondary" onClick={() => previewInputRef.current?.click()}
+                      disabled={uploading === 'preview'}>
+                      {uploading === 'preview' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Ändern
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => onChange('image_url', null)}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
+              ) : (
+                <button onClick={() => previewInputRef.current?.click()}
+                  disabled={uploading === 'preview'}
+                  className="w-full aspect-video bg-zinc-800/60 border-2 border-dashed border-zinc-600/50 rounded-lg flex flex-col items-center justify-center gap-2 hover:border-blue-500/50 hover:bg-zinc-800 transition-colors cursor-pointer">
+                  {uploading === 'preview' ? (
+                    <Loader2 className="w-6 h-6 text-zinc-400 animate-spin" />
+                  ) : (
+                    <>
+                      <Upload className="w-6 h-6 text-zinc-500" />
+                      <span className="text-xs text-zinc-500">Vorschaubild hochladen</span>
+                    </>
+                  )}
+                </button>
               )}
             </div>
-          )}
+          </div>
+
+          {/* URL fallback inputs */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label className="text-zinc-400 text-xs">oder URL eingeben</Label>
+              <Input value={tour?.hero_image_url || ''} onChange={(e) => onChange('hero_image_url', e.target.value)}
+                placeholder="https://..." className="bg-zinc-800/60 border-zinc-600/50 text-white placeholder:text-zinc-500 text-xs h-8" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-zinc-400 text-xs">oder URL eingeben</Label>
+              <Input value={tour?.image_url || ''} onChange={(e) => onChange('image_url', e.target.value)}
+                placeholder="https://..." className="bg-zinc-800/60 border-zinc-600/50 text-white placeholder:text-zinc-500 text-xs h-8" />
+            </div>
+          </div>
         </CardContent>
       </Card>
 
