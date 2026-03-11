@@ -1001,21 +1001,6 @@ const TourCheckoutPage = () => {
                   {/* Payment Info */}
                   <Card>
                     <CardContent className="p-5 space-y-5">
-                      {selectedPaymentMethod === "bank_transfer" && (
-                        <div className="p-5 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl space-y-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                              <Banknote className="w-5 h-5 text-primary" />
-                            </div>
-                            <div>
-                              <p className="font-semibold text-foreground">Überweisung</p>
-                              <p className="text-sm text-muted-foreground">
-                                Du erhältst nach der Buchung eine E-Mail mit den Bankdaten und dem Verwendungszweck.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
                       {selectedPaymentMethod === "stripe" && (
                         <div className="p-5 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl space-y-3">
                           <div className="flex items-center gap-3">
