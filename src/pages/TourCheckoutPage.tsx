@@ -125,7 +125,7 @@ const TourCheckoutPage = () => {
   const [selectedExtras, setSelectedExtras] = useState<Record<string, number>>({});
   const [selectedAddons, setSelectedAddons] = useState<Record<string, number>>({});
   const [agreeTerms, setAgreeTerms] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("bank_transfer");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("paypal");
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [agreeTravelInfo, setAgreeTravelInfo] = useState(false);
   const [bookingNumber, setBookingNumber] = useState<string | null>(null);
@@ -962,9 +962,8 @@ const TourCheckoutPage = () => {
                     </CardHeader>
                     <CardContent className="space-y-3">
                       {[
-                        { key: "bank_transfer" as PaymentMethod, icon: Banknote, label: "Überweisung", desc: "Zahlung per Banküberweisung" },
-                        { key: "stripe" as PaymentMethod, icon: CreditCard, label: "Kreditkarte", desc: "Visa, Mastercard, AMEX & mehr" },
                         { key: "paypal" as PaymentMethod, icon: Wallet, label: "PayPal", desc: "Schnell & sicher mit PayPal bezahlen" },
+                        { key: "stripe" as PaymentMethod, icon: CreditCard, label: "Kreditkarte", desc: "Visa, Mastercard, AMEX & mehr" },
                       ].map((method) => (
                         <div
                           key={method.key}
@@ -1002,21 +1001,6 @@ const TourCheckoutPage = () => {
                   {/* Payment Info */}
                   <Card>
                     <CardContent className="p-5 space-y-5">
-                      {selectedPaymentMethod === "bank_transfer" && (
-                        <div className="p-5 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl space-y-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                              <Banknote className="w-5 h-5 text-primary" />
-                            </div>
-                            <div>
-                              <p className="font-semibold text-foreground">Überweisung</p>
-                              <p className="text-sm text-muted-foreground">
-                                Du erhältst nach der Buchung eine E-Mail mit den Bankdaten und dem Verwendungszweck.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
                       {selectedPaymentMethod === "stripe" && (
                         <div className="p-5 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl space-y-3">
                           <div className="flex items-center gap-3">
