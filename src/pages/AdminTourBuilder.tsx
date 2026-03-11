@@ -75,15 +75,7 @@ const AdminTourBuilder = () => {
     if (tourId || !currentTour) return;
     setIsCreating(true);
     try {
-      const result = await createTour({
-        destination: currentTour.destination || 'Neue Reise',
-        location: currentTour.location || '',
-        country: currentTour.country || 'Europa',
-        duration_days: currentTour.duration_days || 7,
-        price_from: currentTour.price_from || 299,
-        departure_date: currentTour.departure_date || new Date().toISOString().split('T')[0],
-        return_date: currentTour.return_date || new Date().toISOString().split('T')[0],
-      });
+      const result = await createTour(currentTour);
       if (result.error) {
         toast({ title: "Fehler beim Erstellen", description: (result.error as Error).message, variant: "destructive" });
       } else if (result.data) {

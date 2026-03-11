@@ -397,6 +397,22 @@ export function useTourBuilder(tourId?: string) {
           max_participants: tourData.max_participants || 45,
           is_active: false,
           publish_status: 'draft',
+          description: tourData.description || null,
+          short_description: tourData.short_description || null,
+          image_url: tourData.image_url || null,
+          hero_image_url: tourData.hero_image_url || null,
+          gallery_images: tourData.gallery_images || [],
+          highlights: tourData.highlights || [],
+          category: tourData.category || 'Strandurlaub',
+          tags: tourData.tags || [],
+          slug: tourData.slug || null,
+          meta_title: tourData.meta_title || null,
+          meta_description: tourData.meta_description || null,
+          insurance_info: tourData.insurance_info || null,
+          documents_required: tourData.documents_required || null,
+          discount_percent: tourData.discount_percent || 0,
+          min_participants: tourData.min_participants || 1,
+          included_services: tourData.included_services || [],
         })
         .select()
         .single();
