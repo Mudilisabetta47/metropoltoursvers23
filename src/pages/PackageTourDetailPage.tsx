@@ -87,9 +87,9 @@ const PackageTourDetailPage = () => {
   const [inquiryNumber, setInquiryNumber] = useState<string | null>(null);
 
   const getImageSrc = (tour: PackageTour) => {
-    if (tour.image_url && imageMap[tour.image_url]) {
-      return imageMap[tour.image_url];
-    }
+    const url = tour.hero_image_url || tour.image_url;
+    if (url && (url.startsWith('http://') || url.startsWith('https://'))) return url;
+    if (url && imageMap[url]) return imageMap[url];
     const fallbackKey = tour.destination.toLowerCase();
     return imageMap[fallbackKey] || tourCroatia;
   };
