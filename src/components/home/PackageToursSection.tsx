@@ -107,7 +107,7 @@ const PackageToursSection = () => {
                 {/* Image */}
                 <div className="relative h-44 overflow-hidden">
                   <img
-                    src={getImageSrc(tour.image_url, tour.destination)}
+                    src={getImageSrc(tour, tour.destination)}
                     alt={tour.destination}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     loading="lazy"
