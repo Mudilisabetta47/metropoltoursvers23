@@ -281,7 +281,24 @@ export default function AuthPage() {
                       <button
                         type="button"
                         className="text-sm text-primary hover:underline"
-                        onClick={() => toast.info('Passwort-Reset kommt bald!')}
+                        onClick={async () => {
+                          if (!formData.email.trim()) {
+                            toast.error('Bitte geben Sie zuerst Ihre E-Mail-Adresse ein');
+                            return;
+                          }
+                          try {
+                            const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
+                              redirectTo: `${window.location.origin}/reset-password`,
+                            });
+                            if (error) {
+                              toast.error(error.message);
+                            } else {
+                              toast.success('Passwort-Reset-Link wurde an Ihre E-Mail gesendet');
+                            }
+                          } catch (err) {
+                            toast.error('Ein Fehler ist aufgetreten');
+                          }
+                        }}
                       >
                         Passwort vergessen?
                       </button>
