@@ -813,9 +813,21 @@ export function useTourBuilder(tourId?: string) {
       .map(e => e.message);
   };
 
-  // Update a single tour field
+  // Update a single tour field (and auto-save for existing tours)
   const updateTourField = (field: keyof ExtendedPackageTour, value: unknown) => {
     setTour(prev => prev ? { ...prev, [field]: value } : null);
+    
+    // Auto-save to DB for existing tours
+    if (tourId) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any)
+        .from('package_tours')
+        .update({ [field]: value })
+        .eq('id', tourId)
+        .then(({ error }: { error: unknown }) => {
+          if (error) console.error(`Auto-save failed for ${field}:`, error);
+        });
+    }
   };
 
   // Wrapper functions for create/update operations
