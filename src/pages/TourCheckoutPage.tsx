@@ -64,7 +64,7 @@ import {
   ExtendedPackageTour,
 } from "@/hooks/useTourBuilder";
 
-type PaymentMethod = "bank_transfer" | "stripe" | "paypal";
+type PaymentMethod = "paypal";
 type CheckoutStep = "summary" | "passengers" | "payment" | "confirmation";
 
 interface PassengerInfo {
