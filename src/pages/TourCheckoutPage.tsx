@@ -1269,18 +1269,12 @@ const TourCheckoutPage = () => {
                         {isProcessing ? (
                           <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            {selectedPaymentMethod === "stripe" ? "Weiterleitung zu Stripe..." :
-                             selectedPaymentMethod === "paypal" ? "Weiterleitung zu PayPal..." :
-                             "Buchung wird erstellt..."}
+                            Weiterleitung zu PayPal...
                           </>
                         ) : currentStep === "payment" ? (
                           <>
-                            {selectedPaymentMethod === "paypal" ? <Wallet className="w-4 h-4 mr-2" /> :
-                             selectedPaymentMethod === "stripe" ? <CreditCard className="w-4 h-4 mr-2" /> :
-                             <CheckCircle2 className="w-4 h-4 mr-2" />}
-                            {selectedPaymentMethod === "bank_transfer" ? "Jetzt verbindlich buchen" :
-                             selectedPaymentMethod === "stripe" ? "Jetzt mit Kreditkarte zahlen" :
-                             "Jetzt mit PayPal zahlen"}
+                            <Wallet className="w-4 h-4 mr-2" />
+                            Jetzt mit PayPal zahlen
                           </>
                         ) : (
                           "Weiter"
