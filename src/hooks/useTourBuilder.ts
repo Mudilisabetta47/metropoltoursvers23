@@ -359,9 +359,12 @@ export function useTourBuilder(tourId?: string) {
 
     try {
       // If no specific updates passed, save the full current tour state
+      if (Object.keys(updates).length === 0 && !tour) {
+        return { error: new Error('No tour data to save') };
+      }
+
       const dataToSave = Object.keys(updates).length > 0 ? updates : (() => {
-        if (!tour) return {};
-        const { id, created_at, updated_at, ...rest } = tour;
+        const { id, created_at, updated_at, ...rest } = tour as ExtendedPackageTour;
         return rest;
       })();
 
