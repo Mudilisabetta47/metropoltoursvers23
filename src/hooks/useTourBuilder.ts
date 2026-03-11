@@ -824,7 +824,7 @@ export function useTourBuilder(tourId?: string) {
 
   // Update a single tour field (and auto-save for existing tours)
   const updateTourField = (field: keyof ExtendedPackageTour, value: unknown) => {
-    setTour(prev => prev ? { ...prev, [field]: value } : null);
+    setTour(prev => ({ ...(prev ?? emptyTour), [field]: value } as ExtendedPackageTour));
     
     // Auto-save to DB for existing tours
     if (tourId) {
