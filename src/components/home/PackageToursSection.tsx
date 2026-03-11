@@ -35,9 +35,15 @@ const PackageToursSection = () => {
   const headline = getContent('package_tours_headline');
   const badge = headline?.metadata?.badge as string || "Pauschalreisen 2025 – Jetzt Frühbucher-Rabatt sichern!";
 
-  const getImageSrc = (imageUrl: string | null, destination: string) => {
-    if (imageUrl && imageMap[imageUrl]) {
-      return imageMap[imageUrl];
+  const getImageSrc = (tour: { image_url: string | null; hero_image_url?: string | null }, destination: string) => {
+    const url = tour.hero_image_url || tour.image_url;
+    // If it's a full URL (from admin), use it directly
+    if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+      return url;
+    }
+    // Check local image map
+    if (url && imageMap[url]) {
+      return imageMap[url];
     }
     const fallbackKey = `/tour-${destination.toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue')}.jpg`;
     return imageMap[fallbackKey] || tourCroatia;
