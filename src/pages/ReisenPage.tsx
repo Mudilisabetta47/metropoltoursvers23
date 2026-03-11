@@ -97,8 +97,10 @@ const ReisenPage = () => {
     return () => observer.disconnect();
   }, []);
 
-  const getImageSrc = (imageUrl: string | null, destination: string) => {
-    if (imageUrl && imageMap[imageUrl]) return imageMap[imageUrl];
+  const getImageSrc = (imageUrl: string | null, heroUrl: string | null | undefined, destination: string) => {
+    const url = heroUrl || imageUrl;
+    if (url && (url.startsWith('http://') || url.startsWith('https://'))) return url;
+    if (url && imageMap[url]) return imageMap[url];
     const fallbackKey = `/tour-${destination.toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue')}.jpg`;
     return imageMap[fallbackKey] || tourCroatia;
   };
