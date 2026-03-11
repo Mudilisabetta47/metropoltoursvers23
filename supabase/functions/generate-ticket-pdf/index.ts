@@ -229,14 +229,11 @@ const handler = async (req: Request): Promise<Response> => {
       isAuthorized = true;
     }
 
-    // Generate QR Code as base64 (minimal data)
-    const qrData = JSON.stringify({
-      t: booking.ticket_number,
-      s: booking.seat.seat_number,
-    });
+    // Generate QR Code as base64 — use plain ticket number so the scanner can read it
+    const qrData = booking.ticket_number;
     
     const qrCodeDataUrl = await QRCode.toDataURL(qrData, {
-      width: 150,
+      width: 200,
       margin: 2,
       color: { dark: "#000000", light: "#ffffff" },
     });
