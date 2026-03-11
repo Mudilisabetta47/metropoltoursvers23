@@ -125,7 +125,7 @@ const TourCheckoutPage = () => {
   const [selectedExtras, setSelectedExtras] = useState<Record<string, number>>({});
   const [selectedAddons, setSelectedAddons] = useState<Record<string, number>>({});
   const [agreeTerms, setAgreeTerms] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("bank_transfer");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("paypal");
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [agreeTravelInfo, setAgreeTravelInfo] = useState(false);
   const [bookingNumber, setBookingNumber] = useState<string | null>(null);
