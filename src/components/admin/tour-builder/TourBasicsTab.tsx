@@ -14,8 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Palmtree, Image, Tag, Star, X, Plus, Sparkles, Loader2, Wand2 } from "lucide-react";
-import { useState } from "react";
+import { Palmtree, Image, Tag, Star, X, Plus, Sparkles, Loader2, Wand2, Upload } from "lucide-react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
