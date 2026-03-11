@@ -194,6 +194,35 @@ const TourCheckoutPage = () => {
       verifyAndLoadBooking();
       return;
     }
+    // PayPal return
+    if (paymentStatus === "paypal_success" && tourId) {
+      const paypalOrderId = searchParams.get("paypal_order_id") || searchParams.get("token");
+      const capturePayPal = async () => {
+        setIsLoading(true);
+        try {
+          if (paypalOrderId) {
+            const { data: captureData, error: captureError } = await supabase.functions.invoke('capture-paypal-order', {
+              body: { orderId: paypalOrderId }
+            });
+            if (captureError) console.error("PayPal capture error:", captureError);
+            if (captureData?.success && captureData?.bookingId) {
+              setBookingId(captureData.bookingId);
+              setBookingNumber(captureData.bookingNumber || "");
+              setCurrentStep("confirmation");
+              // Generate documents
+              supabase.functions.invoke('generate-tour-documents', {
+                body: { bookingId: captureData.bookingId }
+              }).catch(err => console.error("Doc gen error:", err));
+            }
+          }
+        } catch (err) {
+          console.error("PayPal capture error:", err);
+        }
+        await loadTourData();
+      };
+      capturePayPal();
+      return;
+    }
     if (paymentStatus === "success" && tourId) {
       // No session_id but payment=success (e.g. bank transfer)
       const findExistingBooking = async () => {
