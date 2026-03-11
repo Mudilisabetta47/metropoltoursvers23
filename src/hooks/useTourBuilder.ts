@@ -358,15 +358,22 @@ export function useTourBuilder(tourId?: string) {
     setIsSaving(true);
 
     try {
+      // If no specific updates passed, save the full current tour state
+      const dataToSave = Object.keys(updates).length > 0 ? updates : (() => {
+        if (!tour) return {};
+        const { id, created_at, updated_at, ...rest } = tour;
+        return rest;
+      })();
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase as any)
         .from('package_tours')
-        .update(updates)
+        .update(dataToSave)
         .eq('id', tourId);
 
       if (error) throw error;
       
-      setTour(prev => prev ? { ...prev, ...updates } : null);
+      setTour(prev => prev ? { ...prev, ...dataToSave } : null);
       return { error: null };
     } catch (error) {
       console.error('Error saving tour:', error);
@@ -806,9 +813,21 @@ export function useTourBuilder(tourId?: string) {
       .map(e => e.message);
   };
 
-  // Update a single tour field
+  // Update a single tour field (and auto-save for existing tours)
   const updateTourField = (field: keyof ExtendedPackageTour, value: unknown) => {
     setTour(prev => prev ? { ...prev, [field]: value } : null);
+    
+    // Auto-save to DB for existing tours
+    if (tourId) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any)
+        .from('package_tours')
+        .update({ [field]: value })
+        .eq('id', tourId)
+        .then(({ error }: { error: unknown }) => {
+          if (error) console.error(`Auto-save failed for ${field}:`, error);
+        });
+    }
   };
 
   // Wrapper functions for create/update operations
