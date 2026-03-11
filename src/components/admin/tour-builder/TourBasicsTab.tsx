@@ -42,7 +42,35 @@ const TourBasicsTab = ({ tour, onChange }: TourBasicsTabProps) => {
   const [newHighlight, setNewHighlight] = useState('');
   const [newTag, setNewTag] = useState('');
   const [aiLoading, setAiLoading] = useState<string | null>(null);
+  const [uploading, setUploading] = useState<string | null>(null);
   const { toast } = useToast();
+  const heroInputRef = useRef<HTMLInputElement>(null);
+  const previewInputRef = useRef<HTMLInputElement>(null);
+
+  const uploadImage = async (file: File, type: 'hero' | 'preview') => {
+    setUploading(type);
+    try {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const fileName = `${type}-${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
+      const path = `tours/${tour?.destination || 'new'}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('tour-images')
+        .upload(path, file, { contentType: file.type, cacheControl: '3600' });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from('tour-images').getPublicUrl(path);
+      const field = type === 'hero' ? 'hero_image_url' : 'image_url';
+      onChange(field, urlData.publicUrl);
+      toast({ title: 'Bild hochgeladen!' });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({ title: 'Upload fehlgeschlagen', variant: 'destructive' });
+    } finally {
+      setUploading(null);
+    }
+  };
 
   const addHighlight = () => {
     if (newHighlight.trim()) {
