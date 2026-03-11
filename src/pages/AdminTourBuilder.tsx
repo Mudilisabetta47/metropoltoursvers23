@@ -80,6 +80,7 @@ const AdminTourBuilder = () => {
         toast({ title: "Fehler beim Erstellen", description: (result.error as Error).message, variant: "destructive" });
       } else if (result.data) {
         toast({ title: "Reise erstellt!" });
+        setHasUnsavedChanges(false);
         navigate(`/admin/tour-builder/${result.data.id}`, { replace: true });
       }
     } finally { setIsCreating(false); }
