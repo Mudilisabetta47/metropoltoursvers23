@@ -114,7 +114,16 @@ const AdminTourBuilder = () => {
 
   const handleSave = async () => {
     if (!tourId) { await handleCreateNewTour(); return; }
-    const result = await saveTour({});
+    if (!currentTour) {
+      toast({ title: "Keine Reisedaten geladen", variant: "destructive" });
+      return;
+    }
+
+    const {
+      id, created_at, updated_at, ...payload
+    } = currentTour as TourData & { created_at?: string; updated_at?: string };
+
+    const result = await saveTour(payload);
     if (result.error) {
       toast({ title: "Fehler beim Speichern", description: (result.error as Error).message, variant: "destructive" });
     } else {
