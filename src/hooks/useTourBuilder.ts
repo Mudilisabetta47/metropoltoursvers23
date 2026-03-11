@@ -280,7 +280,7 @@ export function useTourBuilder(tourId?: string) {
   const [inclusions, setInclusions] = useState<TourInclusion[]>([]);
   const [legal, setLegal] = useState<TourLegal[]>([]);
   const [extras, setExtras] = useState<TourExtra[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(!!tourId);
   const [isSaving, setIsSaving] = useState(false);
 
   // Fetch all tour data
@@ -390,37 +390,43 @@ export function useTourBuilder(tourId?: string) {
     const client = supabase as any;
 
     try {
+      const today = new Date().toISOString().split('T')[0];
+      const payload = {
+        destination: tourData.destination?.trim() || 'Neue Reise',
+        location: tourData.location?.trim() || '',
+        country: tourData.country?.trim() || 'Europa',
+        duration_days: tourData.duration_days ?? 7,
+        price_from: tourData.price_from ?? 299,
+        departure_date: tourData.departure_date || today,
+        return_date: tourData.return_date || tourData.departure_date || today,
+        max_participants: tourData.max_participants ?? 45,
+        current_participants: tourData.current_participants ?? 0,
+        min_participants: tourData.min_participants ?? 1,
+        is_featured: tourData.is_featured ?? false,
+        is_active: tourData.is_active ?? false,
+        discount_percent: tourData.discount_percent ?? 0,
+        publish_status: tourData.publish_status || 'draft',
+        description: tourData.description ?? null,
+        short_description: tourData.short_description ?? null,
+        image_url: tourData.image_url ?? null,
+        hero_image_url: tourData.hero_image_url ?? null,
+        gallery_images: tourData.gallery_images ?? [],
+        highlights: tourData.highlights ?? [],
+        category: tourData.category ?? 'Strandurlaub',
+        tags: tourData.tags ?? [],
+        slug: tourData.slug ?? null,
+        meta_title: tourData.meta_title ?? null,
+        meta_description: tourData.meta_description ?? null,
+        insurance_info: tourData.insurance_info ?? null,
+        documents_required: tourData.documents_required ?? null,
+        included_services: tourData.included_services ?? [],
+        itinerary: tourData.itinerary ?? [],
+      };
+
       // Create the tour
       const { data: newTour, error: tourError } = await client
         .from('package_tours')
-        .insert({
-          destination: tourData.destination || 'Neue Reise',
-          location: tourData.location || '',
-          country: tourData.country || 'Europa',
-          duration_days: tourData.duration_days || 7,
-          price_from: tourData.price_from || 299,
-          departure_date: tourData.departure_date || new Date().toISOString().split('T')[0],
-          return_date: tourData.return_date || new Date().toISOString().split('T')[0],
-          max_participants: tourData.max_participants || 45,
-          is_active: false,
-          publish_status: 'draft',
-          description: tourData.description || null,
-          short_description: tourData.short_description || null,
-          image_url: tourData.image_url || null,
-          hero_image_url: tourData.hero_image_url || null,
-          gallery_images: tourData.gallery_images || [],
-          highlights: tourData.highlights || [],
-          category: tourData.category || 'Strandurlaub',
-          tags: tourData.tags || [],
-          slug: tourData.slug || null,
-          meta_title: tourData.meta_title || null,
-          meta_description: tourData.meta_description || null,
-          insurance_info: tourData.insurance_info || null,
-          documents_required: tourData.documents_required || null,
-          discount_percent: tourData.discount_percent || 0,
-          min_participants: tourData.min_participants || 1,
-          included_services: tourData.included_services || [],
-        })
+        .insert(payload)
         .select()
         .single();
 
