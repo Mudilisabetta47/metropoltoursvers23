@@ -139,6 +139,14 @@ const AdminCMS = () => {
     setJobsLoading(false);
   };
 
+  const fetchWeekendTrips = async () => {
+    setWeekendLoading(true);
+    const { data } = await (supabase as any).from('weekend_trips').select('*').order('sort_order', { ascending: true });
+    setWeekendTrips(data || []);
+    setWeekendLoading(false);
+  };
+
+
   // Filtered data
   const filteredTours = useMemo(() => {
     let result = tours;
