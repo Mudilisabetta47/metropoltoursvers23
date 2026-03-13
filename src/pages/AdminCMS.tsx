@@ -433,6 +433,9 @@ const AdminCMS = () => {
           <TabsTrigger value="services" className="data-[state=active]:bg-purple-600/20 data-[state=active]:text-purple-400 text-zinc-400 gap-1.5 text-xs">
             <Briefcase className="w-3.5 h-3.5" />Services
           </TabsTrigger>
+          <TabsTrigger value="weekend" className="data-[state=active]:bg-sky-600/20 data-[state=active]:text-sky-400 text-zinc-400 gap-1.5 text-xs">
+            <MapPin className="w-3.5 h-3.5" />Wochenendtrips
+          </TabsTrigger>
           <TabsTrigger value="categories" className="data-[state=active]:bg-cyan-600/20 data-[state=active]:text-cyan-400 text-zinc-400 gap-1.5 text-xs">
             <Tag className="w-3.5 h-3.5" />Sortiment
           </TabsTrigger>
