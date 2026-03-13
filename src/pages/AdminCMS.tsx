@@ -98,6 +98,11 @@ const AdminCMS = () => {
   const [jobListings, setJobListings] = useState<JobListing[]>([]);
   const [jobsLoading, setJobsLoading] = useState(true);
 
+  const [weekendTrips, setWeekendTrips] = useState<WeekendTrip[]>([]);
+  const [weekendLoading, setWeekendLoading] = useState(true);
+  const [weekendSearch, setWeekendSearch] = useState("");
+  const [weekendDialog, setWeekendDialog] = useState<{ open: boolean; trip: Partial<WeekendTrip> | null; isNew: boolean }>({ open: false, trip: null, isNew: false });
+
   // Search & filter
   const [tourSearch, setTourSearch] = useState("");
   const [tourStatusFilter, setTourStatusFilter] = useState<string>("all");
