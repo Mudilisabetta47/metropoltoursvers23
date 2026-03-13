@@ -449,7 +449,7 @@ const HeroSlider = () => {
                 >
                   <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-3 shadow-md group-hover:shadow-xl transition-all duration-300">
                     <img
-                      src={getImageSrc(dest.image_url, dest.destination)}
+                      src={getImageSrc(dest.image_url, dest.destination, dest.hero_image_url)}
                       alt={dest.destination}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
