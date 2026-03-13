@@ -201,7 +201,7 @@ const HeroSlider = () => {
                           className="w-full flex items-center gap-4 px-5 py-4 hover:bg-primary/5 transition-colors text-left group border-b border-border/50 last:border-0"
                         >
                           <img 
-                            src={getImageSrc(tour.image_url, tour.destination)} 
+                            src={getImageSrc(tour.image_url, tour.destination, tour.hero_image_url)} 
                             alt={tour.destination}
                             className="w-16 h-16 rounded-xl object-cover group-hover:scale-105 transition-transform shadow-sm"
                           />
