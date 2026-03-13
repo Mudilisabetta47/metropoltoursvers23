@@ -49,9 +49,16 @@ const HeroSlider = () => {
   const totalTravelers = adults + children;
   const showContactHint = totalTravelers > 20;
 
-  const getImageSrc = (imageUrl: string | null, destination: string) => {
-    if (imageUrl && imageMap[imageUrl]) {
-      return imageMap[imageUrl];
+  const getImageSrc = (imageUrl: string | null, destination: string, heroUrl?: string | null) => {
+    // Prioritize hero_image_url, then image_url
+    const url = heroUrl || imageUrl;
+    // If it's a full URL (from admin upload), use directly
+    if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+      return url;
+    }
+    // Check local image map
+    if (url && imageMap[url]) {
+      return imageMap[url];
     }
     const fallbackKey = `/tour-${destination.toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue')}.jpg`;
     return imageMap[fallbackKey] || tourCroatia;
@@ -194,7 +201,7 @@ const HeroSlider = () => {
                           className="w-full flex items-center gap-4 px-5 py-4 hover:bg-primary/5 transition-colors text-left group border-b border-border/50 last:border-0"
                         >
                           <img 
-                            src={getImageSrc(tour.image_url, tour.destination)} 
+                            src={getImageSrc(tour.image_url, tour.destination, tour.hero_image_url)} 
                             alt={tour.destination}
                             className="w-16 h-16 rounded-xl object-cover group-hover:scale-105 transition-transform shadow-sm"
                           />
@@ -442,7 +449,7 @@ const HeroSlider = () => {
                 >
                   <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-3 shadow-md group-hover:shadow-xl transition-all duration-300">
                     <img
-                      src={getImageSrc(dest.image_url, dest.destination)}
+                      src={getImageSrc(dest.image_url, dest.destination, dest.hero_image_url)}
                       alt={dest.destination}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
