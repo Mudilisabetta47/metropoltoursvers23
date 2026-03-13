@@ -1,53 +1,35 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  LayoutDashboard, Palmtree, Briefcase, FileText, Users, Settings, LogOut,
-  Plus, Pencil, Trash2, RefreshCw, Shield, ChevronRight, Globe, Star, Tag, UserPlus
+import {
+  Palmtree, Briefcase, FileText, Plus, Pencil, Trash2, RefreshCw,
+  Star, Tag, UserPlus, Search, Filter, BarChart3, Clock, Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { 
-  useAdminTours, 
-  useAdminServices, 
-  useAdminContent,
-  PackageTour,
-  ServiceType
+import {
+  useAdminTours, useAdminServices, useAdminContent,
+  PackageTour, ServiceType
 } from "@/hooks/useCMS";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
-
-type TabType = 'overview' | 'tours' | 'services' | 'content' | 'categories' | 'jobs' | 'inquiries' | 'legacy';
+import AdminLayout from "@/components/admin/AdminLayout";
 
 interface Category {
   id: string;
@@ -76,22 +58,31 @@ interface JobListing {
 const AdminCMS = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, isAdmin, isLoading: authLoading, signOut } = useAuth();
-  
-  const [activeTab, setActiveTab] = useState<TabType>('overview');
-  
-  // CMS Hooks
+
   const { tours, isLoading: toursLoading, createTour, updateTour, deleteTour, fetchAll: fetchTours } = useAdminTours();
   const { services, isLoading: servicesLoading, createService, updateService, deleteService, fetchAll: fetchServices } = useAdminServices();
-  const { content, isLoading: contentLoading, fetchAll: fetchContent } = useAdminContent();
+  const { content, isLoading: contentLoading, fetchAll: fetchContent, upsertContent } = useAdminContent();
 
-  // Categories & Jobs state
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [jobListings, setJobListings] = useState<JobListing[]>([]);
   const [jobsLoading, setJobsLoading] = useState(true);
+
+  // Search & filter
+  const [tourSearch, setTourSearch] = useState("");
+  const [tourStatusFilter, setTourStatusFilter] = useState<string>("all");
+  const [serviceSearch, setServiceSearch] = useState("");
+  const [contentSearch, setContentSearch] = useState("");
+  const [catSearch, setCatSearch] = useState("");
+  const [jobSearch, setJobSearch] = useState("");
+
+  // Dialogs
   const [catDialog, setCatDialog] = useState<{ open: boolean; cat: Partial<Category> | null; isNew: boolean }>({ open: false, cat: null, isNew: false });
   const [jobDialog, setJobDialog] = useState<{ open: boolean; job: Partial<JobListing> | null; isNew: boolean }>({ open: false, job: null, isNew: false });
+  const [tourDialog, setTourDialog] = useState<{ open: boolean; tour: Partial<PackageTour> | null; isNew: boolean }>({ open: false, tour: null, isNew: false });
+  const [serviceDialog, setServiceDialog] = useState<{ open: boolean; service: Partial<ServiceType> | null; isNew: boolean }>({ open: false, service: null, isNew: false });
+  const [contentDialog, setContentDialog] = useState<{ open: boolean; item: any | null }>({ open: false, item: null });
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     fetchCategories();
@@ -112,6 +103,72 @@ const AdminCMS = () => {
     setJobsLoading(false);
   };
 
+  // Filtered data
+  const filteredTours = useMemo(() => {
+    let result = tours;
+    if (tourSearch) {
+      const q = tourSearch.toLowerCase();
+      result = result.filter(t => t.destination.toLowerCase().includes(q) || t.location.toLowerCase().includes(q) || t.country.toLowerCase().includes(q));
+    }
+    if (tourStatusFilter === "active") result = result.filter(t => t.is_active);
+    else if (tourStatusFilter === "inactive") result = result.filter(t => !t.is_active);
+    else if (tourStatusFilter === "featured") result = result.filter(t => t.is_featured);
+    return result;
+  }, [tours, tourSearch, tourStatusFilter]);
+
+  const filteredServices = useMemo(() => {
+    if (!serviceSearch) return services;
+    const q = serviceSearch.toLowerCase();
+    return services.filter(s => s.name.toLowerCase().includes(q) || s.slug.toLowerCase().includes(q));
+  }, [services, serviceSearch]);
+
+  const filteredContent = useMemo(() => {
+    if (!contentSearch) return content;
+    const q = contentSearch.toLowerCase();
+    return content.filter(c => c.section_key.toLowerCase().includes(q) || c.title?.toLowerCase().includes(q));
+  }, [content, contentSearch]);
+
+  const filteredCategories = useMemo(() => {
+    if (!catSearch) return categories;
+    const q = catSearch.toLowerCase();
+    return categories.filter(c => c.name.toLowerCase().includes(q) || c.slug.toLowerCase().includes(q));
+  }, [categories, catSearch]);
+
+  const filteredJobs = useMemo(() => {
+    if (!jobSearch) return jobListings;
+    const q = jobSearch.toLowerCase();
+    return jobListings.filter(j => j.title.toLowerCase().includes(q) || j.department.toLowerCase().includes(q));
+  }, [jobListings, jobSearch]);
+
+  // Quick toggle handlers
+  const toggleTourActive = async (id: string, current: boolean) => {
+    await updateTour(id, { is_active: !current });
+    toast({ title: !current ? "Reise aktiviert" : "Reise deaktiviert" });
+  };
+
+  const toggleTourFeatured = async (id: string, current: boolean) => {
+    await updateTour(id, { is_featured: !current });
+    toast({ title: !current ? "Als Featured markiert" : "Featured entfernt" });
+  };
+
+  const toggleServiceActive = async (id: string, current: boolean) => {
+    await updateService(id, { is_active: !current });
+    toast({ title: !current ? "Service aktiviert" : "Service deaktiviert" });
+  };
+
+  const toggleCategoryActive = async (id: string, current: boolean) => {
+    await (supabase as any).from('cms_categories').update({ is_active: !current }).eq('id', id);
+    fetchCategories();
+    toast({ title: !current ? "Kategorie aktiviert" : "Kategorie deaktiviert" });
+  };
+
+  const toggleJobActive = async (id: string, current: boolean) => {
+    await (supabase as any).from('job_listings').update({ is_active: !current }).eq('id', id);
+    fetchJobs();
+    toast({ title: !current ? "Stelle aktiviert" : "Stelle deaktiviert" });
+  };
+
+  // CRUD handlers
   const handleSaveCategory = async () => {
     if (!catDialog.cat?.name) return;
     setIsSaving(true);
@@ -130,7 +187,7 @@ const AdminCMS = () => {
   };
 
   const handleDeleteCategory = async (id: string) => {
-    if (!confirm('Kategorie löschen?')) return;
+    if (!confirm('Kategorie wirklich löschen?')) return;
     await (supabase as any).from('cms_categories').delete().eq('id', id);
     toast({ title: "Kategorie gelöscht" });
     fetchCategories();
@@ -154,899 +211,594 @@ const AdminCMS = () => {
   };
 
   const handleDeleteJob = async (id: string) => {
-    if (!confirm('Stelle löschen?')) return;
+    if (!confirm('Stelle wirklich löschen?')) return;
     await (supabase as any).from('job_listings').delete().eq('id', id);
     toast({ title: "Stelle gelöscht" });
     fetchJobs();
   };
-  
-  // Dialog states
-  const [tourDialog, setTourDialog] = useState<{ open: boolean; tour: Partial<PackageTour> | null; isNew: boolean }>({
-    open: false, tour: null, isNew: false
-  });
-  const [serviceDialog, setServiceDialog] = useState<{ open: boolean; service: Partial<ServiceType> | null; isNew: boolean }>({
-    open: false, service: null, isNew: false
-  });
-  const [isSaving, setIsSaving] = useState(false);
-
-  // Access control
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
-      </div>
-    );
-  }
-
-  if (!user || !isAdmin) {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <Card className="max-w-md w-full mx-4 bg-zinc-900 border-zinc-800">
-          <CardContent className="pt-6 text-center">
-            <Shield className="w-16 h-16 mx-auto mb-4 text-zinc-600" />
-            <h1 className="text-2xl font-bold mb-2 text-white">Admin-Zugang erforderlich</h1>
-            <p className="text-zinc-400 mb-6">
-              Sie benötigen Admin-Rechte für das CMS.
-            </p>
-            <Button onClick={() => navigate("/auth")} className="bg-emerald-600 hover:bg-emerald-700">
-              Anmelden
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const menuItems = [
-    { id: 'overview' as TabType, label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'tours' as TabType, label: 'Pauschalreisen', icon: Palmtree },
-    { id: 'services' as TabType, label: 'Reisearten', icon: Briefcase },
-    { id: 'categories' as TabType, label: 'Sortiment', icon: Tag },
-    { id: 'jobs' as TabType, label: 'Karriere', icon: UserPlus },
-    { id: 'content' as TabType, label: 'CMS Inhalte', icon: FileText },
-    { id: 'inquiries' as TabType, label: 'Anfragen', icon: Users, external: true },
-    { id: 'legacy' as TabType, label: 'System', icon: Settings, external: true },
-  ];
 
   const handleSaveTour = async () => {
     if (!tourDialog.tour) return;
     setIsSaving(true);
-
     try {
       if (tourDialog.isNew) {
         const { error } = await createTour(tourDialog.tour as Omit<PackageTour, 'id' | 'created_at' | 'updated_at'>);
         if (error) throw error;
-        toast({ title: "Reise erfolgreich erstellt" });
+        toast({ title: "Reise erstellt" });
       } else {
         const { id, ...updates } = tourDialog.tour;
         const { error } = await updateTour(id!, updates);
         if (error) throw error;
-        toast({ title: "Reise erfolgreich aktualisiert" });
+        toast({ title: "Reise aktualisiert" });
       }
       setTourDialog({ open: false, tour: null, isNew: false });
-    } catch (error) {
-      console.error('Error saving tour:', error);
+    } catch {
       toast({ title: "Fehler beim Speichern", variant: "destructive" });
-    } finally {
-      setIsSaving(false);
     }
+    setIsSaving(false);
   };
 
   const handleDeleteTour = async (id: string) => {
-    if (!confirm('Diese Reise wirklich löschen?')) return;
-    
+    if (!confirm('Reise wirklich löschen?')) return;
     const { error } = await deleteTour(id);
-    if (error) {
-      toast({ title: "Fehler beim Löschen", variant: "destructive" });
-    } else {
-      toast({ title: "Reise gelöscht" });
-    }
+    if (error) toast({ title: "Fehler", variant: "destructive" });
+    else toast({ title: "Reise gelöscht" });
   };
 
   const handleSaveService = async () => {
     if (!serviceDialog.service) return;
     setIsSaving(true);
-
     try {
       if (serviceDialog.isNew) {
         const { error } = await createService(serviceDialog.service as Omit<ServiceType, 'id' | 'created_at' | 'updated_at'>);
         if (error) throw error;
-        toast({ title: "Service erfolgreich erstellt" });
+        toast({ title: "Service erstellt" });
       } else {
         const { id, ...updates } = serviceDialog.service;
         const { error } = await updateService(id!, updates);
         if (error) throw error;
-        toast({ title: "Service erfolgreich aktualisiert" });
+        toast({ title: "Service aktualisiert" });
       }
       setServiceDialog({ open: false, service: null, isNew: false });
-    } catch (error) {
-      console.error('Error saving service:', error);
+    } catch {
       toast({ title: "Fehler beim Speichern", variant: "destructive" });
-    } finally {
-      setIsSaving(false);
     }
+    setIsSaving(false);
   };
 
   const handleDeleteService = async (id: string) => {
-    if (!confirm('Diesen Service wirklich löschen?')) return;
-    
+    if (!confirm('Service wirklich löschen?')) return;
     const { error } = await deleteService(id);
-    if (error) {
-      toast({ title: "Fehler beim Löschen", variant: "destructive" });
-    } else {
-      toast({ title: "Service gelöscht" });
-    }
+    if (error) toast({ title: "Fehler", variant: "destructive" });
+    else toast({ title: "Service gelöscht" });
   };
 
+  const handleSaveContent = async () => {
+    if (!contentDialog.item) return;
+    setIsSaving(true);
+    try {
+      const { section_key, ...updates } = contentDialog.item;
+      await upsertContent(section_key, updates);
+      toast({ title: "Inhalt gespeichert" });
+      setContentDialog({ open: false, item: null });
+    } catch {
+      toast({ title: "Fehler", variant: "destructive" });
+    }
+    setIsSaving(false);
+  };
+
+  // Stats
+  const activeTours = tours.filter(t => t.is_active).length;
+  const featuredTours = tours.filter(t => t.is_featured).length;
+  const upcomingTours = tours.filter(t => new Date(t.departure_date) > new Date()).length;
+  const activeServices = services.filter(s => s.is_active).length;
+  const activeCategories = categories.filter(c => c.is_active).length;
+  const activeJobs = jobListings.filter(j => j.is_active).length;
 
   const newServiceTemplate: Partial<ServiceType> = {
-    name: '',
-    slug: '',
-    description: '',
-    icon: 'Users',
-    highlight: '',
-    features: [],
-    is_active: true,
-    sort_order: services.length + 1
+    name: '', slug: '', description: '', icon: 'Users',
+    highlight: '', features: [], is_active: true, sort_order: services.length + 1
   };
 
+  const statsCards = [
+    { label: "Reisen gesamt", value: tours.length, sub: `${activeTours} aktiv`, icon: Palmtree, color: "text-emerald-400" },
+    { label: "Featured", value: featuredTours, sub: "hervorgehoben", icon: Star, color: "text-amber-400" },
+    { label: "Bevorstehend", value: upcomingTours, sub: "zukünftige Termine", icon: Clock, color: "text-blue-400" },
+    { label: "Services", value: services.length, sub: `${activeServices} aktiv`, icon: Briefcase, color: "text-purple-400" },
+    { label: "Kategorien", value: categories.length, sub: `${activeCategories} aktiv`, icon: Tag, color: "text-cyan-400" },
+    { label: "Stellen", value: jobListings.length, sub: `${activeJobs} aktiv`, icon: UserPlus, color: "text-orange-400" },
+    { label: "CMS Blöcke", value: content.length, sub: "Textinhalte", icon: FileText, color: "text-rose-400" },
+    { label: "Auslastung", value: `${tours.length > 0 ? Math.round((activeTours / tours.length) * 100) : 0}%`, sub: "aktive Reisen", icon: BarChart3, color: "text-teal-400" },
+  ];
+
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col">
-        <div className="p-4 border-b border-zinc-800">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-              <Globe className="w-4 h-4" />
+    <AdminLayout title="Content Management" subtitle="Inhalte, Reisen, Services und Stellenanzeigen verwalten" actions={
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" onClick={() => { fetchTours(); fetchServices(); fetchContent(); fetchCategories(); fetchJobs(); }}
+          className="border-[#2a3040] text-zinc-400 hover:text-white hover:bg-[#1e2430]">
+          <RefreshCw className="w-3.5 h-3.5 mr-1.5" />Alles aktualisieren
+        </Button>
+      </div>
+    }>
+      {/* KPI Bar */}
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3 mb-6">
+        {statsCards.map((s) => (
+          <Card key={s.label} className="bg-[#1a1f2a] border-[#2a3040]">
+            <CardContent className="p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <s.icon className={`w-3.5 h-3.5 ${s.color}`} />
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wider">{s.label}</span>
+              </div>
+              <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
+              <div className="text-[10px] text-zinc-600">{s.sub}</div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Main Tabs */}
+      <Tabs defaultValue="tours" className="space-y-4">
+        <TabsList className="bg-[#1a1f2a] border border-[#2a3040] p-1 h-auto flex-wrap">
+          <TabsTrigger value="tours" className="data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400 text-zinc-400 gap-1.5 text-xs">
+            <Palmtree className="w-3.5 h-3.5" />Reisen
+          </TabsTrigger>
+          <TabsTrigger value="services" className="data-[state=active]:bg-purple-600/20 data-[state=active]:text-purple-400 text-zinc-400 gap-1.5 text-xs">
+            <Briefcase className="w-3.5 h-3.5" />Services
+          </TabsTrigger>
+          <TabsTrigger value="categories" className="data-[state=active]:bg-cyan-600/20 data-[state=active]:text-cyan-400 text-zinc-400 gap-1.5 text-xs">
+            <Tag className="w-3.5 h-3.5" />Sortiment
+          </TabsTrigger>
+          <TabsTrigger value="jobs" className="data-[state=active]:bg-orange-600/20 data-[state=active]:text-orange-400 text-zinc-400 gap-1.5 text-xs">
+            <UserPlus className="w-3.5 h-3.5" />Karriere
+          </TabsTrigger>
+          <TabsTrigger value="content" className="data-[state=active]:bg-rose-600/20 data-[state=active]:text-rose-400 text-zinc-400 gap-1.5 text-xs">
+            <FileText className="w-3.5 h-3.5" />CMS Blöcke
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ─── TOURS TAB ─── */}
+        <TabsContent value="tours">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+              <Input value={tourSearch} onChange={e => setTourSearch(e.target.value)}
+                placeholder="Reiseziel, Region, Land..." className="pl-9 bg-[#1a1f2a] border-[#2a3040] text-sm h-9" />
             </div>
-            <div>
-              <h1 className="font-bold text-sm">METROPOL CMS</h1>
-              <p className="text-xs text-zinc-500">Content Management</p>
+            <Select value={tourStatusFilter} onValueChange={setTourStatusFilter}>
+              <SelectTrigger className="w-36 bg-[#1a1f2a] border-[#2a3040] h-9 text-sm">
+                <Filter className="w-3.5 h-3.5 mr-1.5 text-zinc-500" /><SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#1a1f2a] border-[#2a3040]">
+                <SelectItem value="all">Alle ({tours.length})</SelectItem>
+                <SelectItem value="active">Aktiv ({activeTours})</SelectItem>
+                <SelectItem value="inactive">Inaktiv ({tours.length - activeTours})</SelectItem>
+                <SelectItem value="featured">Featured ({featuredTours})</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={() => navigate('/admin/tour-builder')} className="bg-emerald-600 hover:bg-emerald-700 h-9 text-sm">
+              <Plus className="w-3.5 h-3.5 mr-1.5" />Neue Reise
+            </Button>
+          </div>
+
+          <Card className="bg-[#1a1f2a] border-[#2a3040]">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-[#2a3040] hover:bg-transparent">
+                  <TableHead className="text-zinc-500 text-xs">Reiseziel</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Region / Land</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Dauer</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Preis</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Abfahrt</TableHead>
+                  <TableHead className="text-zinc-500 text-xs text-center">Aktiv</TableHead>
+                  <TableHead className="text-zinc-500 text-xs text-center">Featured</TableHead>
+                  <TableHead className="text-zinc-500 text-xs text-right">Aktionen</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {toursLoading ? (
+                  <TableRow><TableCell colSpan={8} className="text-center py-12 text-zinc-500">Laden...</TableCell></TableRow>
+                ) : filteredTours.length === 0 ? (
+                  <TableRow><TableCell colSpan={8} className="text-center py-12 text-zinc-500">
+                    {tourSearch || tourStatusFilter !== 'all' ? 'Keine Treffer' : 'Keine Reisen vorhanden'}
+                  </TableCell></TableRow>
+                ) : filteredTours.map(tour => (
+                  <TableRow key={tour.id} className="border-[#2a3040] hover:bg-[#1e2430]">
+                    <TableCell className="font-medium text-white text-sm">{tour.destination}</TableCell>
+                    <TableCell className="text-zinc-400 text-sm">
+                      <span>{tour.location}</span>
+                      <span className="text-zinc-600 ml-1.5 text-xs">({tour.country})</span>
+                    </TableCell>
+                    <TableCell className="text-zinc-300 text-sm">{tour.duration_days}T</TableCell>
+                    <TableCell className="text-emerald-400 font-medium text-sm">
+                      {tour.price_from.toLocaleString('de-DE')} €
+                      {tour.discount_percent > 0 && (
+                        <Badge className="ml-1.5 bg-red-600/20 text-red-400 text-[10px] px-1 py-0">-{tour.discount_percent}%</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-zinc-300 text-sm">
+                      {format(new Date(tour.departure_date), 'dd.MM.yy', { locale: de })}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Switch checked={tour.is_active} onCheckedChange={() => toggleTourActive(tour.id, tour.is_active)}
+                        className="data-[state=checked]:bg-emerald-600" />
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <button onClick={() => toggleTourFeatured(tour.id, tour.is_featured)} className="mx-auto block">
+                        <Star className={`w-4 h-4 transition-colors ${tour.is_featured ? 'text-amber-400 fill-amber-400' : 'text-zinc-600 hover:text-amber-400/50'}`} />
+                      </button>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-0.5">
+                        <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/tour-builder/${tour.id}`)}
+                          className="text-emerald-400 hover:text-emerald-300 h-7 w-7 p-0" title="Im Builder öffnen">
+                          <Settings className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setTourDialog({ open: true, tour: { ...tour }, isNew: false })}
+                          className="text-zinc-400 hover:text-white h-7 w-7 p-0" title="Schnellbearbeitung">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteTour(tour.id)}
+                          className="text-red-400/60 hover:text-red-400 h-7 w-7 p-0" title="Löschen">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+          <div className="text-xs text-zinc-600 mt-2 px-1">
+            {filteredTours.length} von {tours.length} Reisen angezeigt
+          </div>
+        </TabsContent>
+
+        {/* ─── SERVICES TAB ─── */}
+        <TabsContent value="services">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+              <Input value={serviceSearch} onChange={e => setServiceSearch(e.target.value)}
+                placeholder="Name oder Slug..." className="pl-9 bg-[#1a1f2a] border-[#2a3040] text-sm h-9" />
+            </div>
+            <Button onClick={() => setServiceDialog({ open: true, service: { ...newServiceTemplate }, isNew: true })}
+              className="bg-purple-600 hover:bg-purple-700 h-9 text-sm">
+              <Plus className="w-3.5 h-3.5 mr-1.5" />Neuer Service
+            </Button>
+          </div>
+
+          <Card className="bg-[#1a1f2a] border-[#2a3040]">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-[#2a3040] hover:bg-transparent">
+                  <TableHead className="text-zinc-500 text-xs">Name</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Slug</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Icon</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Highlight</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Features</TableHead>
+                  <TableHead className="text-zinc-500 text-xs text-center">Aktiv</TableHead>
+                  <TableHead className="text-zinc-500 text-xs text-right">Aktionen</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {servicesLoading ? (
+                  <TableRow><TableCell colSpan={7} className="text-center py-12 text-zinc-500">Laden...</TableCell></TableRow>
+                ) : filteredServices.length === 0 ? (
+                  <TableRow><TableCell colSpan={7} className="text-center py-12 text-zinc-500">Keine Services</TableCell></TableRow>
+                ) : filteredServices.map(s => (
+                  <TableRow key={s.id} className="border-[#2a3040] hover:bg-[#1e2430]">
+                    <TableCell className="font-medium text-white text-sm">{s.name}</TableCell>
+                    <TableCell className="text-zinc-500 font-mono text-xs">{s.slug}</TableCell>
+                    <TableCell className="text-zinc-400 text-sm">{s.icon}</TableCell>
+                    <TableCell className="text-zinc-400 text-sm max-w-[200px] truncate">{s.highlight || '—'}</TableCell>
+                    <TableCell className="text-zinc-500 text-xs">{s.features?.length || 0} Punkte</TableCell>
+                    <TableCell className="text-center">
+                      <Switch checked={s.is_active} onCheckedChange={() => toggleServiceActive(s.id, s.is_active)}
+                        className="data-[state=checked]:bg-purple-600" />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-0.5">
+                        <Button variant="ghost" size="sm" onClick={() => setServiceDialog({ open: true, service: { ...s }, isNew: false })}
+                          className="text-zinc-400 hover:text-white h-7 w-7 p-0">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteService(s.id)}
+                          className="text-red-400/60 hover:text-red-400 h-7 w-7 p-0">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+
+        {/* ─── CATEGORIES TAB ─── */}
+        <TabsContent value="categories">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+              <Input value={catSearch} onChange={e => setCatSearch(e.target.value)}
+                placeholder="Kategorie suchen..." className="pl-9 bg-[#1a1f2a] border-[#2a3040] text-sm h-9" />
+            </div>
+            <Button onClick={() => setCatDialog({ open: true, cat: { name: '', slug: '', icon: 'MapPin', sort_order: categories.length, is_active: true }, isNew: true })}
+              className="bg-cyan-600 hover:bg-cyan-700 h-9 text-sm">
+              <Plus className="w-3.5 h-3.5 mr-1.5" />Neue Kategorie
+            </Button>
+          </div>
+
+          <Card className="bg-[#1a1f2a] border-[#2a3040]">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-[#2a3040] hover:bg-transparent">
+                  <TableHead className="text-zinc-500 text-xs">Reihenfolge</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Name</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Slug</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Icon</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Beschreibung</TableHead>
+                  <TableHead className="text-zinc-500 text-xs text-center">Aktiv</TableHead>
+                  <TableHead className="text-zinc-500 text-xs text-right">Aktionen</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {categoriesLoading ? (
+                  <TableRow><TableCell colSpan={7} className="text-center py-12 text-zinc-500">Laden...</TableCell></TableRow>
+                ) : filteredCategories.length === 0 ? (
+                  <TableRow><TableCell colSpan={7} className="text-center py-12 text-zinc-500">Keine Kategorien</TableCell></TableRow>
+                ) : filteredCategories.map(cat => (
+                  <TableRow key={cat.id} className="border-[#2a3040] hover:bg-[#1e2430]">
+                    <TableCell className="text-zinc-500 text-sm font-mono w-16">{cat.sort_order}</TableCell>
+                    <TableCell className="font-medium text-white text-sm">{cat.name}</TableCell>
+                    <TableCell className="text-zinc-500 font-mono text-xs">{cat.slug}</TableCell>
+                    <TableCell className="text-zinc-400 text-sm">{cat.icon || '—'}</TableCell>
+                    <TableCell className="text-zinc-400 text-sm max-w-[200px] truncate">{cat.description || '—'}</TableCell>
+                    <TableCell className="text-center">
+                      <Switch checked={cat.is_active ?? true} onCheckedChange={() => toggleCategoryActive(cat.id, cat.is_active ?? true)}
+                        className="data-[state=checked]:bg-cyan-600" />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-0.5">
+                        <Button variant="ghost" size="sm" onClick={() => setCatDialog({ open: true, cat: { ...cat }, isNew: false })}
+                          className="text-zinc-400 hover:text-white h-7 w-7 p-0">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteCategory(cat.id)}
+                          className="text-red-400/60 hover:text-red-400 h-7 w-7 p-0">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+
+        {/* ─── JOBS TAB ─── */}
+        <TabsContent value="jobs">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+              <Input value={jobSearch} onChange={e => setJobSearch(e.target.value)}
+                placeholder="Stelle suchen..." className="pl-9 bg-[#1a1f2a] border-[#2a3040] text-sm h-9" />
+            </div>
+            <Button onClick={() => setJobDialog({ open: true, job: { title: '', department: 'Allgemein', location: 'Düsseldorf', employment_type: 'Vollzeit', description: '', requirements: [], benefits: [], is_active: true, sort_order: jobListings.length }, isNew: true })}
+              className="bg-orange-600 hover:bg-orange-700 h-9 text-sm">
+              <Plus className="w-3.5 h-3.5 mr-1.5" />Neue Stelle
+            </Button>
+          </div>
+
+          <Card className="bg-[#1a1f2a] border-[#2a3040]">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-[#2a3040] hover:bg-transparent">
+                  <TableHead className="text-zinc-500 text-xs">Titel</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Abteilung</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Standort</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Art</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Gehalt</TableHead>
+                  <TableHead className="text-zinc-500 text-xs text-center">Aktiv</TableHead>
+                  <TableHead className="text-zinc-500 text-xs text-right">Aktionen</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {jobsLoading ? (
+                  <TableRow><TableCell colSpan={7} className="text-center py-12 text-zinc-500">Laden...</TableCell></TableRow>
+                ) : filteredJobs.length === 0 ? (
+                  <TableRow><TableCell colSpan={7} className="text-center py-12 text-zinc-500">Keine Stellen</TableCell></TableRow>
+                ) : filteredJobs.map(job => (
+                  <TableRow key={job.id} className="border-[#2a3040] hover:bg-[#1e2430]">
+                    <TableCell className="font-medium text-white text-sm">{job.title}</TableCell>
+                    <TableCell className="text-zinc-400 text-sm">{job.department}</TableCell>
+                    <TableCell className="text-zinc-400 text-sm">{job.location}</TableCell>
+                    <TableCell>
+                      <Badge className="bg-[#252b38] text-zinc-300 text-[10px] border-0">{job.employment_type}</Badge>
+                    </TableCell>
+                    <TableCell className="text-zinc-400 text-sm">{job.salary_range || '—'}</TableCell>
+                    <TableCell className="text-center">
+                      <Switch checked={job.is_active} onCheckedChange={() => toggleJobActive(job.id, job.is_active)}
+                        className="data-[state=checked]:bg-orange-600" />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-0.5">
+                        <Button variant="ghost" size="sm" onClick={() => setJobDialog({ open: true, job: { ...job }, isNew: false })}
+                          className="text-zinc-400 hover:text-white h-7 w-7 p-0">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteJob(job.id)}
+                          className="text-red-400/60 hover:text-red-400 h-7 w-7 p-0">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+
+        {/* ─── CMS CONTENT TAB ─── */}
+        <TabsContent value="content">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+              <Input value={contentSearch} onChange={e => setContentSearch(e.target.value)}
+                placeholder="Section Key oder Titel..." className="pl-9 bg-[#1a1f2a] border-[#2a3040] text-sm h-9" />
             </div>
           </div>
-        </div>
 
-        <nav className="flex-1 p-2">
-          {menuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => {
-                if (item.id === 'inquiries') {
-                  navigate('/admin/inquiries');
-                } else if (item.id === 'legacy') {
-                  navigate('/admin/dashboard');
-                } else {
-                  setActiveTab(item.id);
-                }
-              }}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors mb-1 ${
-                activeTab === item.id 
-                  ? 'bg-emerald-600/20 text-emerald-400' 
-                  : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
-              }`}
-            >
-              <item.icon className="w-4 h-4" />
-              {item.label}
-              {item.external && <ChevronRight className="w-4 h-4 ml-auto" />}
-            </button>
-          ))}
-        </nav>
-
-        <div className="p-4 border-t border-zinc-800">
-          <div className="text-xs text-zinc-500 mb-2">{user?.email}</div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="w-full justify-start text-zinc-400 hover:text-white hover:bg-zinc-800"
-            onClick={() => signOut()}
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Abmelden
-          </Button>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        <div className="p-6">
-          {/* Overview Tab */}
-          {activeTab === 'overview' && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-2xl font-bold mb-2">Dashboard</h2>
-                <p className="text-zinc-500">Übersicht über alle CMS-Inhalte</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="bg-zinc-900 border-zinc-800">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-zinc-400 flex items-center gap-2">
-                      <Palmtree className="w-4 h-4" />
-                      Pauschalreisen
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold text-emerald-400">{tours.length}</div>
-                    <p className="text-xs text-zinc-500">{tours.filter(t => t.is_active).length} aktiv</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-zinc-900 border-zinc-800">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-zinc-400 flex items-center gap-2">
-                      <Briefcase className="w-4 h-4" />
-                      Reisearten
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold text-blue-400">{services.length}</div>
-                    <p className="text-xs text-zinc-500">{services.filter(s => s.is_active).length} aktiv</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-zinc-900 border-zinc-800">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-zinc-400 flex items-center gap-2">
-                      <FileText className="w-4 h-4" />
-                      CMS Blöcke
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold text-purple-400">{content.length}</div>
-                    <p className="text-xs text-zinc-500">Textinhalte</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-zinc-900 border-zinc-800">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-zinc-400 flex items-center gap-2">
-                      <Star className="w-4 h-4" />
-                      Featured
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold text-amber-400">{tours.filter(t => t.is_featured).length}</div>
-                    <p className="text-xs text-zinc-500">Hervorgehobene Reisen</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="bg-zinc-900 border-zinc-800">
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center justify-between">
-                      Neueste Reisen
-                      <Button size="sm" variant="outline" onClick={() => setActiveTab('tours')} className="border-zinc-700">
-                        Alle anzeigen
-                      </Button>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {tours.slice(0, 5).map(tour => (
-                        <div key={tour.id} className="flex items-center justify-between py-2 border-b border-zinc-800 last:border-0">
-                          <div>
-                            <div className="font-medium text-white">{tour.destination}</div>
-                            <div className="text-xs text-zinc-500">{tour.location}</div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge className={tour.is_active ? 'bg-emerald-600' : 'bg-zinc-600'}>
-                              {tour.is_active ? 'Aktiv' : 'Inaktiv'}
-                            </Badge>
-                            <span className="text-emerald-400 font-medium">ab {tour.price_from}€</span>
-                          </div>
+          <div className="grid gap-3">
+            {contentLoading ? (
+              <Card className="bg-[#1a1f2a] border-[#2a3040] p-12 text-center text-zinc-500">Laden...</Card>
+            ) : filteredContent.length === 0 ? (
+              <Card className="bg-[#1a1f2a] border-[#2a3040] p-12 text-center text-zinc-500">Keine Inhalte</Card>
+            ) : filteredContent.map(item => (
+              <Card key={item.id} className="bg-[#1a1f2a] border-[#2a3040] hover:border-[#3a4050] transition-colors">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <code className="text-xs text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded">{item.section_key}</code>
+                        <Badge className={item.is_active ? 'bg-emerald-600/20 text-emerald-400 border-0 text-[10px]' : 'bg-zinc-700/50 text-zinc-400 border-0 text-[10px]'}>
+                          {item.is_active ? 'Aktiv' : 'Inaktiv'}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <span className="text-zinc-600 text-[10px] uppercase">Titel</span>
+                          <p className="text-white truncate">{item.title || '—'}</p>
                         </div>
-                      ))}
+                        <div>
+                          <span className="text-zinc-600 text-[10px] uppercase">Untertitel</span>
+                          <p className="text-zinc-300 truncate">{item.subtitle || '—'}</p>
+                        </div>
+                        <div>
+                          <span className="text-zinc-600 text-[10px] uppercase">Inhalt</span>
+                          <p className="text-zinc-400 truncate">{item.content || '—'}</p>
+                        </div>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-zinc-900 border-zinc-800">
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center justify-between">
-                      Reisearten
-                      <Button size="sm" variant="outline" onClick={() => setActiveTab('services')} className="border-zinc-700">
-                        Alle anzeigen
-                      </Button>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {services.map(service => (
-                        <div key={service.id} className="flex items-center justify-between py-2 border-b border-zinc-800 last:border-0">
-                          <div>
-                            <div className="font-medium text-white">{service.name}</div>
-                            <div className="text-xs text-zinc-500">{service.highlight}</div>
-                          </div>
-                          <Badge className={service.is_active ? 'bg-blue-600' : 'bg-zinc-600'}>
-                            {service.is_active ? 'Aktiv' : 'Inaktiv'}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          )}
-
-          {/* Tours Tab */}
-          {activeTab === 'tours' && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold">Pauschalreisen</h2>
-                  <p className="text-zinc-500">Verwalten Sie alle Reiseangebote</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => fetchTours()}
-                    className="border-zinc-700"
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Aktualisieren
-                  </Button>
-                  <Button 
-                    onClick={() => navigate('/admin/tour-builder')}
-                    className="bg-emerald-600 hover:bg-emerald-700"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Neue Reise (Builder)
-                  </Button>
-                </div>
-              </div>
-
-              <Card className="bg-zinc-900 border-zinc-800">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-zinc-800">
-                      <TableHead className="text-zinc-400">Reiseziel</TableHead>
-                      <TableHead className="text-zinc-400">Region</TableHead>
-                      <TableHead className="text-zinc-400">Dauer</TableHead>
-                      <TableHead className="text-zinc-400">Preis</TableHead>
-                      <TableHead className="text-zinc-400">Datum</TableHead>
-                      <TableHead className="text-zinc-400">Status</TableHead>
-                      <TableHead className="text-zinc-400 text-right">Aktionen</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {toursLoading ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-zinc-500">
-                          Laden...
-                        </TableCell>
-                      </TableRow>
-                    ) : tours.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-zinc-500">
-                          Keine Reisen vorhanden
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      tours.map((tour) => (
-                        <TableRow key={tour.id} className="border-zinc-800">
-                          <TableCell className="font-medium text-white">
-                            <div className="flex items-center gap-2">
-                              {tour.is_featured && <Star className="w-4 h-4 text-amber-400 fill-amber-400" />}
-                              {tour.destination}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-zinc-400">{tour.location}</TableCell>
-                          <TableCell className="text-zinc-300">{tour.duration_days} Tage</TableCell>
-                          <TableCell className="text-emerald-400 font-medium">ab {tour.price_from}€</TableCell>
-                          <TableCell className="text-zinc-300">
-                            {format(new Date(tour.departure_date), 'dd.MM.yyyy', { locale: de })}
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={tour.is_active ? 'bg-emerald-600' : 'bg-zinc-600'}>
-                              {tour.is_active ? 'Aktiv' : 'Inaktiv'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => navigate(`/admin/tour-builder/${tour.id}`)}
-                              className="text-emerald-400 hover:text-emerald-300"
-                              title="Im Builder bearbeiten"
-                            >
-                              <Settings className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => setTourDialog({ open: true, tour, isNew: false })}
-                              className="text-zinc-400 hover:text-white"
-                              title="Schnellbearbeitung"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleDeleteTour(tour.id)}
-                              className="text-red-400 hover:text-red-300"
-                              title="Löschen"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+                    <Button variant="ghost" size="sm" onClick={() => setContentDialog({ open: true, item: { ...item } })}
+                      className="text-zinc-400 hover:text-white h-8 w-8 p-0 shrink-0">
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </CardContent>
               </Card>
-            </div>
-          )}
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
 
-          {/* Services Tab */}
-          {activeTab === 'services' && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold">Reisearten / Services</h2>
-                  <p className="text-zinc-500">Verwalten Sie die Business-Services</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => fetchServices()}
-                    className="border-zinc-700"
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Aktualisieren
-                  </Button>
-                  <Button 
-                    onClick={() => setServiceDialog({ open: true, service: newServiceTemplate, isNew: true })}
-                    className="bg-emerald-600 hover:bg-emerald-700"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Neuer Service
-                  </Button>
-                </div>
-              </div>
+      {/* ─── DIALOGS ─── */}
 
-              <Card className="bg-zinc-900 border-zinc-800">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-zinc-800">
-                      <TableHead className="text-zinc-400">Name</TableHead>
-                      <TableHead className="text-zinc-400">Slug</TableHead>
-                      <TableHead className="text-zinc-400">Icon</TableHead>
-                      <TableHead className="text-zinc-400">Highlight</TableHead>
-                      <TableHead className="text-zinc-400">Status</TableHead>
-                      <TableHead className="text-zinc-400 text-right">Aktionen</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {servicesLoading ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-zinc-500">
-                          Laden...
-                        </TableCell>
-                      </TableRow>
-                    ) : services.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-zinc-500">
-                          Keine Services vorhanden
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      services.map((service) => (
-                        <TableRow key={service.id} className="border-zinc-800">
-                          <TableCell className="font-medium text-white">{service.name}</TableCell>
-                          <TableCell className="text-zinc-400 font-mono text-sm">{service.slug}</TableCell>
-                          <TableCell className="text-zinc-300">{service.icon}</TableCell>
-                          <TableCell className="text-zinc-300">{service.highlight || '-'}</TableCell>
-                          <TableCell>
-                            <Badge className={service.is_active ? 'bg-blue-600' : 'bg-zinc-600'}>
-                              {service.is_active ? 'Aktiv' : 'Inaktiv'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => setServiceDialog({ open: true, service, isNew: false })}
-                              className="text-zinc-400 hover:text-white"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleDeleteService(service.id)}
-                              className="text-red-400 hover:text-red-300"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </Card>
-            </div>
-          )}
-
-          {/* Content Tab */}
-          {activeTab === 'content' && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold">CMS Inhalte</h2>
-                  <p className="text-zinc-500">Bearbeiten Sie Texte und Überschriften</p>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => fetchContent()}
-                  className="border-zinc-700"
-                >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Aktualisieren
-                </Button>
-              </div>
-
-              <div className="grid gap-4">
-                {contentLoading ? (
-                  <Card className="bg-zinc-900 border-zinc-800 p-8 text-center text-zinc-500">
-                    Laden...
-                  </Card>
-                ) : content.length === 0 ? (
-                  <Card className="bg-zinc-900 border-zinc-800 p-8 text-center text-zinc-500">
-                    Keine Inhalte vorhanden
-                  </Card>
-                ) : (
-                  content.map((item) => (
-                    <Card key={item.id} className="bg-zinc-900 border-zinc-800">
-                      <CardHeader>
-                        <CardTitle className="text-lg flex items-center justify-between">
-                          <span className="font-mono text-sm text-emerald-400">{item.section_key}</span>
-                          <Badge className={item.is_active ? 'bg-emerald-600' : 'bg-zinc-600'}>
-                            {item.is_active ? 'Aktiv' : 'Inaktiv'}
-                          </Badge>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div>
-                          <Label className="text-zinc-400 text-xs">Titel</Label>
-                          <p className="text-white">{item.title || '-'}</p>
-                        </div>
-                        <div>
-                          <Label className="text-zinc-400 text-xs">Untertitel</Label>
-                          <p className="text-zinc-300">{item.subtitle || '-'}</p>
-                        </div>
-                        <div>
-                          <Label className="text-zinc-400 text-xs">Inhalt</Label>
-                          <p className="text-zinc-400 text-sm">{item.content || '-'}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Categories (Sortiment) Tab */}
-          {activeTab === 'categories' && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold">Sortiment / Kategorien</h2>
-                  <p className="text-zinc-500">Verwalten Sie Reise-Kategorien und Tags</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={fetchCategories} className="border-zinc-700">
-                    <RefreshCw className="w-4 h-4 mr-2" />Aktualisieren
-                  </Button>
-                  <Button onClick={() => setCatDialog({ open: true, cat: { name: '', slug: '', icon: 'MapPin', sort_order: categories.length, is_active: true }, isNew: true })} className="bg-emerald-600 hover:bg-emerald-700">
-                    <Plus className="w-4 h-4 mr-2" />Neue Kategorie
-                  </Button>
-                </div>
-              </div>
-
-              <Card className="bg-zinc-900 border-zinc-800">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-zinc-800">
-                      <TableHead className="text-zinc-400">Name</TableHead>
-                      <TableHead className="text-zinc-400">Slug</TableHead>
-                      <TableHead className="text-zinc-400">Icon</TableHead>
-                      <TableHead className="text-zinc-400">Reihenfolge</TableHead>
-                      <TableHead className="text-zinc-400">Status</TableHead>
-                      <TableHead className="text-zinc-400 text-right">Aktionen</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {categoriesLoading ? (
-                      <TableRow><TableCell colSpan={6} className="text-center py-8 text-zinc-500">Laden...</TableCell></TableRow>
-                    ) : categories.length === 0 ? (
-                      <TableRow><TableCell colSpan={6} className="text-center py-8 text-zinc-500">Keine Kategorien</TableCell></TableRow>
-                    ) : categories.map(cat => (
-                      <TableRow key={cat.id} className="border-zinc-800">
-                        <TableCell className="font-medium text-white">{cat.name}</TableCell>
-                        <TableCell className="text-zinc-400 font-mono text-xs">{cat.slug}</TableCell>
-                        <TableCell className="text-zinc-400">{cat.icon || '—'}</TableCell>
-                        <TableCell className="text-zinc-400">{cat.sort_order}</TableCell>
-                        <TableCell>
-                          <Badge className={cat.is_active ? 'bg-emerald-600' : 'bg-zinc-600'}>
-                            {cat.is_active ? 'Aktiv' : 'Inaktiv'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button size="sm" variant="ghost" onClick={() => setCatDialog({ open: true, cat: { ...cat }, isNew: false })}>
-                              <Pencil className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button size="sm" variant="ghost" className="text-red-400" onClick={() => handleDeleteCategory(cat.id)}>
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Card>
-            </div>
-          )}
-
-          {/* Jobs (Karriere) Tab */}
-          {activeTab === 'jobs' && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold">Karriere / Stellenanzeigen</h2>
-                  <p className="text-zinc-500">Verwalten Sie offene Stellen auf der Karriere-Seite</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={fetchJobs} className="border-zinc-700">
-                    <RefreshCw className="w-4 h-4 mr-2" />Aktualisieren
-                  </Button>
-                  <Button onClick={() => setJobDialog({ open: true, job: { title: '', department: 'Allgemein', location: 'Düsseldorf', employment_type: 'Vollzeit', description: '', requirements: [], benefits: [], is_active: true, sort_order: jobListings.length }, isNew: true })} className="bg-emerald-600 hover:bg-emerald-700">
-                    <Plus className="w-4 h-4 mr-2" />Neue Stelle
-                  </Button>
-                </div>
-              </div>
-
-              <Card className="bg-zinc-900 border-zinc-800">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-zinc-800">
-                      <TableHead className="text-zinc-400">Titel</TableHead>
-                      <TableHead className="text-zinc-400">Abteilung</TableHead>
-                      <TableHead className="text-zinc-400">Standort</TableHead>
-                      <TableHead className="text-zinc-400">Art</TableHead>
-                      <TableHead className="text-zinc-400">Status</TableHead>
-                      <TableHead className="text-zinc-400 text-right">Aktionen</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {jobsLoading ? (
-                      <TableRow><TableCell colSpan={6} className="text-center py-8 text-zinc-500">Laden...</TableCell></TableRow>
-                    ) : jobListings.length === 0 ? (
-                      <TableRow><TableCell colSpan={6} className="text-center py-8 text-zinc-500">Keine Stellen</TableCell></TableRow>
-                    ) : jobListings.map(job => (
-                      <TableRow key={job.id} className="border-zinc-800">
-                        <TableCell className="font-medium text-white">{job.title}</TableCell>
-                        <TableCell className="text-zinc-400">{job.department}</TableCell>
-                        <TableCell className="text-zinc-400">{job.location}</TableCell>
-                        <TableCell className="text-zinc-400">{job.employment_type}</TableCell>
-                        <TableCell>
-                          <Badge className={job.is_active ? 'bg-emerald-600' : 'bg-zinc-600'}>
-                            {job.is_active ? 'Aktiv' : 'Inaktiv'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button size="sm" variant="ghost" onClick={() => setJobDialog({ open: true, job: { ...job }, isNew: false })}>
-                              <Pencil className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button size="sm" variant="ghost" className="text-red-400" onClick={() => handleDeleteJob(job.id)}>
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Card>
-            </div>
-          )}
-        </div>
-      </main>
-
-      {/* Tour Edit Dialog */}
-      <Dialog open={tourDialog.open} onOpenChange={(open) => !open && setTourDialog({ open: false, tour: null, isNew: false })}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+      {/* Tour Edit */}
+      <Dialog open={tourDialog.open} onOpenChange={open => !open && setTourDialog({ open: false, tour: null, isNew: false })}>
+        <DialogContent className="bg-[#1a1f2a] border-[#2a3040] text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{tourDialog.isNew ? 'Neue Reise erstellen' : 'Reise bearbeiten'}</DialogTitle>
-            <DialogDescription className="text-zinc-400">
-              Füllen Sie die Details für die Pauschalreise aus
-            </DialogDescription>
+            <DialogTitle>{tourDialog.isNew ? 'Neue Reise' : 'Reise bearbeiten'}</DialogTitle>
+            <DialogDescription className="text-zinc-500">Schnellbearbeitung der Reisedaten</DialogDescription>
           </DialogHeader>
-
           {tourDialog.tour && (
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Reiseziel *</Label>
-                  <Input
-                    value={tourDialog.tour.destination || ''}
-                    onChange={(e) => setTourDialog(prev => ({ ...prev, tour: { ...prev.tour!, destination: e.target.value } }))}
-                    className="bg-zinc-800 border-zinc-700 mt-1"
-                    placeholder="z.B. Kroatien"
-                  />
+                  <Label className="text-zinc-400 text-xs">Reiseziel *</Label>
+                  <Input value={tourDialog.tour.destination || ''} onChange={e => setTourDialog(p => ({ ...p, tour: { ...p.tour!, destination: e.target.value } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" />
                 </div>
                 <div>
-                  <Label>Region</Label>
-                  <Input
-                    value={tourDialog.tour.location || ''}
-                    onChange={(e) => setTourDialog(prev => ({ ...prev, tour: { ...prev.tour!, location: e.target.value } }))}
-                    className="bg-zinc-800 border-zinc-700 mt-1"
-                    placeholder="z.B. Dalmatinische Küste"
-                  />
+                  <Label className="text-zinc-400 text-xs">Region</Label>
+                  <Input value={tourDialog.tour.location || ''} onChange={e => setTourDialog(p => ({ ...p, tour: { ...p.tour!, location: e.target.value } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" />
                 </div>
               </div>
-
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label>Dauer (Tage)</Label>
-                  <Input
-                    type="number"
-                    value={tourDialog.tour.duration_days || 7}
-                    onChange={(e) => setTourDialog(prev => ({ ...prev, tour: { ...prev.tour!, duration_days: parseInt(e.target.value) } }))}
-                    className="bg-zinc-800 border-zinc-700 mt-1"
-                  />
+                  <Label className="text-zinc-400 text-xs">Dauer (Tage)</Label>
+                  <Input type="number" value={tourDialog.tour.duration_days || 7} onChange={e => setTourDialog(p => ({ ...p, tour: { ...p.tour!, duration_days: parseInt(e.target.value) } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" />
                 </div>
                 <div>
-                  <Label>Preis ab (€)</Label>
-                  <Input
-                    type="number"
-                    value={tourDialog.tour.price_from || 0}
-                    onChange={(e) => setTourDialog(prev => ({ ...prev, tour: { ...prev.tour!, price_from: parseFloat(e.target.value) } }))}
-                    className="bg-zinc-800 border-zinc-700 mt-1"
-                  />
+                  <Label className="text-zinc-400 text-xs">Preis ab (€)</Label>
+                  <Input type="number" value={tourDialog.tour.price_from || 0} onChange={e => setTourDialog(p => ({ ...p, tour: { ...p.tour!, price_from: parseFloat(e.target.value) } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" />
                 </div>
                 <div>
-                  <Label>Rabatt (%)</Label>
-                  <Input
-                    type="number"
-                    value={tourDialog.tour.discount_percent || 0}
-                    onChange={(e) => setTourDialog(prev => ({ ...prev, tour: { ...prev.tour!, discount_percent: parseInt(e.target.value) } }))}
-                    className="bg-zinc-800 border-zinc-700 mt-1"
-                  />
+                  <Label className="text-zinc-400 text-xs">Rabatt (%)</Label>
+                  <Input type="number" value={tourDialog.tour.discount_percent || 0} onChange={e => setTourDialog(p => ({ ...p, tour: { ...p.tour!, discount_percent: parseInt(e.target.value) } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" />
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Hinreise</Label>
-                  <Input
-                    type="date"
-                    value={tourDialog.tour.departure_date || ''}
-                    onChange={(e) => setTourDialog(prev => ({ ...prev, tour: { ...prev.tour!, departure_date: e.target.value } }))}
-                    className="bg-zinc-800 border-zinc-700 mt-1"
-                  />
+                  <Label className="text-zinc-400 text-xs">Hinreise</Label>
+                  <Input type="date" value={tourDialog.tour.departure_date || ''} onChange={e => setTourDialog(p => ({ ...p, tour: { ...p.tour!, departure_date: e.target.value } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" />
                 </div>
                 <div>
-                  <Label>Rückreise</Label>
-                  <Input
-                    type="date"
-                    value={tourDialog.tour.return_date || ''}
-                    onChange={(e) => setTourDialog(prev => ({ ...prev, tour: { ...prev.tour!, return_date: e.target.value } }))}
-                    className="bg-zinc-800 border-zinc-700 mt-1"
-                  />
+                  <Label className="text-zinc-400 text-xs">Rückreise</Label>
+                  <Input type="date" value={tourDialog.tour.return_date || ''} onChange={e => setTourDialog(p => ({ ...p, tour: { ...p.tour!, return_date: e.target.value } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" />
                 </div>
               </div>
-
               <div>
-                <Label>Beschreibung</Label>
-                <Textarea
-                  value={tourDialog.tour.description || ''}
-                  onChange={(e) => setTourDialog(prev => ({ ...prev, tour: { ...prev.tour!, description: e.target.value } }))}
-                  className="bg-zinc-800 border-zinc-700 mt-1"
-                  rows={3}
-                />
+                <Label className="text-zinc-400 text-xs">Beschreibung</Label>
+                <Textarea value={tourDialog.tour.description || ''} onChange={e => setTourDialog(p => ({ ...p, tour: { ...p.tour!, description: e.target.value } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" rows={3} />
               </div>
-
               <div>
-                <Label>Highlights (kommagetrennt)</Label>
-                <Input
-                  value={tourDialog.tour.highlights?.join(', ') || ''}
-                  onChange={(e) => setTourDialog(prev => ({ ...prev, tour: { ...prev.tour!, highlights: e.target.value.split(',').map(h => h.trim()).filter(Boolean) } }))}
-                  className="bg-zinc-800 border-zinc-700 mt-1"
-                  placeholder="Strand, Altstadt, Kulinarik"
-                />
+                <Label className="text-zinc-400 text-xs">Highlights (kommagetrennt)</Label>
+                <Input value={tourDialog.tour.highlights?.join(', ') || ''} onChange={e => setTourDialog(p => ({ ...p, tour: { ...p.tour!, highlights: e.target.value.split(',').map(h => h.trim()).filter(Boolean) } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" placeholder="Strand, Altstadt, Kulinarik" />
               </div>
-
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2">
-                  <Switch
-                    checked={tourDialog.tour.is_active}
-                    onCheckedChange={(checked) => setTourDialog(prev => ({ ...prev, tour: { ...prev.tour!, is_active: checked } }))}
-                  />
-                  <Label>Aktiv</Label>
+                  <Switch checked={tourDialog.tour.is_active} onCheckedChange={c => setTourDialog(p => ({ ...p, tour: { ...p.tour!, is_active: c } }))} />
+                  <Label className="text-sm">Aktiv</Label>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Switch
-                    checked={tourDialog.tour.is_featured}
-                    onCheckedChange={(checked) => setTourDialog(prev => ({ ...prev, tour: { ...prev.tour!, is_featured: checked } }))}
-                  />
-                  <Label>Hervorgehoben</Label>
+                  <Switch checked={tourDialog.tour.is_featured} onCheckedChange={c => setTourDialog(p => ({ ...p, tour: { ...p.tour!, is_featured: c } }))} />
+                  <Label className="text-sm">Hervorgehoben</Label>
                 </div>
               </div>
             </div>
           )}
-
           <DialogFooter>
-            <Button variant="outline" onClick={() => setTourDialog({ open: false, tour: null, isNew: false })} className="border-zinc-700">
-              Abbrechen
-            </Button>
-            <Button onClick={handleSaveTour} disabled={isSaving} className="bg-emerald-600 hover:bg-emerald-700">
-              {isSaving ? 'Speichern...' : 'Speichern'}
-            </Button>
+            <Button variant="outline" onClick={() => setTourDialog({ open: false, tour: null, isNew: false })} className="border-[#2a3040]">Abbrechen</Button>
+            <Button onClick={handleSaveTour} disabled={isSaving} className="bg-emerald-600 hover:bg-emerald-700">{isSaving ? 'Speichern...' : 'Speichern'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Service Edit Dialog */}
-      <Dialog open={serviceDialog.open} onOpenChange={(open) => !open && setServiceDialog({ open: false, service: null, isNew: false })}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-lg">
+      {/* Service Edit */}
+      <Dialog open={serviceDialog.open} onOpenChange={open => !open && setServiceDialog({ open: false, service: null, isNew: false })}>
+        <DialogContent className="bg-[#1a1f2a] border-[#2a3040] text-white max-w-lg">
           <DialogHeader>
-            <DialogTitle>{serviceDialog.isNew ? 'Neuen Service erstellen' : 'Service bearbeiten'}</DialogTitle>
-            <DialogDescription className="text-zinc-400">
-              Füllen Sie die Details für den Service aus
-            </DialogDescription>
+            <DialogTitle>{serviceDialog.isNew ? 'Neuer Service' : 'Service bearbeiten'}</DialogTitle>
           </DialogHeader>
-
           {serviceDialog.service && (
             <div className="space-y-4 py-4">
               <div>
-                <Label>Name *</Label>
-                <Input
-                  value={serviceDialog.service.name || ''}
-                  onChange={(e) => setServiceDialog(prev => ({ 
-                    ...prev, 
-                    service: { 
-                      ...prev.service!, 
-                      name: e.target.value,
-                      slug: prev.service?.slug || e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[äöü]/g, c => ({ 'ä': 'ae', 'ö': 'oe', 'ü': 'ue' }[c] || c))
-                    } 
-                  }))}
-                  className="bg-zinc-800 border-zinc-700 mt-1"
-                  placeholder="z.B. Schulfahrten"
-                />
+                <Label className="text-zinc-400 text-xs">Name *</Label>
+                <Input value={serviceDialog.service.name || ''} onChange={e => setServiceDialog(p => ({
+                  ...p, service: { ...p.service!, name: e.target.value, slug: p.service?.slug || e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[äöü]/g, c => ({ 'ä': 'ae', 'ö': 'oe', 'ü': 'ue' }[c] || c)) }
+                }))} className="bg-[#151920] border-[#2a3040] mt-1" />
               </div>
-
               <div>
-                <Label>Slug</Label>
-                <Input
-                  value={serviceDialog.service.slug || ''}
-                  onChange={(e) => setServiceDialog(prev => ({ ...prev, service: { ...prev.service!, slug: e.target.value } }))}
-                  className="bg-zinc-800 border-zinc-700 mt-1 font-mono"
-                  placeholder="schulfahrten"
-                />
+                <Label className="text-zinc-400 text-xs">Slug</Label>
+                <Input value={serviceDialog.service.slug || ''} onChange={e => setServiceDialog(p => ({ ...p, service: { ...p.service!, slug: e.target.value } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1 font-mono" />
               </div>
-
               <div>
-                <Label>Icon</Label>
-                <Select 
-                  value={serviceDialog.service.icon || 'Users'}
-                  onValueChange={(value) => setServiceDialog(prev => ({ ...prev, service: { ...prev.service!, icon: value } }))}
-                >
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700 mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                <Label className="text-zinc-400 text-xs">Icon</Label>
+                <Select value={serviceDialog.service.icon || 'Users'} onValueChange={v => setServiceDialog(p => ({ ...p, service: { ...p.service!, icon: v } }))}>
+                  <SelectTrigger className="bg-[#151920] border-[#2a3040] mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-[#1a1f2a] border-[#2a3040]">
                     <SelectItem value="School">School</SelectItem>
                     <SelectItem value="Users">Users</SelectItem>
                     <SelectItem value="MapPin">MapPin</SelectItem>
@@ -1056,117 +808,106 @@ const AdminCMS = () => {
                   </SelectContent>
                 </Select>
               </div>
-
               <div>
-                <Label>Beschreibung</Label>
-                <Textarea
-                  value={serviceDialog.service.description || ''}
-                  onChange={(e) => setServiceDialog(prev => ({ ...prev, service: { ...prev.service!, description: e.target.value } }))}
-                  className="bg-zinc-800 border-zinc-700 mt-1"
-                  rows={3}
-                />
+                <Label className="text-zinc-400 text-xs">Beschreibung</Label>
+                <Textarea value={serviceDialog.service.description || ''} onChange={e => setServiceDialog(p => ({ ...p, service: { ...p.service!, description: e.target.value } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" rows={3} />
               </div>
-
               <div>
-                <Label>Highlight</Label>
-                <Input
-                  value={serviceDialog.service.highlight || ''}
-                  onChange={(e) => setServiceDialog(prev => ({ ...prev, service: { ...prev.service!, highlight: e.target.value } }))}
-                  className="bg-zinc-800 border-zinc-700 mt-1"
-                  placeholder="z.B. Kinderfreundlich"
-                />
+                <Label className="text-zinc-400 text-xs">Highlight</Label>
+                <Input value={serviceDialog.service.highlight || ''} onChange={e => setServiceDialog(p => ({ ...p, service: { ...p.service!, highlight: e.target.value } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" />
               </div>
-
               <div className="flex items-center gap-2">
-                <Switch
-                  checked={serviceDialog.service.is_active}
-                  onCheckedChange={(checked) => setServiceDialog(prev => ({ ...prev, service: { ...prev.service!, is_active: checked } }))}
-                />
-                <Label>Aktiv</Label>
+                <Switch checked={serviceDialog.service.is_active} onCheckedChange={c => setServiceDialog(p => ({ ...p, service: { ...p.service!, is_active: c } }))} />
+                <Label className="text-sm">Aktiv</Label>
               </div>
             </div>
           )}
-
           <DialogFooter>
-            <Button variant="outline" onClick={() => setServiceDialog({ open: false, service: null, isNew: false })} className="border-zinc-700">
-              Abbrechen
-            </Button>
-            <Button onClick={handleSaveService} disabled={isSaving} className="bg-emerald-600 hover:bg-emerald-700">
-              {isSaving ? 'Speichern...' : 'Speichern'}
-            </Button>
+            <Button variant="outline" onClick={() => setServiceDialog({ open: false, service: null, isNew: false })} className="border-[#2a3040]">Abbrechen</Button>
+            <Button onClick={handleSaveService} disabled={isSaving} className="bg-purple-600 hover:bg-purple-700">{isSaving ? 'Speichern...' : 'Speichern'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Category Dialog */}
-      <Dialog open={catDialog.open} onOpenChange={(open) => !open && setCatDialog({ open: false, cat: null, isNew: false })}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
+      <Dialog open={catDialog.open} onOpenChange={open => !open && setCatDialog({ open: false, cat: null, isNew: false })}>
+        <DialogContent className="bg-[#1a1f2a] border-[#2a3040] text-white">
           <DialogHeader>
             <DialogTitle>{catDialog.isNew ? 'Neue Kategorie' : 'Kategorie bearbeiten'}</DialogTitle>
           </DialogHeader>
           {catDialog.cat && (
             <div className="space-y-4 py-4">
               <div>
-                <Label>Name *</Label>
-                <Input value={catDialog.cat.name || ''} onChange={e => setCatDialog(p => ({ ...p, cat: { ...p.cat!, name: e.target.value, slug: p.cat?.slug || e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[äöü]/g, c => ({'ä':'ae','ö':'oe','ü':'ue'}[c] || c)) } }))} className="bg-zinc-800 border-zinc-700 mt-1" />
+                <Label className="text-zinc-400 text-xs">Name *</Label>
+                <Input value={catDialog.cat.name || ''} onChange={e => setCatDialog(p => ({ ...p, cat: { ...p.cat!, name: e.target.value, slug: p.cat?.slug || e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[äöü]/g, c => ({'ä':'ae','ö':'oe','ü':'ue'}[c] || c)) } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" />
               </div>
               <div>
-                <Label>Slug</Label>
-                <Input value={catDialog.cat.slug || ''} onChange={e => setCatDialog(p => ({ ...p, cat: { ...p.cat!, slug: e.target.value } }))} className="bg-zinc-800 border-zinc-700 mt-1" />
+                <Label className="text-zinc-400 text-xs">Slug</Label>
+                <Input value={catDialog.cat.slug || ''} onChange={e => setCatDialog(p => ({ ...p, cat: { ...p.cat!, slug: e.target.value } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1 font-mono" />
               </div>
               <div>
-                <Label>Beschreibung</Label>
-                <Textarea value={catDialog.cat.description || ''} onChange={e => setCatDialog(p => ({ ...p, cat: { ...p.cat!, description: e.target.value } }))} className="bg-zinc-800 border-zinc-700 mt-1" rows={2} />
+                <Label className="text-zinc-400 text-xs">Beschreibung</Label>
+                <Textarea value={catDialog.cat.description || ''} onChange={e => setCatDialog(p => ({ ...p, cat: { ...p.cat!, description: e.target.value } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" rows={2} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Icon</Label>
-                  <Input value={catDialog.cat.icon || ''} onChange={e => setCatDialog(p => ({ ...p, cat: { ...p.cat!, icon: e.target.value } }))} className="bg-zinc-800 border-zinc-700 mt-1" placeholder="MapPin" />
+                  <Label className="text-zinc-400 text-xs">Icon</Label>
+                  <Input value={catDialog.cat.icon || ''} onChange={e => setCatDialog(p => ({ ...p, cat: { ...p.cat!, icon: e.target.value } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" placeholder="MapPin" />
                 </div>
                 <div>
-                  <Label>Reihenfolge</Label>
-                  <Input type="number" value={catDialog.cat.sort_order ?? 0} onChange={e => setCatDialog(p => ({ ...p, cat: { ...p.cat!, sort_order: parseInt(e.target.value) } }))} className="bg-zinc-800 border-zinc-700 mt-1" />
+                  <Label className="text-zinc-400 text-xs">Reihenfolge</Label>
+                  <Input type="number" value={catDialog.cat.sort_order ?? 0} onChange={e => setCatDialog(p => ({ ...p, cat: { ...p.cat!, sort_order: parseInt(e.target.value) } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" />
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Switch checked={catDialog.cat.is_active ?? true} onCheckedChange={checked => setCatDialog(p => ({ ...p, cat: { ...p.cat!, is_active: checked } }))} />
-                <Label>Aktiv</Label>
+                <Switch checked={catDialog.cat.is_active ?? true} onCheckedChange={c => setCatDialog(p => ({ ...p, cat: { ...p.cat!, is_active: c } }))} />
+                <Label className="text-sm">Aktiv</Label>
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCatDialog({ open: false, cat: null, isNew: false })} className="border-zinc-700">Abbrechen</Button>
-            <Button onClick={handleSaveCategory} disabled={isSaving} className="bg-emerald-600 hover:bg-emerald-700">{isSaving ? 'Speichern...' : 'Speichern'}</Button>
+            <Button variant="outline" onClick={() => setCatDialog({ open: false, cat: null, isNew: false })} className="border-[#2a3040]">Abbrechen</Button>
+            <Button onClick={handleSaveCategory} disabled={isSaving} className="bg-cyan-600 hover:bg-cyan-700">{isSaving ? 'Speichern...' : 'Speichern'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Job Dialog */}
-      <Dialog open={jobDialog.open} onOpenChange={(open) => !open && setJobDialog({ open: false, job: null, isNew: false })}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+      <Dialog open={jobDialog.open} onOpenChange={open => !open && setJobDialog({ open: false, job: null, isNew: false })}>
+        <DialogContent className="bg-[#1a1f2a] border-[#2a3040] text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{jobDialog.isNew ? 'Neue Stelle' : 'Stelle bearbeiten'}</DialogTitle>
           </DialogHeader>
           {jobDialog.job && (
             <div className="space-y-4 py-4">
               <div>
-                <Label>Titel *</Label>
-                <Input value={jobDialog.job.title || ''} onChange={e => setJobDialog(p => ({ ...p, job: { ...p.job!, title: e.target.value } }))} className="bg-zinc-800 border-zinc-700 mt-1" placeholder="z.B. Busfahrer/in (m/w/d)" />
+                <Label className="text-zinc-400 text-xs">Titel *</Label>
+                <Input value={jobDialog.job.title || ''} onChange={e => setJobDialog(p => ({ ...p, job: { ...p.job!, title: e.target.value } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" placeholder="z.B. Busfahrer/in (m/w/d)" />
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label>Abteilung</Label>
-                  <Input value={jobDialog.job.department || 'Allgemein'} onChange={e => setJobDialog(p => ({ ...p, job: { ...p.job!, department: e.target.value } }))} className="bg-zinc-800 border-zinc-700 mt-1" />
+                  <Label className="text-zinc-400 text-xs">Abteilung</Label>
+                  <Input value={jobDialog.job.department || 'Allgemein'} onChange={e => setJobDialog(p => ({ ...p, job: { ...p.job!, department: e.target.value } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" />
                 </div>
                 <div>
-                  <Label>Standort</Label>
-                  <Input value={jobDialog.job.location || 'Düsseldorf'} onChange={e => setJobDialog(p => ({ ...p, job: { ...p.job!, location: e.target.value } }))} className="bg-zinc-800 border-zinc-700 mt-1" />
+                  <Label className="text-zinc-400 text-xs">Standort</Label>
+                  <Input value={jobDialog.job.location || 'Düsseldorf'} onChange={e => setJobDialog(p => ({ ...p, job: { ...p.job!, location: e.target.value } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" />
                 </div>
                 <div>
-                  <Label>Anstellungsart</Label>
+                  <Label className="text-zinc-400 text-xs">Anstellungsart</Label>
                   <Select value={jobDialog.job.employment_type || 'Vollzeit'} onValueChange={v => setJobDialog(p => ({ ...p, job: { ...p.job!, employment_type: v } }))}>
-                    <SelectTrigger className="bg-zinc-800 border-zinc-700 mt-1"><SelectValue /></SelectTrigger>
-                    <SelectContent>
+                    <SelectTrigger className="bg-[#151920] border-[#2a3040] mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent className="bg-[#1a1f2a] border-[#2a3040]">
                       <SelectItem value="Vollzeit">Vollzeit</SelectItem>
                       <SelectItem value="Teilzeit">Teilzeit</SelectItem>
                       <SelectItem value="Minijob">Minijob</SelectItem>
@@ -1176,30 +917,74 @@ const AdminCMS = () => {
                 </div>
               </div>
               <div>
-                <Label>Beschreibung</Label>
-                <Textarea value={jobDialog.job.description || ''} onChange={e => setJobDialog(p => ({ ...p, job: { ...p.job!, description: e.target.value } }))} className="bg-zinc-800 border-zinc-700 mt-1" rows={3} />
+                <Label className="text-zinc-400 text-xs">Beschreibung</Label>
+                <Textarea value={jobDialog.job.description || ''} onChange={e => setJobDialog(p => ({ ...p, job: { ...p.job!, description: e.target.value } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" rows={3} />
               </div>
               <div>
-                <Label>Gehaltsspanne</Label>
-                <Input value={jobDialog.job.salary_range || ''} onChange={e => setJobDialog(p => ({ ...p, job: { ...p.job!, salary_range: e.target.value } }))} className="bg-zinc-800 border-zinc-700 mt-1" placeholder="z.B. 2.500 – 3.200€/Monat" />
+                <Label className="text-zinc-400 text-xs">Gehaltsspanne</Label>
+                <Input value={jobDialog.job.salary_range || ''} onChange={e => setJobDialog(p => ({ ...p, job: { ...p.job!, salary_range: e.target.value } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" placeholder="z.B. 2.500 – 3.200€/Monat" />
               </div>
               <div>
-                <Label>Anforderungen (kommagetrennt)</Label>
-                <Textarea value={(jobDialog.job.requirements || []).join(', ')} onChange={e => setJobDialog(p => ({ ...p, job: { ...p.job!, requirements: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } }))} className="bg-zinc-800 border-zinc-700 mt-1" rows={2} placeholder="Führerschein Klasse D, Berufserfahrung" />
+                <Label className="text-zinc-400 text-xs">Anforderungen (kommagetrennt)</Label>
+                <Textarea value={(jobDialog.job.requirements || []).join(', ')} onChange={e => setJobDialog(p => ({ ...p, job: { ...p.job!, requirements: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" rows={2} placeholder="Führerschein Klasse D, Berufserfahrung" />
               </div>
               <div className="flex items-center gap-2">
-                <Switch checked={jobDialog.job.is_active ?? true} onCheckedChange={checked => setJobDialog(p => ({ ...p, job: { ...p.job!, is_active: checked } }))} />
-                <Label>Aktiv</Label>
+                <Switch checked={jobDialog.job.is_active ?? true} onCheckedChange={c => setJobDialog(p => ({ ...p, job: { ...p.job!, is_active: c } }))} />
+                <Label className="text-sm">Aktiv</Label>
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setJobDialog({ open: false, job: null, isNew: false })} className="border-zinc-700">Abbrechen</Button>
-            <Button onClick={handleSaveJob} disabled={isSaving} className="bg-emerald-600 hover:bg-emerald-700">{isSaving ? 'Speichern...' : 'Speichern'}</Button>
+            <Button variant="outline" onClick={() => setJobDialog({ open: false, job: null, isNew: false })} className="border-[#2a3040]">Abbrechen</Button>
+            <Button onClick={handleSaveJob} disabled={isSaving} className="bg-orange-600 hover:bg-orange-700">{isSaving ? 'Speichern...' : 'Speichern'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+
+      {/* Content Edit Dialog */}
+      <Dialog open={contentDialog.open} onOpenChange={open => !open && setContentDialog({ open: false, item: null })}>
+        <DialogContent className="bg-[#1a1f2a] border-[#2a3040] text-white max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Inhalt bearbeiten</DialogTitle>
+            {contentDialog.item && (
+              <code className="text-xs text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded inline-block mt-1">
+                {contentDialog.item.section_key}
+              </code>
+            )}
+          </DialogHeader>
+          {contentDialog.item && (
+            <div className="space-y-4 py-4">
+              <div>
+                <Label className="text-zinc-400 text-xs">Titel</Label>
+                <Input value={contentDialog.item.title || ''} onChange={e => setContentDialog(p => ({ ...p, item: { ...p.item, title: e.target.value } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" />
+              </div>
+              <div>
+                <Label className="text-zinc-400 text-xs">Untertitel</Label>
+                <Input value={contentDialog.item.subtitle || ''} onChange={e => setContentDialog(p => ({ ...p, item: { ...p.item, subtitle: e.target.value } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" />
+              </div>
+              <div>
+                <Label className="text-zinc-400 text-xs">Inhalt</Label>
+                <Textarea value={contentDialog.item.content || ''} onChange={e => setContentDialog(p => ({ ...p, item: { ...p.item, content: e.target.value } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" rows={5} />
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={contentDialog.item.is_active} onCheckedChange={c => setContentDialog(p => ({ ...p, item: { ...p.item, is_active: c } }))} />
+                <Label className="text-sm">Aktiv</Label>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setContentDialog({ open: false, item: null })} className="border-[#2a3040]">Abbrechen</Button>
+            <Button onClick={handleSaveContent} disabled={isSaving} className="bg-emerald-600 hover:bg-emerald-700">{isSaving ? 'Speichern...' : 'Speichern'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </AdminLayout>
   );
 };
 
