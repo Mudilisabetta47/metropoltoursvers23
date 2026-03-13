@@ -33,10 +33,10 @@ const OperationsDashboard = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Live clock
-  useState(() => {
+  useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(interval);
-  });
+  }, []);
 
   if (authLoading) {
     return (
