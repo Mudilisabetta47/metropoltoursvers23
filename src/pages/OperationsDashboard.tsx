@@ -21,6 +21,7 @@ import EmployeePanel from "@/components/operations/EmployeePanel";
 import ScannerPanel from "@/components/operations/ScannerPanel";
 import CommandCenter from "@/components/operations/CommandCenter";
 import LogsPanel from "@/components/operations/LogsPanel";
+import NotesPanel from "@/components/operations/NotesPanel";
 
 type ViewMode = 'center' | 'map' | 'incidents' | 'employees' | 'scanner' | 'commands' | 'logs';
 
