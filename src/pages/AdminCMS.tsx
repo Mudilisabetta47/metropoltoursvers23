@@ -373,6 +373,8 @@ const AdminCMS = () => {
   };
 
   // Stats
+  const activeWeekendTrips = weekendTrips.filter(w => w.is_active).length;
+
   const activeTours = tours.filter(t => t.is_active).length;
   const featuredTours = tours.filter(t => t.is_featured).length;
   const upcomingTours = tours.filter(t => new Date(t.departure_date) > new Date()).length;
