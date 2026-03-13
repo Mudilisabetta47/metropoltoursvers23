@@ -502,22 +502,32 @@ export const useCommandLogs = (limit = 50) => {
   }>>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchLogs = async () => {
-      const { data, error } = await supabase
-        .from('command_logs')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(limit);
-      
-      if (!error && data) {
-        setLogs(data as typeof logs);
-      }
-      setIsLoading(false);
-    };
-
-    fetchLogs();
+  const fetchLogs = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('command_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    
+    if (!error && data) {
+      setLogs(data as typeof logs);
+    }
+    setIsLoading(false);
   }, [limit]);
+
+  useEffect(() => {
+    fetchLogs();
+
+    const channel = supabase
+      .channel('command_logs_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'command_logs' },
+        () => { fetchLogs(); }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchLogs]);
 
   return { logs, isLoading };
 };
