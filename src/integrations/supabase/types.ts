@@ -2589,6 +2589,104 @@ export type Database = {
           },
         ]
       }
+      weekend_trips: {
+        Row: {
+          base_price: number
+          country: string
+          created_at: string
+          departure_city: string
+          departure_point: string | null
+          destination: string
+          distance: string | null
+          duration: string | null
+          full_description: string | null
+          gallery_images: string[] | null
+          hero_image_url: string | null
+          highlights: string[] | null
+          id: string
+          image_url: string | null
+          inclusions: string[] | null
+          is_active: boolean
+          is_featured: boolean
+          meta_description: string | null
+          meta_title: string | null
+          not_included: string[] | null
+          route_id: string | null
+          short_description: string | null
+          slug: string
+          sort_order: number
+          tags: string[] | null
+          updated_at: string
+          via_stops: Json | null
+        }
+        Insert: {
+          base_price?: number
+          country?: string
+          created_at?: string
+          departure_city?: string
+          departure_point?: string | null
+          destination: string
+          distance?: string | null
+          duration?: string | null
+          full_description?: string | null
+          gallery_images?: string[] | null
+          hero_image_url?: string | null
+          highlights?: string[] | null
+          id?: string
+          image_url?: string | null
+          inclusions?: string[] | null
+          is_active?: boolean
+          is_featured?: boolean
+          meta_description?: string | null
+          meta_title?: string | null
+          not_included?: string[] | null
+          route_id?: string | null
+          short_description?: string | null
+          slug: string
+          sort_order?: number
+          tags?: string[] | null
+          updated_at?: string
+          via_stops?: Json | null
+        }
+        Update: {
+          base_price?: number
+          country?: string
+          created_at?: string
+          departure_city?: string
+          departure_point?: string | null
+          destination?: string
+          distance?: string | null
+          duration?: string | null
+          full_description?: string | null
+          gallery_images?: string[] | null
+          hero_image_url?: string | null
+          highlights?: string[] | null
+          id?: string
+          image_url?: string | null
+          inclusions?: string[] | null
+          is_active?: boolean
+          is_featured?: boolean
+          meta_description?: string | null
+          meta_title?: string | null
+          not_included?: string[] | null
+          route_id?: string | null
+          short_description?: string | null
+          slug?: string
+          sort_order?: number
+          tags?: string[] | null
+          updated_at?: string
+          via_stops?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekend_trips_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       bookings_agent_view: {

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Palmtree, Briefcase, FileText, Plus, Pencil, Trash2, RefreshCw,
-  Star, Tag, UserPlus, Search, Filter, BarChart3, Clock, Settings
+  Star, Tag, UserPlus, Search, Filter, BarChart3, Clock, Settings, MapPin
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +55,36 @@ interface JobListing {
   sort_order: number;
 }
 
+interface WeekendTrip {
+  id: string;
+  destination: string;
+  slug: string;
+  country: string;
+  image_url: string | null;
+  hero_image_url: string | null;
+  gallery_images: string[];
+  short_description: string | null;
+  full_description: string | null;
+  highlights: string[];
+  inclusions: string[];
+  not_included: string[];
+  duration: string | null;
+  distance: string | null;
+  base_price: number;
+  route_id: string | null;
+  departure_city: string;
+  departure_point: string | null;
+  via_stops: any[];
+  is_active: boolean;
+  is_featured: boolean;
+  sort_order: number;
+  meta_title: string | null;
+  meta_description: string | null;
+  tags: string[];
+  created_at: string;
+  updated_at: string;
+}
+
 const AdminCMS = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -67,6 +97,11 @@ const AdminCMS = () => {
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [jobListings, setJobListings] = useState<JobListing[]>([]);
   const [jobsLoading, setJobsLoading] = useState(true);
+
+  const [weekendTrips, setWeekendTrips] = useState<WeekendTrip[]>([]);
+  const [weekendLoading, setWeekendLoading] = useState(true);
+  const [weekendSearch, setWeekendSearch] = useState("");
+  const [weekendDialog, setWeekendDialog] = useState<{ open: boolean; trip: Partial<WeekendTrip> | null; isNew: boolean }>({ open: false, trip: null, isNew: false });
 
   // Search & filter
   const [tourSearch, setTourSearch] = useState("");
@@ -87,6 +122,7 @@ const AdminCMS = () => {
   useEffect(() => {
     fetchCategories();
     fetchJobs();
+    fetchWeekendTrips();
   }, []);
 
   const fetchCategories = async () => {
@@ -102,6 +138,19 @@ const AdminCMS = () => {
     setJobListings(data || []);
     setJobsLoading(false);
   };
+
+  const fetchWeekendTrips = async () => {
+    setWeekendLoading(true);
+    const { data } = await (supabase as any).from('weekend_trips').select('*').order('sort_order', { ascending: true });
+    setWeekendTrips(data || []);
+    setWeekendLoading(false);
+  };
+
+  const filteredWeekendTrips = useMemo(() => {
+    if (!weekendSearch) return weekendTrips;
+    const q = weekendSearch.toLowerCase();
+    return weekendTrips.filter(w => w.destination.toLowerCase().includes(q) || w.slug.toLowerCase().includes(q));
+  }, [weekendTrips, weekendSearch]);
 
   // Filtered data
   const filteredTours = useMemo(() => {
@@ -166,6 +215,42 @@ const AdminCMS = () => {
     await (supabase as any).from('job_listings').update({ is_active: !current }).eq('id', id);
     fetchJobs();
     toast({ title: !current ? "Stelle aktiviert" : "Stelle deaktiviert" });
+  };
+
+  const toggleWeekendActive = async (id: string, current: boolean) => {
+    await (supabase as any).from('weekend_trips').update({ is_active: !current }).eq('id', id);
+    fetchWeekendTrips();
+    toast({ title: !current ? "Trip aktiviert" : "Trip deaktiviert" });
+  };
+
+  const toggleWeekendFeatured = async (id: string, current: boolean) => {
+    await (supabase as any).from('weekend_trips').update({ is_featured: !current }).eq('id', id);
+    fetchWeekendTrips();
+    toast({ title: !current ? "Als Featured markiert" : "Featured entfernt" });
+  };
+
+  const handleSaveWeekendTrip = async () => {
+    if (!weekendDialog.trip?.destination) return;
+    setIsSaving(true);
+    try {
+      if (weekendDialog.isNew) {
+        await (supabase as any).from('weekend_trips').insert(weekendDialog.trip);
+      } else {
+        const { id, created_at: _ca, updated_at: _ua, ...updates } = weekendDialog.trip as any;
+        await (supabase as any).from('weekend_trips').update(updates).eq('id', id);
+      }
+      toast({ title: weekendDialog.isNew ? "Wochenendtrip erstellt" : "Wochenendtrip aktualisiert" });
+      setWeekendDialog({ open: false, trip: null, isNew: false });
+      fetchWeekendTrips();
+    } catch { toast({ title: "Fehler", variant: "destructive" }); }
+    setIsSaving(false);
+  };
+
+  const handleDeleteWeekendTrip = async (id: string) => {
+    if (!confirm('Wochenendtrip wirklich löschen?')) return;
+    await (supabase as any).from('weekend_trips').delete().eq('id', id);
+    toast({ title: "Wochenendtrip gelöscht" });
+    fetchWeekendTrips();
   };
 
   // CRUD handlers
@@ -288,6 +373,8 @@ const AdminCMS = () => {
   };
 
   // Stats
+  const activeWeekendTrips = weekendTrips.filter(w => w.is_active).length;
+
   const activeTours = tours.filter(t => t.is_active).length;
   const featuredTours = tours.filter(t => t.is_featured).length;
   const upcomingTours = tours.filter(t => new Date(t.departure_date) > new Date()).length;
@@ -307,6 +394,7 @@ const AdminCMS = () => {
     { label: "Services", value: services.length, sub: `${activeServices} aktiv`, icon: Briefcase, color: "text-purple-400" },
     { label: "Kategorien", value: categories.length, sub: `${activeCategories} aktiv`, icon: Tag, color: "text-cyan-400" },
     { label: "Stellen", value: jobListings.length, sub: `${activeJobs} aktiv`, icon: UserPlus, color: "text-orange-400" },
+    { label: "Trips", value: weekendTrips.length, sub: `${activeWeekendTrips} aktiv`, icon: MapPin, color: "text-sky-400" },
     { label: "CMS Blöcke", value: content.length, sub: "Textinhalte", icon: FileText, color: "text-rose-400" },
     { label: "Auslastung", value: `${tours.length > 0 ? Math.round((activeTours / tours.length) * 100) : 0}%`, sub: "aktive Reisen", icon: BarChart3, color: "text-teal-400" },
   ];
@@ -314,7 +402,7 @@ const AdminCMS = () => {
   return (
     <AdminLayout title="Content Management" subtitle="Inhalte, Reisen, Services und Stellenanzeigen verwalten" actions={
       <div className="flex gap-2">
-        <Button variant="outline" size="sm" onClick={() => { fetchTours(); fetchServices(); fetchContent(); fetchCategories(); fetchJobs(); }}
+        <Button variant="outline" size="sm" onClick={() => { fetchTours(); fetchServices(); fetchContent(); fetchCategories(); fetchJobs(); fetchWeekendTrips(); }}
           className="border-[#2a3040] text-zinc-400 hover:text-white hover:bg-[#1e2430]">
           <RefreshCw className="w-3.5 h-3.5 mr-1.5" />Alles aktualisieren
         </Button>
@@ -344,6 +432,9 @@ const AdminCMS = () => {
           </TabsTrigger>
           <TabsTrigger value="services" className="data-[state=active]:bg-purple-600/20 data-[state=active]:text-purple-400 text-zinc-400 gap-1.5 text-xs">
             <Briefcase className="w-3.5 h-3.5" />Services
+          </TabsTrigger>
+          <TabsTrigger value="weekend" className="data-[state=active]:bg-sky-600/20 data-[state=active]:text-sky-400 text-zinc-400 gap-1.5 text-xs">
+            <MapPin className="w-3.5 h-3.5" />Wochenendtrips
           </TabsTrigger>
           <TabsTrigger value="categories" className="data-[state=active]:bg-cyan-600/20 data-[state=active]:text-cyan-400 text-zinc-400 gap-1.5 text-xs">
             <Tag className="w-3.5 h-3.5" />Sortiment
@@ -629,6 +720,81 @@ const AdminCMS = () => {
                           <Pencil className="w-3.5 h-3.5" />
                         </Button>
                         <Button variant="ghost" size="sm" onClick={() => handleDeleteJob(job.id)}
+                          className="text-red-400/60 hover:text-red-400 h-7 w-7 p-0">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+
+        {/* ─── WEEKEND TRIPS TAB ─── */}
+        <TabsContent value="weekend">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+              <Input value={weekendSearch} onChange={e => setWeekendSearch(e.target.value)}
+                placeholder="Ziel suchen..." className="pl-9 bg-[#1a1f2a] border-[#2a3040] text-sm h-9" />
+            </div>
+            <Button onClick={() => setWeekendDialog({ open: true, trip: { destination: '', slug: '', country: 'Europa', base_price: 0, departure_city: 'Hamburg', departure_point: 'ZOB', highlights: [], inclusions: ['Hin- und Rückfahrt im Komfortbus', 'Kostenloses WLAN an Bord', 'Steckdosen am Sitzplatz', 'Erfahrener Busfahrer', 'Stadtplan & Infomaterial'], not_included: ['Übernachtung', 'Verpflegung', 'Eintritte & Führungen'], tags: [], gallery_images: [], via_stops: [], is_active: true, is_featured: false, sort_order: weekendTrips.length }, isNew: true })}
+              className="bg-sky-600 hover:bg-sky-700 h-9 text-sm">
+              <Plus className="w-3.5 h-3.5 mr-1.5" />Neuer Wochenendtrip
+            </Button>
+          </div>
+
+          <Card className="bg-[#1a1f2a] border-[#2a3040]">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-[#2a3040] hover:bg-transparent">
+                  <TableHead className="text-zinc-500 text-xs w-12">#</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Ziel</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Slug</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Fahrzeit</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Distanz</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Preis</TableHead>
+                  <TableHead className="text-zinc-500 text-xs text-center">Aktiv</TableHead>
+                  <TableHead className="text-zinc-500 text-xs text-center">Featured</TableHead>
+                  <TableHead className="text-zinc-500 text-xs text-right">Aktionen</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {weekendLoading ? (
+                  <TableRow><TableCell colSpan={9} className="text-center py-12 text-zinc-500">Laden...</TableCell></TableRow>
+                ) : filteredWeekendTrips.length === 0 ? (
+                  <TableRow><TableCell colSpan={9} className="text-center py-12 text-zinc-500">Keine Wochenendtrips</TableCell></TableRow>
+                ) : filteredWeekendTrips.map(trip => (
+                  <TableRow key={trip.id} className="border-[#2a3040] hover:bg-[#1e2430]">
+                    <TableCell className="text-zinc-500 font-mono text-xs">{trip.sort_order}</TableCell>
+                    <TableCell className="font-medium text-white text-sm">
+                      <div className="flex items-center gap-2">
+                        {trip.image_url && <img src={trip.image_url} alt="" className="w-8 h-8 rounded object-cover" />}
+                        {trip.destination}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-zinc-500 font-mono text-xs">{trip.slug}</TableCell>
+                    <TableCell className="text-zinc-400 text-sm">{trip.duration || '—'}</TableCell>
+                    <TableCell className="text-zinc-400 text-sm">{trip.distance || '—'}</TableCell>
+                    <TableCell className="text-sky-400 font-medium text-sm">ab {trip.base_price.toLocaleString('de-DE')} €</TableCell>
+                    <TableCell className="text-center">
+                      <Switch checked={trip.is_active} onCheckedChange={() => toggleWeekendActive(trip.id, trip.is_active)}
+                        className="data-[state=checked]:bg-sky-600" />
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <button onClick={() => toggleWeekendFeatured(trip.id, trip.is_featured)} className="mx-auto block">
+                        <Star className={`w-4 h-4 transition-colors ${trip.is_featured ? 'text-amber-400 fill-amber-400' : 'text-zinc-600 hover:text-amber-400/50'}`} />
+                      </button>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-0.5">
+                        <Button variant="ghost" size="sm" onClick={() => setWeekendDialog({ open: true, trip: { ...trip }, isNew: false })}
+                          className="text-zinc-400 hover:text-white h-7 w-7 p-0">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteWeekendTrip(trip.id)}
                           className="text-red-400/60 hover:text-red-400 h-7 w-7 p-0">
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
@@ -940,6 +1106,105 @@ const AdminCMS = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setJobDialog({ open: false, job: null, isNew: false })} className="border-[#2a3040]">Abbrechen</Button>
             <Button onClick={handleSaveJob} disabled={isSaving} className="bg-orange-600 hover:bg-orange-700">{isSaving ? 'Speichern...' : 'Speichern'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Weekend Trip Dialog */}
+      <Dialog open={weekendDialog.open} onOpenChange={open => !open && setWeekendDialog({ open: false, trip: null, isNew: false })}>
+        <DialogContent className="bg-[#1a1f2a] border-[#2a3040] text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{weekendDialog.isNew ? 'Neuer Wochenendtrip' : 'Wochenendtrip bearbeiten'}</DialogTitle>
+            <DialogDescription className="text-zinc-500">Ziel, Beschreibung, Preis und Leistungen verwalten</DialogDescription>
+          </DialogHeader>
+          {weekendDialog.trip && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-zinc-400 text-xs">Ziel *</Label>
+                  <Input value={weekendDialog.trip.destination || ''} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, destination: e.target.value, slug: p.trip?.slug || e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[äöü]/g, c => ({'ä':'ae','ö':'oe','ü':'ue'}[c] || c)) } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" placeholder="z.B. Kopenhagen" />
+                </div>
+                <div>
+                  <Label className="text-zinc-400 text-xs">Slug</Label>
+                  <Input value={weekendDialog.trip.slug || ''} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, slug: e.target.value } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1 font-mono" />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label className="text-zinc-400 text-xs">Land</Label>
+                  <Input value={weekendDialog.trip.country || 'Europa'} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, country: e.target.value } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" />
+                </div>
+                <div>
+                  <Label className="text-zinc-400 text-xs">Fahrzeit</Label>
+                  <Input value={weekendDialog.trip.duration || ''} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, duration: e.target.value } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" placeholder="z.B. 7,5 Std." />
+                </div>
+                <div>
+                  <Label className="text-zinc-400 text-xs">Distanz</Label>
+                  <Input value={weekendDialog.trip.distance || ''} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, distance: e.target.value } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" placeholder="z.B. 586 km" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-zinc-400 text-xs">Basispreis (€) *</Label>
+                  <Input type="number" value={weekendDialog.trip.base_price || 0} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, base_price: parseFloat(e.target.value) } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" />
+                </div>
+                <div>
+                  <Label className="text-zinc-400 text-xs">Reihenfolge</Label>
+                  <Input type="number" value={weekendDialog.trip.sort_order || 0} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, sort_order: parseInt(e.target.value) } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" />
+                </div>
+              </div>
+              <div>
+                <Label className="text-zinc-400 text-xs">Bild-URL</Label>
+                <Input value={weekendDialog.trip.image_url || ''} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, image_url: e.target.value } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" placeholder="https://images.unsplash.com/..." />
+              </div>
+              <div>
+                <Label className="text-zinc-400 text-xs">Kurzbeschreibung</Label>
+                <Textarea value={weekendDialog.trip.short_description || ''} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, short_description: e.target.value } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" rows={2} />
+              </div>
+              <div>
+                <Label className="text-zinc-400 text-xs">Ausführliche Beschreibung</Label>
+                <Textarea value={weekendDialog.trip.full_description || ''} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, full_description: e.target.value } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" rows={4} />
+              </div>
+              <div>
+                <Label className="text-zinc-400 text-xs">Highlights (kommagetrennt)</Label>
+                <Input value={(weekendDialog.trip.highlights || []).join(', ')} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, highlights: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" placeholder="Nyhavn, Tivoli, Meerjungfrau" />
+              </div>
+              <div>
+                <Label className="text-zinc-400 text-xs">Inklusive Leistungen (kommagetrennt)</Label>
+                <Textarea value={(weekendDialog.trip.inclusions || []).join(', ')} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, inclusions: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" rows={2} />
+              </div>
+              <div>
+                <Label className="text-zinc-400 text-xs">Nicht enthalten (kommagetrennt)</Label>
+                <Input value={(weekendDialog.trip.not_included || []).join(', ')} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, not_included: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" placeholder="Übernachtung, Verpflegung" />
+              </div>
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <Switch checked={weekendDialog.trip.is_active ?? true} onCheckedChange={c => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, is_active: c } }))} />
+                  <Label className="text-sm">Aktiv</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch checked={weekendDialog.trip.is_featured ?? false} onCheckedChange={c => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, is_featured: c } }))} />
+                  <Label className="text-sm">Featured</Label>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setWeekendDialog({ open: false, trip: null, isNew: false })} className="border-[#2a3040]">Abbrechen</Button>
+            <Button onClick={handleSaveWeekendTrip} disabled={isSaving} className="bg-sky-600 hover:bg-sky-700">{isSaving ? 'Speichern...' : 'Speichern'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
