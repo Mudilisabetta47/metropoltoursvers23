@@ -217,6 +217,42 @@ const AdminCMS = () => {
     toast({ title: !current ? "Stelle aktiviert" : "Stelle deaktiviert" });
   };
 
+  const toggleWeekendActive = async (id: string, current: boolean) => {
+    await (supabase as any).from('weekend_trips').update({ is_active: !current }).eq('id', id);
+    fetchWeekendTrips();
+    toast({ title: !current ? "Trip aktiviert" : "Trip deaktiviert" });
+  };
+
+  const toggleWeekendFeatured = async (id: string, current: boolean) => {
+    await (supabase as any).from('weekend_trips').update({ is_featured: !current }).eq('id', id);
+    fetchWeekendTrips();
+    toast({ title: !current ? "Als Featured markiert" : "Featured entfernt" });
+  };
+
+  const handleSaveWeekendTrip = async () => {
+    if (!weekendDialog.trip?.destination) return;
+    setIsSaving(true);
+    try {
+      if (weekendDialog.isNew) {
+        await (supabase as any).from('weekend_trips').insert(weekendDialog.trip);
+      } else {
+        const { id, created_at, updated_at, ...updates } = weekendDialog.trip as any;
+        await (supabase as any).from('weekend_trips').update(updates).eq('id', id);
+      }
+      toast({ title: weekendDialog.isNew ? "Wochenendtrip erstellt" : "Wochenendtrip aktualisiert" });
+      setWeekendDialog({ open: false, trip: null, isNew: false });
+      fetchWeekendTrips();
+    } catch { toast({ title: "Fehler", variant: "destructive" }); }
+    setIsSaving(false);
+  };
+
+  const handleDeleteWeekendTrip = async (id: string) => {
+    if (!confirm('Wochenendtrip wirklich löschen?')) return;
+    await (supabase as any).from('weekend_trips').delete().eq('id', id);
+    toast({ title: "Wochenendtrip gelöscht" });
+    fetchWeekendTrips();
+  };
+
   // CRUD handlers
   const handleSaveCategory = async () => {
     if (!catDialog.cat?.name) return;
