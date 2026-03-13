@@ -402,7 +402,7 @@ const AdminCMS = () => {
   return (
     <AdminLayout title="Content Management" subtitle="Inhalte, Reisen, Services und Stellenanzeigen verwalten" actions={
       <div className="flex gap-2">
-        <Button variant="outline" size="sm" onClick={() => { fetchTours(); fetchServices(); fetchContent(); fetchCategories(); fetchJobs(); }}
+        <Button variant="outline" size="sm" onClick={() => { fetchTours(); fetchServices(); fetchContent(); fetchCategories(); fetchJobs(); fetchWeekendTrips(); }}
           className="border-[#2a3040] text-zinc-400 hover:text-white hover:bg-[#1e2430]">
           <RefreshCw className="w-3.5 h-3.5 mr-1.5" />Alles aktualisieren
         </Button>
