@@ -122,6 +122,7 @@ const AdminCMS = () => {
   useEffect(() => {
     fetchCategories();
     fetchJobs();
+    fetchWeekendTrips();
   }, []);
 
   const fetchCategories = async () => {
