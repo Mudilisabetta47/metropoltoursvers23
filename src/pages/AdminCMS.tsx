@@ -1110,6 +1110,105 @@ const AdminCMS = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Weekend Trip Dialog */}
+      <Dialog open={weekendDialog.open} onOpenChange={open => !open && setWeekendDialog({ open: false, trip: null, isNew: false })}>
+        <DialogContent className="bg-[#1a1f2a] border-[#2a3040] text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{weekendDialog.isNew ? 'Neuer Wochenendtrip' : 'Wochenendtrip bearbeiten'}</DialogTitle>
+            <DialogDescription className="text-zinc-500">Ziel, Beschreibung, Preis und Leistungen verwalten</DialogDescription>
+          </DialogHeader>
+          {weekendDialog.trip && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-zinc-400 text-xs">Ziel *</Label>
+                  <Input value={weekendDialog.trip.destination || ''} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, destination: e.target.value, slug: p.trip?.slug || e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[äöü]/g, c => ({'ä':'ae','ö':'oe','ü':'ue'}[c] || c)) } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" placeholder="z.B. Kopenhagen" />
+                </div>
+                <div>
+                  <Label className="text-zinc-400 text-xs">Slug</Label>
+                  <Input value={weekendDialog.trip.slug || ''} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, slug: e.target.value } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1 font-mono" />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label className="text-zinc-400 text-xs">Land</Label>
+                  <Input value={weekendDialog.trip.country || 'Europa'} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, country: e.target.value } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" />
+                </div>
+                <div>
+                  <Label className="text-zinc-400 text-xs">Fahrzeit</Label>
+                  <Input value={weekendDialog.trip.duration || ''} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, duration: e.target.value } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" placeholder="z.B. 7,5 Std." />
+                </div>
+                <div>
+                  <Label className="text-zinc-400 text-xs">Distanz</Label>
+                  <Input value={weekendDialog.trip.distance || ''} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, distance: e.target.value } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" placeholder="z.B. 586 km" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-zinc-400 text-xs">Basispreis (€) *</Label>
+                  <Input type="number" value={weekendDialog.trip.base_price || 0} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, base_price: parseFloat(e.target.value) } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" />
+                </div>
+                <div>
+                  <Label className="text-zinc-400 text-xs">Reihenfolge</Label>
+                  <Input type="number" value={weekendDialog.trip.sort_order || 0} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, sort_order: parseInt(e.target.value) } }))}
+                    className="bg-[#151920] border-[#2a3040] mt-1" />
+                </div>
+              </div>
+              <div>
+                <Label className="text-zinc-400 text-xs">Bild-URL</Label>
+                <Input value={weekendDialog.trip.image_url || ''} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, image_url: e.target.value } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" placeholder="https://images.unsplash.com/..." />
+              </div>
+              <div>
+                <Label className="text-zinc-400 text-xs">Kurzbeschreibung</Label>
+                <Textarea value={weekendDialog.trip.short_description || ''} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, short_description: e.target.value } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" rows={2} />
+              </div>
+              <div>
+                <Label className="text-zinc-400 text-xs">Ausführliche Beschreibung</Label>
+                <Textarea value={weekendDialog.trip.full_description || ''} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, full_description: e.target.value } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" rows={4} />
+              </div>
+              <div>
+                <Label className="text-zinc-400 text-xs">Highlights (kommagetrennt)</Label>
+                <Input value={(weekendDialog.trip.highlights || []).join(', ')} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, highlights: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" placeholder="Nyhavn, Tivoli, Meerjungfrau" />
+              </div>
+              <div>
+                <Label className="text-zinc-400 text-xs">Inklusive Leistungen (kommagetrennt)</Label>
+                <Textarea value={(weekendDialog.trip.inclusions || []).join(', ')} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, inclusions: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" rows={2} />
+              </div>
+              <div>
+                <Label className="text-zinc-400 text-xs">Nicht enthalten (kommagetrennt)</Label>
+                <Input value={(weekendDialog.trip.not_included || []).join(', ')} onChange={e => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, not_included: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } }))}
+                  className="bg-[#151920] border-[#2a3040] mt-1" placeholder="Übernachtung, Verpflegung" />
+              </div>
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <Switch checked={weekendDialog.trip.is_active ?? true} onCheckedChange={c => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, is_active: c } }))} />
+                  <Label className="text-sm">Aktiv</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch checked={weekendDialog.trip.is_featured ?? false} onCheckedChange={c => setWeekendDialog(p => ({ ...p, trip: { ...p.trip!, is_featured: c } }))} />
+                  <Label className="text-sm">Featured</Label>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setWeekendDialog({ open: false, trip: null, isNew: false })} className="border-[#2a3040]">Abbrechen</Button>
+            <Button onClick={handleSaveWeekendTrip} disabled={isSaving} className="bg-sky-600 hover:bg-sky-700">{isSaving ? 'Speichern...' : 'Speichern'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Content Edit Dialog */}
       <Dialog open={contentDialog.open} onOpenChange={open => !open && setContentDialog({ open: false, item: null })}>
         <DialogContent className="bg-[#1a1f2a] border-[#2a3040] text-white max-w-lg">
