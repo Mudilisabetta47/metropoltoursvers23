@@ -46,6 +46,7 @@ const TourBasicsTab = ({ tour, onChange }: TourBasicsTabProps) => {
   const { toast } = useToast();
   const heroInputRef = useRef<HTMLInputElement>(null);
   const previewInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const uploadImage = async (file: File, type: 'hero' | 'preview') => {
     setUploading(type);
