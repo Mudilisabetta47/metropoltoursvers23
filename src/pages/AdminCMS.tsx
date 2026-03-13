@@ -55,6 +55,36 @@ interface JobListing {
   sort_order: number;
 }
 
+interface WeekendTrip {
+  id: string;
+  destination: string;
+  slug: string;
+  country: string;
+  image_url: string | null;
+  hero_image_url: string | null;
+  gallery_images: string[];
+  short_description: string | null;
+  full_description: string | null;
+  highlights: string[];
+  inclusions: string[];
+  not_included: string[];
+  duration: string | null;
+  distance: string | null;
+  base_price: number;
+  route_id: string | null;
+  departure_city: string;
+  departure_point: string | null;
+  via_stops: any[];
+  is_active: boolean;
+  is_featured: boolean;
+  sort_order: number;
+  meta_title: string | null;
+  meta_description: string | null;
+  tags: string[];
+  created_at: string;
+  updated_at: string;
+}
+
 const AdminCMS = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
