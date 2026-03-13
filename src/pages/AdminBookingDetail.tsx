@@ -406,6 +406,7 @@ const AdminBookingDetail = () => {
             { value: "payments", icon: CreditCard, label: "Zahlungen" },
             { value: "documents", icon: FileCheck, label: "Dokumente" },
             { value: "communication", icon: MessageSquare, label: "Kommunikation" },
+            { value: "insurance", icon: Shield, label: "Versicherung" },
             { value: "checkin", icon: CheckSquare, label: "Check-in" },
             { value: "automation", icon: Mail, label: "Automationen" },
             { value: "audit", icon: History, label: "Änderungen" },
