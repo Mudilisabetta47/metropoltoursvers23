@@ -2,9 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Palmtree, Briefcase, FileText, Plus, Pencil, Trash2, RefreshCw,
-  Globe, Star, Tag, UserPlus, Search, Eye, EyeOff, TrendingUp,
-  ExternalLink, Copy, ToggleLeft, Filter, BarChart3, Clock,
-  CheckCircle2, XCircle, ArrowUpDown, Settings
+  Star, Tag, UserPlus, Search, Filter, BarChart3, Clock, Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
