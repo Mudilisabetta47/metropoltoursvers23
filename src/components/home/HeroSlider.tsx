@@ -49,9 +49,16 @@ const HeroSlider = () => {
   const totalTravelers = adults + children;
   const showContactHint = totalTravelers > 20;
 
-  const getImageSrc = (imageUrl: string | null, destination: string) => {
-    if (imageUrl && imageMap[imageUrl]) {
-      return imageMap[imageUrl];
+  const getImageSrc = (imageUrl: string | null, destination: string, heroUrl?: string | null) => {
+    // Prioritize hero_image_url, then image_url
+    const url = heroUrl || imageUrl;
+    // If it's a full URL (from admin upload), use directly
+    if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+      return url;
+    }
+    // Check local image map
+    if (url && imageMap[url]) {
+      return imageMap[url];
     }
     const fallbackKey = `/tour-${destination.toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue')}.jpg`;
     return imageMap[fallbackKey] || tourCroatia;
