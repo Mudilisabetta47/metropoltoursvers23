@@ -485,6 +485,87 @@ export type Database = {
           },
         ]
       }
+      expenses: {
+        Row: {
+          amount: number
+          bus_id: string | null
+          category: string
+          created_at: string
+          description: string
+          expense_date: string
+          id: string
+          net_amount: number
+          notes: string | null
+          payment_method: string | null
+          receipt_filename: string | null
+          receipt_url: string | null
+          recorded_by: string | null
+          status: string
+          tax_amount: number
+          tax_rate: number
+          trip_id: string | null
+          updated_at: string
+          vendor: string | null
+        }
+        Insert: {
+          amount: number
+          bus_id?: string | null
+          category?: string
+          created_at?: string
+          description: string
+          expense_date?: string
+          id?: string
+          net_amount?: number
+          notes?: string | null
+          payment_method?: string | null
+          receipt_filename?: string | null
+          receipt_url?: string | null
+          recorded_by?: string | null
+          status?: string
+          tax_amount?: number
+          tax_rate?: number
+          trip_id?: string | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Update: {
+          amount?: number
+          bus_id?: string | null
+          category?: string
+          created_at?: string
+          description?: string
+          expense_date?: string
+          id?: string
+          net_amount?: number
+          notes?: string | null
+          payment_method?: string | null
+          receipt_filename?: string | null
+          receipt_url?: string | null
+          recorded_by?: string | null
+          status?: string
+          tax_amount?: number
+          tax_rate?: number
+          trip_id?: string | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incidents: {
         Row: {
           assigned_to: string | null
