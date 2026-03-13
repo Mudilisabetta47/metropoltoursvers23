@@ -416,6 +416,76 @@ const TourBasicsTab = ({ tour, onChange }: TourBasicsTabProps) => {
                 placeholder="https://..." className="bg-zinc-800/60 border-zinc-600/50 text-white placeholder:text-zinc-500 text-xs h-8" />
             </div>
           </div>
+
+          {/* Gallery Images */}
+          <div className="space-y-3 pt-4 border-t border-zinc-800/50">
+            <div className="flex items-center justify-between">
+              <Label className="text-zinc-300 text-sm font-medium">Galerie-Bilder</Label>
+              <span className="text-xs text-zinc-500">{(tour?.gallery_images || []).length} Bilder</span>
+            </div>
+            <input type="file" ref={galleryInputRef} accept="image/*" multiple className="hidden"
+              onChange={async (e) => {
+                const files = Array.from(e.target.files || []);
+                if (files.length === 0) return;
+                setUploading('gallery');
+                try {
+                  const currentGallery = tour?.gallery_images || [];
+                  const newUrls: string[] = [];
+                  for (const file of files) {
+                    const ext = file.name.split('.').pop() || 'jpg';
+                    const fileName = `gallery-${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
+                    const path = `tours/${tour?.destination || 'new'}/${fileName}`;
+                    const { error: uploadError } = await supabase.storage
+                      .from('tour-images')
+                      .upload(path, file, { contentType: file.type, cacheControl: '3600' });
+                    if (uploadError) throw uploadError;
+                    const { data: urlData } = supabase.storage.from('tour-images').getPublicUrl(path);
+                    newUrls.push(urlData.publicUrl);
+                  }
+                  onChange('gallery_images', [...currentGallery, ...newUrls]);
+                  toast({ title: `${newUrls.length} Bild(er) hochgeladen!` });
+                } catch (error) {
+                  console.error('Gallery upload error:', error);
+                  toast({ title: 'Upload fehlgeschlagen', variant: 'destructive' });
+                } finally {
+                  setUploading(null);
+                  if (galleryInputRef.current) galleryInputRef.current.value = '';
+                }
+              }} />
+            
+            <div className="grid grid-cols-4 gap-3">
+              {(tour?.gallery_images || []).map((url, index) => (
+                <div key={index} className="relative group aspect-video bg-zinc-800 rounded-lg overflow-hidden border border-zinc-700/50">
+                  <img src={url} alt={`Galerie ${index + 1}`} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Button size="sm" variant="destructive" className="h-7 w-7 p-0"
+                      onClick={() => {
+                        const current = tour?.gallery_images || [];
+                        onChange('gallery_images', current.filter((_, i) => i !== index));
+                      }}>
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Add button */}
+              <button
+                onClick={() => galleryInputRef.current?.click()}
+                disabled={uploading === 'gallery'}
+                className="aspect-video bg-zinc-800/60 border-2 border-dashed border-zinc-600/50 rounded-lg flex flex-col items-center justify-center gap-1 hover:border-blue-500/50 hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                {uploading === 'gallery' ? (
+                  <Loader2 className="w-5 h-5 text-zinc-400 animate-spin" />
+                ) : (
+                  <>
+                    <Plus className="w-5 h-5 text-zinc-500" />
+                    <span className="text-[10px] text-zinc-500">Bilder hinzufügen</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
