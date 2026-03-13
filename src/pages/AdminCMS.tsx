@@ -146,6 +146,11 @@ const AdminCMS = () => {
     setWeekendLoading(false);
   };
 
+  const filteredWeekendTrips = useMemo(() => {
+    if (!weekendSearch) return weekendTrips;
+    const q = weekendSearch.toLowerCase();
+    return weekendTrips.filter(w => w.destination.toLowerCase().includes(q) || w.slug.toLowerCase().includes(q));
+  }, [weekendTrips, weekendSearch]);
 
   // Filtered data
   const filteredTours = useMemo(() => {
