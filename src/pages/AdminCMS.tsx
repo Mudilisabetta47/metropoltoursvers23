@@ -236,7 +236,7 @@ const AdminCMS = () => {
       if (weekendDialog.isNew) {
         await (supabase as any).from('weekend_trips').insert(weekendDialog.trip);
       } else {
-        const { id, created_at, updated_at, ...updates } = weekendDialog.trip as any;
+        const { id, created_at: _ca, updated_at: _ua, ...updates } = weekendDialog.trip as any;
         await (supabase as any).from('weekend_trips').update(updates).eq('id', id);
       }
       toast({ title: weekendDialog.isNew ? "Wochenendtrip erstellt" : "Wochenendtrip aktualisiert" });
