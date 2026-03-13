@@ -394,6 +394,7 @@ const AdminCMS = () => {
     { label: "Services", value: services.length, sub: `${activeServices} aktiv`, icon: Briefcase, color: "text-purple-400" },
     { label: "Kategorien", value: categories.length, sub: `${activeCategories} aktiv`, icon: Tag, color: "text-cyan-400" },
     { label: "Stellen", value: jobListings.length, sub: `${activeJobs} aktiv`, icon: UserPlus, color: "text-orange-400" },
+    { label: "Trips", value: weekendTrips.length, sub: `${activeWeekendTrips} aktiv`, icon: MapPin, color: "text-sky-400" },
     { label: "CMS Blöcke", value: content.length, sub: "Textinhalte", icon: FileText, color: "text-rose-400" },
     { label: "Auslastung", value: `${tours.length > 0 ? Math.round((activeTours / tours.length) * 100) : 0}%`, sub: "aktive Reisen", icon: BarChart3, color: "text-teal-400" },
   ];
