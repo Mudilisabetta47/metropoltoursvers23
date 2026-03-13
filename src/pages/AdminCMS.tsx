@@ -732,6 +732,81 @@ const AdminCMS = () => {
           </Card>
         </TabsContent>
 
+        {/* ─── WEEKEND TRIPS TAB ─── */}
+        <TabsContent value="weekend">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+              <Input value={weekendSearch} onChange={e => setWeekendSearch(e.target.value)}
+                placeholder="Ziel suchen..." className="pl-9 bg-[#1a1f2a] border-[#2a3040] text-sm h-9" />
+            </div>
+            <Button onClick={() => setWeekendDialog({ open: true, trip: { destination: '', slug: '', country: 'Europa', base_price: 0, departure_city: 'Hamburg', departure_point: 'ZOB', highlights: [], inclusions: ['Hin- und Rückfahrt im Komfortbus', 'Kostenloses WLAN an Bord', 'Steckdosen am Sitzplatz', 'Erfahrener Busfahrer', 'Stadtplan & Infomaterial'], not_included: ['Übernachtung', 'Verpflegung', 'Eintritte & Führungen'], tags: [], gallery_images: [], via_stops: [], is_active: true, is_featured: false, sort_order: weekendTrips.length }, isNew: true })}
+              className="bg-sky-600 hover:bg-sky-700 h-9 text-sm">
+              <Plus className="w-3.5 h-3.5 mr-1.5" />Neuer Wochenendtrip
+            </Button>
+          </div>
+
+          <Card className="bg-[#1a1f2a] border-[#2a3040]">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-[#2a3040] hover:bg-transparent">
+                  <TableHead className="text-zinc-500 text-xs w-12">#</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Ziel</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Slug</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Fahrzeit</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Distanz</TableHead>
+                  <TableHead className="text-zinc-500 text-xs">Preis</TableHead>
+                  <TableHead className="text-zinc-500 text-xs text-center">Aktiv</TableHead>
+                  <TableHead className="text-zinc-500 text-xs text-center">Featured</TableHead>
+                  <TableHead className="text-zinc-500 text-xs text-right">Aktionen</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {weekendLoading ? (
+                  <TableRow><TableCell colSpan={9} className="text-center py-12 text-zinc-500">Laden...</TableCell></TableRow>
+                ) : filteredWeekendTrips.length === 0 ? (
+                  <TableRow><TableCell colSpan={9} className="text-center py-12 text-zinc-500">Keine Wochenendtrips</TableCell></TableRow>
+                ) : filteredWeekendTrips.map(trip => (
+                  <TableRow key={trip.id} className="border-[#2a3040] hover:bg-[#1e2430]">
+                    <TableCell className="text-zinc-500 font-mono text-xs">{trip.sort_order}</TableCell>
+                    <TableCell className="font-medium text-white text-sm">
+                      <div className="flex items-center gap-2">
+                        {trip.image_url && <img src={trip.image_url} alt="" className="w-8 h-8 rounded object-cover" />}
+                        {trip.destination}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-zinc-500 font-mono text-xs">{trip.slug}</TableCell>
+                    <TableCell className="text-zinc-400 text-sm">{trip.duration || '—'}</TableCell>
+                    <TableCell className="text-zinc-400 text-sm">{trip.distance || '—'}</TableCell>
+                    <TableCell className="text-sky-400 font-medium text-sm">ab {trip.base_price.toLocaleString('de-DE')} €</TableCell>
+                    <TableCell className="text-center">
+                      <Switch checked={trip.is_active} onCheckedChange={() => toggleWeekendActive(trip.id, trip.is_active)}
+                        className="data-[state=checked]:bg-sky-600" />
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <button onClick={() => toggleWeekendFeatured(trip.id, trip.is_featured)} className="mx-auto block">
+                        <Star className={`w-4 h-4 transition-colors ${trip.is_featured ? 'text-amber-400 fill-amber-400' : 'text-zinc-600 hover:text-amber-400/50'}`} />
+                      </button>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-0.5">
+                        <Button variant="ghost" size="sm" onClick={() => setWeekendDialog({ open: true, trip: { ...trip }, isNew: false })}
+                          className="text-zinc-400 hover:text-white h-7 w-7 p-0">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteWeekendTrip(trip.id)}
+                          className="text-red-400/60 hover:text-red-400 h-7 w-7 p-0">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+
         {/* ─── CMS CONTENT TAB ─── */}
         <TabsContent value="content">
           <div className="flex items-center gap-3 mb-4">
