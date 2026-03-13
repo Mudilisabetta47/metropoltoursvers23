@@ -647,6 +647,33 @@ export type Database = {
         }
         Relationships: []
       }
+      ops_notes: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_pinned: boolean
+          priority: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          priority?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          priority?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       package_tour_inquiries: {
         Row: {
           created_at: string
