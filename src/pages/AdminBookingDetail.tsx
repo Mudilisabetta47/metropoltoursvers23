@@ -804,26 +804,7 @@ const AdminBookingDetail = () => {
                 </div>
               </SectionCard>
 
-              <SectionCard title="Versicherung">
-                {!insurance ? (
-                  <div className="text-center py-3">
-                    <p className="text-zinc-500 text-xs mb-2">Keine Versicherung hinterlegt</p>
-                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-7 text-xs" onClick={() => saveInsurance({ is_active: true, policy_status: "requested" })} disabled={!!processing}><Plus className="w-3 h-3 mr-1" /> Versicherung anlegen</Button>
-                  </div>
-                ) : (
-                  <div className="space-y-0">
-                    <Row label="Anbieter">{insurance.provider || "–"}</Row>
-                    <Row label="Produkt">{insurance.product || "–"}</Row>
-                    <Row label="Policennr.">{insurance.policy_number || "–"}</Row>
-                    <Row label="Preis">{insurance.price ? fmt(insurance.price) : "–"}</Row>
-                    <Row label="Status">
-                      <Badge className={cn("text-[10px] border", insurance.policy_status === "active" ? "bg-emerald-500/20 text-emerald-300 border-emerald-600/40" : insurance.policy_status === "requested" ? "bg-amber-500/20 text-amber-300 border-amber-600/40" : "bg-zinc-700/50 text-zinc-400 border-zinc-600/40")}>
-                        {insurance.policy_status === "active" ? "Aktiv" : insurance.policy_status === "requested" ? "Angefragt" : insurance.policy_status}
-                      </Badge>
-                    </Row>
-                  </div>
-                )}
-              </SectionCard>
+              {/* Versicherung wurde in eigenen Tab verschoben */}
             </div>
           </div>
         </TabsContent>
