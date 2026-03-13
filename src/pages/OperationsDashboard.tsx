@@ -242,9 +242,9 @@ interface MissionControlViewProps {
 
 const MissionControlView = ({ rightExpanded, onToggleRight }: MissionControlViewProps) => {
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col overflow-auto">
       {/* KPI Strip */}
-      <div className="p-3 pb-0">
+      <div className="p-3 pb-0 flex-shrink-0">
         <KPIPanel />
       </div>
 
@@ -253,12 +253,12 @@ const MissionControlView = ({ rightExpanded, onToggleRight }: MissionControlView
         {/* Left Column: Map + Bottom Panels */}
         <div className="flex-1 flex flex-col gap-3 min-w-0">
           {/* Map */}
-          <div className="flex-1 min-h-[280px] rounded-xl overflow-hidden border border-[#1a2436]">
+          <div className="flex-1 min-h-[250px] rounded-xl overflow-hidden border border-[#1a2436]">
             <LiveMap />
           </div>
 
           {/* Bottom Panel Row */}
-          <div className="grid grid-cols-2 gap-3" style={{ height: '320px' }}>
+          <div className="grid grid-cols-2 gap-3 flex-shrink-0" style={{ minHeight: '280px' }}>
             <div className="overflow-auto rounded-xl">
               <ScannerPanel />
             </div>
@@ -268,13 +268,13 @@ const MissionControlView = ({ rightExpanded, onToggleRight }: MissionControlView
           </div>
         </div>
 
-        {/* Right Column: Incidents + Logs */}
+        {/* Right Column: Incidents + Employee + Logs */}
         <div className={cn(
-          "flex flex-col gap-3 transition-all duration-300",
-          rightExpanded ? "w-96" : "w-72"
+          "flex flex-col gap-3 transition-all duration-300 flex-shrink-0",
+          rightExpanded ? "w-96" : "w-80"
         )}>
           {/* Toggle */}
-          <div className="flex justify-end">
+          <div className="flex justify-end flex-shrink-0">
             <button
               onClick={onToggleRight}
               className="p-1 rounded text-zinc-600 hover:text-zinc-400 hover:bg-[#111a28] transition-colors"
@@ -285,20 +285,20 @@ const MissionControlView = ({ rightExpanded, onToggleRight }: MissionControlView
           </div>
 
           {/* Incidents */}
-          <div className="flex-1 min-h-0 overflow-hidden rounded-xl border border-[#1a2436]">
+          <div className="flex-1 min-h-[200px] overflow-hidden rounded-xl border border-[#1a2436]">
             <IncidentPanel />
           </div>
 
+          {/* Employee Strip */}
+          <div className="flex-shrink-0 rounded-xl">
+            <EmployeePanel />
+          </div>
+
           {/* Logs */}
-          <div className="h-[280px] overflow-hidden rounded-xl">
+          <div className="h-[240px] overflow-hidden rounded-xl flex-shrink-0">
             <LogsPanel />
           </div>
         </div>
-      </div>
-
-      {/* Employee Strip */}
-      <div className="p-3 pt-0">
-        <EmployeePanel />
       </div>
     </div>
   );
