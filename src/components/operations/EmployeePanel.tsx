@@ -5,8 +5,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { formatDistanceToNow } from "date-fns";
-import { de } from "date-fns/locale";
 
 const EmployeePanel = () => {
   const { shifts, isLoading } = useEmployeeShifts();
