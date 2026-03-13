@@ -4,7 +4,7 @@ import { format, differenceInDays } from "date-fns";
 import { de } from "date-fns/locale";
 import {
   Download, Loader2, AlertTriangle, Plus, FileText, Receipt,
-  Upload, Trash2, Eye, Save, CreditCard, TrendingUp, Fuel, ShoppingBag
+  Trash2, Eye, Save, CreditCard, TrendingUp, Fuel, ShoppingBag
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
