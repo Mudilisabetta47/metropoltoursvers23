@@ -60,90 +60,79 @@ const EmployeePanel = () => {
   }, {} as Record<string, EmployeeShift[]>);
 
   return (
-    <div className="p-4 bg-zinc-900/50 rounded-xl border border-zinc-800">
+    <div className="p-3 bg-[#111820] rounded-lg border border-[#1e2836]">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-primary" />
-          <h2 className="text-lg font-bold text-white">Mitarbeiter Operations</h2>
+          <Users className="w-4 h-4 text-violet-400" />
+          <h2 className="text-sm font-semibold text-zinc-300">Personal heute</h2>
         </div>
-        <div className="flex items-center gap-2 text-xs">
-          <Badge className="bg-emerald-500/20 text-emerald-400">
+        <div className="flex items-center gap-1.5 text-[10px]">
+          <Badge className="bg-emerald-500/20 text-emerald-400 text-[10px] px-1.5 py-0">
             {activeCount} Aktiv
           </Badge>
-          <Badge className="bg-amber-500/20 text-amber-400">
+          <Badge className="bg-amber-500/20 text-amber-400 text-[10px] px-1.5 py-0">
             {breakCount} Pause
           </Badge>
-          <Badge className="bg-blue-500/20 text-blue-400">
+          <Badge className="bg-blue-500/20 text-blue-400 text-[10px] px-1.5 py-0">
             {scheduledCount} Geplant
           </Badge>
         </div>
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+        <div className="flex items-center justify-center py-4">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-500"></div>
         </div>
       ) : shifts.length === 0 ? (
-        <div className="text-center py-8 text-zinc-500">
-          <Users className="w-12 h-12 mx-auto mb-3 text-zinc-600" />
-          <p className="text-sm">Keine Schichten für heute</p>
+        <div className="flex items-center gap-3 py-2 px-3 bg-[#0c1018] rounded-md">
+          <Users className="w-5 h-5 text-zinc-700 flex-shrink-0" />
+          <div>
+            <p className="text-xs text-zinc-500">Keine Schichten für heute geplant</p>
+            <p className="text-[10px] text-zinc-700 italic">Schichten werden in der Personalplanung erstellt</p>
+          </div>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-2">
           {Object.entries(groupedShifts).map(([role, roleShifts]) => (
             <div key={role}>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="p-1.5 rounded-md bg-zinc-800 text-zinc-400">
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className="p-1 rounded bg-[#0c1018] text-zinc-500">
                   {getRoleIcon(role)}
                 </div>
-                <span className="text-sm font-medium text-zinc-300">{getRoleLabel(role)}</span>
-                <span className="text-xs text-zinc-500">({roleShifts.length})</span>
+                <span className="text-xs font-medium text-zinc-400">{getRoleLabel(role)}</span>
+                <span className="text-[10px] text-zinc-600">({roleShifts.length})</span>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1.5">
                 {roleShifts.map((shift) => {
                   const statusConfig = getStatusConfig(shift.status);
                   
                   return (
                     <div 
                       key={shift.id}
-                      className="p-3 bg-zinc-800/50 rounded-lg border border-zinc-700/50 hover:bg-zinc-800 transition-colors"
+                      className="p-2 bg-[#0c1018] rounded border border-[#1e2836] hover:border-[#2a3a50] transition-colors"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-white">
-                          User #{shift.user_id.slice(0, 6)}
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-medium text-white">
+                          #{shift.user_id.slice(0, 6)}
                         </span>
-                        <Badge className={cn("text-[10px] px-1.5 py-0", statusConfig.color)}>
+                        <Badge className={cn("text-[9px] px-1 py-0", statusConfig.color)}>
                           {statusConfig.icon}
-                          <span className="ml-1">{statusConfig.label}</span>
+                          <span className="ml-0.5">{statusConfig.label}</span>
                         </Badge>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>
-                          <span className="text-zinc-500">Schicht:</span>
-                          <div className="text-zinc-300">
-                            {new Date(shift.shift_start).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
-                            {shift.shift_end && (
-                              <> - {new Date(shift.shift_end).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}</>
-                            )}
-                          </div>
-                        </div>
-                        
-                        {shift.actual_start && (
-                          <div>
-                            <span className="text-zinc-500">Start:</span>
-                            <div className="text-zinc-300">
-                              {formatDistanceToNow(new Date(shift.actual_start), { addSuffix: true, locale: de })}
-                            </div>
-                          </div>
+                      <div className="text-[10px] text-zinc-500">
+                        {new Date(shift.shift_start).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                        {shift.shift_end && (
+                          <> – {new Date(shift.shift_end).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}</>
                         )}
                       </div>
                       
                       {shift.assigned_bus_id && (
-                        <div className="mt-2 flex items-center gap-1 text-xs text-zinc-500">
-                          <Bus className="w-3 h-3" />
+                        <div className="mt-1 flex items-center gap-1 text-[10px] text-zinc-600">
+                          <Bus className="w-2.5 h-2.5" />
                           Bus #{shift.assigned_bus_id.slice(0, 6)}
                         </div>
                       )}
