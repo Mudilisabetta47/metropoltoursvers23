@@ -699,7 +699,175 @@ const AdminBookingDetail = () => {
           </div>
         </TabsContent>
 
-        {/* ─── CHECK-IN ─── */}
+        {/* ─── INSURANCE ─── */}
+        <TabsContent value="insurance">
+          <div className="space-y-4">
+            {/* Status Banner */}
+            {(() => {
+              const statusMap: Record<string, { label: string; cls: string }> = {
+                not_requested: { label: "Keine Versicherung angefragt", cls: "bg-zinc-700/30 border-zinc-600/40 text-zinc-400" },
+                pending: { label: "Versicherung in Bearbeitung", cls: "bg-amber-500/10 border-amber-600/30 text-amber-400" },
+                requested: { label: "Versicherung angefragt", cls: "bg-blue-500/10 border-blue-600/30 text-blue-400" },
+                active: { label: "Versicherung aktiv", cls: "bg-emerald-500/10 border-emerald-600/30 text-emerald-400" },
+                denied: { label: "Versicherung abgelehnt", cls: "bg-red-500/10 border-red-600/30 text-red-400" },
+              };
+              const s = statusMap[insurance?.policy_status || "not_requested"] || statusMap.not_requested;
+              return (
+                <div className={cn("flex items-center gap-2 px-4 py-3 rounded-lg border text-sm font-medium", s.cls)}>
+                  <Shield className="w-4 h-4" /> {s.label}
+                </div>
+              );
+            })()}
+
+            {!insurance ? (
+              <SectionCard title="Versicherung anlegen">
+                <div className="text-center py-6">
+                  <p className="text-zinc-500 text-sm mb-3">Für diese Buchung wurde noch keine Versicherung angelegt.</p>
+                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-8 text-xs" onClick={() => saveInsurance({ is_active: true, policy_status: "requested" })} disabled={!!processing}>
+                    <Plus className="w-3 h-3 mr-1" /> Versicherung anlegen
+                  </Button>
+                </div>
+              </SectionCard>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* Form Card */}
+                <SectionCard title="Versicherungsdaten">
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-zinc-400 text-xs">Status</Label>
+                      <Select value={insurance.policy_status} onValueChange={(v) => saveInsurance({ policy_status: v })}>
+                        <SelectTrigger className="bg-[#1a1f2a] border-[#2a3040] text-white mt-1"><SelectValue /></SelectTrigger>
+                        <SelectContent className="bg-[#1a1f2a] border-[#2a3040]">
+                          <SelectItem value="not_requested" className="text-white">Nicht angefragt</SelectItem>
+                          <SelectItem value="requested" className="text-white">Angefragt</SelectItem>
+                          <SelectItem value="pending" className="text-white">In Bearbeitung</SelectItem>
+                          <SelectItem value="active" className="text-white">Aktiv</SelectItem>
+                          <SelectItem value="denied" className="text-white">Abgelehnt</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-zinc-400 text-xs">Anbieter</Label>
+                      <Select value={insurance.provider || ""} onValueChange={(v) => saveInsurance({ provider: v })}>
+                        <SelectTrigger className="bg-[#1a1f2a] border-[#2a3040] text-white mt-1"><SelectValue placeholder="Anbieter wählen" /></SelectTrigger>
+                        <SelectContent className="bg-[#1a1f2a] border-[#2a3040]">
+                          <SelectItem value="ERGO" className="text-white">ERGO Reiseversicherung</SelectItem>
+                          <SelectItem value="HanseMerkur" className="text-white">HanseMerkur</SelectItem>
+                          <SelectItem value="Allianz" className="text-white">Allianz Travel</SelectItem>
+                          <SelectItem value="Europäische" className="text-white">Europäische Reiseversicherung</SelectItem>
+                          <SelectItem value="Sonstige" className="text-white">Sonstige</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-zinc-400 text-xs">Produkt</Label>
+                      <Select value={insurance.product || ""} onValueChange={(v) => saveInsurance({ product: v })}>
+                        <SelectTrigger className="bg-[#1a1f2a] border-[#2a3040] text-white mt-1"><SelectValue placeholder="Produkt wählen" /></SelectTrigger>
+                        <SelectContent className="bg-[#1a1f2a] border-[#2a3040]">
+                          <SelectItem value="Reiserücktritt" className="text-white">Reiserücktrittsversicherung</SelectItem>
+                          <SelectItem value="Vollschutz" className="text-white">Reise-Vollschutz</SelectItem>
+                          <SelectItem value="Storno+Abbruch" className="text-white">Storno + Abbruch</SelectItem>
+                          <SelectItem value="Sicherungsschein" className="text-white">Nur Sicherungsschein</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-zinc-400 text-xs">Policennummer</Label>
+                      <Input defaultValue={insurance.policy_number || ""} onBlur={(e) => { if (e.target.value !== (insurance.policy_number || "")) saveInsurance({ policy_number: e.target.value }); }} className="bg-[#1a1f2a] border-[#2a3040] text-white mt-1" placeholder="z.B. POL-2026-123456" />
+                    </div>
+                    <div>
+                      <Label className="text-zinc-400 text-xs">Preis (€)</Label>
+                      <Input type="number" step="0.01" defaultValue={insurance.price || 0} onBlur={(e) => { const v = parseFloat(e.target.value) || 0; if (v !== (insurance.price || 0)) saveInsurance({ price: v }); }} className="bg-[#1a1f2a] border-[#2a3040] text-white mt-1" />
+                    </div>
+                  </div>
+                </SectionCard>
+
+                {/* Right Column */}
+                <div className="space-y-4">
+                  {/* PDF Upload/Download */}
+                  <SectionCard title="Policen-Dokument">
+                    {insurance.policy_pdf_url ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 bg-[#1a1f2a] border border-[#2a3040] rounded-lg p-3">
+                          <FileText className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <span className="text-xs text-zinc-200 flex-1 truncate">{insurance.policy_pdf_url.split("/").pop()}</span>
+                          <Button size="sm" variant="ghost" className="h-7 text-xs text-emerald-400" onClick={() => {
+                            const url = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/authenticated/tour-documents/${insurance.policy_pdf_url}`;
+                            window.open(url, "_blank");
+                          }}><Download className="w-3 h-3 mr-1" /> Öffnen</Button>
+                        </div>
+                        <Button size="sm" variant="outline" className="border-[#2a3040] text-zinc-300 h-7 text-xs w-full" onClick={async () => {
+                          const input = document.createElement("input");
+                          input.type = "file"; input.accept = ".pdf";
+                          input.onchange = async () => {
+                            const file = input.files?.[0];
+                            if (!file) return;
+                            const path = `insurance/${booking.id}/${file.name}`;
+                            const { error } = await supabase.storage.from("tour-documents").upload(path, file, { upsert: true });
+                            if (error) { toast({ title: "Upload fehlgeschlagen", variant: "destructive" }); return; }
+                            await saveInsurance({ policy_pdf_url: path });
+                            toast({ title: "✅ PDF aktualisiert" });
+                          };
+                          input.click();
+                        }}><Upload className="w-3 h-3 mr-1" /> PDF ersetzen</Button>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4">
+                        <p className="text-zinc-500 text-xs mb-2">Kein PDF hochgeladen</p>
+                        <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-7 text-xs" onClick={async () => {
+                          const input = document.createElement("input");
+                          input.type = "file"; input.accept = ".pdf";
+                          input.onchange = async () => {
+                            const file = input.files?.[0];
+                            if (!file) return;
+                            const path = `insurance/${booking.id}/${file.name}`;
+                            const { error } = await supabase.storage.from("tour-documents").upload(path, file, { upsert: true });
+                            if (error) { toast({ title: "Upload fehlgeschlagen", variant: "destructive" }); return; }
+                            await saveInsurance({ policy_pdf_url: path });
+                            toast({ title: "✅ PDF hochgeladen" });
+                          };
+                          input.click();
+                        }} disabled={!!processing}><Upload className="w-3 h-3 mr-1" /> PDF hochladen</Button>
+                      </div>
+                    )}
+                  </SectionCard>
+
+                  {/* Insured Persons */}
+                  <SectionCard title="Versicherte Personen">
+                    {(() => {
+                      const persons = Array.isArray((insurance as any).insured_persons) ? (insurance as any).insured_persons : [];
+                      return persons.length === 0 ? (
+                        <p className="text-zinc-500 text-xs py-3 text-center">
+                          {passengers.length > 0 ? `${passengers.length} Reisende vorhanden – Personen werden aus Passagierdaten übernommen` : "Keine versicherten Personen hinterlegt"}
+                        </p>
+                      ) : (
+                        <div className="space-y-1">
+                          {persons.map((p: any, i: number) => (
+                            <div key={i} className="flex justify-between py-1.5 border-b border-[#1e2430] last:border-0 text-xs">
+                              <span className="text-zinc-200">{p.firstName || p.first_name || ""} {p.lastName || p.last_name || ""}</span>
+                              <span className="text-zinc-500">{p.birthDate || p.birth_date || "–"}</span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </SectionCard>
+
+                  {/* Notes */}
+                  <SectionCard title="Notizen zur Versicherung">
+                    <Textarea defaultValue={insurance.notes || ""} onBlur={(e) => { if (e.target.value !== (insurance.notes || "")) saveInsurance({ notes: e.target.value }); }} className="bg-[#1a1f2a] border-[#2a3040] text-zinc-100 text-xs min-h-[80px]" placeholder="Interne Anmerkungen zur Versicherung..." />
+                  </SectionCard>
+
+                  {/* Send to customer */}
+                  <Button size="sm" variant="outline" className="border-[#2a3040] text-zinc-300 h-8 text-xs w-full" onClick={() => sendEmail("insurance_certificate")} disabled={!!processing || insurance.policy_status !== "active"}>
+                    <Send className="w-3 h-3 mr-1" /> Sicherungsschein an Kunden senden
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
         <TabsContent value="checkin">
           <div className="space-y-4">
             <div className="grid md:grid-cols-3 gap-3">
