@@ -295,6 +295,11 @@ const MissionControlView = ({ rightExpanded, onToggleRight }: MissionControlView
             <EmployeePanel />
           </div>
 
+          {/* Internal Notes */}
+          <div className="h-[260px] overflow-hidden rounded-xl flex-shrink-0">
+            <NotesPanel />
+          </div>
+
           {/* Logs */}
           <div className="h-[240px] overflow-hidden rounded-xl flex-shrink-0">
             <LogsPanel />
