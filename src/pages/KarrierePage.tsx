@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { 
-  Briefcase, MapPin, Clock, ChevronRight, Send, Users, 
-  Heart, Shield, Coffee, Bus, Star, CheckCircle2
+import {
+  Briefcase, MapPin, Clock, ChevronRight, Send, Users,
+  Heart, Shield, Coffee, Bus, Star, CheckCircle2, Sparkles, Rocket
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -12,8 +12,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +40,14 @@ const BENEFITS = [
   { icon: Star, title: "Entwicklung", desc: "Weiterbildungen & Aufstiegsmöglichkeiten" },
   { icon: Users, title: "Familiäres Umfeld", desc: "Kleines Team mit großem Zusammenhalt" },
 ];
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: (i: number) => ({
+    opacity: 1, y: 0,
+    transition: { delay: i * 0.08, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+  }),
+};
 
 const KarrierePage = () => {
   const { toast } = useToast();
@@ -95,16 +104,18 @@ const KarrierePage = () => {
       <Header />
       <main className="flex-1 pt-16 lg:pt-20">
         {/* Hero */}
-        <section className="relative bg-gradient-to-br from-primary/10 via-background to-primary/5 py-20 lg:py-28">
-          <div className="max-w-[1240px] mx-auto px-4 text-center">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-              <Badge variant="secondary" className="mb-4 text-sm px-4 py-1.5">
-                <Briefcase className="w-3.5 h-3.5 mr-1.5" /> Karriere bei Metropol Tours
+        <section className="relative overflow-hidden py-20 lg:py-28 bg-secondary">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.15),transparent_70%)]" />
+          <div className="container mx-auto px-4 relative z-10 text-center">
+            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+              <Badge className="mb-5 bg-primary/20 text-primary border-0 text-sm px-4 py-1.5">
+                <Rocket className="w-3.5 h-3.5 mr-1.5" />
+                Karriere bei Metropol Tours
               </Badge>
-              <h1 className="text-4xl lg:text-5xl font-bold text-foreground mb-4">
-                Werde Teil unseres <span className="text-primary">Teams</span>
+              <h1 className="text-4xl lg:text-5xl font-bold text-secondary-foreground mb-5">
+                Werde Teil unseres <span className="gradient-text">Teams</span>
               </h1>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-lg text-secondary-foreground/70 max-w-2xl mx-auto">
                 Wir verbinden Menschen mit ihren Traumreisezielen. Gestalte mit uns die Zukunft des Reisens auf dem Balkan.
               </p>
             </motion.div>
@@ -112,31 +123,40 @@ const KarrierePage = () => {
         </section>
 
         {/* Benefits */}
-        <section className="py-16 bg-muted/30">
-          <div className="max-w-[1240px] mx-auto px-4">
-            <h2 className="text-2xl font-bold text-foreground text-center mb-10">
-              Warum Metropol Tours?
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <section className="py-20 lg:py-28 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-14"
+            >
+              <Badge className="mb-4 bg-primary/10 text-primary border-0">
+                <Heart className="w-3 h-3 mr-1" />
+                Benefits
+              </Badge>
+              <h2 className="text-3xl lg:text-4xl font-bold text-foreground">
+                Warum Metropol Tours?
+              </h2>
+            </motion.div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {BENEFITS.map((b, i) => (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+                  custom={i}
+                  variants={fadeUp}
+                  initial="hidden"
+                  whileInView="visible"
                   viewport={{ once: true }}
-                  transition={{ delay: i * 0.08 }}
+                  className="group"
                 >
-                  <Card className="border-border bg-card hover:shadow-md transition-shadow h-full">
-                    <CardContent className="p-6 flex items-start gap-4">
-                      <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                        <b.icon className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-foreground mb-1">{b.title}</h3>
-                        <p className="text-sm text-muted-foreground">{b.desc}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <div className="card-elevated p-8 h-full border border-transparent hover:border-primary/30 transition-all">
+                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                      <b.icon className="w-7 h-7 text-primary" />
+                    </div>
+                    <h3 className="font-bold text-foreground text-lg mb-2">{b.title}</h3>
+                    <p className="text-muted-foreground">{b.desc}</p>
+                  </div>
                 </motion.div>
               ))}
             </div>
@@ -144,67 +164,90 @@ const KarrierePage = () => {
         </section>
 
         {/* Job Listings */}
-        <section className="py-16">
-          <div className="max-w-[1240px] mx-auto px-4">
-            <h2 className="text-2xl font-bold text-foreground mb-2">Offene Stellen</h2>
-            <p className="text-muted-foreground mb-8">
-              Finde die passende Position für dich.
-            </p>
+        <section className="py-20 lg:py-28">
+          <div className="container mx-auto px-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="mb-10"
+            >
+              <Badge className="mb-4 bg-primary/10 text-primary border-0">
+                <Briefcase className="w-3 h-3 mr-1" />
+                Stellenangebote
+              </Badge>
+              <h2 className="text-3xl lg:text-4xl font-bold text-foreground">Offene Stellen</h2>
+              <p className="text-muted-foreground mt-2">
+                Finde die passende Position für dich.
+              </p>
+            </motion.div>
 
             {isLoading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="h-24 bg-muted animate-pulse rounded-xl" />
+                  <Skeleton key={i} className="h-24 rounded-2xl" />
                 ))}
               </div>
             ) : jobs.length === 0 ? (
-              <Card className="border-border bg-card">
-                <CardContent className="p-10 text-center">
-                  <Briefcase className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="font-semibold text-foreground mb-2">Aktuell keine offenen Stellen</h3>
-                  <p className="text-muted-foreground text-sm max-w-md mx-auto">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <div className="bg-card rounded-2xl border border-border p-12 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
+                  <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5">
+                    <Briefcase className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="font-bold text-foreground text-xl mb-2">Aktuell keine offenen Stellen</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">
                     Initiativbewerbungen sind jederzeit willkommen. Nutze das Formular unten, um dich bei uns vorzustellen.
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </motion.div>
             ) : (
               <div className="space-y-4">
-                {jobs.map(job => (
-                  <motion.div key={job.id} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-                    <Card
-                      className={`border-border bg-card cursor-pointer transition-all hover:shadow-md ${
-                        selectedJob === job.id ? "ring-2 ring-primary" : ""
+                {jobs.map((job, i) => (
+                  <motion.div
+                    key={job.id}
+                    custom={i}
+                    variants={fadeUp}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true }}
+                  >
+                    <div
+                      className={`bg-card rounded-2xl border-2 cursor-pointer transition-all hover:border-primary/30 ${
+                        selectedJob === job.id ? "border-primary" : "border-border"
                       }`}
+                      style={{ boxShadow: "var(--shadow-card)" }}
                       onClick={() => setSelectedJob(selectedJob === job.id ? null : job.id)}
                     >
-                      <CardContent className="p-5">
+                      <div className="p-6">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
-                            <h3 className="font-semibold text-foreground text-lg">{job.title}</h3>
+                            <h3 className="font-bold text-foreground text-lg">{job.title}</h3>
                             <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
                               <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{job.location}</span>
                               <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{job.employment_type}</span>
-                              <Badge variant="outline">{job.department}</Badge>
+                              <Badge variant="outline" className="rounded-full">{job.department}</Badge>
                             </div>
                           </div>
-                          <ChevronRight className={`w-5 h-5 text-muted-foreground transition-transform ${selectedJob === job.id ? "rotate-90" : ""}`} />
+                          <div className={`w-8 h-8 rounded-full bg-muted flex items-center justify-center transition-all ${selectedJob === job.id ? "bg-primary/10" : ""}`}>
+                            <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform ${selectedJob === job.id ? "rotate-90 text-primary" : ""}`} />
+                          </div>
                         </div>
 
                         {selectedJob === job.id && (
                           <motion.div
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: "auto", opacity: 1 }}
-                            className="mt-4 pt-4 border-t border-border"
+                            className="mt-5 pt-5 border-t border-border"
                           >
                             {job.description && (
-                              <p className="text-sm text-muted-foreground mb-4">{job.description}</p>
+                              <p className="text-muted-foreground mb-5 leading-relaxed">{job.description}</p>
                             )}
                             {job.requirements.length > 0 && (
-                              <div className="mb-4">
-                                <h4 className="text-sm font-semibold text-foreground mb-2">Anforderungen</h4>
-                                <ul className="space-y-1.5">
-                                  {job.requirements.map((r, i) => (
-                                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                              <div className="mb-5">
+                                <h4 className="font-bold text-foreground mb-3">Anforderungen</h4>
+                                <ul className="space-y-2">
+                                  {job.requirements.map((r, idx) => (
+                                    <li key={idx} className="flex items-start gap-3 text-sm text-muted-foreground">
                                       <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                                       {r}
                                     </li>
@@ -213,22 +256,22 @@ const KarrierePage = () => {
                               </div>
                             )}
                             {job.salary_range && (
-                              <p className="text-sm text-primary font-medium">Gehalt: {job.salary_range}</p>
+                              <p className="text-primary font-semibold mb-4">Gehalt: {job.salary_range}</p>
                             )}
                             <Button
-                              className="mt-4"
+                              className="gap-2"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setForm(f => ({ ...f, job_listing_id: job.id }));
                                 document.getElementById("bewerbung")?.scrollIntoView({ behavior: "smooth" });
                               }}
                             >
-                              Jetzt bewerben <ChevronRight className="w-4 h-4 ml-1" />
+                              Jetzt bewerben <ChevronRight className="w-4 h-4" />
                             </Button>
                           </motion.div>
                         )}
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
                   </motion.div>
                 ))}
               </div>
@@ -237,15 +280,30 @@ const KarrierePage = () => {
         </section>
 
         {/* Application Form */}
-        <section id="bewerbung" className="py-16 bg-muted/30">
+        <section id="bewerbung" className="py-20 lg:py-28 bg-muted/30">
           <div className="max-w-[720px] mx-auto px-4">
-            <h2 className="text-2xl font-bold text-foreground mb-2">Bewerbung senden</h2>
-            <p className="text-muted-foreground mb-8">
-              Auch Initiativbewerbungen sind willkommen.
-            </p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-10"
+            >
+              <Badge className="mb-4 bg-primary/10 text-primary border-0">
+                <Send className="w-3 h-3 mr-1" />
+                Bewerbung
+              </Badge>
+              <h2 className="text-3xl lg:text-4xl font-bold text-foreground">Bewerbung senden</h2>
+              <p className="text-muted-foreground mt-2">
+                Auch Initiativbewerbungen sind willkommen.
+              </p>
+            </motion.div>
 
-            <Card className="border-border bg-card">
-              <CardContent className="p-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <div className="bg-card rounded-2xl border border-border p-8" style={{ boxShadow: "var(--shadow-elevated)" }}>
                 <form onSubmit={handleSubmit} className="space-y-5">
                   {jobs.length > 0 && (
                     <div>
@@ -282,13 +340,13 @@ const KarrierePage = () => {
                     <Label>Nachricht / Motivation</Label>
                     <Textarea className="mt-1.5 min-h-[120px]" value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} placeholder="Erzähle uns etwas über dich..." />
                   </div>
-                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  <Button type="submit" className="w-full h-12 text-base font-semibold" disabled={isSubmitting}>
                     <Send className="w-4 h-4 mr-2" />
                     {isSubmitting ? "Wird gesendet..." : "Bewerbung absenden"}
                   </Button>
                 </form>
-              </CardContent>
-            </Card>
+              </div>
+            </motion.div>
           </div>
         </section>
       </main>
