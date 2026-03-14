@@ -36,8 +36,7 @@ const WeekendTripsSection = () => {
         .from("routes")
         .select("*")
         .eq("is_active", true)
-        .ilike("name", "Hamburg -%")
-        .limit(4);
+        .ilike("name", "Hamburg -%");
       if (error) throw error;
       return data as Route[];
     },
