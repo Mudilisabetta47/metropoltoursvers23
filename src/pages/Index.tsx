@@ -6,7 +6,9 @@ import PackageToursSection from "@/components/home/PackageToursSection";
 import WeekendTripsSection from "@/components/home/WeekendTripsSection";
 import PopularRoutesSection from "@/components/home/PopularRoutesSection";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
+import NewsletterSection from "@/components/home/NewsletterSection";
 import CTASection from "@/components/home/CTASection";
+import ScrollToTopButton from "@/components/home/ScrollToTopButton";
 
 const Index = () => {
   return (
@@ -19,9 +21,11 @@ const Index = () => {
         <WeekendTripsSection />
         <PopularRoutesSection />
         <TestimonialsSection />
+        <NewsletterSection />
         <CTASection />
       </main>
       <Footer />
+      <ScrollToTopButton />
     </div>
   );
 };

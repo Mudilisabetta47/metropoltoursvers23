@@ -1,9 +1,10 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRight, MapPin, Calendar, Bus, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Route {
@@ -28,6 +29,8 @@ const WeekendTripsSection = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [totalCards, setTotalCards] = useState(0);
 
   const { data: routes, isLoading } = useQuery({
     queryKey: ["weekend-routes-preview"],
@@ -42,11 +45,21 @@ const WeekendTripsSection = () => {
     },
   });
 
+  useEffect(() => {
+    if (routes) setTotalCards(routes.length);
+  }, [routes]);
+
   const updateScrollState = () => {
     const el = scrollRef.current;
     if (!el) return;
     setCanScrollLeft(el.scrollLeft > 10);
     setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
+    
+    // Calculate active index based on scroll position
+    const cardWidth = el.querySelector("div")?.offsetWidth || 300;
+    const gap = 24;
+    const index = Math.round(el.scrollLeft / (cardWidth + gap));
+    setActiveIndex(Math.min(index, totalCards - 1));
   };
 
   const scroll = (direction: "left" | "right") => {
@@ -56,9 +69,39 @@ const WeekendTripsSection = () => {
     el.scrollBy({ left: direction === "left" ? -cardWidth : cardWidth, behavior: "smooth" });
   };
 
+  const scrollToIndex = (index: number) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const cardWidth = el.querySelector("div")?.offsetWidth || 300;
+    const gap = 24;
+    el.scrollTo({ left: index * (cardWidth + gap), behavior: "smooth" });
+  };
+
   const getDestination = (routeName: string) => routeName.split(" - ")[1] || routeName;
 
-  if (isLoading || !routes || routes.length === 0) return null;
+  // Skeleton loading state
+  if (isLoading) {
+    return (
+      <section className="py-20 lg:py-28 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="mb-12">
+            <Skeleton className="h-6 w-32 mb-4" />
+            <Skeleton className="h-10 w-80 mb-2" />
+            <Skeleton className="h-5 w-96" />
+          </div>
+          <div className="flex gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex-shrink-0 w-[280px] sm:w-[300px] lg:w-[calc(25%-18px)]">
+                <Skeleton className="aspect-[4/5] rounded-2xl" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!routes || routes.length === 0) return null;
 
   return (
     <section className="py-20 lg:py-28 bg-muted/30">
@@ -79,12 +122,11 @@ const WeekendTripsSection = () => {
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {/* Scroll Arrows */}
             <button
               onClick={() => scroll("left")}
               disabled={!canScrollLeft}
               className="w-10 h-10 rounded-full bg-card shadow-sm border border-border flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              aria-label="Zurück"
+              aria-label="Vorherige Wochenendtrips anzeigen"
             >
               <ChevronLeft className="w-5 h-5 text-foreground" />
             </button>
@@ -92,7 +134,7 @@ const WeekendTripsSection = () => {
               onClick={() => scroll("right")}
               disabled={!canScrollRight}
               className="w-10 h-10 rounded-full bg-card shadow-sm border border-border flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              aria-label="Weiter"
+              aria-label="Weitere Wochenendtrips anzeigen"
             >
               <ChevronRight className="w-5 h-5 text-foreground" />
             </button>
@@ -113,6 +155,8 @@ const WeekendTripsSection = () => {
           onScroll={updateScrollState}
           className="flex gap-6 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-4 px-4 pb-4"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          role="list"
+          aria-label="Wochenendtrip-Ziele"
         >
           {routes.map((route) => {
             const destination = getDestination(route.name);
@@ -121,6 +165,8 @@ const WeekendTripsSection = () => {
             return (
               <div
                 key={route.id}
+                role="listitem"
+                aria-label={`Wochenendtrip nach ${destination} ab ${route.base_price}€`}
                 className="group relative rounded-2xl overflow-hidden cursor-pointer flex-shrink-0 snap-start w-[280px] sm:w-[300px] lg:w-[calc(25%-18px)]"
                 onClick={() => navigate(`/wochenendtrips/${destination}`)}
               >
@@ -128,8 +174,9 @@ const WeekendTripsSection = () => {
                 <div className="aspect-[4/5] relative">
                   <img
                     src={image || "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400&q=80"}
-                    alt={destination}
+                    alt={`Wochenendtrip nach ${destination}`}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 </div>
@@ -160,6 +207,24 @@ const WeekendTripsSection = () => {
             );
           })}
         </div>
+
+        {/* Scroll Dots */}
+        {routes.length > 4 && (
+          <div className="flex justify-center gap-2 mt-6">
+            {routes.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => scrollToIndex(index)}
+                className={`h-2.5 rounded-full transition-all duration-300 ${
+                  index === activeIndex
+                    ? "bg-primary w-8"
+                    : "bg-primary/30 hover:bg-primary/50 w-2.5"
+                }`}
+                aria-label={`Zum ${index + 1}. Ziel scrollen`}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Mobile CTA */}
         <div className="mt-6 md:hidden text-center">
