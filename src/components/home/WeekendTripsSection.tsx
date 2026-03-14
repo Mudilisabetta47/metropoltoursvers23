@@ -1,9 +1,10 @@
+import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate, Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, MapPin, Calendar, Bus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, MapPin, Calendar, Bus, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Route {
   id: string;
@@ -13,21 +14,20 @@ interface Route {
 }
 
 const DESTINATION_IMAGES: Record<string, string> = {
-  Kopenhagen:
-    "https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?w=400&q=80",
-  Amsterdam:
-    "https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=400&q=80",
-  Paris:
-    "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&q=80",
+  Kopenhagen: "https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?w=400&q=80",
+  Amsterdam: "https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=400&q=80",
+  Paris: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&q=80",
   Rom: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=400&q=80",
   Prag: "https://images.unsplash.com/photo-1541849546-216549ae216d?w=400&q=80",
   Wien: "https://images.unsplash.com/photo-1516550893923-42d28e5677af?w=400&q=80",
-  Barcelona:
-    "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&q=80",
+  Barcelona: "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&q=80",
 };
 
 const WeekendTripsSection = () => {
   const navigate = useNavigate();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
   const { data: routes, isLoading } = useQuery({
     queryKey: ["weekend-routes-preview"],
@@ -42,13 +42,23 @@ const WeekendTripsSection = () => {
     },
   });
 
-  const getDestination = (routeName: string) => {
-    return routeName.split(" - ")[1] || routeName;
+  const updateScrollState = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 10);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
   };
 
-  if (isLoading || !routes || routes.length === 0) {
-    return null;
-  }
+  const scroll = (direction: "left" | "right") => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const cardWidth = el.querySelector("div")?.offsetWidth || 300;
+    el.scrollBy({ left: direction === "left" ? -cardWidth : cardWidth, behavior: "smooth" });
+  };
+
+  const getDestination = (routeName: string) => routeName.split(" - ")[1] || routeName;
+
+  if (isLoading || !routes || routes.length === 0) return null;
 
   return (
     <section className="py-20 lg:py-28 bg-muted/30">
@@ -68,18 +78,42 @@ const WeekendTripsSection = () => {
               Zustieg in Bremen und Hannover.
             </p>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => navigate("/wochenendtrips")}
-            className="shrink-0"
-          >
-            Alle Ziele entdecken
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Scroll Arrows */}
+            <button
+              onClick={() => scroll("left")}
+              disabled={!canScrollLeft}
+              className="w-10 h-10 rounded-full bg-card shadow-sm border border-border flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              aria-label="Zurück"
+            >
+              <ChevronLeft className="w-5 h-5 text-foreground" />
+            </button>
+            <button
+              onClick={() => scroll("right")}
+              disabled={!canScrollRight}
+              className="w-10 h-10 rounded-full bg-card shadow-sm border border-border flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              aria-label="Weiter"
+            >
+              <ChevronRight className="w-5 h-5 text-foreground" />
+            </button>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/wochenendtrips")}
+              className="ml-2 hidden md:inline-flex"
+            >
+              Alle Ziele
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
         </div>
 
-        {/* Routes Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Scrollable Cards */}
+        <div
+          ref={scrollRef}
+          onScroll={updateScrollState}
+          className="flex gap-6 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-4 px-4 pb-4"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
           {routes.map((route) => {
             const destination = getDestination(route.name);
             const image = DESTINATION_IMAGES[destination];
@@ -87,16 +121,13 @@ const WeekendTripsSection = () => {
             return (
               <div
                 key={route.id}
-                className="group relative rounded-2xl overflow-hidden cursor-pointer"
+                className="group relative rounded-2xl overflow-hidden cursor-pointer flex-shrink-0 snap-start w-[280px] sm:w-[300px] lg:w-[calc(25%-18px)]"
                 onClick={() => navigate(`/wochenendtrips/${destination}`)}
               >
                 {/* Image */}
                 <div className="aspect-[4/5] relative">
                   <img
-                    src={
-                      image ||
-                      "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400&q=80"
-                    }
+                    src={image || "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400&q=80"}
                     alt={destination}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
@@ -109,15 +140,10 @@ const WeekendTripsSection = () => {
                     <MapPin className="w-3 h-3" />
                     Ab Hamburg
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-1">
-                    {destination}
-                  </h3>
+                  <h3 className="text-xl font-bold text-white mb-1">{destination}</h3>
                   <div className="flex items-center justify-between">
                     <span className="text-white/80 text-sm">
-                      ab{" "}
-                      <span className="text-white font-bold text-lg">
-                        {route.base_price}€
-                      </span>
+                      ab <span className="text-white font-bold text-lg">{route.base_price}€</span>
                     </span>
                     <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-primary transition-colors">
                       <ArrowRight className="w-4 h-4 text-white" />
@@ -133,6 +159,14 @@ const WeekendTripsSection = () => {
               </div>
             );
           })}
+        </div>
+
+        {/* Mobile CTA */}
+        <div className="mt-6 md:hidden text-center">
+          <Button variant="outline" onClick={() => navigate("/wochenendtrips")}>
+            Alle Ziele entdecken
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
         </div>
       </div>
     </section>
