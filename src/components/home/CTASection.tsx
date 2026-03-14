@@ -1,6 +1,7 @@
 import { ArrowRight, Smartphone, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import TrustLogos from "@/components/home/TrustLogos";
 
 const CTASection = () => {
   const navigate = useNavigate();
@@ -53,17 +54,12 @@ const CTASection = () => {
           {/* App Preview Mockup */}
           <div className="relative hidden lg:block">
             <div className="relative mx-auto w-72">
-              {/* Phone Frame */}
               <div className="bg-secondary rounded-[3rem] p-3 shadow-2xl">
                 <div className="bg-background rounded-[2.5rem] overflow-hidden aspect-[9/19]">
-                  {/* App Screen Content */}
                   <div className="h-full flex flex-col">
-                    {/* Status Bar */}
                     <div className="bg-primary h-8 flex items-center justify-center">
                       <div className="w-20 h-5 bg-secondary rounded-full" />
                     </div>
-                    
-                    {/* App Header */}
                     <div className="bg-primary px-4 pb-6 pt-4">
                       <div className="text-primary-foreground text-sm font-semibold mb-2">METROPOL TOURS</div>
                       <div className="bg-primary-foreground/20 rounded-lg p-3">
@@ -77,8 +73,6 @@ const CTASection = () => {
                         </div>
                       </div>
                     </div>
-                    
-                    {/* App Content */}
                     <div className="flex-1 p-4 space-y-3">
                       {[1, 2, 3].map((i) => (
                         <div key={i} className="bg-muted rounded-lg p-3">
@@ -94,7 +88,6 @@ const CTASection = () => {
                 </div>
               </div>
 
-              {/* Floating Elements */}
               <div className="absolute -right-8 top-20 bg-card rounded-xl p-3 shadow-elevated animate-bounce" style={{ animationDuration: "3s" }}>
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -109,6 +102,9 @@ const CTASection = () => {
             </div>
           </div>
         </div>
+
+        {/* Trust Logos */}
+        <TrustLogos />
       </div>
     </section>
   );
