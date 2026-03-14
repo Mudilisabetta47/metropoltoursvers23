@@ -32,7 +32,7 @@ const DelayPrediction = () => {
     };
   });
 
-  const delayedCount = predictions.filter(p => p.currentDelay > 5).length;
+  const delayedCount = predictions.filter(p => (p.delay_minutes || 0) > 5).length;
 
   return (
     <div className="p-3 bg-[#111820] rounded-lg border border-[#1e2836]">
