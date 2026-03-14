@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Wifi, Snowflake, Armchair, Plug, Coffee, Shield, Briefcase, HelpCircle,
-  ChevronDown, Clock, Ban, CreditCard, Dog, Baby, Bike, Phone, Mail, Sparkles
+  ChevronDown, Dog, Baby, Bike, Phone, Mail, Sparkles
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
