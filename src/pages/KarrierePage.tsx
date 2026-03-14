@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Briefcase, MapPin, Clock, ChevronRight, Send, Users,
-  Heart, Shield, Coffee, Bus, Star, CheckCircle2, Sparkles, Rocket
+  Heart, Shield, Coffee, Bus, Star, CheckCircle2, Rocket
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
