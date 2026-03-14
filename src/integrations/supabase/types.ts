@@ -183,6 +183,65 @@ export type Database = {
           },
         ]
       }
+      bus_maintenance: {
+        Row: {
+          bus_id: string
+          completed_date: string | null
+          cost: number | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_date: string
+          id: string
+          maintenance_type: string
+          notes: string | null
+          status: string
+          title: string
+          updated_at: string
+          vendor: string | null
+        }
+        Insert: {
+          bus_id: string
+          completed_date?: string | null
+          cost?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date: string
+          id?: string
+          maintenance_type?: string
+          notes?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          vendor?: string | null
+        }
+        Update: {
+          bus_id?: string
+          completed_date?: string | null
+          cost?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string
+          id?: string
+          maintenance_type?: string
+          notes?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bus_maintenance_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buses: {
         Row: {
           amenities: string[] | null
@@ -416,6 +475,45 @@ export type Database = {
           updated_at?: string | null
           valid_from?: string | null
           valid_until?: string | null
+        }
+        Relationships: []
+      }
+      driver_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_broadcast: boolean
+          message: string
+          priority: string
+          read_at: string | null
+          recipient_id: string | null
+          recipient_role: string | null
+          sender_id: string
+          subject: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_broadcast?: boolean
+          message: string
+          priority?: string
+          read_at?: string | null
+          recipient_id?: string | null
+          recipient_role?: string | null
+          sender_id: string
+          subject: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_broadcast?: boolean
+          message?: string
+          priority?: string
+          read_at?: string | null
+          recipient_id?: string | null
+          recipient_role?: string | null
+          sender_id?: string
+          subject?: string
         }
         Relationships: []
       }
@@ -1266,6 +1364,42 @@ export type Database = {
           slug?: string
           sort_order?: number | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      shift_handovers: {
+        Row: {
+          created_at: string
+          from_user_id: string
+          id: string
+          notes: string | null
+          open_issues: string | null
+          shift_date: string
+          status: string
+          summary: string
+          to_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          from_user_id: string
+          id?: string
+          notes?: string | null
+          open_issues?: string | null
+          shift_date?: string
+          status?: string
+          summary: string
+          to_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          from_user_id?: string
+          id?: string
+          notes?: string | null
+          open_issues?: string | null
+          shift_date?: string
+          status?: string
+          summary?: string
+          to_user_id?: string | null
         }
         Relationships: []
       }
