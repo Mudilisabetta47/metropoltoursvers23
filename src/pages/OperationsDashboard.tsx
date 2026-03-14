@@ -30,8 +30,25 @@ import DriverMessaging from "@/components/operations/DriverMessaging";
 import MaintenancePlanner from "@/components/operations/MaintenancePlanner";
 import DelayPrediction from "@/components/operations/DelayPrediction";
 import IncidentNotifications from "@/components/operations/IncidentNotifications";
+import LayoutConfigurator, { useLayoutConfig, PanelConfig } from "@/components/operations/LayoutConfigurator";
 
 type ViewMode = 'center' | 'map' | 'incidents' | 'employees' | 'scanner' | 'commands' | 'logs' | 'maintenance' | 'messaging';
+
+// Panel component registry
+const PANEL_COMPONENTS: Record<string, React.FC> = {
+  scanner: ScannerPanel,
+  command: CommandCenter,
+  weather: WeatherWidget,
+  occupancy: OccupancyPanel,
+  incidents: IncidentPanel,
+  delay: DelayPrediction,
+  employees: EmployeePanel,
+  handover: ShiftHandoverPanel,
+  notes: NotesPanel,
+  logs: LogsPanel,
+  messaging: DriverMessaging,
+  maintenance: MaintenancePlanner,
+};
 
 const OperationsDashboard = () => {
   const navigate = useNavigate();
@@ -40,8 +57,8 @@ const OperationsDashboard = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [rightPanelExpanded, setRightPanelExpanded] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const layoutConfig = useLayoutConfig();
 
-  // Live clock
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(interval);
@@ -93,14 +110,11 @@ const OperationsDashboard = () => {
 
   return (
     <div className="h-screen bg-[#080c12] text-zinc-100 flex flex-col overflow-hidden">
-      {/* Push Notifications (invisible) */}
       <IncidentNotifications />
-
-      {/* Top Bar */}
       <SystemStatusBar />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar */}
+        {/* Sidebar */}
         <aside className={cn(
           "bg-[#0b1018] border-r border-[#141e2e] flex flex-col transition-all duration-300 ease-in-out",
           sidebarCollapsed ? "w-[52px]" : "w-44"
@@ -171,8 +185,9 @@ const OperationsDashboard = () => {
           </div>
         </aside>
 
-        {/* Main Content */}
+        {/* Main */}
         <main className="flex-1 overflow-hidden flex flex-col">
+          {/* Header */}
           <div className="h-10 bg-[#0b1018]/80 border-b border-[#141e2e] flex items-center justify-between px-4">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
@@ -186,7 +201,16 @@ const OperationsDashboard = () => {
                 {format(currentTime, 'EEEE, dd. MMMM yyyy', { locale: de })}
               </span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              {activeView === 'center' && (
+                <LayoutConfigurator
+                  panels={layoutConfig.panels}
+                  onToggle={layoutConfig.toggleVisibility}
+                  onMove={layoutConfig.movePanel}
+                  onChangeZone={layoutConfig.changeZone}
+                  onReset={layoutConfig.resetLayout}
+                />
+              )}
               <div className="flex items-center gap-1.5 text-[11px]">
                 <Clock className="w-3 h-3 text-zinc-600" />
                 <span className="text-zinc-400 font-mono tabular-nums">
@@ -200,13 +224,18 @@ const OperationsDashboard = () => {
             </div>
           </div>
 
+          {/* Content */}
           <div className="flex-1 overflow-auto">
-            {activeView === 'center' && <MissionControlView rightExpanded={rightPanelExpanded} onToggleRight={() => setRightPanelExpanded(!rightPanelExpanded)} />}
+            {activeView === 'center' && (
+              <MissionControlView
+                rightExpanded={rightPanelExpanded}
+                onToggleRight={() => setRightPanelExpanded(!rightPanelExpanded)}
+                layoutConfig={layoutConfig}
+              />
+            )}
             {activeView === 'map' && (
               <div className="h-full p-3">
-                <div className="h-full rounded-xl overflow-hidden border border-[#1a2436]">
-                  <LiveMap />
-                </div>
+                <div className="h-full rounded-xl overflow-hidden border border-[#1a2436]"><LiveMap /></div>
               </div>
             )}
             {activeView === 'incidents' && <div className="h-full"><IncidentPanel /></div>}
@@ -218,11 +247,7 @@ const OperationsDashboard = () => {
                 <ShiftHandoverPanel />
               </div>
             )}
-            {activeView === 'maintenance' && (
-              <div className="p-4 max-w-5xl">
-                <MaintenancePlanner />
-              </div>
-            )}
+            {activeView === 'maintenance' && <div className="p-4 max-w-5xl"><MaintenancePlanner /></div>}
             {activeView === 'commands' && (
               <div className="p-4 space-y-4 max-w-5xl">
                 <CommandCenter />
@@ -237,84 +262,91 @@ const OperationsDashboard = () => {
   );
 };
 
-// ─── Mission Control View ──────────────────────────────────────────────────
+// ─── Mission Control (Dynamic Layout) ──────────────────────────────────────
 
 interface MissionControlViewProps {
   rightExpanded: boolean;
   onToggleRight: () => void;
+  layoutConfig: ReturnType<typeof useLayoutConfig>;
 }
 
-const MissionControlView = ({ rightExpanded, onToggleRight }: MissionControlViewProps) => {
+const RenderPanel = ({ id }: { id: string }) => {
+  const Component = PANEL_COMPONENTS[id];
+  if (!Component) return null;
+  return <Component />;
+};
+
+const MissionControlView = ({ rightExpanded, onToggleRight, layoutConfig }: MissionControlViewProps) => {
+  const bottomPanels = layoutConfig.getVisiblePanels("bottom-left");
+  const rightPanels = layoutConfig.getVisiblePanels("right");
+
+  const cols = Math.min(bottomPanels.length, 4) || 1;
+
   return (
     <div className="h-full flex flex-col overflow-auto">
-      {/* KPI Strip */}
+      {/* KPI */}
       <div className="p-3 pb-0 flex-shrink-0">
         <KPIPanel />
       </div>
 
-      {/* Main Grid */}
+      {/* Grid */}
       <div className="flex-1 p-3 flex gap-3 min-h-0">
-        {/* Left Column */}
+        {/* Left */}
         <div className="flex-1 flex flex-col gap-3 min-w-0">
-          {/* Map */}
           <div className="flex-1 min-h-[250px] rounded-xl overflow-hidden border border-[#1a2436]">
             <LiveMap />
           </div>
 
-          {/* Bottom Panels */}
-          <div className="grid grid-cols-3 gap-3 flex-shrink-0" style={{ minHeight: '260px' }}>
-            <div className="overflow-auto rounded-xl">
-              <ScannerPanel />
-            </div>
-            <div className="overflow-auto rounded-xl">
-              <CommandCenter />
-            </div>
-            <div className="overflow-auto rounded-xl space-y-3">
-              <WeatherWidget />
-              <OccupancyPanel />
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column */}
-        <div className={cn(
-          "flex flex-col gap-3 transition-all duration-300 flex-shrink-0",
-          rightExpanded ? "w-96" : "w-80"
-        )}>
-          <div className="flex justify-end flex-shrink-0">
-            <button
-              onClick={onToggleRight}
-              className="p-1 rounded text-zinc-600 hover:text-zinc-400 hover:bg-[#111a28] transition-colors"
-              title={rightExpanded ? 'Panel verkleinern' : 'Panel vergrößern'}
+          {bottomPanels.length > 0 && (
+            <div
+              className="gap-3 flex-shrink-0 grid"
+              style={{
+                gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+                minHeight: '260px',
+              }}
             >
-              {rightExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-            </button>
-          </div>
-
-          <div className="flex-1 min-h-[180px] overflow-hidden rounded-xl border border-[#1a2436]">
-            <IncidentPanel />
-          </div>
-
-          <div className="flex-shrink-0 rounded-xl">
-            <DelayPrediction />
-          </div>
-
-          <div className="flex-shrink-0 rounded-xl">
-            <EmployeePanel />
-          </div>
-
-          <div className="flex-shrink-0 rounded-xl">
-            <ShiftHandoverPanel />
-          </div>
-
-          <div className="h-[220px] overflow-hidden rounded-xl flex-shrink-0">
-            <NotesPanel />
-          </div>
-
-          <div className="h-[200px] overflow-hidden rounded-xl flex-shrink-0">
-            <LogsPanel />
-          </div>
+              {bottomPanels.map((panel) => (
+                <div key={panel.id} className="overflow-auto rounded-xl">
+                  <RenderPanel id={panel.id} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+
+        {/* Right */}
+        {rightPanels.length > 0 && (
+          <div className={cn(
+            "flex flex-col gap-3 transition-all duration-300 flex-shrink-0",
+            rightExpanded ? "w-96" : "w-80"
+          )}>
+            <div className="flex justify-end flex-shrink-0">
+              <button
+                onClick={onToggleRight}
+                className="p-1 rounded text-zinc-600 hover:text-zinc-400 hover:bg-[#111a28] transition-colors"
+                title={rightExpanded ? 'Panel verkleinern' : 'Panel vergrößern'}
+              >
+                {rightExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+
+            {rightPanels.map((panel, idx) => {
+              // First panel gets flex-1 for main space, rest are compact
+              const isFirst = idx === 0;
+              return (
+                <div
+                  key={panel.id}
+                  className={cn(
+                    "rounded-xl overflow-hidden",
+                    isFirst ? "flex-1 min-h-[180px] border border-[#1a2436]" : "flex-shrink-0"
+                  )}
+                >
+                  <RenderPanel id={panel.id} />
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
