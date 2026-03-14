@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { ArrowRight, Clock, Bus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { format, addDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+
 interface Stop {
   id: string;
   name: string;
@@ -11,33 +13,33 @@ interface Stop {
   stop_order: number;
   price_from_start: number;
 }
+
 interface RouteDisplay {
   fromStop: Stop;
   toStop: Stop;
   price: number;
   duration: string;
 }
+
 const PopularRoutesSection = () => {
   const navigate = useNavigate();
   const [routes, setRoutes] = useState<RouteDisplay[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     loadRoutes();
   }, []);
+
   const loadRoutes = async () => {
     setIsLoading(true);
     try {
-      const {
-        data: stops,
-        error
-      } = await supabase.from('stops').select('*').order('stop_order');
+      const { data: stops, error } = await supabase.from('stops').select('*').order('stop_order');
       if (error) throw error;
       if (!stops || stops.length < 2) {
         setRoutes([]);
         return;
       }
 
-      // Generate route combinations
       const routeDisplays: RouteDisplay[] = [];
       for (let i = 0; i < stops.length - 1; i++) {
         for (let j = i + 1; j < stops.length; j++) {
@@ -45,8 +47,6 @@ const PopularRoutesSection = () => {
             const fromStop = stops[i];
             const toStop = stops[j];
             const price = toStop.price_from_start - fromStop.price_from_start;
-
-            // Estimate duration based on stop order difference (rough estimate)
             const stopsDiff = toStop.stop_order - fromStop.stop_order;
             const hours = Math.max(2, stopsDiff * 3);
             const duration = `${hours}h 00min`;
@@ -54,8 +54,7 @@ const PopularRoutesSection = () => {
               fromStop,
               toStop,
               price: Math.max(price, 15),
-              // Minimum price
-              duration
+              duration,
             });
           }
         }
@@ -67,6 +66,7 @@ const PopularRoutesSection = () => {
       setIsLoading(false);
     }
   };
+
   const handleBookRoute = (fromStop: Stop, toStop: Stop) => {
     const tomorrow = addDays(new Date(), 1);
     const searchParams = new URLSearchParams({
@@ -75,24 +75,92 @@ const PopularRoutesSection = () => {
       from: fromStop.name,
       to: toStop.name,
       date: format(tomorrow, "yyyy-MM-dd"),
-      passengers: "1"
+      passengers: "1",
     });
     navigate(`/search?${searchParams.toString()}`);
   };
+
   if (isLoading) {
-    return <section className="py-20 lg:py-28">
+    return (
+      <section className="py-20 lg:py-28">
         <div className="container mx-auto px-4">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <div className="text-center mb-12">
+            <Skeleton className="h-10 w-72 mx-auto mb-4" />
+            <Skeleton className="h-5 w-96 mx-auto" />
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton key={i} className="h-24 rounded-xl" />
+            ))}
           </div>
         </div>
-      </section>;
+      </section>
+    );
   }
-  if (routes.length === 0) {
-    return null;
-  }
-  return <section className="py-20 lg:py-28">
-      
-    </section>;
+
+  if (routes.length === 0) return null;
+
+  return (
+    <section className="py-20 lg:py-28">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            Beliebte <span className="text-primary">Strecken</span>
+          </h2>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            Unsere meistgebuchten Verbindungen – täglich für Sie unterwegs.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4" role="list" aria-label="Beliebte Busstrecken">
+          {routes.map((route, index) => (
+            <button
+              key={index}
+              onClick={() => handleBookRoute(route.fromStop, route.toStop)}
+              className="group bg-card rounded-xl p-5 border border-border hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-0.5 text-left"
+              role="listitem"
+              aria-label={`${route.fromStop.city} nach ${route.toStop.city}, ab ${route.price}€`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                      {route.fromStop.city}
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <span className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                      {route.toStop.city}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      {route.duration}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Bus className="w-3.5 h-3.5" />
+                      Direktverbindung
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">ab</p>
+                  <p className="text-xl font-bold text-primary">{route.price}€</p>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <div className="text-center mt-8">
+          <Button variant="outline" size="lg" onClick={() => navigate("/search")} className="group">
+            Alle Verbindungen suchen
+            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
 };
+
 export default PopularRoutesSection;
