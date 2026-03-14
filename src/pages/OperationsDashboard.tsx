@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, Map, AlertTriangle, Users, Scan, 
   Zap, FileText, ChevronLeft, ChevronRight,
-  Globe, Shield, Radio, Activity, Clock, Maximize2, Minimize2
+  Globe, Shield, Radio, Activity, Clock, Maximize2, Minimize2,
+  Wrench, MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,8 +23,15 @@ import ScannerPanel from "@/components/operations/ScannerPanel";
 import CommandCenter from "@/components/operations/CommandCenter";
 import LogsPanel from "@/components/operations/LogsPanel";
 import NotesPanel from "@/components/operations/NotesPanel";
+import WeatherWidget from "@/components/operations/WeatherWidget";
+import OccupancyPanel from "@/components/operations/OccupancyPanel";
+import ShiftHandoverPanel from "@/components/operations/ShiftHandoverPanel";
+import DriverMessaging from "@/components/operations/DriverMessaging";
+import MaintenancePlanner from "@/components/operations/MaintenancePlanner";
+import DelayPrediction from "@/components/operations/DelayPrediction";
+import IncidentNotifications from "@/components/operations/IncidentNotifications";
 
-type ViewMode = 'center' | 'map' | 'incidents' | 'employees' | 'scanner' | 'commands' | 'logs';
+type ViewMode = 'center' | 'map' | 'incidents' | 'employees' | 'scanner' | 'commands' | 'logs' | 'maintenance' | 'messaging';
 
 const OperationsDashboard = () => {
   const navigate = useNavigate();
@@ -69,13 +77,15 @@ const OperationsDashboard = () => {
   }
 
   const navItems = [
-    { id: 'center' as ViewMode, label: 'Mission Control', icon: LayoutDashboard, accent: 'emerald' },
-    { id: 'map' as ViewMode, label: 'Live-Ortung', icon: Map, accent: 'blue' },
-    { id: 'incidents' as ViewMode, label: 'Vorfälle', icon: AlertTriangle, accent: 'amber' },
-    { id: 'employees' as ViewMode, label: 'Personal', icon: Users, accent: 'violet' },
-    { id: 'scanner' as ViewMode, label: 'Ticketprüfung', icon: Scan, accent: 'cyan' },
-    { id: 'commands' as ViewMode, label: 'Leitstelle', icon: Zap, accent: 'orange' },
-    { id: 'logs' as ViewMode, label: 'Protokolle', icon: FileText, accent: 'zinc' },
+    { id: 'center' as ViewMode, label: 'Mission Control', icon: LayoutDashboard },
+    { id: 'map' as ViewMode, label: 'Live-Ortung', icon: Map },
+    { id: 'incidents' as ViewMode, label: 'Vorfälle', icon: AlertTriangle },
+    { id: 'employees' as ViewMode, label: 'Personal', icon: Users },
+    { id: 'scanner' as ViewMode, label: 'Ticketprüfung', icon: Scan },
+    { id: 'messaging' as ViewMode, label: 'Nachrichten', icon: MessageSquare },
+    { id: 'maintenance' as ViewMode, label: 'Wartung', icon: Wrench },
+    { id: 'commands' as ViewMode, label: 'Leitstelle', icon: Zap },
+    { id: 'logs' as ViewMode, label: 'Protokolle', icon: FileText },
   ].filter(item => {
     if (item.id === 'commands' && !isAdmin) return false;
     return true;
@@ -83,16 +93,18 @@ const OperationsDashboard = () => {
 
   return (
     <div className="h-screen bg-[#080c12] text-zinc-100 flex flex-col overflow-hidden">
-      {/* Top Bar - System Status */}
+      {/* Push Notifications (invisible) */}
+      <IncidentNotifications />
+
+      {/* Top Bar */}
       <SystemStatusBar />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar - Compact Navigation */}
+        {/* Left Sidebar */}
         <aside className={cn(
           "bg-[#0b1018] border-r border-[#141e2e] flex flex-col transition-all duration-300 ease-in-out",
           sidebarCollapsed ? "w-[52px]" : "w-44"
         )}>
-          {/* Logo / Brand */}
           <div className={cn(
             "h-12 flex items-center border-b border-[#141e2e] px-2",
             sidebarCollapsed ? "justify-center" : "justify-between"
@@ -115,8 +127,7 @@ const OperationsDashboard = () => {
             )}
           </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 py-2 px-1.5 space-y-0.5">
+          <nav className="flex-1 py-2 px-1.5 space-y-0.5 overflow-auto">
             {navItems.map((item) => {
               const isActive = activeView === item.id;
               return (
@@ -139,7 +150,6 @@ const OperationsDashboard = () => {
             })}
           </nav>
 
-          {/* Bottom */}
           <div className="p-1.5 border-t border-[#141e2e] space-y-1">
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -161,9 +171,8 @@ const OperationsDashboard = () => {
           </div>
         </aside>
 
-        {/* Main Content Area */}
+        {/* Main Content */}
         <main className="flex-1 overflow-hidden flex flex-col">
-          {/* View Header */}
           <div className="h-10 bg-[#0b1018]/80 border-b border-[#141e2e] flex items-center justify-between px-4">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
@@ -191,7 +200,6 @@ const OperationsDashboard = () => {
             </div>
           </div>
 
-          {/* View Content */}
           <div className="flex-1 overflow-auto">
             {activeView === 'center' && <MissionControlView rightExpanded={rightPanelExpanded} onToggleRight={() => setRightPanelExpanded(!rightPanelExpanded)} />}
             {activeView === 'map' && (
@@ -201,19 +209,18 @@ const OperationsDashboard = () => {
                 </div>
               </div>
             )}
-            {activeView === 'incidents' && (
-              <div className="h-full">
-                <IncidentPanel />
+            {activeView === 'incidents' && <div className="h-full"><IncidentPanel /></div>}
+            {activeView === 'employees' && <div className="p-4"><EmployeePanel /></div>}
+            {activeView === 'scanner' && <div className="p-4"><ScannerPanel /></div>}
+            {activeView === 'messaging' && (
+              <div className="p-4 grid grid-cols-2 gap-4 max-w-5xl">
+                <DriverMessaging />
+                <ShiftHandoverPanel />
               </div>
             )}
-            {activeView === 'employees' && (
-              <div className="p-4">
-                <EmployeePanel />
-              </div>
-            )}
-            {activeView === 'scanner' && (
-              <div className="p-4">
-                <ScannerPanel />
+            {activeView === 'maintenance' && (
+              <div className="p-4 max-w-5xl">
+                <MaintenancePlanner />
               </div>
             )}
             {activeView === 'commands' && (
@@ -222,11 +229,7 @@ const OperationsDashboard = () => {
                 <LogsPanel />
               </div>
             )}
-            {activeView === 'logs' && (
-              <div className="p-4 max-w-5xl">
-                <LogsPanel />
-              </div>
-            )}
+            {activeView === 'logs' && <div className="p-4 max-w-5xl"><LogsPanel /></div>}
           </div>
         </main>
       </div>
@@ -234,7 +237,7 @@ const OperationsDashboard = () => {
   );
 };
 
-// ─── Mission Control View (Overview) ────────────────────────────────────────
+// ─── Mission Control View ──────────────────────────────────────────────────
 
 interface MissionControlViewProps {
   rightExpanded: boolean;
@@ -249,32 +252,35 @@ const MissionControlView = ({ rightExpanded, onToggleRight }: MissionControlView
         <KPIPanel />
       </div>
 
-      {/* Main Grid: Map + Incidents + Panels */}
+      {/* Main Grid */}
       <div className="flex-1 p-3 flex gap-3 min-h-0">
-        {/* Left Column: Map + Bottom Panels */}
+        {/* Left Column */}
         <div className="flex-1 flex flex-col gap-3 min-w-0">
           {/* Map */}
           <div className="flex-1 min-h-[250px] rounded-xl overflow-hidden border border-[#1a2436]">
             <LiveMap />
           </div>
 
-          {/* Bottom Panel Row */}
-          <div className="grid grid-cols-2 gap-3 flex-shrink-0" style={{ minHeight: '280px' }}>
+          {/* Bottom Panels */}
+          <div className="grid grid-cols-3 gap-3 flex-shrink-0" style={{ minHeight: '260px' }}>
             <div className="overflow-auto rounded-xl">
               <ScannerPanel />
             </div>
             <div className="overflow-auto rounded-xl">
               <CommandCenter />
             </div>
+            <div className="overflow-auto rounded-xl space-y-3">
+              <WeatherWidget />
+              <OccupancyPanel />
+            </div>
           </div>
         </div>
 
-        {/* Right Column: Incidents + Employee + Logs */}
+        {/* Right Column */}
         <div className={cn(
           "flex flex-col gap-3 transition-all duration-300 flex-shrink-0",
           rightExpanded ? "w-96" : "w-80"
         )}>
-          {/* Toggle */}
           <div className="flex justify-end flex-shrink-0">
             <button
               onClick={onToggleRight}
@@ -285,23 +291,27 @@ const MissionControlView = ({ rightExpanded, onToggleRight }: MissionControlView
             </button>
           </div>
 
-          {/* Incidents */}
-          <div className="flex-1 min-h-[200px] overflow-hidden rounded-xl border border-[#1a2436]">
+          <div className="flex-1 min-h-[180px] overflow-hidden rounded-xl border border-[#1a2436]">
             <IncidentPanel />
           </div>
 
-          {/* Employee Strip */}
+          <div className="flex-shrink-0 rounded-xl">
+            <DelayPrediction />
+          </div>
+
           <div className="flex-shrink-0 rounded-xl">
             <EmployeePanel />
           </div>
 
-          {/* Internal Notes */}
-          <div className="h-[260px] overflow-hidden rounded-xl flex-shrink-0">
+          <div className="flex-shrink-0 rounded-xl">
+            <ShiftHandoverPanel />
+          </div>
+
+          <div className="h-[220px] overflow-hidden rounded-xl flex-shrink-0">
             <NotesPanel />
           </div>
 
-          {/* Logs */}
-          <div className="h-[240px] overflow-hidden rounded-xl flex-shrink-0">
+          <div className="h-[200px] overflow-hidden rounded-xl flex-shrink-0">
             <LogsPanel />
           </div>
         </div>
