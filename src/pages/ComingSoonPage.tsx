@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Lock, Bus, MapPin, Sparkles, Shield, Wifi, Globe, ChevronRight } from "lucide-react";
+import { Lock, Bus, Shield, Wifi, Globe, ChevronRight } from "lucide-react";
 
 // Launch in ~2 months
 const LAUNCH_DATE = new Date("2025-09-17T00:00:00+02:00");
