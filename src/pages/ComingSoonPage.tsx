@@ -195,7 +195,12 @@ const ComingSoonPage = () => {
         ))}
       </div>
 
-      {/* ── Content ── */}
+      {/* ── 3D Bus ── */}
+      <Suspense fallback={null}>
+        <Bus3DScene />
+      </Suspense>
+
+
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6">
         <div className="flex flex-col items-center gap-6 sm:gap-8 md:gap-10 max-w-5xl w-full">
 
