@@ -3,13 +3,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
-import Index from "./pages/Index";
+import ComingSoonPage from "./pages/ComingSoonPage";
 import CookieBanner from "./components/CookieBanner";
 import TravelAdvisorChat from "./components/chat/TravelAdvisorChat";
 
 // Lazy-loaded pages for code splitting
+const Index = lazy(() => import("./pages/Index"));
 const SearchPage = lazy(() => import("./pages/SearchPage"));
 const CheckoutPage = lazy(() => import("./pages/CheckoutPage"));
 const ServicePage = lazy(() => import("./pages/ServicePage"));
@@ -66,6 +67,28 @@ const AdminRedirect = () => {
   return <Navigate to={isDriverOnly ? "/admin/driver" : "/admin/dashboard"} replace />;
 };
 
+// Coming Soon gate: public visitors see countdown, staff sees full site
+const COMING_SOON_ENABLED = true; // Toggle to false to disable
+
+const PublicGate = ({ children }: { children: React.ReactNode }) => {
+  const { user, hasAnyStaffRole, isLoading } = useAuth();
+  const location = useLocation();
+  
+  // Always allow auth, admin, reset-password, legal pages
+  const bypassPaths = ['/auth', '/admin', '/reset-password', '/imprint', '/privacy', '/terms', '/passagierdaten'];
+  const isBypassed = bypassPaths.some(p => location.pathname.startsWith(p));
+  
+  if (isBypassed) return <>{children}</>;
+  if (isLoading) return <PageLoader />;
+  
+  // Staff can see everything
+  if (COMING_SOON_ENABLED && !hasAnyStaffRole) {
+    return <ComingSoonPage />;
+  }
+  
+  return <>{children}</>;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -74,6 +97,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Suspense fallback={<PageLoader />}>
+            <PublicGate>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/search" element={<SearchPage />} />
@@ -121,6 +145,7 @@ const App = () => (
               <Route path="/passagierdaten" element={<PassengerDataPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </PublicGate>
           </Suspense>
           <TravelAdvisorChat />
         </BrowserRouter>
