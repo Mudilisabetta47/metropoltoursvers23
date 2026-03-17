@@ -1,7 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Lock, Bus, Shield, Wifi, Globe, ChevronRight } from "lucide-react";
+
+const Bus3DScene = lazy(() => import("@/components/three/Bus3DScene"));
 
 // Launch in ~2 months
 const LAUNCH_DATE = new Date("2025-09-17T00:00:00+02:00");
@@ -193,7 +195,12 @@ const ComingSoonPage = () => {
         ))}
       </div>
 
-      {/* ── Content ── */}
+      {/* ── 3D Bus ── */}
+      <Suspense fallback={null}>
+        <Bus3DScene />
+      </Suspense>
+
+
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6">
         <div className="flex flex-col items-center gap-6 sm:gap-8 md:gap-10 max-w-5xl w-full">
 
