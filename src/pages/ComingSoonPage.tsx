@@ -264,7 +264,7 @@ const ComingSoonPage = () => {
               </span>
             </h1>
             <p className="text-sm sm:text-base md:text-lg text-white/35 max-w-xl mx-auto leading-relaxed font-light">
-              Premium Busreisen durch den Balkan — komfortabel, sicher und unvergesslich.
+              Premium Busreisen — komfortabel, sicher und unvergesslich.
               <br className="hidden sm:block" />
               Wir starten in Kürze.
             </p>
