@@ -145,6 +145,7 @@ const App = () => (
               <Route path="/passagierdaten" element={<PassengerDataPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </PublicGate>
           </Suspense>
           <TravelAdvisorChat />
         </BrowserRouter>
