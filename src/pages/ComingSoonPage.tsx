@@ -322,7 +322,7 @@ const ComingSoonPage = () => {
           >
             {[
               { icon: Bus, label: "Premium Flotte", sub: "Modernste Busse" },
-              { icon: Globe, label: "8 Länder", sub: "Balkan & mehr" },
+              { icon: Globe, label: "Ganz Europa", sub: "Viele Ziele" },
               { icon: Shield, label: "Sicher reisen", sub: "Versichert" },
               { icon: Wifi, label: "Online buchen", sub: "24/7 Service" },
             ].map((item, i) => (
