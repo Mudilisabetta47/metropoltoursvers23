@@ -38,6 +38,9 @@ const defaultCountries = [
   'Schweiz', 'Ungarn', 'Tschechien', 'Polen', 'Türkei'
 ];
 
+const sanitizePath = (name: string) =>
+  name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'new';
+
 const TourBasicsTab = ({ tour, onChange }: TourBasicsTabProps) => {
   const [newHighlight, setNewHighlight] = useState('');
   const [newTag, setNewTag] = useState('');
