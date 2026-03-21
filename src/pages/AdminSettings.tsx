@@ -522,8 +522,149 @@ const AdminSettings = () => {
     </div>
   );
 
+  const renderTours = () => {
+    const countryGroups: Record<string, typeof toursList> = {};
+    toursList.forEach(t => {
+      if (t.country && t.country !== 'Deutschland') {
+        if (!countryGroups[t.country]) countryGroups[t.country] = [];
+        countryGroups[t.country].push(t);
+      }
+    });
+
+    return (
+      <div className="space-y-4">
+        {/* Default Pickup Stops */}
+        <SectionCard title="Standard-Zustiegsorte (DE)" description="Diese Haltestellen werden automatisch bei jeder neuen Tour vorgeschlagen. Hamburg → Bremen → Hannover ist die Standard-Route.">
+          <div className="space-y-2">
+            {tourTemplates.default_stops.map((stop, i) => (
+              <div key={i} className="flex items-center gap-3 py-2.5 px-3 rounded bg-[#1a1f2a] border border-[#2a3040]">
+                <div className="w-7 h-7 rounded-full bg-emerald-600/20 flex items-center justify-center text-emerald-400 text-xs font-bold">
+                  {stop.sort_order}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-zinc-200">{stop.city}</p>
+                  <p className="text-[10px] text-zinc-500">{stop.location}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-xs text-zinc-300">{stop.surcharge > 0 ? `+${stop.surcharge} €` : 'Inkl.'}</p>
+                  <p className="text-[10px] text-zinc-500">{stop.distance_km} km ab HH</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-zinc-600 mt-2">Hannover = Basishaltestelle (0 € Zuschlag). Zuschläge gelten pro Person für Hin- und Rückfahrt.</p>
+          <SaveButton onClick={() => handleSave("Standard-Zustiegsorte")} />
+        </SectionCard>
+
+        {/* Distance Templates */}
+        <SectionCard title="Entfernungsvorlagen" description="Gespeicherte Distanzen zwischen Standard-Haltestellen und Zielorten für schnelle Routenplanung">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-zinc-500 border-b border-[#2a3040]">
+                  <th className="text-left py-2 px-2">Von</th>
+                  <th className="text-left py-2 px-2">Nach</th>
+                  <th className="text-right py-2 px-2">Entfernung</th>
+                  <th className="text-right py-2 px-2">Fahrzeit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tourTemplates.distance_templates.map((d, i) => (
+                  <tr key={i} className="border-b border-[#1a1f2a] hover:bg-[#1a1f2a]/50">
+                    <td className="py-2 px-2 text-zinc-300">{d.from}</td>
+                    <td className="py-2 px-2 text-zinc-300">{d.to}</td>
+                    <td className="py-2 px-2 text-right text-zinc-200 font-medium">{d.km.toLocaleString()} km</td>
+                    <td className="py-2 px-2 text-right text-zinc-400">ca. {d.hours} Std.</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <SaveButton onClick={() => handleSave("Entfernungsvorlagen")} />
+        </SectionCard>
+
+        {/* Tour Combination by Country */}
+        <SectionCard title="Tour-Kombination nach Land" description="Touren im selben Land oder in der Nähe können automatisch verknüpft und als Empfehlungen angezeigt werden. Deutschland ist ausgenommen.">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs text-zinc-300">Auto-Kombination aktivieren</Label>
+              <Switch
+                checked={tourTemplates.auto_combine}
+                onCheckedChange={v => setTourTemplates(p => ({ ...p, auto_combine: v }))}
+              />
+            </div>
+            <Field label="Ausgeschlossene Länder" hint="Kommagetrennt, z. B. Deutschland">
+              <Input
+                value={tourTemplates.combine_exclude_countries}
+                onChange={e => setTourTemplates(p => ({ ...p, combine_exclude_countries: e.target.value }))}
+                className={inputCls}
+              />
+            </Field>
+          </div>
+
+          {/* Detected country groups */}
+          {Object.keys(countryGroups).length > 0 ? (
+            <div className="space-y-3 mt-4">
+              <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Erkannte Ländergruppen</p>
+              {Object.entries(countryGroups).map(([country, countryTours]) => (
+                <div key={country} className="p-3 rounded bg-[#1a1f2a] border border-[#2a3040]">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Globe className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-xs font-medium text-zinc-200">{country}</span>
+                    <span className="text-[10px] text-zinc-500 ml-auto">
+                      {countryTours.length} {countryTours.length === 1 ? 'Tour' : 'Touren'}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    {countryTours.map(t => (
+                      <div key={t.id} className="flex items-center gap-2 py-1 px-2 rounded bg-[#151920]">
+                        <Navigation className="w-3 h-3 text-zinc-500" />
+                        <span className="text-[11px] text-zinc-300 truncate">{t.destination}</span>
+                        {countryTours.length >= 2 && (
+                          <Link2 className="w-3 h-3 text-emerald-500 ml-auto shrink-0" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {countryTours.length >= 2 && (
+                    <p className="text-[10px] text-emerald-500/70 mt-2 flex items-center gap-1">
+                      <Link2 className="w-3 h-3" />
+                      Diese Touren werden automatisch als Empfehlungen verknüpft
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-4 text-zinc-600 text-xs mt-4">
+              Keine kombinierbaren Touren gefunden. Touren im selben Land (außer DE) werden hier gruppiert.
+            </div>
+          )}
+
+          {/* Single tours that could be combined */}
+          {toursList.filter(t => t.country === 'Deutschland' || !t.country).length > 0 && (
+            <div className="mt-4 p-3 rounded bg-[#1a1f2a]/50 border border-[#2a3040]">
+              <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium mb-2">Nicht kombiniert (Deutschland / ohne Land)</p>
+              <div className="space-y-1">
+                {toursList.filter(t => t.country === 'Deutschland' || !t.country).map(t => (
+                  <div key={t.id} className="flex items-center gap-2 py-1 px-2 text-[11px] text-zinc-500">
+                    <span className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
+                    {t.destination} {t.country && <span className="text-zinc-600">({t.country})</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <SaveButton onClick={() => handleSave("Tour-Kombination")} />
+        </SectionCard>
+      </div>
+    );
+  };
+
   const renderMap: Record<SettingsSection, () => JSX.Element> = {
     general: renderGeneral, booking: renderBooking, routes: renderRoutes,
+    tours: renderTours,
     finance: renderFinance, crm: renderCRM, staff: renderStaff,
     notifications: renderNotifications, templates: renderTemplates,
     operations: renderOperations, vehicles: renderVehicles,
