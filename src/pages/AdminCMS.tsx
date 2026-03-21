@@ -590,7 +590,17 @@ const AdminCMS = () => {
                   </TableCell></TableRow>
                 ) : filteredTours.map(tour => (
                   <TableRow key={tour.id} className="border-[#2a3040] hover:bg-[#1e2430]">
-                    <TableCell className="font-medium text-white text-sm">{tour.destination}</TableCell>
+                    <TableCell className="font-medium text-white text-sm">
+                      <div className="flex items-center gap-1.5">
+                        {tour.destination}
+                        {getTourCombinations(tour.id).length > 0 && (
+                          <Badge className="bg-blue-600/20 text-blue-400 text-[9px] px-1 py-0 gap-0.5">
+                            <Link2 className="w-2.5 h-2.5" />
+                            {getTourCombinations(tour.id).map(c => c.name).join(', ')}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-zinc-400 text-sm">
                       <span>{tour.location}</span>
                       <span className="text-zinc-600 ml-1.5 text-xs">({tour.country})</span>
