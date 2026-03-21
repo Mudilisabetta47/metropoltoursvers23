@@ -156,7 +156,7 @@ const AdminSettings = () => {
   });
 
   const [toursList, setToursList] = useState<{ id: string; destination: string; country: string }[]>([]);
-  const [tourCombinations, setTourCombinations] = useState<Record<string, string[]>>({});
+  
 
   useEffect(() => {
     loadTours();
