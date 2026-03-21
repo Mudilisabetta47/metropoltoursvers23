@@ -472,7 +472,7 @@ VALUES (
   'Hamburg - Kroatien',
   'Fernbuslinie von Hamburg ZOB über Bremen und Hannover nach Kroatien',
   89.99,
-  true
+  false
 );
 
 -- Insert stops
