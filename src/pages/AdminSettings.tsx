@@ -134,9 +134,61 @@ const AdminSettings = () => {
     tuev_reminder_days: "30",
   });
 
+  // Tour templates & combination state
+  const [tourTemplates, setTourTemplates] = useState({
+    auto_combine: true,
+    combine_exclude_countries: "Deutschland",
+    default_stops: [
+      { city: "Hamburg", location: "Hamburg ZOB", surcharge: 29, distance_km: 0, sort_order: 1 },
+      { city: "Bremen", location: "Bremen ZOB", surcharge: 19, distance_km: 120, sort_order: 2 },
+      { city: "Hannover", location: "Hannover ZOB", surcharge: 0, distance_km: 290, sort_order: 3 },
+    ],
+    distance_templates: [
+      { from: "Hamburg", to: "Bremen", km: 120, hours: 1.5 },
+      { from: "Bremen", to: "Hannover", km: 170, hours: 2.0 },
+      { from: "Hamburg", to: "Hannover", km: 290, hours: 3.0 },
+      { from: "Hannover", to: "Lloret de Mar", km: 1650, hours: 18 },
+      { from: "Hannover", to: "Novalja", km: 1200, hours: 14 },
+      { from: "Hannover", to: "Istanbul", km: 2200, hours: 26 },
+      { from: "Hannover", to: "Sanremo", km: 1100, hours: 12 },
+      { from: "Hannover", to: "Österreich", km: 750, hours: 8 },
+    ],
+  });
+
+  const [toursList, setToursList] = useState<{ id: string; destination: string; country: string }[]>([]);
+  const [tourCombinations, setTourCombinations] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    loadTours();
+  }, []);
+
+  const loadTours = async () => {
+    const { data } = await supabase
+      .from('package_tours')
+      .select('id, destination, country')
+      .eq('is_active', true)
+      .order('country');
+    if (data) {
+      setToursList(data);
+      const groups: Record<string, string[]> = {};
+      data.forEach(t => {
+        if (t.country && t.country !== 'Deutschland') {
+          if (!groups[t.country]) groups[t.country] = [];
+          groups[t.country].push(t.id);
+        }
+      });
+      const combos: Record<string, string[]> = {};
+      Object.entries(groups).forEach(([country, ids]) => {
+        if (ids.length >= 2) combos[country] = ids;
+      });
+      setTourCombinations(combos);
+    }
+  };
+
   const handleSave = (section: string) => {
     toast({ title: `✅ ${section} gespeichert` });
   };
+
 
   const inputCls = "bg-[#1a1f2a] border-[#2a3040] text-zinc-100 h-9 text-sm";
 
