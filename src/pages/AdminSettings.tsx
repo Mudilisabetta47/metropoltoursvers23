@@ -177,11 +177,7 @@ const AdminSettings = () => {
           groups[t.country].push(t.id);
         }
       });
-      const combos: Record<string, string[]> = {};
-      Object.entries(groups).forEach(([country, ids]) => {
-        if (ids.length >= 2) combos[country] = ids;
-      });
-      setTourCombinations(combos);
+      // grouping is now done in renderTours directly
     }
   };
 
