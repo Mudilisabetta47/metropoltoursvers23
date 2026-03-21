@@ -1757,6 +1757,75 @@ export type Database = {
           },
         ]
       }
+      tour_combination_members: {
+        Row: {
+          combination_id: string
+          created_at: string
+          id: string
+          sort_order: number
+          tour_id: string
+        }
+        Insert: {
+          combination_id: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          tour_id: string
+        }
+        Update: {
+          combination_id?: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          tour_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tour_combination_members_combination_id_fkey"
+            columns: ["combination_id"]
+            isOneToOne: false
+            referencedRelation: "tour_combinations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tour_combination_members_tour_id_fkey"
+            columns: ["tour_id"]
+            isOneToOne: false
+            referencedRelation: "package_tours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tour_combinations: {
+        Row: {
+          country: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tour_customer_notes: {
         Row: {
           created_at: string

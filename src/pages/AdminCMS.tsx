@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Palmtree, Briefcase, FileText, Plus, Pencil, Trash2, RefreshCw,
-  Star, Tag, UserPlus, Search, Filter, BarChart3, Clock, Settings, MapPin
+  Star, Tag, UserPlus, Search, Filter, BarChart3, Clock, Settings, MapPin,
+  Link2, Unlink, Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -119,10 +120,19 @@ const AdminCMS = () => {
   const [contentDialog, setContentDialog] = useState<{ open: boolean; item: any | null }>({ open: false, item: null });
   const [isSaving, setIsSaving] = useState(false);
 
+  // Tour combination state
+  const [combineDialog, setCombineDialog] = useState(false);
+  const [combineSelectedTours, setCombineSelectedTours] = useState<string[]>([]);
+  const [combineName, setCombineName] = useState("");
+  const [combineDescription, setCombineDescription] = useState("");
+  const [existingCombinations, setExistingCombinations] = useState<any[]>([]);
+  const [combineLoading, setCombineLoading] = useState(false);
+
   useEffect(() => {
     fetchCategories();
     fetchJobs();
     fetchWeekendTrips();
+    fetchCombinations();
   }, []);
 
   const fetchCategories = async () => {
@@ -144,6 +154,89 @@ const AdminCMS = () => {
     const { data } = await (supabase as any).from('weekend_trips').select('*').order('sort_order', { ascending: true });
     setWeekendTrips(data || []);
     setWeekendLoading(false);
+  };
+
+  const fetchCombinations = async () => {
+    const { data } = await supabase
+      .from('tour_combinations')
+      .select('*, tour_combination_members(tour_id)')
+      .order('created_at', { ascending: false });
+    setExistingCombinations(data || []);
+  };
+
+  const openCombineDialog = () => {
+    setCombineSelectedTours([]);
+    setCombineName("");
+    setCombineDescription("");
+    setCombineDialog(true);
+  };
+
+  const toggleCombineTour = (tourId: string) => {
+    setCombineSelectedTours(prev =>
+      prev.includes(tourId) ? prev.filter(id => id !== tourId) : [...prev, tourId]
+    );
+  };
+
+  const handleSaveCombination = async () => {
+    if (combineSelectedTours.length < 2) {
+      toast({ title: "Mindestens 2 Touren auswählen", variant: "destructive" });
+      return;
+    }
+    if (!combineName.trim()) {
+      toast({ title: "Name eingeben", variant: "destructive" });
+      return;
+    }
+
+    setCombineLoading(true);
+    try {
+      // Detect common country
+      const selectedTourData = tours.filter(t => combineSelectedTours.includes(t.id));
+      const countries = [...new Set(selectedTourData.map(t => t.country))];
+      const country = countries.length === 1 ? countries[0] : null;
+
+      const { data: combo, error } = await supabase
+        .from('tour_combinations')
+        .insert({ name: combineName, description: combineDescription || null, country })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const members = combineSelectedTours.map((tourId, i) => ({
+        combination_id: combo.id,
+        tour_id: tourId,
+        sort_order: i,
+      }));
+
+      const { error: memberError } = await supabase
+        .from('tour_combination_members')
+        .insert(members);
+
+      if (memberError) throw memberError;
+
+      toast({ title: "✅ Touren kombiniert", description: `${combineSelectedTours.length} Touren verknüpft. Sitzplätze bleiben unabhängig.` });
+      setCombineDialog(false);
+      fetchCombinations();
+    } catch (err: any) {
+      toast({ title: "Fehler", description: err.message, variant: "destructive" });
+    } finally {
+      setCombineLoading(false);
+    }
+  };
+
+  const handleDeleteCombination = async (comboId: string) => {
+    const { error } = await supabase.from('tour_combinations').delete().eq('id', comboId);
+    if (!error) {
+      toast({ title: "Kombination aufgelöst" });
+      fetchCombinations();
+    }
+  };
+
+  // Get combination info for a tour
+  const getTourCombinations = (tourId: string) => {
+    return existingCombinations.filter(c =>
+      c.tour_combination_members?.some((m: any) => m.tour_id === tourId)
+    );
   };
 
   const filteredWeekendTrips = useMemo(() => {
@@ -466,6 +559,9 @@ const AdminCMS = () => {
                 <SelectItem value="featured">Featured ({featuredTours})</SelectItem>
               </SelectContent>
             </Select>
+            <Button onClick={openCombineDialog} variant="outline" className="border-[#2a3040] text-zinc-300 hover:text-white h-9 text-sm gap-1.5">
+              <Link2 className="w-3.5 h-3.5" />Kombinieren
+            </Button>
             <Button onClick={() => navigate('/admin/tour-builder')} className="bg-emerald-600 hover:bg-emerald-700 h-9 text-sm">
               <Plus className="w-3.5 h-3.5 mr-1.5" />Neue Reise
             </Button>
@@ -494,7 +590,17 @@ const AdminCMS = () => {
                   </TableCell></TableRow>
                 ) : filteredTours.map(tour => (
                   <TableRow key={tour.id} className="border-[#2a3040] hover:bg-[#1e2430]">
-                    <TableCell className="font-medium text-white text-sm">{tour.destination}</TableCell>
+                    <TableCell className="font-medium text-white text-sm">
+                      <div className="flex items-center gap-1.5">
+                        {tour.destination}
+                        {getTourCombinations(tour.id).length > 0 && (
+                          <Badge className="bg-blue-600/20 text-blue-400 text-[9px] px-1 py-0 gap-0.5">
+                            <Link2 className="w-2.5 h-2.5" />
+                            {getTourCombinations(tour.id).map(c => c.name).join(', ')}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-zinc-400 text-sm">
                       <span>{tour.location}</span>
                       <span className="text-zinc-600 ml-1.5 text-xs">({tour.country})</span>
@@ -542,6 +648,60 @@ const AdminCMS = () => {
           <div className="text-xs text-zinc-600 mt-2 px-1">
             {filteredTours.length} von {tours.length} Reisen angezeigt
           </div>
+
+          {/* Existing Combinations */}
+          {existingCombinations.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-sm font-medium text-zinc-300 mb-3 flex items-center gap-2">
+                <Link2 className="w-4 h-4 text-blue-400" />
+                Aktive Kombinationen ({existingCombinations.length})
+              </h3>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {existingCombinations.map(combo => {
+                  const memberTours = tours.filter(t =>
+                    combo.tour_combination_members?.some((m: any) => m.tour_id === t.id)
+                  );
+                  return (
+                    <Card key={combo.id} className="bg-[#1a1f2a] border-[#2a3040]">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <p className="text-sm font-medium text-zinc-200">{combo.name}</p>
+                            {combo.country && (
+                              <Badge className="bg-blue-600/20 text-blue-400 text-[10px] mt-1">{combo.country}</Badge>
+                            )}
+                          </div>
+                          <Button variant="ghost" size="sm" onClick={() => handleDeleteCombination(combo.id)}
+                            className="text-red-400/50 hover:text-red-400 h-6 w-6 p-0" title="Auflösen">
+                            <Unlink className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                        {combo.description && (
+                          <p className="text-[10px] text-zinc-500 mb-2">{combo.description}</p>
+                        )}
+                        <div className="space-y-1">
+                          {memberTours.map(t => (
+                            <div key={t.id} className="flex items-center gap-2 text-xs text-zinc-400 py-0.5">
+                              <MapPin className="w-3 h-3 text-emerald-500 shrink-0" />
+                              <span className="truncate">{t.destination}</span>
+                            </div>
+                          ))}
+                          {combo.tour_combination_members?.length > memberTours.length && (
+                            <p className="text-[10px] text-zinc-600">
+                              +{combo.tour_combination_members.length - memberTours.length} weitere (inaktiv)
+                            </p>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-zinc-600 mt-2 flex items-center gap-1">
+                          <Eye className="w-3 h-3" /> Sitzplätze bleiben unabhängig pro Tour
+                        </p>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         {/* ─── SERVICES TAB ─── */}
@@ -1246,6 +1406,110 @@ const AdminCMS = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setContentDialog({ open: false, item: null })} className="border-[#2a3040]">Abbrechen</Button>
             <Button onClick={handleSaveContent} disabled={isSaving} className="bg-emerald-600 hover:bg-emerald-700">{isSaving ? 'Speichern...' : 'Speichern'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── COMBINE DIALOG ─── */}
+      <Dialog open={combineDialog} onOpenChange={setCombineDialog}>
+        <DialogContent className="bg-[#1a1f2a] border-[#2a3040] text-white max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Link2 className="w-5 h-5 text-blue-400" />
+              Touren kombinieren
+            </DialogTitle>
+            <DialogDescription className="text-zinc-500">
+              Verknüpfe Touren im selben Land/Region als Empfehlungen. Jede Tour behält ihre eigenen Sitzplätze – keine Doppelbuchungen möglich.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label className="text-zinc-400 text-xs">Kombinationsname *</Label>
+              <Input
+                value={combineName}
+                onChange={e => setCombineName(e.target.value)}
+                placeholder="z. B. Kroatien-Paket, Spanien-Reisen..."
+                className="bg-[#151920] border-[#2a3040] mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-zinc-400 text-xs">Beschreibung (optional)</Label>
+              <Input
+                value={combineDescription}
+                onChange={e => setCombineDescription(e.target.value)}
+                placeholder="z. B. Unsere Touren an der Adriaküste"
+                className="bg-[#151920] border-[#2a3040] mt-1"
+              />
+            </div>
+
+            <div>
+              <Label className="text-zinc-400 text-xs mb-2 block">
+                Touren auswählen ({combineSelectedTours.length} gewählt)
+              </Label>
+              <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+                {tours.map(tour => {
+                  const isSelected = combineSelectedTours.includes(tour.id);
+                  const existingCombo = getTourCombinations(tour.id);
+                  return (
+                    <button
+                      key={tour.id}
+                      onClick={() => toggleCombineTour(tour.id)}
+                      className={`w-full flex items-center gap-3 p-2.5 rounded-lg border text-left transition-all ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-600/10'
+                          : 'border-[#2a3040] bg-[#151920] hover:border-zinc-600'
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${
+                        isSelected ? 'border-blue-500 bg-blue-500' : 'border-zinc-600'
+                      }`}>
+                        {isSelected && <span className="text-white text-xs">✓</span>}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-zinc-200 truncate">{tour.destination}</p>
+                        <p className="text-[10px] text-zinc-500">{tour.country} · {tour.location}</p>
+                      </div>
+                      {existingCombo.length > 0 && (
+                        <Badge className="bg-blue-600/20 text-blue-400 text-[9px] px-1.5 shrink-0">
+                          {existingCombo[0].name}
+                        </Badge>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {combineSelectedTours.length >= 2 && (
+              <div className="p-3 rounded-lg bg-emerald-600/10 border border-emerald-600/20">
+                <p className="text-xs text-emerald-400 font-medium mb-1">✅ Vorschau der Kombination</p>
+                <div className="space-y-0.5">
+                  {tours.filter(t => combineSelectedTours.includes(t.id)).map(t => (
+                    <p key={t.id} className="text-[11px] text-zinc-300 flex items-center gap-1.5">
+                      <MapPin className="w-3 h-3 text-emerald-500" />
+                      {t.destination} ({t.country})
+                    </p>
+                  ))}
+                </div>
+                <p className="text-[10px] text-zinc-500 mt-2">
+                  Sitzplätze: Jede Tour behält ihren eigenen Sitzpool. Keine Beeinträchtigung bei Buchungen.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCombineDialog(false)} className="border-[#2a3040]">
+              Abbrechen
+            </Button>
+            <Button
+              onClick={handleSaveCombination}
+              disabled={combineLoading || combineSelectedTours.length < 2 || !combineName.trim()}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {combineLoading ? 'Verknüpfen...' : `${combineSelectedTours.length} Touren verknüpfen`}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
