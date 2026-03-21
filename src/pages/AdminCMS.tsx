@@ -559,6 +559,9 @@ const AdminCMS = () => {
                 <SelectItem value="featured">Featured ({featuredTours})</SelectItem>
               </SelectContent>
             </Select>
+            <Button onClick={openCombineDialog} variant="outline" className="border-[#2a3040] text-zinc-300 hover:text-white h-9 text-sm gap-1.5">
+              <Link2 className="w-3.5 h-3.5" />Kombinieren
+            </Button>
             <Button onClick={() => navigate('/admin/tour-builder')} className="bg-emerald-600 hover:bg-emerald-700 h-9 text-sm">
               <Plus className="w-3.5 h-3.5 mr-1.5" />Neue Reise
             </Button>
