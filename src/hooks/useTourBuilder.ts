@@ -601,11 +601,27 @@ export function useTourBuilder(tourId?: string) {
     if (!tourId) return { error: new Error('No tour ID') };
 
     try {
+      // Strip id from the payload to avoid conflicts
+      const { id: _id, ...payload } = inclusion as TourInclusion & { created_at?: string };
+      
       if (inclusion.id) {
-        const { error } = await client.from('tour_inclusions').update(inclusion).eq('id', inclusion.id);
+        const { error } = await client.from('tour_inclusions').update({
+          icon: payload.icon,
+          title: payload.title,
+          description: payload.description ?? null,
+          category: payload.category || 'included',
+          sort_order: payload.sort_order ?? 0,
+        }).eq('id', inclusion.id);
         if (error) throw error;
       } else {
-        const { error } = await client.from('tour_inclusions').insert({ ...inclusion, tour_id: tourId });
+        const { error } = await client.from('tour_inclusions').insert({
+          tour_id: tourId,
+          icon: payload.icon || 'Check',
+          title: payload.title || '',
+          description: payload.description ?? null,
+          category: payload.category || 'included',
+          sort_order: payload.sort_order ?? 0,
+        });
         if (error) throw error;
       }
       await fetchTour();
