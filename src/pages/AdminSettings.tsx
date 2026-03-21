@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Save, CreditCard, Mail, Building2, Route, Users,
-  Bell, FileText, Activity, Truck, Shield, UserCheck
+  Bell, FileText, Activity, Truck, Shield, UserCheck,
+  MapPin, Link2, Trash2, Plus, Globe, Navigation
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
