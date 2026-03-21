@@ -648,6 +648,60 @@ const AdminCMS = () => {
           <div className="text-xs text-zinc-600 mt-2 px-1">
             {filteredTours.length} von {tours.length} Reisen angezeigt
           </div>
+
+          {/* Existing Combinations */}
+          {existingCombinations.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-sm font-medium text-zinc-300 mb-3 flex items-center gap-2">
+                <Link2 className="w-4 h-4 text-blue-400" />
+                Aktive Kombinationen ({existingCombinations.length})
+              </h3>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {existingCombinations.map(combo => {
+                  const memberTours = tours.filter(t =>
+                    combo.tour_combination_members?.some((m: any) => m.tour_id === t.id)
+                  );
+                  return (
+                    <Card key={combo.id} className="bg-[#1a1f2a] border-[#2a3040]">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <p className="text-sm font-medium text-zinc-200">{combo.name}</p>
+                            {combo.country && (
+                              <Badge className="bg-blue-600/20 text-blue-400 text-[10px] mt-1">{combo.country}</Badge>
+                            )}
+                          </div>
+                          <Button variant="ghost" size="sm" onClick={() => handleDeleteCombination(combo.id)}
+                            className="text-red-400/50 hover:text-red-400 h-6 w-6 p-0" title="Auflösen">
+                            <Unlink className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                        {combo.description && (
+                          <p className="text-[10px] text-zinc-500 mb-2">{combo.description}</p>
+                        )}
+                        <div className="space-y-1">
+                          {memberTours.map(t => (
+                            <div key={t.id} className="flex items-center gap-2 text-xs text-zinc-400 py-0.5">
+                              <MapPin className="w-3 h-3 text-emerald-500 shrink-0" />
+                              <span className="truncate">{t.destination}</span>
+                            </div>
+                          ))}
+                          {combo.tour_combination_members?.length > memberTours.length && (
+                            <p className="text-[10px] text-zinc-600">
+                              +{combo.tour_combination_members.length - memberTours.length} weitere (inaktiv)
+                            </p>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-zinc-600 mt-2 flex items-center gap-1">
+                          <Eye className="w-3 h-3" /> Sitzplätze bleiben unabhängig pro Tour
+                        </p>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         {/* ─── SERVICES TAB ─── */}
