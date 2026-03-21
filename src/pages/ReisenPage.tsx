@@ -505,7 +505,7 @@ const ReisenPage = () => {
                         className="group bg-card rounded-xl border border-border overflow-hidden hover:shadow-elevated hover:border-primary/20 transition-all duration-300 flex flex-col sm:flex-row"
                       >
                         {/* Image */}
-                        <div className="relative w-full sm:w-[260px] h-[200px] sm:h-auto shrink-0 overflow-hidden cursor-pointer"
+                        <div className="relative w-full sm:w-[280px] h-[200px] sm:min-h-[200px] sm:max-h-[220px] shrink-0 overflow-hidden cursor-pointer"
                           onClick={() => navigate(`/reisen/${tour.slug || tour.id}`)}
                         >
                           <img
