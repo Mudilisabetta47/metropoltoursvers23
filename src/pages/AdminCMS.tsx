@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Palmtree, Briefcase, FileText, Plus, Pencil, Trash2, RefreshCw,
-  Star, Tag, UserPlus, Search, Filter, BarChart3, Clock, Settings, MapPin
+  Star, Tag, UserPlus, Search, Filter, BarChart3, Clock, Settings, MapPin,
+  Link2, Unlink, Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
