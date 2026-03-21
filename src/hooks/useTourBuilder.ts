@@ -601,8 +601,8 @@ export function useTourBuilder(tourId?: string) {
     if (!tourId) return { error: new Error('No tour ID') };
 
     try {
-      // Strip id and created_at from the payload to avoid conflicts
-      const { id, created_at, ...payload } = inclusion as TourInclusion;
+      // Strip id from the payload to avoid conflicts
+      const { id: _id, ...payload } = inclusion as TourInclusion & { created_at?: string };
       
       if (inclusion.id) {
         const { error } = await client.from('tour_inclusions').update({
