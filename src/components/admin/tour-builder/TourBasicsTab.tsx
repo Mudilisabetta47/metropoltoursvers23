@@ -439,7 +439,8 @@ const TourBasicsTab = ({ tour, onChange }: TourBasicsTabProps) => {
                   for (const file of files) {
                     const ext = file.name.split('.').pop() || 'jpg';
                     const fileName = `gallery-${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
-                    const path = `tours/${tour?.destination || 'new'}/${fileName}`;
+                    const folderName = sanitizePath(tour?.slug || tour?.destination || 'new');
+                    const path = `tours/${folderName}/${fileName}`;
                     const { error: uploadError } = await supabase.storage
                       .from('tour-images')
                       .upload(path, file, { contentType: file.type, cacheControl: '3600' });
