@@ -20,6 +20,7 @@ type SettingsSection =
   | "general"
   | "booking"
   | "routes"
+  | "tours"
   | "finance"
   | "crm"
   | "staff"
@@ -32,6 +33,7 @@ const sections: { key: SettingsSection; label: string; icon: any; description: s
   { key: "general", label: "Allgemein", icon: Building2, description: "Firmendaten & Grundeinstellungen" },
   { key: "booking", label: "Buchung", icon: FileText, description: "Buchungssystem & Regeln" },
   { key: "routes", label: "Routen & Fahrten", icon: Route, description: "Strecken, Haltestellen, Preise" },
+  { key: "tours", label: "Touren & Vorlagen", icon: MapPin, description: "Standard-Haltestellen, Kombination & Entfernungen" },
   { key: "finance", label: "Finanzen", icon: CreditCard, description: "Preise, Rabatte, Rechnungen" },
   { key: "crm", label: "Kunden / CRM", icon: UserCheck, description: "Kundenverwaltung & Datenschutz" },
   { key: "staff", label: "Mitarbeiter & Rollen", icon: Users, description: "Rollen, Rechte, Sicherheit" },
