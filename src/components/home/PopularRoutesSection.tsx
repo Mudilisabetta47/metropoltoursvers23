@@ -54,7 +54,7 @@ const PopularRoutesSection = () => {
               fromStop,
               toStop,
               price: Math.max(price, 15),
-              duration,
+              duration
             });
           }
         }
@@ -75,7 +75,7 @@ const PopularRoutesSection = () => {
       from: fromStop.name,
       to: toStop.name,
       date: format(tomorrow, "yyyy-MM-dd"),
-      passengers: "1",
+      passengers: "1"
     });
     navigate(`/search?${searchParams.toString()}`);
   };
@@ -89,78 +89,78 @@ const PopularRoutesSection = () => {
             <Skeleton className="h-5 w-96 mx-auto" />
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Skeleton key={i} className="h-24 rounded-xl" />
-            ))}
+            {[1, 2, 3, 4, 5, 6].map((i) =>
+            <Skeleton key={i} className="h-24 rounded-xl" />
+            )}
           </div>
         </div>
-      </section>
-    );
+      </section>);
+
   }
 
   if (routes.length === 0) return null;
 
   return (
     <section className="py-20 lg:py-28">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Beliebte <span className="text-primary">Strecken</span>
-          </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Unsere meistgebuchten Verbindungen – täglich für Sie unterwegs.
-          </p>
-        </div>
+      
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4" role="list" aria-label="Beliebte Busstrecken">
-          {routes.map((route, index) => (
-            <button
-              key={index}
-              onClick={() => handleBookRoute(route.fromStop, route.toStop)}
-              className="group bg-card rounded-xl p-5 border border-border hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-0.5 text-left"
-              role="listitem"
-              aria-label={`${route.fromStop.city} nach ${route.toStop.city}, ab ${route.price}€`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                      {route.fromStop.city}
-                    </span>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                    <span className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                      {route.toStop.city}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5" />
-                      {route.duration}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Bus className="w-3.5 h-3.5" />
-                      Direktverbindung
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-muted-foreground">ab</p>
-                  <p className="text-xl font-bold text-primary">{route.price}€</p>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
 
-        <div className="text-center mt-8">
-          <Button variant="outline" size="lg" onClick={() => navigate("/search")} className="group">
-            Alle Verbindungen suchen
-            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-          </Button>
-        </div>
-      </div>
-    </section>
-  );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      
+    </section>);
+
 };
 
 export default PopularRoutesSection;
