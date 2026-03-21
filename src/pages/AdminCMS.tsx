@@ -156,6 +156,89 @@ const AdminCMS = () => {
     setWeekendLoading(false);
   };
 
+  const fetchCombinations = async () => {
+    const { data } = await supabase
+      .from('tour_combinations')
+      .select('*, tour_combination_members(tour_id)')
+      .order('created_at', { ascending: false });
+    setExistingCombinations(data || []);
+  };
+
+  const openCombineDialog = () => {
+    setCombineSelectedTours([]);
+    setCombineName("");
+    setCombineDescription("");
+    setCombineDialog(true);
+  };
+
+  const toggleCombineTour = (tourId: string) => {
+    setCombineSelectedTours(prev =>
+      prev.includes(tourId) ? prev.filter(id => id !== tourId) : [...prev, tourId]
+    );
+  };
+
+  const handleSaveCombination = async () => {
+    if (combineSelectedTours.length < 2) {
+      toast({ title: "Mindestens 2 Touren auswählen", variant: "destructive" });
+      return;
+    }
+    if (!combineName.trim()) {
+      toast({ title: "Name eingeben", variant: "destructive" });
+      return;
+    }
+
+    setCombineLoading(true);
+    try {
+      // Detect common country
+      const selectedTourData = tours.filter(t => combineSelectedTours.includes(t.id));
+      const countries = [...new Set(selectedTourData.map(t => t.country))];
+      const country = countries.length === 1 ? countries[0] : null;
+
+      const { data: combo, error } = await supabase
+        .from('tour_combinations')
+        .insert({ name: combineName, description: combineDescription || null, country })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const members = combineSelectedTours.map((tourId, i) => ({
+        combination_id: combo.id,
+        tour_id: tourId,
+        sort_order: i,
+      }));
+
+      const { error: memberError } = await supabase
+        .from('tour_combination_members')
+        .insert(members);
+
+      if (memberError) throw memberError;
+
+      toast({ title: "✅ Touren kombiniert", description: `${combineSelectedTours.length} Touren verknüpft. Sitzplätze bleiben unabhängig.` });
+      setCombineDialog(false);
+      fetchCombinations();
+    } catch (err: any) {
+      toast({ title: "Fehler", description: err.message, variant: "destructive" });
+    } finally {
+      setCombineLoading(false);
+    }
+  };
+
+  const handleDeleteCombination = async (comboId: string) => {
+    const { error } = await supabase.from('tour_combinations').delete().eq('id', comboId);
+    if (!error) {
+      toast({ title: "Kombination aufgelöst" });
+      fetchCombinations();
+    }
+  };
+
+  // Get combination info for a tour
+  const getTourCombinations = (tourId: string) => {
+    return existingCombinations.filter(c =>
+      c.tour_combination_members?.some((m: any) => m.tour_id === tourId)
+    );
+  };
+
   const filteredWeekendTrips = useMemo(() => {
     if (!weekendSearch) return weekendTrips;
     const q = weekendSearch.toLowerCase();
