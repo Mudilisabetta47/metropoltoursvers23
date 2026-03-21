@@ -101,65 +101,6 @@ const PopularRoutesSection = () => {
   if (routes.length === 0) return null;
 
   return (
-    <section className="py-20 lg:py-28">
-      
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      
-    </section>);
 
 };
 
