@@ -120,10 +120,19 @@ const AdminCMS = () => {
   const [contentDialog, setContentDialog] = useState<{ open: boolean; item: any | null }>({ open: false, item: null });
   const [isSaving, setIsSaving] = useState(false);
 
+  // Tour combination state
+  const [combineDialog, setCombineDialog] = useState(false);
+  const [combineSelectedTours, setCombineSelectedTours] = useState<string[]>([]);
+  const [combineName, setCombineName] = useState("");
+  const [combineDescription, setCombineDescription] = useState("");
+  const [existingCombinations, setExistingCombinations] = useState<any[]>([]);
+  const [combineLoading, setCombineLoading] = useState(false);
+
   useEffect(() => {
     fetchCategories();
     fetchJobs();
     fetchWeekendTrips();
+    fetchCombinations();
   }, []);
 
   const fetchCategories = async () => {
