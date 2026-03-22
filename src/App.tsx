@@ -134,6 +134,8 @@ const App = () => (
               <Route path="/admin/cms" element={<AdminCMS />} />
               <Route path="/admin/tour-builder" element={<AdminTourBuilder />} />
               <Route path="/admin/tour-builder/:tourId" element={<AdminTourBuilder />} />
+              <Route path="/admin/weekend-trip-builder" element={<AdminWeekendTripBuilder />} />
+              <Route path="/admin/weekend-trip-builder/:tripId" element={<AdminWeekendTripBuilder />} />
               <Route path="/admin/tour-bookings" element={<AdminTourBookings />} />
               <Route path="/admin/bus-bookings" element={<AdminDashboard />} />
               <Route path="/admin/employees" element={<AdminEmployees />} />
