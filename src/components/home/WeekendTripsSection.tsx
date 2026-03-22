@@ -7,22 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRight, MapPin, Calendar, Bus, ChevronLeft, ChevronRight } from "lucide-react";
 
-interface Route {
+interface WeekendTrip {
   id: string;
-  name: string;
-  description: string;
+  destination: string;
+  slug: string;
+  image_url: string | null;
+  short_description: string | null;
   base_price: number;
+  departure_city: string;
+  is_active: boolean;
 }
-
-const DESTINATION_IMAGES: Record<string, string> = {
-  Kopenhagen: "https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?w=400&q=80",
-  Amsterdam: "https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=400&q=80",
-  Paris: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&q=80",
-  Rom: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=400&q=80",
-  Prag: "https://images.unsplash.com/photo-1541849546-216549ae216d?w=400&q=80",
-  Wien: "https://images.unsplash.com/photo-1516550893923-42d28e5677af?w=400&q=80",
-  Barcelona: "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&q=80",
-};
 
 const WeekendTripsSection = () => {
   const navigate = useNavigate();
@@ -30,36 +24,29 @@ const WeekendTripsSection = () => {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [totalCards, setTotalCards] = useState(0);
 
-  const { data: routes, isLoading } = useQuery({
-    queryKey: ["weekend-routes-preview"],
+  const { data: trips, isLoading } = useQuery({
+    queryKey: ["weekend-trips-home"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("routes")
+      const { data, error } = await (supabase as any)
+        .from("weekend_trips")
         .select("*")
         .eq("is_active", true)
-        .ilike("name", "Hamburg -%");
+        .order("sort_order");
       if (error) throw error;
-      return data as Route[];
+      return data as WeekendTrip[];
     },
   });
-
-  useEffect(() => {
-    if (routes) setTotalCards(routes.length);
-  }, [routes]);
 
   const updateScrollState = () => {
     const el = scrollRef.current;
     if (!el) return;
     setCanScrollLeft(el.scrollLeft > 10);
     setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
-    
-    // Calculate active index based on scroll position
     const cardWidth = el.querySelector("div")?.offsetWidth || 300;
     const gap = 24;
     const index = Math.round(el.scrollLeft / (cardWidth + gap));
-    setActiveIndex(Math.min(index, totalCards - 1));
+    setActiveIndex(Math.min(index, (trips?.length || 1) - 1));
   };
 
   const scroll = (direction: "left" | "right") => {
@@ -73,13 +60,9 @@ const WeekendTripsSection = () => {
     const el = scrollRef.current;
     if (!el) return;
     const cardWidth = el.querySelector("div")?.offsetWidth || 300;
-    const gap = 24;
-    el.scrollTo({ left: index * (cardWidth + gap), behavior: "smooth" });
+    el.scrollTo({ left: index * (cardWidth + 24), behavior: "smooth" });
   };
 
-  const getDestination = (routeName: string) => routeName.split(" - ")[1] || routeName;
-
-  // Skeleton loading state
   if (isLoading) {
     return (
       <section className="py-20 lg:py-28 bg-muted/30">
@@ -101,7 +84,7 @@ const WeekendTripsSection = () => {
     );
   }
 
-  if (!routes || routes.length === 0) return null;
+  if (!trips || trips.length === 0) return null;
 
   return (
     <section className="py-20 lg:py-28 bg-muted/30">
@@ -122,27 +105,15 @@ const WeekendTripsSection = () => {
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => scroll("left")}
-              disabled={!canScrollLeft}
-              className="w-10 h-10 rounded-full bg-card shadow-sm border border-border flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              aria-label="Vorherige Wochenendtrips anzeigen"
-            >
+            <button onClick={() => scroll("left")} disabled={!canScrollLeft}
+              className="w-10 h-10 rounded-full bg-card shadow-sm border border-border flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
               <ChevronLeft className="w-5 h-5 text-foreground" />
             </button>
-            <button
-              onClick={() => scroll("right")}
-              disabled={!canScrollRight}
-              className="w-10 h-10 rounded-full bg-card shadow-sm border border-border flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              aria-label="Weitere Wochenendtrips anzeigen"
-            >
+            <button onClick={() => scroll("right")} disabled={!canScrollRight}
+              className="w-10 h-10 rounded-full bg-card shadow-sm border border-border flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
               <ChevronRight className="w-5 h-5 text-foreground" />
             </button>
-            <Button
-              variant="outline"
-              onClick={() => navigate("/wochenendtrips")}
-              className="ml-2 hidden md:inline-flex"
-            >
+            <Button variant="outline" onClick={() => navigate("/wochenendtrips")} className="ml-2 hidden md:inline-flex">
               Alle Ziele
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
@@ -150,78 +121,55 @@ const WeekendTripsSection = () => {
         </div>
 
         {/* Scrollable Cards */}
-        <div
-          ref={scrollRef}
-          onScroll={updateScrollState}
+        <div ref={scrollRef} onScroll={updateScrollState}
           className="flex gap-6 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-4 px-4 pb-4"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-          role="list"
-          aria-label="Wochenendtrip-Ziele"
-        >
-          {routes.map((route) => {
-            const destination = getDestination(route.name);
-            const image = DESTINATION_IMAGES[destination];
-
-            return (
-              <div
-                key={route.id}
-                role="listitem"
-                aria-label={`Wochenendtrip nach ${destination} ab ${route.base_price}€`}
-                className="group relative rounded-2xl overflow-hidden cursor-pointer flex-shrink-0 snap-start w-[280px] sm:w-[300px] lg:w-[calc(25%-18px)]"
-                onClick={() => navigate(`/wochenendtrips/${destination}`)}
-              >
-                {/* Image */}
-                <div className="aspect-[4/5] relative">
-                  <img
-                    src={image || "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400&q=80"}
-                    alt={`Wochenendtrip nach ${destination}`}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                </div>
-
-                {/* Content */}
-                <div className="absolute bottom-0 left-0 right-0 p-5">
-                  <div className="flex items-center gap-2 text-white/70 text-xs mb-2">
-                    <MapPin className="w-3 h-3" />
-                    Ab Hamburg
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-1">{destination}</h3>
-                  <div className="flex items-center justify-between">
-                    <span className="text-white/80 text-sm">
-                      ab <span className="text-white font-bold text-lg">{route.base_price}€</span>
-                    </span>
-                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-primary transition-colors">
-                      <ArrowRight className="w-4 h-4 text-white" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Badge */}
-                <Badge className="absolute top-4 right-4 bg-primary border-0">
-                  <Bus className="w-3 h-3 mr-1" />
-                  Wochenendtrip
-                </Badge>
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+          {trips.map((trip) => (
+            <div
+              key={trip.id}
+              className="group relative rounded-2xl overflow-hidden cursor-pointer flex-shrink-0 snap-start w-[280px] sm:w-[300px] lg:w-[calc(25%-18px)]"
+              onClick={() => navigate(`/wochenendtrips/${trip.slug}`)}
+            >
+              <div className="aspect-[4/5] relative">
+                <img
+                  src={trip.image_url || "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400&q=80"}
+                  alt={`Wochenendtrip nach ${trip.destination}`}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               </div>
-            );
-          })}
+              <div className="absolute bottom-0 left-0 right-0 p-5">
+                <div className="flex items-center gap-2 text-white/70 text-xs mb-2">
+                  <MapPin className="w-3 h-3" />
+                  Ab {trip.departure_city}
+                </div>
+                <h3 className="text-xl font-bold text-white mb-1">{trip.destination}</h3>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/80 text-sm">
+                    ab <span className="text-white font-bold text-lg">{trip.base_price}€</span>
+                  </span>
+                  <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-primary transition-colors">
+                    <ArrowRight className="w-4 h-4 text-white" />
+                  </div>
+                </div>
+              </div>
+              <Badge className="absolute top-4 right-4 bg-primary border-0">
+                <Bus className="w-3 h-3 mr-1" />
+                Wochenendtrip
+              </Badge>
+            </div>
+          ))}
         </div>
 
         {/* Scroll Dots */}
-        {routes.length > 4 && (
+        {trips.length > 4 && (
           <div className="flex justify-center gap-2 mt-6">
-            {routes.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => scrollToIndex(index)}
+            {trips.map((_, index) => (
+              <button key={index} onClick={() => scrollToIndex(index)}
                 className={`h-2.5 rounded-full transition-all duration-300 ${
-                  index === activeIndex
-                    ? "bg-primary w-8"
-                    : "bg-primary/30 hover:bg-primary/50 w-2.5"
-                }`}
-                aria-label={`Zum ${index + 1}. Ziel scrollen`}
-              />
+                  index === activeIndex ? "bg-primary w-8" : "bg-primary/30 hover:bg-primary/50 w-2.5"
+                }`} />
             ))}
           </div>
         )}

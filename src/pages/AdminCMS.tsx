@@ -908,9 +908,9 @@ const AdminCMS = () => {
               <Input value={weekendSearch} onChange={e => setWeekendSearch(e.target.value)}
                 placeholder="Ziel suchen..." className="pl-9 bg-[#1a1f2a] border-[#2a3040] text-sm h-9" />
             </div>
-            <Button onClick={() => setWeekendDialog({ open: true, trip: { destination: '', slug: '', country: 'Europa', base_price: 0, departure_city: 'Hamburg', departure_point: 'ZOB', highlights: [], inclusions: ['Hin- und Rückfahrt im Komfortbus', 'Kostenloses WLAN an Bord', 'Steckdosen am Sitzplatz', 'Erfahrener Busfahrer', 'Stadtplan & Infomaterial'], not_included: ['Übernachtung', 'Verpflegung', 'Eintritte & Führungen'], tags: [], gallery_images: [], via_stops: [], is_active: true, is_featured: false, sort_order: weekendTrips.length }, isNew: true })}
+            <Button onClick={() => navigate('/admin/weekend-trip-builder')}
               className="bg-sky-600 hover:bg-sky-700 h-9 text-sm">
-              <Plus className="w-3.5 h-3.5 mr-1.5" />Neuer Wochenendtrip
+              <Plus className="w-3.5 h-3.5 mr-1.5" />Neuer Wochenendtrip (Builder)
             </Button>
           </div>
 
@@ -958,7 +958,7 @@ const AdminCMS = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-0.5">
-                        <Button variant="ghost" size="sm" onClick={() => setWeekendDialog({ open: true, trip: { ...trip }, isNew: false })}
+                        <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/weekend-trip-builder/${trip.id}`)}
                           className="text-zinc-400 hover:text-white h-7 w-7 p-0">
                           <Pencil className="w-3.5 h-3.5" />
                         </Button>
