@@ -12,32 +12,22 @@ import {
   Armchair, Star, TrendingUp, Sparkles,
 } from "lucide-react";
 
-interface Route {
+interface WeekendTrip {
   id: string;
-  name: string;
-  description: string;
+  destination: string;
+  slug: string;
+  country: string;
+  image_url: string | null;
+  short_description: string | null;
+  highlights: string[];
+  duration: string | null;
+  distance: string | null;
   base_price: number;
+  departure_city: string;
+  via_stops: { city: string; name: string; surcharge: number }[];
   is_active: boolean;
+  is_featured: boolean;
 }
-
-interface Stop {
-  id: string;
-  route_id: string;
-  name: string;
-  city: string;
-  stop_order: number;
-  price_from_start: number;
-}
-
-const DESTINATION_META: Record<string, { image: string; highlights: string[]; duration: string; distance: string }> = {
-  Kopenhagen: { image: "https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?w=800&q=80", highlights: ["Nyhavn", "Tivoli", "Meerjungfrau"], duration: "7,5 Std.", distance: "586 km" },
-  Amsterdam: { image: "https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=800&q=80", highlights: ["Grachten", "Van Gogh Museum", "Anne Frank Haus"], duration: "6,5 Std.", distance: "625 km" },
-  Paris: { image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80", highlights: ["Eiffelturm", "Louvre", "Champs-Élysées"], duration: "10 Std.", distance: "1.023 km" },
-  Rom: { image: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800&q=80", highlights: ["Kolosseum", "Vatikan", "Trevi-Brunnen"], duration: "17 Std.", distance: "1.765 km" },
-  Prag: { image: "https://images.unsplash.com/photo-1541849546-216549ae216d?w=800&q=80", highlights: ["Karlsbrücke", "Prager Burg", "Altstadt"], duration: "8 Std.", distance: "758 km" },
-  Wien: { image: "https://images.unsplash.com/photo-1516550893923-42d28e5677af?w=800&q=80", highlights: ["Schönbrunn", "Stephansdom", "Prater"], duration: "11 Std.", distance: "1.081 km" },
-  Barcelona: { image: "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80", highlights: ["Sagrada Familia", "Park Güell", "La Rambla"], duration: "17,5 Std.", distance: "1.904 km" },
-};
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -50,32 +40,18 @@ const fadeUp = {
 const WeekendTripsPage = () => {
   const navigate = useNavigate();
 
-  const { data: routes, isLoading: routesLoading } = useQuery({
-    queryKey: ["weekend-routes"],
+  const { data: trips, isLoading } = useQuery({
+    queryKey: ["weekend-trips-page"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("routes").select("*").eq("is_active", true).ilike("name", "Hamburg -%");
+      const { data, error } = await (supabase as any)
+        .from("weekend_trips")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order");
       if (error) throw error;
-      return data as Route[];
+      return data as WeekendTrip[];
     },
   });
-
-  const { data: stops } = useQuery({
-    queryKey: ["route-stops"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("stops").select("*").order("stop_order");
-      if (error) throw error;
-      return data as Stop[];
-    },
-  });
-
-  const getDestinationCity = (route: Route) => {
-    const routeStops = stops?.filter((s) => s.route_id === route.id) || [];
-    const lastStop = routeStops.sort((a, b) => b.stop_order - a.stop_order)[0];
-    return lastStop?.city || route.name.split(" - ")[1] || "";
-  };
-
-  const getRouteStops = (routeId: string) =>
-    (stops?.filter((s) => s.route_id === routeId) || []).sort((a, b) => a.stop_order - b.stop_order);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -146,7 +122,7 @@ const WeekendTripsPage = () => {
               </h2>
             </motion.div>
 
-            {routesLoading ? (
+            {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <div key={i} className="rounded-2xl overflow-hidden">
@@ -161,84 +137,79 @@ const WeekendTripsPage = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {routes?.map((route, i) => {
-                  const destination = getDestinationCity(route);
-                  const meta = DESTINATION_META[destination];
-                  const routeStops = getRouteStops(route.id);
+                {trips?.map((trip, i) => (
+                  <motion.div
+                    key={trip.id}
+                    custom={i}
+                    variants={fadeUp}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true }}
+                    className="group card-elevated overflow-hidden cursor-pointer border border-transparent hover:border-primary/30 transition-all"
+                    onClick={() => navigate(`/wochenendtrips/${trip.slug}`)}
+                  >
+                    {/* Image */}
+                    <div className="relative h-52 overflow-hidden">
+                      <img
+                        src={trip.image_url || "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80"}
+                        alt={`Wochenendtrip nach ${trip.destination}`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <h3 className="text-2xl font-bold text-white">{trip.destination}</h3>
+                        <p className="text-white/80 text-sm mt-1">{trip.short_description}</p>
+                      </div>
+                      <Badge className="absolute top-4 right-4 bg-primary border-0 shadow-lg text-sm">
+                        ab {trip.base_price}€
+                      </Badge>
+                    </div>
 
-                  return (
-                    <motion.div
-                      key={route.id}
-                      custom={i}
-                      variants={fadeUp}
-                      initial="hidden"
-                      whileInView="visible"
-                      viewport={{ once: true }}
-                      className="group card-elevated overflow-hidden cursor-pointer border border-transparent hover:border-primary/30 transition-all"
-                      onClick={() => navigate(`/wochenendtrips/${destination}`)}
-                    >
-                      {/* Image */}
-                      <div className="relative h-52 overflow-hidden">
-                        <img
-                          src={meta?.image || "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80"}
-                          alt={`Wochenendtrip nach ${destination}`}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                        <div className="absolute bottom-4 left-4 right-4">
-                          <h3 className="text-2xl font-bold text-white">{destination}</h3>
-                          <p className="text-white/80 text-sm mt-1">{route.description}</p>
+                    {/* Content */}
+                    <div className="p-5">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="w-4 h-4 text-primary" />
+                          {trip.duration || "–"}
                         </div>
-                        <Badge className="absolute top-4 right-4 bg-primary border-0 shadow-lg text-sm">
-                          ab {route.base_price}€
-                        </Badge>
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="w-4 h-4 text-primary" />
+                          {trip.distance || "–"}
+                        </div>
                       </div>
 
-                      {/* Content */}
-                      <div className="p-5">
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                          <div className="flex items-center gap-1.5">
-                            <Clock className="w-4 h-4 text-primary" />
-                            {meta?.duration || "–"}
+                      {/* Stops */}
+                      <div className="flex items-center gap-1.5 mb-4 text-xs flex-wrap">
+                        <span className="text-muted-foreground">{trip.departure_city}</span>
+                        {(trip.via_stops || []).map((stop, idx) => (
+                          <div key={idx} className="flex items-center">
+                            <ArrowRight className="w-3 h-3 mx-1 text-muted-foreground/40" />
+                            <span className="text-muted-foreground">{stop.city}</span>
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <MapPin className="w-4 h-4 text-primary" />
-                            {meta?.distance || "–"}
-                          </div>
-                        </div>
+                        ))}
+                        <ArrowRight className="w-3 h-3 mx-1 text-muted-foreground/40" />
+                        <span className="font-bold text-primary">{trip.destination}</span>
+                      </div>
 
-                        {/* Stops */}
-                        <div className="flex items-center gap-1.5 mb-4 text-xs flex-wrap">
-                          {routeStops.map((stop, idx) => (
-                            <div key={stop.id} className="flex items-center">
-                              <span className={idx === routeStops.length - 1 ? "font-bold text-primary" : "text-muted-foreground"}>
-                                {stop.city}
-                              </span>
-                              {idx < routeStops.length - 1 && <ArrowRight className="w-3 h-3 mx-1 text-muted-foreground/40" />}
-                            </div>
+                      {/* Highlights */}
+                      {trip.highlights?.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mb-5">
+                          {trip.highlights.slice(0, 3).map((h) => (
+                            <Badge key={h} variant="secondary" className="text-xs rounded-full">
+                              <Star className="w-3 h-3 mr-1" />{h}
+                            </Badge>
                           ))}
                         </div>
+                      )}
 
-                        {/* Highlights */}
-                        {meta?.highlights && (
-                          <div className="flex flex-wrap gap-1.5 mb-5">
-                            {meta.highlights.map((h) => (
-                              <Badge key={h} variant="secondary" className="text-xs rounded-full">
-                                <Star className="w-3 h-3 mr-1" />{h}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-
-                        <Button className="w-full gap-2">
-                          <Bus className="w-4 h-4" />
-                          Jetzt buchen
-                        </Button>
-                      </div>
-                    </motion.div>
-                  );
-                })}
+                      <Button className="w-full gap-2">
+                        <Bus className="w-4 h-4" />
+                        Jetzt buchen
+                      </Button>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
             )}
           </div>
