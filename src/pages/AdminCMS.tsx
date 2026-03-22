@@ -958,7 +958,7 @@ const AdminCMS = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-0.5">
-                        <Button variant="ghost" size="sm" onClick={() => setWeekendDialog({ open: true, trip: { ...trip }, isNew: false })}
+                        <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/weekend-trip-builder/${trip.id}`)}
                           className="text-zinc-400 hover:text-white h-7 w-7 p-0">
                           <Pencil className="w-3.5 h-3.5" />
                         </Button>
