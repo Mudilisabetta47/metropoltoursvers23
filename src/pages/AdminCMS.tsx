@@ -323,19 +323,27 @@ const AdminCMS = () => {
   };
 
   const handleSaveWeekendTrip = async () => {
-    if (!weekendDialog.trip?.destination) return;
+    if (!weekendDialog.trip?.destination || !weekendDialog.trip?.slug) {
+      toast({ title: "Bitte Ziel und Slug ausfüllen", variant: "destructive" });
+      return;
+    }
     setIsSaving(true);
     try {
+      const { id, created_at: _ca, updated_at: _ua, ...payload } = weekendDialog.trip as any;
       if (weekendDialog.isNew) {
-        await (supabase as any).from('weekend_trips').insert(weekendDialog.trip);
+        const { error } = await (supabase as any).from('weekend_trips').insert(payload);
+        if (error) throw error;
       } else {
-        const { id, created_at: _ca, updated_at: _ua, ...updates } = weekendDialog.trip as any;
-        await (supabase as any).from('weekend_trips').update(updates).eq('id', id);
+        const { error } = await (supabase as any).from('weekend_trips').update(payload).eq('id', id);
+        if (error) throw error;
       }
       toast({ title: weekendDialog.isNew ? "Wochenendtrip erstellt" : "Wochenendtrip aktualisiert" });
       setWeekendDialog({ open: false, trip: null, isNew: false });
       fetchWeekendTrips();
-    } catch { toast({ title: "Fehler", variant: "destructive" }); }
+    } catch (err: any) {
+      console.error('Weekend trip save error:', err);
+      toast({ title: "Fehler beim Speichern", description: err?.message || 'Unbekannter Fehler', variant: "destructive" });
+    }
     setIsSaving(false);
   };
 
