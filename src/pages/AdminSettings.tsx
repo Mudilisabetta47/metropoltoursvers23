@@ -156,11 +156,38 @@ const AdminSettings = () => {
   });
 
   const [toursList, setToursList] = useState<{ id: string; destination: string; country: string }[]>([]);
-  
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
   useEffect(() => {
     loadTours();
+    loadSettings();
   }, []);
+
+  const loadSettings = async () => {
+    try {
+      const { data } = await supabase.from('app_settings').select('section_key, settings');
+      if (data) {
+        const map: Record<string, any> = {};
+        data.forEach(row => { map[row.section_key] = row.settings; });
+        if (map.general) setGeneral(p => ({ ...p, ...map.general }));
+        if (map.booking) setBooking(p => ({ ...p, ...map.booking }));
+        if (map.routes) setRouteSettings(p => ({ ...p, ...map.routes }));
+        if (map.finance) setFinance(p => ({ ...p, ...map.finance }));
+        if (map.crm) setCrm(p => ({ ...p, ...map.crm }));
+        if (map.staff) setStaff(p => ({ ...p, ...map.staff }));
+        if (map.notifications) setNotifications(p => ({ ...p, ...map.notifications }));
+        if (map.templates) setTemplates(p => ({ ...p, ...map.templates }));
+        if (map.operations) setOps(p => ({ ...p, ...map.operations }));
+        if (map.vehicles) setVehicles(p => ({ ...p, ...map.vehicles }));
+        if (map.tours) setTourTemplates(p => ({ ...p, ...map.tours }));
+      }
+    } catch (e) {
+      console.error('Error loading settings:', e);
+    } finally {
+      setIsLoadingSettings(false);
+    }
+  };
 
   const loadTours = async () => {
     const { data } = await supabase
@@ -170,19 +197,40 @@ const AdminSettings = () => {
       .order('country');
     if (data) {
       setToursList(data);
-      const groups: Record<string, string[]> = {};
-      data.forEach(t => {
-        if (t.country && t.country !== 'Deutschland') {
-          if (!groups[t.country]) groups[t.country] = [];
-          groups[t.country].push(t.id);
-        }
-      });
-      // grouping is now done in renderTours directly
     }
   };
 
-  const handleSave = (section: string) => {
-    toast({ title: `✅ ${section} gespeichert` });
+  const sectionStateMap: Record<string, any> = {
+    general, booking, routes: routeSettings, finance, crm, staff,
+    notifications, templates, operations: ops, vehicles, tours: tourTemplates,
+  };
+
+  const handleSave = async (label: string) => {
+    // Find which section_key maps to this label
+    const sectionKeyMap: Record<string, string> = {
+      'Firmendaten': 'general', 'Regionale Einstellungen': 'general',
+      'Buchungseinstellungen': 'booking', 'Routen-Einstellungen': 'routes',
+      'Finanz-Einstellungen': 'finance', 'CRM-Einstellungen': 'crm',
+      'Mitarbeiter-Einstellungen': 'staff', 'Benachrichtigungen': 'notifications',
+      'Vorlagen': 'templates', 'Leitstand-Einstellungen': 'operations',
+      'Fahrzeug-Einstellungen': 'vehicles', 'Standard-Zustiegsorte': 'tours',
+      'Entfernungsvorlagen': 'tours', 'Tour-Kombination': 'tours',
+    };
+    const sectionKey = sectionKeyMap[label] || activeSection;
+    const settings = sectionStateMap[sectionKey];
+
+    setIsSaving(true);
+    const { error } = await supabase.from('app_settings').upsert(
+      { section_key: sectionKey, settings, updated_at: new Date().toISOString() },
+      { onConflict: 'section_key' }
+    );
+    setIsSaving(false);
+
+    if (error) {
+      toast({ title: `❌ Fehler beim Speichern`, description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: `✅ ${label} gespeichert` });
+    }
   };
 
 
