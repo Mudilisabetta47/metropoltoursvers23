@@ -156,10 +156,12 @@ const AdminSettings = () => {
   });
 
   const [toursList, setToursList] = useState<{ id: string; destination: string; country: string }[]>([]);
-  
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
   useEffect(() => {
     loadTours();
+    loadSettings();
   }, []);
 
   const loadTours = async () => {
