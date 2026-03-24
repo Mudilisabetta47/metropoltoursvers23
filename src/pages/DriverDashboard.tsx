@@ -3,7 +3,7 @@ import { Html5Qrcode } from "html5-qrcode";
 import {
   Scan, CheckCircle2, XCircle, AlertTriangle, Loader2,
   LogOut, Bus, Clock, Camera, CameraOff,
-  History, Shield, List
+  History, Shield, List, CalendarDays
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,12 +13,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format, startOfWeek, addDays } from "date-fns";
 import { de } from "date-fns/locale";
 
-type DriverTab = "scan" | "history";
+type DriverTab = "scan" | "history" | "shifts";
 
-// Bot protection: client-side validation & cooldown
 const QR_PAYLOAD_REGEX = /^[a-zA-Z0-9\-_.]+$/;
 const MAX_PAYLOAD_LENGTH = 200;
 const SCAN_COOLDOWN_MS = 2000;
@@ -44,6 +43,7 @@ const DriverDashboard = () => {
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [scanning, setScanning] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
+  const [cameraStarting, setCameraStarting] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const lastScanTimeRef = useRef<number>(0);
   const scannerContainerId = "qr-reader";
@@ -52,14 +52,29 @@ const DriverDashboard = () => {
   const [scanHistory, setScanHistory] = useState<any[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
+  // Shifts state
+  const [shifts, setShifts] = useState<any[]>([]);
+  const [shiftsLoading, setShiftsLoading] = useState(false);
+
   // Cleanup camera on unmount
   useEffect(() => {
     return () => {
-      if (scannerRef.current?.isScanning) {
-        scannerRef.current.stop().catch(() => {});
+      if (scannerRef.current) {
+        try {
+          if (scannerRef.current.isScanning) {
+            scannerRef.current.stop().catch(() => {});
+          }
+        } catch {}
       }
     };
   }, []);
+
+  // Stop camera when leaving scan tab
+  useEffect(() => {
+    if (activeTab !== "scan" && cameraActive) {
+      stopCamera();
+    }
+  }, [activeTab]);
 
   const fetchHistory = useCallback(async () => {
     if (!user) return;
@@ -79,86 +94,128 @@ const DriverDashboard = () => {
     }
   }, [user]);
 
+  const fetchShifts = useCallback(async () => {
+    if (!user) return;
+    setShiftsLoading(true);
+    try {
+      const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+      const weekEnd = addDays(weekStart, 13); // Show 2 weeks
+      
+      const { data } = await supabase
+        .from("employee_shifts")
+        .select("*, buses(name, license_plate), trips(departure_time, arrival_time, routes(name))")
+        .eq("user_id", user.id)
+        .gte("shift_date", format(weekStart, "yyyy-MM-dd"))
+        .lte("shift_date", format(weekEnd, "yyyy-MM-dd"))
+        .order("shift_date", { ascending: true })
+        .order("shift_start", { ascending: true });
+      setShifts(data || []);
+    } catch (err) {
+      console.error("Shifts fetch error:", err);
+    } finally {
+      setShiftsLoading(false);
+    }
+  }, [user]);
+
   useEffect(() => {
     if (activeTab === "history") fetchHistory();
-  }, [activeTab, fetchHistory]);
+    if (activeTab === "shifts") fetchShifts();
+  }, [activeTab, fetchHistory, fetchShifts]);
 
   const processQrPayload = async (payload: string) => {
     if (scanning || !payload.trim()) return;
-
-    // Client-side bot protection: cooldown
     const now = Date.now();
     if (now - lastScanTimeRef.current < SCAN_COOLDOWN_MS) {
       toast({ title: "Bitte warten", description: "Cooldown zwischen Scans aktiv", variant: "destructive" });
       return;
     }
-
-    // Input validation
     const sanitized = payload.trim();
     if (sanitized.length > MAX_PAYLOAD_LENGTH || !QR_PAYLOAD_REGEX.test(sanitized)) {
       setScanResult({ result: "invalid_input", message: "Ungültiges Ticket-Format", color: "red" });
       return;
     }
-
     lastScanTimeRef.current = now;
     setScanning(true);
     setScanResult(null);
-
     try {
       const { data, error } = await supabase.functions.invoke("process-ticket-scan", {
         body: { qr_payload: sanitized },
       });
-
       if (error) throw error;
       setScanResult(data as ScanResult);
-
-      // Vibrate on mobile for feedback
       if (navigator.vibrate) {
         if (data.color === "green") navigator.vibrate(200);
         else if (data.color === "yellow") navigator.vibrate([100, 50, 100]);
         else navigator.vibrate([200, 100, 200, 100, 200]);
       }
     } catch (err: any) {
-      setScanResult({
-        result: "error",
-        message: "Fehler: " + (err.message || "Unbekannt"),
-        color: "red",
-      });
+      setScanResult({ result: "error", message: "Fehler: " + (err.message || "Unbekannt"), color: "red" });
     } finally {
       setScanning(false);
     }
   };
 
   const startCamera = async () => {
+    if (cameraStarting) return;
+    setCameraStarting(true);
+    
     try {
-      const scanner = new Html5Qrcode(scannerContainerId);
+      // First request camera permission explicitly
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: "environment" } 
+      });
+      // Stop the test stream immediately
+      stream.getTracks().forEach(track => track.stop());
+      
+      // Small delay to ensure DOM element is ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Clean up any previous scanner instance
+      if (scannerRef.current) {
+        try {
+          if (scannerRef.current.isScanning) {
+            await scannerRef.current.stop();
+          }
+        } catch {}
+        scannerRef.current = null;
+      }
+
+      const scanner = new Html5Qrcode(scannerContainerId, { verbose: false });
       scannerRef.current = scanner;
 
       await scanner.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         (decodedText) => {
-          // On successful scan
           scanner.stop().then(() => {
             setCameraActive(false);
             processQrPayload(decodedText);
-          });
+          }).catch(() => {});
         },
-        () => {} // ignore errors during scanning
+        () => {}
       );
       setCameraActive(true);
     } catch (err: any) {
+      console.error("Camera error:", err);
       toast({
         title: "Kamera-Fehler",
-        description: err.message || "Kamera konnte nicht gestartet werden",
+        description: err.name === "NotAllowedError" 
+          ? "Bitte erlaube den Kamerazugriff in den Browser-Einstellungen und lade die Seite neu."
+          : (err.message || "Kamera konnte nicht gestartet werden"),
         variant: "destructive",
       });
+    } finally {
+      setCameraStarting(false);
     }
   };
 
   const stopCamera = async () => {
-    if (scannerRef.current?.isScanning) {
-      await scannerRef.current.stop();
+    if (scannerRef.current) {
+      try {
+        if (scannerRef.current.isScanning) {
+          await scannerRef.current.stop();
+        }
+      } catch {}
     }
     setCameraActive(false);
   };
@@ -189,6 +246,21 @@ const DriverDashboard = () => {
     }
   };
 
+  const getShiftStatusBadge = (status: string) => {
+    switch (status) {
+      case "scheduled":
+        return <Badge className="bg-blue-500/20 text-blue-400 text-[10px]">Geplant</Badge>;
+      case "in_progress":
+        return <Badge className="bg-emerald-500/20 text-emerald-400 text-[10px]">Aktiv</Badge>;
+      case "completed":
+        return <Badge className="bg-zinc-500/20 text-zinc-400 text-[10px]">Abgeschlossen</Badge>;
+      case "cancelled":
+        return <Badge className="bg-red-500/20 text-red-400 text-[10px]">Abgesagt</Badge>;
+      default:
+        return <Badge className="bg-zinc-500/20 text-zinc-400 text-[10px]">{status}</Badge>;
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
@@ -215,6 +287,7 @@ const DriverDashboard = () => {
 
   const tabs = [
     { id: "scan" as DriverTab, label: "Scanner", icon: Scan },
+    { id: "shifts" as DriverTab, label: "Dienstplan", icon: CalendarDays },
     { id: "history" as DriverTab, label: "Verlauf", icon: History },
   ];
 
@@ -228,7 +301,7 @@ const DriverDashboard = () => {
           </div>
           <div>
             <h1 className="font-bold text-sm text-white">METROPOL TOURS</h1>
-            <p className="text-[10px] text-zinc-500">Ticket-Scanner</p>
+            <p className="text-[10px] text-zinc-500">Fahrer-Dashboard</p>
           </div>
         </div>
         <Button variant="ghost" size="sm" onClick={() => signOut()} className="text-zinc-400 hover:text-white">
@@ -240,23 +313,33 @@ const DriverDashboard = () => {
       <main className="flex-1 overflow-auto p-4 pb-24">
         {activeTab === "scan" && (
           <div className="space-y-4 max-w-md mx-auto">
-            {/* Camera Scanner */}
+            {/* Camera Scanner - container is ALWAYS in DOM */}
             <div className="relative">
               <div
                 id={scannerContainerId}
-                className={`w-full rounded-xl overflow-hidden ${cameraActive ? "min-h-[300px]" : "hidden"}`}
+                style={{ minHeight: cameraActive ? 300 : 0, display: cameraActive ? 'block' : 'none' }}
+                className="w-full rounded-xl overflow-hidden"
               />
               {!cameraActive && (
                 <button
                   onClick={startCamera}
-                  disabled={scanning}
+                  disabled={scanning || cameraStarting}
                   className="w-full flex flex-col items-center justify-center gap-4 py-16 rounded-xl border-2 border-dashed border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 transition-all"
                 >
-                  <div className="w-20 h-20 rounded-full bg-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                    <Camera className="w-10 h-10 text-white" />
-                  </div>
-                  <span className="text-lg font-bold text-emerald-400">SCAN STARTEN</span>
-                  <span className="text-xs text-zinc-500">QR-Code oder Barcode scannen</span>
+                  {cameraStarting ? (
+                    <>
+                      <Loader2 className="w-10 h-10 text-emerald-400 animate-spin" />
+                      <span className="text-lg font-bold text-emerald-400">KAMERA WIRD GESTARTET...</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-20 h-20 rounded-full bg-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                        <Camera className="w-10 h-10 text-white" />
+                      </div>
+                      <span className="text-lg font-bold text-emerald-400">SCAN STARTEN</span>
+                      <span className="text-xs text-zinc-500">QR-Code oder Barcode scannen</span>
+                    </>
+                  )}
                 </button>
               )}
               {cameraActive && (
@@ -314,7 +397,6 @@ const DriverDashboard = () => {
                         )}
                       </div>
                     </div>
-
                     <Button
                       onClick={() => { setScanResult(null); setManualTicket(""); }}
                       variant="outline"
@@ -326,6 +408,76 @@ const DriverDashboard = () => {
                 </Card>
               );
             })()}
+          </div>
+        )}
+
+        {activeTab === "shifts" && (
+          <div className="space-y-3 max-w-md mx-auto">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">Mein Dienstplan</h2>
+              <Button variant="ghost" size="sm" onClick={fetchShifts} className="text-zinc-400">
+                <Clock className="w-4 h-4 mr-1" /> Aktualisieren
+              </Button>
+            </div>
+
+            {shiftsLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
+              </div>
+            ) : shifts.length === 0 ? (
+              <div className="text-center py-12 text-zinc-500">
+                <CalendarDays className="w-12 h-12 mx-auto mb-3 text-zinc-700" />
+                <p>Keine Schichten in den nächsten 2 Wochen</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {(() => {
+                  let lastDate = "";
+                  return shifts.map((shift) => {
+                    const showDate = shift.shift_date !== lastDate;
+                    lastDate = shift.shift_date;
+                    const isToday = shift.shift_date === format(new Date(), "yyyy-MM-dd");
+                    
+                    return (
+                      <div key={shift.id}>
+                        {showDate && (
+                          <div className={`text-xs font-medium mt-3 mb-1 px-1 ${isToday ? "text-emerald-400" : "text-zinc-500"}`}>
+                            {isToday ? "📍 Heute – " : ""}
+                            {format(new Date(shift.shift_date), "EEEE, dd. MMMM", { locale: de })}
+                          </div>
+                        )}
+                        <Card className={`border ${isToday ? "bg-emerald-500/5 border-emerald-500/20" : "bg-zinc-900 border-zinc-800"}`}>
+                          <CardContent className="p-3">
+                            <div className="flex items-center justify-between">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium text-white">
+                                    {shift.shift_start ? format(new Date(shift.shift_start), "HH:mm") : "–"}
+                                    {shift.shift_end ? ` – ${format(new Date(shift.shift_end), "HH:mm")}` : ""}
+                                  </span>
+                                  {getShiftStatusBadge(shift.status)}
+                                </div>
+                                <div className="text-xs text-zinc-500 mt-1 space-y-0.5">
+                                  {shift.buses && (
+                                    <p>🚌 {shift.buses.name} ({shift.buses.license_plate})</p>
+                                  )}
+                                  {shift.trips?.routes?.name && (
+                                    <p>📍 {shift.trips.routes.name}</p>
+                                  )}
+                                  {shift.notes && (
+                                    <p className="text-zinc-600">💬 {shift.notes}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            )}
           </div>
         )}
 
@@ -382,7 +534,7 @@ const DriverDashboard = () => {
       </main>
 
       {/* Bottom Tab Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 flex">
+      <nav className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 flex safe-area-pb">
         {tabs.map((tab) => (
           <button
             key={tab.id}
