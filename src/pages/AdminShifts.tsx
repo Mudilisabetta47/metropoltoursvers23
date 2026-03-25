@@ -3,7 +3,7 @@ import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, parseISO, 
 import { de } from "date-fns/locale";
 import {
   Plus, Loader2, ChevronLeft, ChevronRight, Calendar, Clock,
-  Bus, Trash2, Copy, Printer, MapPin, Navigation, Users
+  Bus, Trash2, Copy, Printer, MapPin, Navigation, Users, Warehouse, Coffee
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,6 +65,13 @@ interface TourOption {
   duration_days: number;
 }
 
+interface DepotOption {
+  id: string;
+  name: string;
+  code: string;
+  city: string;
+}
+
 const SHIFT_ROLES = [
   { value: "driver", label: "Fahrer", short: "F" },
   { value: "guide", label: "Reiseleiter", short: "RL" },
@@ -88,6 +95,7 @@ const AdminShifts = () => {
   const [buses, setBuses] = useState<BusOption[]>([]);
   const [trips, setTrips] = useState<TripOption[]>([]);
   const [tours, setTours] = useState<TourOption[]>([]);
+  const [depotsList, setDepotsList] = useState<DepotOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editModal, setEditModal] = useState(false);
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
@@ -95,7 +103,7 @@ const AdminShifts = () => {
   const [form, setForm] = useState({
     user_id: "",
     shift_date: "",
-    shift_end_date: "", // for multi-day
+    shift_end_date: "",
     shift_start: "06:00",
     shift_end: "18:00",
     role: "driver",
@@ -106,6 +114,10 @@ const AdminShifts = () => {
     assigned_trip_id: "",
     assignment_type: "manual" as "manual" | "trip" | "tour",
     selected_tour_id: "",
+    depot_id: "",
+    dispatch_location: "",
+    break_start: "",
+    break_duration_minutes: 0,
   });
 
   const weekDays = useMemo(() =>
@@ -124,7 +136,7 @@ const AdminShifts = () => {
     const startStr = format(currentWeek, "yyyy-MM-dd");
     const endStr = format(weekEnd, "yyyy-MM-dd");
 
-    const [shiftsRes, rolesRes, busesRes, tripsRes, toursRes] = await Promise.all([
+    const [shiftsRes, rolesRes, busesRes, tripsRes, toursRes, depotsRes] = await Promise.all([
       supabase
         .from("employee_shifts")
         .select("*")
@@ -132,7 +144,7 @@ const AdminShifts = () => {
         .lte("shift_date", endStr)
         .order("shift_start", { ascending: true }),
       supabase.from("user_roles").select("user_id, role"),
-      supabase.from("buses").select("id, name, license_plate").eq("is_active", true),
+      supabase.from("buses").select("id, name, license_plate, total_seats, amenities").eq("is_active", true),
       supabase
         .from("trips")
         .select("id, departure_date, departure_time, arrival_time, bus_id, route_id, routes(name), buses(name)")
@@ -147,6 +159,7 @@ const AdminShifts = () => {
         .gte("departure_date", format(new Date(), "yyyy-MM-dd"))
         .order("departure_date", { ascending: true })
         .limit(50),
+      supabase.from("depots").select("id, name, code, city").eq("is_active", true).order("name"),
     ]);
 
     const userRoles: Record<string, string[]> = {};
@@ -185,6 +198,7 @@ const AdminShifts = () => {
       bus_name: t.buses?.name || "Unbekannt",
     })));
     setTours((toursRes.data as TourOption[]) || []);
+    setDepotsList((depotsRes.data as DepotOption[]) || []);
     setIsLoading(false);
   };
 
@@ -205,6 +219,10 @@ const AdminShifts = () => {
       assigned_trip_id: "",
       assignment_type: "manual",
       selected_tour_id: "",
+      depot_id: "",
+      dispatch_location: "",
+      break_start: "",
+      break_duration_minutes: 0,
     });
     setEditModal(true);
   };
@@ -233,6 +251,10 @@ const AdminShifts = () => {
       assigned_trip_id: shift.assigned_trip_id || "",
       assignment_type: shift.assigned_trip_id ? "trip" : "manual",
       selected_tour_id: "",
+      depot_id: (shift as any).depot_id || "",
+      dispatch_location: (shift as any).dispatch_location || "",
+      break_start: (shift as any).break_start || "",
+      break_duration_minutes: (shift as any).break_duration_minutes || 0,
     });
     setEditModal(true);
   };
@@ -304,9 +326,13 @@ const AdminShifts = () => {
           shift_end: form.shift_end ? `${dateStr}T${form.shift_end}:00` : null,
           role: form.role,
           status: form.status,
-           notes: combinedNotes,
+          notes: combinedNotes,
           assigned_bus_id: form.assigned_bus_id || null,
           assigned_trip_id: form.assigned_trip_id || null,
+          depot_id: form.depot_id || null,
+          dispatch_location: form.dispatch_location || null,
+          break_start: form.break_start || null,
+          break_duration_minutes: form.break_duration_minutes || 0,
         };
       });
 
@@ -331,6 +357,10 @@ const AdminShifts = () => {
         notes: combinedNotes,
         assigned_bus_id: form.assigned_bus_id || null,
         assigned_trip_id: form.assigned_trip_id || null,
+        depot_id: form.depot_id || null,
+        dispatch_location: form.dispatch_location || null,
+        break_start: form.break_start || null,
+        break_duration_minutes: form.break_duration_minutes || 0,
       };
 
       let error;
@@ -915,7 +945,7 @@ const AdminShifts = () => {
               </div>
             </div>
 
-            {/* Bus - show always for manual, auto-filled for trip */}
+            {/* Bus - enhanced with details */}
             <div>
               <Label className="text-zinc-400 text-xs uppercase tracking-wider flex items-center gap-1">
                 <Bus className="w-3 h-3" /> Fahrzeug
@@ -923,14 +953,91 @@ const AdminShifts = () => {
               <Select value={form.assigned_bus_id || "none"} onValueChange={v => setForm(f => ({ ...f, assigned_bus_id: v === "none" ? "" : v }))}>
                 <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1"><SelectValue placeholder="Keins" /></SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-zinc-700">
-                  <SelectItem value="none" className="text-white">– Kein Fahrzeug –</SelectItem>
-                  {buses.map(b => (
+                  <SelectItem value="none" className="text-zinc-500">– Kein Fahrzeug –</SelectItem>
+                  {buses.map((b: any) => (
                     <SelectItem key={b.id} value={b.id} className="text-white">
-                      {b.name} ({b.license_plate})
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{b.name}</span>
+                        <span className="text-zinc-400 font-mono text-[10px]">{b.license_plate}</span>
+                        <Badge className="bg-zinc-700 text-zinc-300 border-0 text-[9px]">{b.total_seats} Plätze</Badge>
+                        {b.amenities?.includes("wifi") && <span className="text-[9px]">📶</span>}
+                        {b.amenities?.includes("wc") && <span className="text-[9px]">🚻</span>}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Depot / Betriebshof */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider flex items-center gap-1">
+                  <Warehouse className="w-3 h-3" /> Betriebshof / Standort
+                </Label>
+                <Select value={form.depot_id || "none"} onValueChange={v => setForm(f => ({ ...f, depot_id: v === "none" ? "" : v }))}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1"><SelectValue placeholder="Keiner" /></SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                    <SelectItem value="none" className="text-zinc-500">– Kein Standort –</SelectItem>
+                    {depotsList.map(d => (
+                      <SelectItem key={d.id} value={d.id} className="text-white">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{d.name}</span>
+                          <span className="text-zinc-400 text-[10px] font-mono">{d.code}</span>
+                          <span className="text-zinc-500 text-[10px]">{d.city}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {depotsList.length === 0 && (
+                  <p className="text-[10px] text-amber-400/70 mt-1">Lege Standorte unter Einstellungen → Betriebshöfe an</p>
+                )}
+              </div>
+              <div>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider flex items-center gap-1">
+                  <MapPin className="w-3 h-3" /> Abfertigungsort
+                </Label>
+                <Input
+                  value={form.dispatch_location}
+                  onChange={e => setForm(f => ({ ...f, dispatch_location: e.target.value }))}
+                  className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                  placeholder="z.B. ZOB Hamburg, Gleis 3..."
+                />
+              </div>
+            </div>
+
+            {/* Break / Pause */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider flex items-center gap-1">
+                  <Coffee className="w-3 h-3" /> Pause ab
+                </Label>
+                <Input
+                  type="time"
+                  value={form.break_start}
+                  onChange={e => setForm(f => ({ ...f, break_start: e.target.value }))}
+                  className="bg-zinc-800 border-zinc-700 text-white mt-1 font-mono"
+                  placeholder="--:--"
+                />
+              </div>
+              <div>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider flex items-center gap-1">
+                  <Coffee className="w-3 h-3" /> Pausendauer (Min.)
+                </Label>
+                <Select value={String(form.break_duration_minutes)} onValueChange={v => setForm(f => ({ ...f, break_duration_minutes: Number(v) }))}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                    <SelectItem value="0" className="text-zinc-500">Keine Pause</SelectItem>
+                    <SelectItem value="15" className="text-white">15 Min.</SelectItem>
+                    <SelectItem value="30" className="text-white">30 Min.</SelectItem>
+                    <SelectItem value="45" className="text-white">45 Min. (gesetzl.)</SelectItem>
+                    <SelectItem value="60" className="text-white">60 Min.</SelectItem>
+                    <SelectItem value="90" className="text-white">90 Min.</SelectItem>
+                    <SelectItem value="120" className="text-white">120 Min.</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Trip selection for edit mode */}

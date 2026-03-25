@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import {
   Save, CreditCard, Mail, Building2, Route, Users,
   Bell, FileText, Activity, Truck, Shield, UserCheck,
-  MapPin, Link2, Globe, Navigation
+  MapPin, Link2, Globe, Navigation, Warehouse, Plus, Trash2, Edit2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -27,10 +27,12 @@ type SettingsSection =
   | "notifications"
   | "templates"
   | "operations"
-  | "vehicles";
+  | "vehicles"
+  | "depots";
 
 const sections: { key: SettingsSection; label: string; icon: any; description: string }[] = [
   { key: "general", label: "Allgemein", icon: Building2, description: "Firmendaten & Grundeinstellungen" },
+  { key: "depots", label: "Betriebshöfe", icon: Warehouse, description: "Standorte, Abfertigungen & Depots" },
   { key: "booking", label: "Buchung", icon: FileText, description: "Buchungssystem & Regeln" },
   { key: "routes", label: "Routen & Fahrten", icon: Route, description: "Strecken, Haltestellen, Preise" },
   { key: "tours", label: "Touren & Vorlagen", icon: MapPin, description: "Standard-Haltestellen, Kombination & Entfernungen" },
@@ -159,10 +161,50 @@ const AdminSettings = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
+  // Depots state
+  const [depots, setDepots] = useState<any[]>([]);
+  const [depotForm, setDepotForm] = useState({ name: "", code: "", city: "", address: "", postal_code: "", phone: "", email: "", contact_person: "", capacity_buses: 0, notes: "", is_active: true });
+  const [editingDepot, setEditingDepot] = useState<string | null>(null);
+  const [showDepotForm, setShowDepotForm] = useState(false);
+
   useEffect(() => {
     loadTours();
     loadSettings();
+    loadDepots();
   }, []);
+
+  const loadDepots = async () => {
+    const { data } = await supabase.from("depots").select("*").order("name");
+    if (data) setDepots(data);
+  };
+
+  const saveDepot = async () => {
+    if (!depotForm.name || !depotForm.code || !depotForm.city) {
+      toast({ title: "Name, Kürzel und Stadt sind Pflicht", variant: "destructive" });
+      return;
+    }
+    let error;
+    if (editingDepot) {
+      ({ error } = await supabase.from("depots").update(depotForm).eq("id", editingDepot));
+    } else {
+      ({ error } = await supabase.from("depots").insert(depotForm));
+    }
+    if (error) {
+      toast({ title: "Fehler", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: editingDepot ? "Standort aktualisiert" : "Standort angelegt" });
+      setShowDepotForm(false);
+      setEditingDepot(null);
+      setDepotForm({ name: "", code: "", city: "", address: "", postal_code: "", phone: "", email: "", contact_person: "", capacity_buses: 0, notes: "", is_active: true });
+      loadDepots();
+    }
+  };
+
+  const deleteDepot = async (id: string) => {
+    const { error } = await supabase.from("depots").delete().eq("id", id);
+    if (error) toast({ title: "Fehler", description: error.message, variant: "destructive" });
+    else { toast({ title: "Standort gelöscht" }); loadDepots(); }
+  };
 
   const loadSettings = async () => {
     try {
@@ -706,12 +748,118 @@ const AdminSettings = () => {
     );
   };
 
+  /* ─── Betriebshöfe / Depots ─── */
+  const renderDepots = () => (
+    <div className="space-y-4">
+      <SectionCard title="Standorte & Betriebshöfe" description="Alle Betriebshöfe, Depots und Abfertigungsstandorte">
+        <div className="flex justify-end mb-2">
+          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-7 text-xs" onClick={() => {
+            setDepotForm({ name: "", code: "", city: "", address: "", postal_code: "", phone: "", email: "", contact_person: "", capacity_buses: 0, notes: "", is_active: true });
+            setEditingDepot(null);
+            setShowDepotForm(true);
+          }}>
+            <Plus className="w-3 h-3 mr-1" /> Neuer Standort
+          </Button>
+        </div>
+
+        {/* Depot List */}
+        {depots.length === 0 ? (
+          <div className="text-center py-8 text-zinc-500 text-xs">
+            <Warehouse className="w-8 h-8 mx-auto mb-2 text-zinc-600" />
+            Noch keine Standorte angelegt
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {depots.map(d => (
+              <div key={d.id} className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${d.is_active ? "bg-[#1a1f2a] border-[#2a3040]" : "bg-[#151920] border-[#1a1f2a] opacity-60"}`}>
+                <div className="w-10 h-10 rounded-lg bg-emerald-600/15 flex items-center justify-center shrink-0">
+                  <Warehouse className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-zinc-200">{d.name}</span>
+                    <span className="text-[10px] font-mono text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded">{d.code}</span>
+                    {!d.is_active && <span className="text-[10px] text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded">Inaktiv</span>}
+                  </div>
+                  <div className="flex items-center gap-3 mt-0.5">
+                    <span className="text-[11px] text-zinc-400">{d.city}{d.postal_code ? ` (${d.postal_code})` : ""}</span>
+                    {d.address && <span className="text-[10px] text-zinc-500 truncate max-w-[200px]">{d.address}</span>}
+                    {d.capacity_buses > 0 && <span className="text-[10px] text-blue-400"><Truck className="w-3 h-3 inline mr-0.5" />{d.capacity_buses} Stellplätze</span>}
+                  </div>
+                  {d.contact_person && <span className="text-[10px] text-zinc-500 block mt-0.5">Ansprechpartner: {d.contact_person}</span>}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-zinc-400 hover:text-zinc-200" onClick={() => {
+                    setDepotForm({ name: d.name, code: d.code, city: d.city, address: d.address || "", postal_code: d.postal_code || "", phone: d.phone || "", email: d.email || "", contact_person: d.contact_person || "", capacity_buses: d.capacity_buses || 0, notes: d.notes || "", is_active: d.is_active });
+                    setEditingDepot(d.id);
+                    setShowDepotForm(true);
+                  }}>
+                    <Edit2 className="w-3 h-3" />
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-400 hover:text-red-300" onClick={() => { if (confirm("Standort wirklich löschen?")) deleteDepot(d.id); }}>
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </SectionCard>
+
+      {/* Depot Form */}
+      {showDepotForm && (
+        <SectionCard title={editingDepot ? "Standort bearbeiten" : "Neuen Standort anlegen"}>
+          <div className="grid grid-cols-3 gap-3">
+            <Field label="Name *">
+              <Input value={depotForm.name} onChange={e => setDepotForm(f => ({ ...f, name: e.target.value }))} className="bg-[#1a1f2a] border-[#2a3040] text-white" placeholder="z.B. Hauptdepot Hamburg" />
+            </Field>
+            <Field label="Kürzel *" hint="Kurzer Code, z.B. HH-ZEN">
+              <Input value={depotForm.code} onChange={e => setDepotForm(f => ({ ...f, code: e.target.value.toUpperCase() }))} className="bg-[#1a1f2a] border-[#2a3040] text-white font-mono" placeholder="HH-ZEN" />
+            </Field>
+            <Field label="Stadt *">
+              <Input value={depotForm.city} onChange={e => setDepotForm(f => ({ ...f, city: e.target.value }))} className="bg-[#1a1f2a] border-[#2a3040] text-white" placeholder="Hamburg" />
+            </Field>
+            <Field label="Adresse">
+              <Input value={depotForm.address} onChange={e => setDepotForm(f => ({ ...f, address: e.target.value }))} className="bg-[#1a1f2a] border-[#2a3040] text-white" placeholder="Musterstraße 1" />
+            </Field>
+            <Field label="PLZ">
+              <Input value={depotForm.postal_code} onChange={e => setDepotForm(f => ({ ...f, postal_code: e.target.value }))} className="bg-[#1a1f2a] border-[#2a3040] text-white" placeholder="20095" />
+            </Field>
+            <Field label="Stellplätze (Busse)">
+              <Input type="number" value={depotForm.capacity_buses} onChange={e => setDepotForm(f => ({ ...f, capacity_buses: Number(e.target.value) }))} className="bg-[#1a1f2a] border-[#2a3040] text-white" />
+            </Field>
+            <Field label="Telefon">
+              <Input value={depotForm.phone} onChange={e => setDepotForm(f => ({ ...f, phone: e.target.value }))} className="bg-[#1a1f2a] border-[#2a3040] text-white" placeholder="+49 40 ..." />
+            </Field>
+            <Field label="E-Mail">
+              <Input value={depotForm.email} onChange={e => setDepotForm(f => ({ ...f, email: e.target.value }))} className="bg-[#1a1f2a] border-[#2a3040] text-white" placeholder="depot@metours.de" />
+            </Field>
+            <Field label="Ansprechpartner">
+              <Input value={depotForm.contact_person} onChange={e => setDepotForm(f => ({ ...f, contact_person: e.target.value }))} className="bg-[#1a1f2a] border-[#2a3040] text-white" placeholder="Max Mustermann" />
+            </Field>
+          </div>
+          <div className="flex items-center gap-3 mt-2">
+            <Switch checked={depotForm.is_active} onCheckedChange={v => setDepotForm(f => ({ ...f, is_active: v }))} />
+            <Label className="text-xs text-zinc-400">Standort aktiv</Label>
+          </div>
+          <div className="flex gap-2 mt-3">
+            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-8 text-xs" onClick={saveDepot}>
+              <Save className="w-3 h-3 mr-1" /> {editingDepot ? "Aktualisieren" : "Anlegen"}
+            </Button>
+            <Button size="sm" variant="ghost" className="text-zinc-400 h-8 text-xs" onClick={() => setShowDepotForm(false)}>Abbrechen</Button>
+          </div>
+        </SectionCard>
+      )}
+    </div>
+  );
+
   const renderMap: Record<SettingsSection, () => JSX.Element> = {
     general: renderGeneral, booking: renderBooking, routes: renderRoutes,
     tours: renderTours,
     finance: renderFinance, crm: renderCRM, staff: renderStaff,
     notifications: renderNotifications, templates: renderTemplates,
     operations: renderOperations, vehicles: renderVehicles,
+    depots: renderDepots,
   };
 
   const activeInfo = sections.find(s => s.key === activeSection)!;
