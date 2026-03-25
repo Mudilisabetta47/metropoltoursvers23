@@ -101,6 +101,7 @@ const AdminShifts = () => {
     role: "driver",
     status: "scheduled",
     notes: "",
+    destination: "",
     assigned_bus_id: "",
     assigned_trip_id: "",
     assignment_type: "manual" as "manual" | "trip" | "tour",
@@ -199,6 +200,7 @@ const AdminShifts = () => {
       role: "driver",
       status: "scheduled",
       notes: "",
+      destination: "",
       assigned_bus_id: "",
       assigned_trip_id: "",
       assignment_type: "manual",
@@ -212,6 +214,11 @@ const AdminShifts = () => {
     setMultiDay(false);
     const startTime = shift.shift_start ? format(new Date(shift.shift_start), "HH:mm") : "06:00";
     const endTime = shift.shift_end ? format(new Date(shift.shift_end), "HH:mm") : "18:00";
+    // Extract destination from notes if it starts with "Ziel: "
+    const notes = shift.notes || "";
+    const destMatch = notes.match(/^Ziel: (.+?)(\n|$)/);
+    const destination = destMatch ? destMatch[1] : "";
+    const cleanNotes = destMatch ? notes.replace(/^Ziel: .+?\n?/, "").trim() : notes;
     setForm({
       user_id: shift.user_id,
       shift_date: shift.shift_date,
@@ -220,7 +227,8 @@ const AdminShifts = () => {
       shift_end: endTime,
       role: shift.role,
       status: shift.status,
-      notes: shift.notes || "",
+      notes: cleanNotes,
+      destination,
       assigned_bus_id: shift.assigned_bus_id || "",
       assigned_trip_id: shift.assigned_trip_id || "",
       assignment_type: shift.assigned_trip_id ? "trip" : "manual",
@@ -274,6 +282,12 @@ const AdminShifts = () => {
       return;
     }
 
+    // Merge destination into notes
+    const combinedNotes = [
+      form.destination ? `Ziel: ${form.destination}` : "",
+      form.notes || "",
+    ].filter(Boolean).join("\n") || null;
+
     // Multi-day: create a shift for each day
     if (multiDay && form.shift_end_date && form.shift_end_date > form.shift_date) {
       const days = eachDayOfInterval({
@@ -290,7 +304,7 @@ const AdminShifts = () => {
           shift_end: form.shift_end ? `${dateStr}T${form.shift_end}:00` : null,
           role: form.role,
           status: form.status,
-          notes: form.notes || null,
+           notes: combinedNotes,
           assigned_bus_id: form.assigned_bus_id || null,
           assigned_trip_id: form.assigned_trip_id || null,
         };
@@ -314,7 +328,7 @@ const AdminShifts = () => {
         shift_end: shiftEndDt,
         role: form.role,
         status: form.status,
-        notes: form.notes || null,
+        notes: combinedNotes,
         assigned_bus_id: form.assigned_bus_id || null,
         assigned_trip_id: form.assigned_trip_id || null,
       };
@@ -524,6 +538,8 @@ const AdminShifts = () => {
                                     const busName = getBusName(shift.assigned_bus_id);
                                     const tripRoute = getTripInfo(shift.assigned_trip_id);
                                     const roleShort = getRoleShort(shift.role);
+                                    const destMatch = shift.notes?.match(/^Ziel: (.+?)(\n|$)/);
+                                    const destination = destMatch ? destMatch[1] : null;
                                     const isCancelled = shift.status === "cancelled";
 
                                     return (
@@ -551,7 +567,13 @@ const AdminShifts = () => {
                                             <span className="truncate max-w-[90px]">{tripRoute}</span>
                                           </div>
                                         )}
-                                        {shift.notes && (
+                                        {!tripRoute && destination && (
+                                          <div className="text-amber-400 print:text-amber-700 flex items-center gap-0.5">
+                                            <MapPin className="w-2.5 h-2.5" />
+                                            <span className="truncate max-w-[90px]">{destination}</span>
+                                          </div>
+                                        )}
+                                        {shift.notes && !shift.notes.startsWith("Ziel:") && (
                                           <div className="text-zinc-500 print:text-gray-500 italic truncate max-w-[100px] print:max-w-none">
                                             {shift.notes}
                                           </div>
@@ -933,6 +955,21 @@ const AdminShifts = () => {
               </div>
             )}
 
+            {/* Destination - for manual assignment */}
+            {(form.assignment_type === "manual" || editingShift) && (
+              <div>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider flex items-center gap-1">
+                  <MapPin className="w-3 h-3" /> Zielort / Reiseziel
+                </Label>
+                <Input
+                  value={form.destination}
+                  onChange={e => setForm(f => ({ ...f, destination: e.target.value }))}
+                  className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                  placeholder="z.B. Zagreb, Kroatien / Nizza, Frankreich..."
+                />
+              </div>
+            )}
+
             {/* Notes */}
             <div>
               <Label className="text-zinc-400 text-xs uppercase tracking-wider">Bemerkungen</Label>
@@ -940,7 +977,7 @@ const AdminShifts = () => {
                 value={form.notes}
                 onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                 className="bg-zinc-800 border-zinc-700 text-white min-h-[60px] mt-1"
-                placeholder="z.B. Reise Zagreb 6 Tage, Vertretung für M. Müller..."
+                placeholder="z.B. Vertretung für M. Müller, Sonderfahrt..."
               />
             </div>
           </div>
