@@ -136,7 +136,7 @@ const AdminShifts = () => {
     const startStr = format(currentWeek, "yyyy-MM-dd");
     const endStr = format(weekEnd, "yyyy-MM-dd");
 
-    const [shiftsRes, rolesRes, busesRes, tripsRes, toursRes] = await Promise.all([
+    const [shiftsRes, rolesRes, busesRes, tripsRes, toursRes, depotsRes] = await Promise.all([
       supabase
         .from("employee_shifts")
         .select("*")
@@ -144,7 +144,7 @@ const AdminShifts = () => {
         .lte("shift_date", endStr)
         .order("shift_start", { ascending: true }),
       supabase.from("user_roles").select("user_id, role"),
-      supabase.from("buses").select("id, name, license_plate").eq("is_active", true),
+      supabase.from("buses").select("id, name, license_plate, total_seats, amenities").eq("is_active", true),
       supabase
         .from("trips")
         .select("id, departure_date, departure_time, arrival_time, bus_id, route_id, routes(name), buses(name)")
@@ -158,6 +158,9 @@ const AdminShifts = () => {
         .eq("is_active", true)
         .gte("departure_date", format(new Date(), "yyyy-MM-dd"))
         .order("departure_date", { ascending: true })
+        .limit(50),
+      supabase.from("depots").select("id, name, code, city").eq("is_active", true).order("name"),
+    ]);
         .limit(50),
     ]);
 
