@@ -149,6 +149,13 @@ const LiveMap = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mapStyle, setMapStyle] = useState<"dark" | "satellite">("dark");
 
+  // Trigger map resize when fullscreen toggles
+  useEffect(() => {
+    setTimeout(() => {
+      mapRef.current?.getMap?.()?.resize?.();
+    }, 100);
+  }, [isFullscreen]);
+
   const getMarkerColor = (status: string) => {
     switch (status) {
       case 'on_time': return '#10b981';
