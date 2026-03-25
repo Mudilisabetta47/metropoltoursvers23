@@ -279,12 +279,26 @@ Deno.serve(async (req) => {
         message: `Bereits eingecheckt um ${resolvedTicket.checked_in_at}`,
       });
 
+      const originStopDup = booking?.stops_bookings_origin_stop_id_fkey || booking?.stops;
+      const destStopDup = booking?.stops_bookings_destination_stop_id_fkey;
+      
       return new Response(
         JSON.stringify({
           result: "already_checked_in",
           message: "Ticket bereits eingecheckt",
           color: "yellow",
           checked_in_at: resolvedTicket.checked_in_at,
+          passenger: booking
+            ? {
+                name: `${booking.passenger_first_name} ${booking.passenger_last_name}`,
+                seat: booking.seats?.seat_number || null,
+                origin: originStopDup ? `${originStopDup.name} (${originStopDup.city})` : null,
+                destination: destStopDup ? `${destStopDup.name} (${destStopDup.city})` : null,
+              }
+            : null,
+          trip: trip
+            ? { route: trip.routes?.name, date: trip.departure_date, time: trip.departure_time }
+            : null,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
