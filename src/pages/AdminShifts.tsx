@@ -161,8 +161,6 @@ const AdminShifts = () => {
         .limit(50),
       supabase.from("depots").select("id, name, code, city").eq("is_active", true).order("name"),
     ]);
-        .limit(50),
-    ]);
 
     const userRoles: Record<string, string[]> = {};
     (rolesRes.data || []).forEach((r: any) => {
