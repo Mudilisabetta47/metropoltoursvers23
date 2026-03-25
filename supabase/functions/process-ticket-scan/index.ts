@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
             qr_payload: qrPayload.toUpperCase(),
             status: "valid",
           })
-          .select("*, bookings(id, passenger_first_name, passenger_last_name, passenger_email, status, price_paid, trip_id), trips(id, route_id, departure_date, departure_time, routes(name))")
+          .select(`*, bookings(${bookingSelect}), trips(id, route_id, departure_date, departure_time, arrival_time, routes(name))`)
           .single();
 
         if (!createErr) resolvedTicket = newTicket;
