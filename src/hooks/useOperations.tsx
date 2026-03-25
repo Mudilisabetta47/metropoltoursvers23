@@ -137,31 +137,38 @@ export const useVehiclePositions = () => {
     const fetchPositions = async () => {
       const { data, error } = await supabase
         .from('vehicle_positions')
-        .select('*, profiles!vehicle_positions_driver_user_id_fkey(first_name, last_name)')
+        .select('*')
         .order('updated_at', { ascending: false });
       
       if (!error && data) {
+        // Fetch driver names from profiles
+        const driverIds = data.map((d: any) => d.driver_user_id).filter(Boolean);
+        let profileMap: Record<string, string> = {};
+        
+        if (driverIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('user_id, first_name, last_name')
+            .in('user_id', driverIds);
+          
+          if (profiles) {
+            profiles.forEach((p: any) => {
+              profileMap[p.user_id] = `${p.first_name || ''} ${p.last_name || ''}`.trim();
+            });
+          }
+        }
+
         const mapped = data.map((d: any) => ({
           ...d,
-          driver_name: d.profiles 
-            ? `${d.profiles.first_name || ''} ${d.profiles.last_name || ''}`.trim() || null
-            : d.driver_name || null,
+          driver_name: profileMap[d.driver_user_id] || d.driver_name || null,
         }));
         setVehicles(mapped as VehiclePosition[]);
-      } else if (error) {
-        // Fallback without join if FK doesn't exist
-        const { data: fallback } = await supabase
-          .from('vehicle_positions')
-          .select('*')
-          .order('updated_at', { ascending: false });
-        if (fallback) setVehicles(fallback as VehiclePosition[]);
       }
       setIsLoading(false);
     };
 
     fetchPositions();
 
-    // Realtime subscription
     const channel = supabase
       .channel('vehicle_positions_changes')
       .on('postgres_changes', 
