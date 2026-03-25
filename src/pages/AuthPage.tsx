@@ -20,7 +20,7 @@ type AuthMode = 'login' | 'register';
 
 export default function AuthPage() {
   const navigate = useNavigate();
-  const { user, roles, isDriver, isLoading } = useAuth();
+  const { user, roles, isDriver, signIn, signUp, isLoading } = useAuth();
   
   const [mode, setMode] = useState<AuthMode>('login');
   const [showPassword, setShowPassword] = useState(false);
