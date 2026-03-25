@@ -74,10 +74,10 @@ const SHIFT_ROLES = [
 
 const SHIFT_STATUSES = [
   { value: "scheduled", label: "Geplant" },
-  { value: "confirmed", label: "Bestätigt" },
-  { value: "in_progress", label: "Im Dienst" },
+  { value: "active", label: "Im Dienst" },
+  { value: "break", label: "Pause" },
   { value: "completed", label: "Abgeschlossen" },
-  { value: "cancelled", label: "Abgesagt" },
+  { value: "absent", label: "Abwesend" },
 ];
 
 const AdminShifts = () => {
