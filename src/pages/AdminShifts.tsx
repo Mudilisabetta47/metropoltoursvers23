@@ -198,6 +198,7 @@ const AdminShifts = () => {
       bus_name: t.buses?.name || "Unbekannt",
     })));
     setTours((toursRes.data as TourOption[]) || []);
+    setDepotsList((depotsRes.data as DepotOption[]) || []);
     setIsLoading(false);
   };
 
@@ -218,6 +219,10 @@ const AdminShifts = () => {
       assigned_trip_id: "",
       assignment_type: "manual",
       selected_tour_id: "",
+      depot_id: "",
+      dispatch_location: "",
+      break_start: "",
+      break_duration_minutes: 0,
     });
     setEditModal(true);
   };
@@ -246,6 +251,10 @@ const AdminShifts = () => {
       assigned_trip_id: shift.assigned_trip_id || "",
       assignment_type: shift.assigned_trip_id ? "trip" : "manual",
       selected_tour_id: "",
+      depot_id: (shift as any).depot_id || "",
+      dispatch_location: (shift as any).dispatch_location || "",
+      break_start: (shift as any).break_start || "",
+      break_duration_minutes: (shift as any).break_duration_minutes || 0,
     });
     setEditModal(true);
   };
