@@ -242,21 +242,49 @@ const DriverDashboard = () => {
         return;
       }
 
-      // Update vehicle position with delay
+      // Get today's shift for bus info
+      const today = new Date().toISOString().split('T')[0];
+      const { data: shift } = await supabase
+        .from('employee_shifts')
+        .select('assigned_bus_id, assigned_trip_id')
+        .eq('user_id', user.id)
+        .eq('shift_date', today)
+        .in('status', ['scheduled', 'active'])
+        .order('shift_start', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      // Upsert vehicle position with delay (creates row if none exists)
+      const posData: any = {
+        driver_user_id: user.id,
+        delay_minutes: mins,
+        status: mins > 5 ? 'delayed' : 'on_time',
+        updated_at: new Date().toISOString(),
+        bus_id: shift?.assigned_bus_id || '00000000-0000-0000-0000-000000000000',
+        trip_id: shift?.assigned_trip_id || null,
+        latitude: 0,
+        longitude: 0,
+        heading: 0,
+        speed_kmh: 0,
+      };
+
       await supabase
         .from("vehicle_positions")
-        .update({ 
-          delay_minutes: mins, 
-          status: mins > 5 ? 'delayed' : 'on_time',
-          updated_at: new Date().toISOString() 
-        })
-        .eq("driver_user_id", user.id);
+        .upsert(posData, { onConflict: 'driver_user_id' });
+
+      // Get driver name for incident
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      const driverName = profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : 'Fahrer';
 
       // Create incident for operations center
       await supabase.from("incidents").insert({
         type: "delay",
-        title: `Verspätung: ${mins} Min.`,
-        description: delayReason || `Fahrer meldet ${mins} Minuten Verspätung`,
+        title: `Verspätung ${driverName}: ${mins} Min.`,
+        description: `${driverName} meldet ${mins} Min. Verspätung${delayReason ? ` – Grund: ${delayReason}` : ''}`,
         severity: mins > 15 ? "warning" : "info",
         source_type: "driver_report",
         source_id: user.id,
