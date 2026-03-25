@@ -3,7 +3,7 @@ import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, parseISO, 
 import { de } from "date-fns/locale";
 import {
   Plus, Loader2, ChevronLeft, ChevronRight, Calendar, Clock,
-  Bus, Trash2, Copy, Printer, MapPin, Navigation, Users
+  Bus, Trash2, Copy, Printer, MapPin, Navigation, Users, Warehouse, Coffee
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +63,13 @@ interface TourOption {
   departure_date: string;
   return_date: string;
   duration_days: number;
+}
+
+interface DepotOption {
+  id: string;
+  name: string;
+  code: string;
+  city: string;
 }
 
 const SHIFT_ROLES = [
