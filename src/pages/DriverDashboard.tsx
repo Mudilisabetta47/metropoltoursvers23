@@ -455,6 +455,7 @@ const DriverDashboard = () => {
 
   const tabs = [
     { id: "scan" as DriverTab, label: "Scanner", icon: Scan },
+    { id: "route" as DriverTab, label: "Route", icon: MapPin },
     { id: "shifts" as DriverTab, label: "Dienstplan", icon: CalendarDays },
     { id: "history" as DriverTab, label: "Verlauf", icon: History },
   ];
