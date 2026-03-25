@@ -95,6 +95,7 @@ const AdminShifts = () => {
   const [buses, setBuses] = useState<BusOption[]>([]);
   const [trips, setTrips] = useState<TripOption[]>([]);
   const [tours, setTours] = useState<TourOption[]>([]);
+  const [depotsList, setDepotsList] = useState<DepotOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editModal, setEditModal] = useState(false);
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
@@ -102,7 +103,7 @@ const AdminShifts = () => {
   const [form, setForm] = useState({
     user_id: "",
     shift_date: "",
-    shift_end_date: "", // for multi-day
+    shift_end_date: "",
     shift_start: "06:00",
     shift_end: "18:00",
     role: "driver",
@@ -113,6 +114,10 @@ const AdminShifts = () => {
     assigned_trip_id: "",
     assignment_type: "manual" as "manual" | "trip" | "tour",
     selected_tour_id: "",
+    depot_id: "",
+    dispatch_location: "",
+    break_start: "",
+    break_duration_minutes: 0,
   });
 
   const weekDays = useMemo(() =>
