@@ -195,9 +195,10 @@ Deno.serve(async (req) => {
     }
 
     // 5. Find ticket by qr_payload
+    const bookingSelect = `id, passenger_first_name, passenger_last_name, passenger_email, passenger_phone, status, price_paid, trip_id, extras, origin_stop_id, destination_stop_id, seat_id, seats(seat_number), stops!bookings_origin_stop_id_fkey(name, city), stops!bookings_destination_stop_id_fkey(name, city)`;
     const { data: ticket, error: ticketError } = await supabase
       .from("tickets")
-      .select("*, bookings(id, passenger_first_name, passenger_last_name, passenger_email, status, price_paid, trip_id), trips(id, route_id, departure_date, departure_time, routes(name))")
+      .select(`*, bookings(${bookingSelect}), trips(id, route_id, departure_date, departure_time, arrival_time, routes(name))`)
       .eq("qr_payload", qrPayload)
       .maybeSingle();
 
