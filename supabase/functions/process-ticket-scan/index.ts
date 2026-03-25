@@ -195,9 +195,10 @@ Deno.serve(async (req) => {
     }
 
     // 5. Find ticket by qr_payload
+    const bookingSelect = `id, passenger_first_name, passenger_last_name, passenger_email, passenger_phone, status, price_paid, trip_id, extras, origin_stop_id, destination_stop_id, seat_id, seats(seat_number), stops!bookings_origin_stop_id_fkey(name, city), stops!bookings_destination_stop_id_fkey(name, city)`;
     const { data: ticket, error: ticketError } = await supabase
       .from("tickets")
-      .select("*, bookings(id, passenger_first_name, passenger_last_name, passenger_email, status, price_paid, trip_id), trips(id, route_id, departure_date, departure_time, routes(name))")
+      .select(`*, bookings(${bookingSelect}), trips(id, route_id, departure_date, departure_time, arrival_time, routes(name))`)
       .eq("qr_payload", qrPayload)
       .maybeSingle();
 
@@ -208,7 +209,7 @@ Deno.serve(async (req) => {
     if (!resolvedTicket) {
       const { data: booking } = await supabase
         .from("bookings")
-        .select("id, ticket_number, passenger_first_name, passenger_last_name, passenger_email, status, price_paid, trip_id, trips(id, route_id, departure_date, departure_time, routes(name))")
+        .select("id, ticket_number, passenger_first_name, passenger_last_name, passenger_email, passenger_phone, status, price_paid, trip_id, extras, origin_stop_id, destination_stop_id, seat_id, seats(seat_number), stops!bookings_origin_stop_id_fkey(name, city), stops!bookings_destination_stop_id_fkey(name, city), trips(id, route_id, departure_date, departure_time, arrival_time, routes(name))")
         .eq("ticket_number", qrPayload.toUpperCase())
         .maybeSingle();
 
@@ -221,7 +222,7 @@ Deno.serve(async (req) => {
             qr_payload: qrPayload.toUpperCase(),
             status: "valid",
           })
-          .select("*, bookings(id, passenger_first_name, passenger_last_name, passenger_email, status, price_paid, trip_id), trips(id, route_id, departure_date, departure_time, routes(name))")
+          .select(`*, bookings(${bookingSelect}), trips(id, route_id, departure_date, departure_time, arrival_time, routes(name))`)
           .single();
 
         if (!createErr) resolvedTicket = newTicket;
@@ -278,12 +279,26 @@ Deno.serve(async (req) => {
         message: `Bereits eingecheckt um ${resolvedTicket.checked_in_at}`,
       });
 
+      const originStopDup = booking?.stops_bookings_origin_stop_id_fkey || booking?.stops;
+      const destStopDup = booking?.stops_bookings_destination_stop_id_fkey;
+      
       return new Response(
         JSON.stringify({
           result: "already_checked_in",
           message: "Ticket bereits eingecheckt",
           color: "yellow",
           checked_in_at: resolvedTicket.checked_in_at,
+          passenger: booking
+            ? {
+                name: `${booking.passenger_first_name} ${booking.passenger_last_name}`,
+                seat: booking.seats?.seat_number || null,
+                origin: originStopDup ? `${originStopDup.name} (${originStopDup.city})` : null,
+                destination: destStopDup ? `${destStopDup.name} (${destStopDup.city})` : null,
+              }
+            : null,
+          trip: trip
+            ? { route: trip.routes?.name, date: trip.departure_date, time: trip.departure_time }
+            : null,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -364,7 +379,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 9. Return success (no sensitive data like emails in response)
+    // 9. Return success with extended driver info
+    const originStop = booking?.stops_bookings_origin_stop_id_fkey || booking?.stops;
+    const destStop = booking?.stops_bookings_destination_stop_id_fkey;
+    
     return new Response(
       JSON.stringify({
         result: "checked_in",
@@ -376,10 +394,25 @@ Deno.serve(async (req) => {
           checked_in_at: now,
         },
         passenger: booking
-          ? `${booking.passenger_first_name} ${booking.passenger_last_name}`
+          ? {
+              name: `${booking.passenger_first_name} ${booking.passenger_last_name}`,
+              first_name: booking.passenger_first_name,
+              last_name: booking.passenger_last_name,
+              phone: booking.passenger_phone,
+              seat: booking.seats?.seat_number || null,
+              price: booking.price_paid,
+              extras: booking.extras,
+              origin: originStop ? `${originStop.name} (${originStop.city})` : null,
+              destination: destStop ? `${destStop.name} (${destStop.city})` : null,
+            }
           : null,
         trip: trip
-          ? { route: trip.routes?.name, date: trip.departure_date, time: trip.departure_time }
+          ? { 
+              route: trip.routes?.name, 
+              date: trip.departure_date, 
+              time: trip.departure_time,
+              arrival: trip.arrival_time,
+            }
           : null,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
