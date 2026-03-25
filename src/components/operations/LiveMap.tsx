@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import Map, { Marker, NavigationControl } from "@vis.gl/react-mapbox";
 import { useVehiclePositions, VehiclePosition } from "@/hooks/useOperations";
+import { useMapboxToken } from "@/hooks/useMapboxToken";
 import {
   Bus,
   MapPin,

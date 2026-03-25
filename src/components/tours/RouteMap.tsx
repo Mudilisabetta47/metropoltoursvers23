@@ -2,6 +2,7 @@ import { useRef } from "react";
 import Map, { Marker, Source, Layer, NavigationControl } from "@vis.gl/react-mapbox";
 import { TourPickupStop } from "@/hooks/useTourBuilder";
 import { useCookieConsent } from "@/hooks/useCookieConsent";
+import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { Button } from "@/components/ui/button";
 import { Cookie } from "lucide-react";
 import "mapbox-gl/dist/mapbox-gl.css";
