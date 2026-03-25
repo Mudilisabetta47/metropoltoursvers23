@@ -326,9 +326,13 @@ const AdminShifts = () => {
           shift_end: form.shift_end ? `${dateStr}T${form.shift_end}:00` : null,
           role: form.role,
           status: form.status,
-           notes: combinedNotes,
+          notes: combinedNotes,
           assigned_bus_id: form.assigned_bus_id || null,
           assigned_trip_id: form.assigned_trip_id || null,
+          depot_id: form.depot_id || null,
+          dispatch_location: form.dispatch_location || null,
+          break_start: form.break_start || null,
+          break_duration_minutes: form.break_duration_minutes || 0,
         };
       });
 
@@ -353,6 +357,10 @@ const AdminShifts = () => {
         notes: combinedNotes,
         assigned_bus_id: form.assigned_bus_id || null,
         assigned_trip_id: form.assigned_trip_id || null,
+        depot_id: form.depot_id || null,
+        dispatch_location: form.dispatch_location || null,
+        break_start: form.break_start || null,
+        break_duration_minutes: form.break_duration_minutes || 0,
       };
 
       let error;
