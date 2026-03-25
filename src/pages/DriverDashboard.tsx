@@ -69,6 +69,15 @@ const DriverDashboard = () => {
   // Shifts state
   const [shifts, setShifts] = useState<any[]>([]);
   const [shiftsLoading, setShiftsLoading] = useState(false);
+  
+  // Route & delay state
+  const { token: mapboxToken } = useMapboxToken();
+  const [todayShift, setTodayShift] = useState<any>(null);
+  const [routeStops, setRouteStops] = useState<any[]>([]);
+  const [delayMinutes, setDelayMinutes] = useState("");
+  const [delayReason, setDelayReason] = useState("");
+  const [reportingDelay, setReportingDelay] = useState(false);
+  const [showDelayForm, setShowDelayForm] = useState(false);
   const geoWatchRef = useRef<number | null>(null);
 
   // Geolocation tracking - send position every 30s
