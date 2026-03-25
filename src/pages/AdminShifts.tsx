@@ -538,7 +538,8 @@ const AdminShifts = () => {
                                     const busName = getBusName(shift.assigned_bus_id);
                                     const tripRoute = getTripInfo(shift.assigned_trip_id);
                                     const roleShort = getRoleShort(shift.role);
-                                    const isCancelled = shift.status === "cancelled";
+                                    const destMatch = shift.notes?.match(/^Ziel: (.+?)(\n|$)/);
+                                    const destination = destMatch ? destMatch[1] : null;
 
                                     return (
                                       <div
