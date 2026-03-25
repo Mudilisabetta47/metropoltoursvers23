@@ -202,10 +202,83 @@ const DriverDashboard = () => {
     }
   }, [user]);
 
+  // Fetch today's route for route tab
+  const fetchTodayRoute = useCallback(async () => {
+    if (!user) return;
+    const today = format(new Date(), "yyyy-MM-dd");
+    
+    const { data: shift } = await supabase
+      .from("employee_shifts")
+      .select("*, buses(name, license_plate), trips(departure_time, arrival_time, route_id, routes(name, id))")
+      .eq("user_id", user.id)
+      .eq("shift_date", today)
+      .in("status", ["scheduled", "active"])
+      .order("shift_start", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    
+    setTodayShift(shift);
+    
+    if (shift?.trips?.route_id) {
+      const { data: stops } = await supabase
+        .from("stops")
+        .select("*")
+        .eq("route_id", shift.trips.route_id)
+        .order("stop_order", { ascending: true });
+      setRouteStops(stops || []);
+    } else {
+      setRouteStops([]);
+    }
+  }, [user]);
+
+  // Report delay
+  const reportDelay = async () => {
+    if (!user || !delayMinutes) return;
+    setReportingDelay(true);
+    try {
+      const mins = parseInt(delayMinutes);
+      if (isNaN(mins) || mins < 1) {
+        toast({ title: "Ungültige Minutenangabe", variant: "destructive" });
+        return;
+      }
+
+      // Update vehicle position with delay
+      await supabase
+        .from("vehicle_positions")
+        .update({ 
+          delay_minutes: mins, 
+          status: mins > 5 ? 'delayed' : 'on_time',
+          updated_at: new Date().toISOString() 
+        })
+        .eq("driver_user_id", user.id);
+
+      // Create incident for operations center
+      await supabase.from("incidents").insert({
+        type: "delay",
+        title: `Verspätung: ${mins} Min.`,
+        description: delayReason || `Fahrer meldet ${mins} Minuten Verspätung`,
+        severity: mins > 15 ? "warning" : "info",
+        source_type: "driver_report",
+        source_id: user.id,
+        status: "open",
+      });
+
+      toast({ title: `Verspätung von ${mins} Min. gemeldet` });
+      setDelayMinutes("");
+      setDelayReason("");
+      setShowDelayForm(false);
+    } catch (err) {
+      toast({ title: "Fehler beim Melden", variant: "destructive" });
+    } finally {
+      setReportingDelay(false);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === "history") fetchHistory();
     if (activeTab === "shifts") fetchShifts();
-  }, [activeTab, fetchHistory, fetchShifts]);
+    if (activeTab === "route") fetchTodayRoute();
+  }, [activeTab, fetchHistory, fetchShifts, fetchTodayRoute]);
 
   const processQrPayload = async (payload: string) => {
     if (scanning || !payload.trim()) return;
