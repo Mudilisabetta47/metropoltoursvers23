@@ -161,10 +161,50 @@ const AdminSettings = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
+  // Depots state
+  const [depots, setDepots] = useState<any[]>([]);
+  const [depotForm, setDepotForm] = useState({ name: "", code: "", city: "", address: "", postal_code: "", phone: "", email: "", contact_person: "", capacity_buses: 0, notes: "", is_active: true });
+  const [editingDepot, setEditingDepot] = useState<string | null>(null);
+  const [showDepotForm, setShowDepotForm] = useState(false);
+
   useEffect(() => {
     loadTours();
     loadSettings();
+    loadDepots();
   }, []);
+
+  const loadDepots = async () => {
+    const { data } = await supabase.from("depots").select("*").order("name");
+    if (data) setDepots(data);
+  };
+
+  const saveDepot = async () => {
+    if (!depotForm.name || !depotForm.code || !depotForm.city) {
+      toast({ title: "Name, Kürzel und Stadt sind Pflicht", variant: "destructive" });
+      return;
+    }
+    let error;
+    if (editingDepot) {
+      ({ error } = await supabase.from("depots").update(depotForm).eq("id", editingDepot));
+    } else {
+      ({ error } = await supabase.from("depots").insert(depotForm));
+    }
+    if (error) {
+      toast({ title: "Fehler", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: editingDepot ? "Standort aktualisiert" : "Standort angelegt" });
+      setShowDepotForm(false);
+      setEditingDepot(null);
+      setDepotForm({ name: "", code: "", city: "", address: "", postal_code: "", phone: "", email: "", contact_person: "", capacity_buses: 0, notes: "", is_active: true });
+      loadDepots();
+    }
+  };
+
+  const deleteDepot = async (id: string) => {
+    const { error } = await supabase.from("depots").delete().eq("id", id);
+    if (error) toast({ title: "Fehler", description: error.message, variant: "destructive" });
+    else { toast({ title: "Standort gelöscht" }); loadDepots(); }
+  };
 
   const loadSettings = async () => {
     try {
