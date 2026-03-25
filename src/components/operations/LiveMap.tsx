@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import Map, { Marker, NavigationControl } from "@vis.gl/react-mapbox";
 import { useVehiclePositions, VehiclePosition } from "@/hooks/useOperations";
+import { useMapboxToken } from "@/hooks/useMapboxToken";
 import {
   Bus,
   MapPin,
@@ -143,7 +144,7 @@ const VehicleDetailPanel = ({ vehicle, onClose }: VehicleDetailPanelProps) => {
 const LiveMap = () => {
   const mapRef = useRef<any>(null);
   const { vehicles } = useVehiclePositions();
-  const mapboxToken = (import.meta.env.VITE_MAPBOX_TOKEN as string | undefined)?.trim() || null;
+  const { token: mapboxToken } = useMapboxToken();
   const [selectedVehicle, setSelectedVehicle] = useState<VehiclePosition | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mapStyle, setMapStyle] = useState<"dark" | "satellite">("dark");

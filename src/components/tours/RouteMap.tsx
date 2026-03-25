@@ -2,6 +2,7 @@ import { useRef } from "react";
 import Map, { Marker, Source, Layer, NavigationControl } from "@vis.gl/react-mapbox";
 import { TourPickupStop } from "@/hooks/useTourBuilder";
 import { useCookieConsent } from "@/hooks/useCookieConsent";
+import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { Button } from "@/components/ui/button";
 import { Cookie } from "lucide-react";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -79,7 +80,7 @@ const getCityCoords = (city: string): { lat: number; lng: number } | null => {
 
 const RouteMap = ({ stops }: RouteMapProps) => {
   const { hasAnalyticsConsent, isLoading: consentLoading } = useCookieConsent();
-  const mapboxToken = (import.meta.env.VITE_MAPBOX_TOKEN as string | undefined)?.trim() || null;
+  const { token: mapboxToken, isLoading: tokenLoading } = useMapboxToken();
   const mapRef = useRef<any>(null);
 
   // Parse coordinates from stops using city lookup
@@ -146,7 +147,7 @@ const RouteMap = ({ stops }: RouteMapProps) => {
   } : null;
 
   // Loading state
-  if (consentLoading) {
+  if (consentLoading || tokenLoading) {
     return (
       <div className="h-64 bg-muted rounded-xl flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Karte wird geladen...</div>
