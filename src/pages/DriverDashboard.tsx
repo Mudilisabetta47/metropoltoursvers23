@@ -67,6 +67,68 @@ const DriverDashboard = () => {
   // Shifts state
   const [shifts, setShifts] = useState<any[]>([]);
   const [shiftsLoading, setShiftsLoading] = useState(false);
+  const geoWatchRef = useRef<number | null>(null);
+
+  // Geolocation tracking - send position every 30s
+  useEffect(() => {
+    if (!user) return;
+
+    const updatePosition = async (lat: number, lng: number, speed: number | null, heading: number | null) => {
+      // Get today's shift to find assigned bus
+      const today = new Date().toISOString().split('T')[0];
+      const { data: shift } = await supabase
+        .from('employee_shifts')
+        .select('assigned_bus_id, assigned_trip_id')
+        .eq('user_id', user.id)
+        .eq('shift_date', today)
+        .in('status', ['scheduled', 'active'])
+        .order('shift_start', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      const busId = shift?.assigned_bus_id;
+      if (!busId) return; // No bus assigned today, don't track
+
+      const posData = {
+        driver_user_id: user.id,
+        bus_id: busId,
+        trip_id: shift?.assigned_trip_id || null,
+        latitude: lat,
+        longitude: lng,
+        speed_kmh: speed ? Math.round((speed * 3.6) * 10) / 10 : 0,
+        heading: heading || 0,
+        status: 'on_time',
+        updated_at: new Date().toISOString(),
+      };
+
+      // Upsert based on driver_user_id
+      const { error } = await supabase
+        .from('vehicle_positions')
+        .upsert(posData, { onConflict: 'driver_user_id' });
+      
+      if (error) console.error('Position update failed:', error);
+    };
+
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => updatePosition(pos.coords.latitude, pos.coords.longitude, pos.coords.speed, pos.coords.heading),
+        (err) => console.warn('Geolocation error:', err),
+        { enableHighAccuracy: true }
+      );
+
+      geoWatchRef.current = navigator.geolocation.watchPosition(
+        (pos) => updatePosition(pos.coords.latitude, pos.coords.longitude, pos.coords.speed, pos.coords.heading),
+        (err) => console.warn('Geolocation watch error:', err),
+        { enableHighAccuracy: true, maximumAge: 30000, timeout: 10000 }
+      );
+    }
+
+    return () => {
+      if (geoWatchRef.current !== null) {
+        navigator.geolocation.clearWatch(geoWatchRef.current);
+      }
+    };
+  }, [user]);
 
   // Cleanup camera on unmount
   useEffect(() => {

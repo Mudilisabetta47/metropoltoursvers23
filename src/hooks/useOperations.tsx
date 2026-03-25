@@ -141,14 +141,34 @@ export const useVehiclePositions = () => {
         .order('updated_at', { ascending: false });
       
       if (!error && data) {
-        setVehicles(data as VehiclePosition[]);
+        // Fetch driver names from profiles
+        const driverIds = data.map((d: any) => d.driver_user_id).filter(Boolean);
+        let profileMap: Record<string, string> = {};
+        
+        if (driverIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('user_id, first_name, last_name')
+            .in('user_id', driverIds);
+          
+          if (profiles) {
+            profiles.forEach((p: any) => {
+              profileMap[p.user_id] = `${p.first_name || ''} ${p.last_name || ''}`.trim();
+            });
+          }
+        }
+
+        const mapped = data.map((d: any) => ({
+          ...d,
+          driver_name: profileMap[d.driver_user_id] || d.driver_name || null,
+        }));
+        setVehicles(mapped as VehiclePosition[]);
       }
       setIsLoading(false);
     };
 
     fetchPositions();
 
-    // Realtime subscription
     const channel = supabase
       .channel('vehicle_positions_changes')
       .on('postgres_changes', 
