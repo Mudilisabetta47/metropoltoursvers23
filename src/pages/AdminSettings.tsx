@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import {
   Save, CreditCard, Mail, Building2, Route, Users,
   Bell, FileText, Activity, Truck, Shield, UserCheck,
-  MapPin, Link2, Globe, Navigation
+  MapPin, Link2, Globe, Navigation, Warehouse, Plus, Trash2, Edit2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -27,10 +27,12 @@ type SettingsSection =
   | "notifications"
   | "templates"
   | "operations"
-  | "vehicles";
+  | "vehicles"
+  | "depots";
 
 const sections: { key: SettingsSection; label: string; icon: any; description: string }[] = [
   { key: "general", label: "Allgemein", icon: Building2, description: "Firmendaten & Grundeinstellungen" },
+  { key: "depots", label: "Betriebshöfe", icon: Warehouse, description: "Standorte, Abfertigungen & Depots" },
   { key: "booking", label: "Buchung", icon: FileText, description: "Buchungssystem & Regeln" },
   { key: "routes", label: "Routen & Fahrten", icon: Route, description: "Strecken, Haltestellen, Preise" },
   { key: "tours", label: "Touren & Vorlagen", icon: MapPin, description: "Standard-Haltestellen, Kombination & Entfernungen" },
