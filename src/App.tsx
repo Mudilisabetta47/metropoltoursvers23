@@ -69,7 +69,7 @@ const AdminRedirect = () => {
 };
 
 // Coming Soon gate: public visitors see countdown, staff sees full site
-const COMING_SOON_ENABLED = true; // Toggle to false to disable
+const COMING_SOON_ENABLED = false; // Toggle to false to disable
 
 const PublicGate = ({ children }: { children: React.ReactNode }) => {
   const { user, hasAnyStaffRole, isLoading } = useAuth();
