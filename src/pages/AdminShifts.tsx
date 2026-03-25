@@ -101,6 +101,7 @@ const AdminShifts = () => {
     role: "driver",
     status: "scheduled",
     notes: "",
+    destination: "",
     assigned_bus_id: "",
     assigned_trip_id: "",
     assignment_type: "manual" as "manual" | "trip" | "tour",
