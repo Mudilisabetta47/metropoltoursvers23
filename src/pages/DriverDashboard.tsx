@@ -642,6 +642,108 @@ const DriverDashboard = () => {
           </div>
         )}
 
+        {activeTab === "route" && (
+          <div className="space-y-4 max-w-md mx-auto">
+            {todayShift ? (
+              <>
+                <Card className="bg-zinc-900 border-zinc-800">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
+                        <Bus className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-white">
+                          {todayShift.trips?.routes?.name || "Heutige Route"}
+                        </h3>
+                        <p className="text-xs text-zinc-400">
+                          {todayShift.buses?.name} ({todayShift.buses?.license_plate})
+                          {todayShift.trips?.departure_time && ` • Ab ${todayShift.trips.departure_time.slice(0,5)}`}
+                        </p>
+                      </div>
+                    </div>
+
+                    {!showDelayForm ? (
+                      <Button
+                        onClick={() => setShowDelayForm(true)}
+                        variant="outline"
+                        className="w-full border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+                      >
+                        <Timer className="w-4 h-4 mr-2" /> Verspätung melden
+                      </Button>
+                    ) : (
+                      <div className="space-y-3 bg-amber-500/5 border border-amber-500/20 rounded-lg p-3">
+                        <h4 className="text-sm font-bold text-amber-400">Verspätung melden</h4>
+                        <div className="flex gap-2">
+                          <Input
+                            type="number"
+                            placeholder="Min."
+                            value={delayMinutes}
+                            onChange={(e) => setDelayMinutes(e.target.value)}
+                            className="bg-zinc-800 border-zinc-700 text-white w-20"
+                            min="1"
+                          />
+                          <Input
+                            placeholder="Grund (optional)"
+                            value={delayReason}
+                            onChange={(e) => setDelayReason(e.target.value)}
+                            className="bg-zinc-800 border-zinc-700 text-white flex-1"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={reportDelay}
+                            disabled={reportingDelay || !delayMinutes}
+                            className="flex-1 bg-amber-600 hover:bg-amber-700"
+                          >
+                            {reportingDelay ? <Loader2 className="w-4 h-4 animate-spin" /> : "Melden"}
+                          </Button>
+                          <Button
+                            onClick={() => { setShowDelayForm(false); setDelayMinutes(""); setDelayReason(""); }}
+                            variant="ghost"
+                            className="text-zinc-400"
+                          >
+                            Abbrechen
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {routeStops.length > 0 && (
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold text-zinc-300 px-1">Haltestellen</h3>
+                    {routeStops.map((stop, idx) => (
+                      <Card key={stop.id} className="bg-zinc-900 border-zinc-800">
+                        <CardContent className="p-3 flex items-center gap-3">
+                          <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                            {idx + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-white truncate">{stop.name}</p>
+                            <p className="text-xs text-zinc-500">{stop.city}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
+                {mapboxToken && routeStops.length > 1 && (
+                  <DriverRouteMap stops={routeStops} mapboxToken={mapboxToken} />
+                )}
+              </>
+            ) : (
+              <div className="text-center py-16 text-zinc-500">
+                <MapPin className="w-12 h-12 mx-auto mb-3 text-zinc-700" />
+                <p className="font-medium">Keine Route für heute</p>
+                <p className="text-xs text-zinc-600 mt-1">Du hast heute keinen Dienstplan zugewiesen.</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === "shifts" && (
           <div className="space-y-3 max-w-md mx-auto">
             <div className="flex items-center justify-between">
