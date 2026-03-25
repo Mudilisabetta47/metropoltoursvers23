@@ -214,6 +214,11 @@ const AdminShifts = () => {
     setMultiDay(false);
     const startTime = shift.shift_start ? format(new Date(shift.shift_start), "HH:mm") : "06:00";
     const endTime = shift.shift_end ? format(new Date(shift.shift_end), "HH:mm") : "18:00";
+    // Extract destination from notes if it starts with "Ziel: "
+    const notes = shift.notes || "";
+    const destMatch = notes.match(/^Ziel: (.+?)(\n|$)/);
+    const destination = destMatch ? destMatch[1] : "";
+    const cleanNotes = destMatch ? notes.replace(/^Ziel: .+?\n?/, "").trim() : notes;
     setForm({
       user_id: shift.user_id,
       shift_date: shift.shift_date,
@@ -222,7 +227,8 @@ const AdminShifts = () => {
       shift_end: endTime,
       role: shift.role,
       status: shift.status,
-      notes: shift.notes || "",
+      notes: cleanNotes,
+      destination,
       assigned_bus_id: shift.assigned_bus_id || "",
       assigned_trip_id: shift.assigned_trip_id || "",
       assignment_type: shift.assigned_trip_id ? "trip" : "manual",
