@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import Map, { Marker, NavigationControl } from "@vis.gl/react-mapbox";
 import { useVehiclePositions, VehiclePosition } from "@/hooks/useOperations";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
@@ -148,6 +148,13 @@ const LiveMap = () => {
   const [selectedVehicle, setSelectedVehicle] = useState<VehiclePosition | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mapStyle, setMapStyle] = useState<"dark" | "satellite">("dark");
+
+  // Trigger map resize when fullscreen toggles
+  useEffect(() => {
+    setTimeout(() => {
+      mapRef.current?.getMap?.()?.resize?.();
+    }, 100);
+  }, [isFullscreen]);
 
   const getMarkerColor = (status: string) => {
     switch (status) {
