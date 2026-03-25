@@ -158,17 +158,18 @@ const DriverDashboard = () => {
   const startCamera = async () => {
     if (cameraStarting) return;
     setCameraStarting(true);
+    // Show the container first so Html5Qrcode can render into it
+    setCameraActive(true);
     
     try {
-      // First request camera permission explicitly
+      // Request camera permission explicitly
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: "environment" } 
       });
-      // Stop the test stream immediately
       stream.getTracks().forEach(track => track.stop());
       
-      // Small delay to ensure DOM element is ready
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Wait for DOM to update with visible container
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       // Clean up any previous scanner instance
       if (scannerRef.current) {
@@ -178,6 +179,11 @@ const DriverDashboard = () => {
           }
         } catch {}
         scannerRef.current = null;
+      }
+
+      const el = document.getElementById(scannerContainerId);
+      if (!el) {
+        throw new Error("Scanner-Container nicht gefunden");
       }
 
       const scanner = new Html5Qrcode(scannerContainerId, { verbose: false });
@@ -194,13 +200,17 @@ const DriverDashboard = () => {
         },
         () => {}
       );
-      setCameraActive(true);
     } catch (err: any) {
       console.error("Camera error:", err);
+      setCameraActive(false);
       toast({
         title: "Kamera-Fehler",
         description: err.name === "NotAllowedError" 
           ? "Bitte erlaube den Kamerazugriff in den Browser-Einstellungen und lade die Seite neu."
+          : err.name === "NotFoundError"
+          ? "Keine Kamera gefunden. Bitte prüfe ob dein Gerät eine Kamera hat."
+          : err.name === "NotReadableError"
+          ? "Kamera wird von einer anderen App verwendet. Bitte schließe andere Apps und versuche es erneut."
           : (err.message || "Kamera konnte nicht gestartet werden"),
         variant: "destructive",
       });
