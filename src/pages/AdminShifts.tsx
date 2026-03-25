@@ -282,6 +282,12 @@ const AdminShifts = () => {
       return;
     }
 
+    // Merge destination into notes
+    const combinedNotes = [
+      form.destination ? `Ziel: ${form.destination}` : "",
+      form.notes || "",
+    ].filter(Boolean).join("\n") || null;
+
     // Multi-day: create a shift for each day
     if (multiDay && form.shift_end_date && form.shift_end_date > form.shift_date) {
       const days = eachDayOfInterval({
