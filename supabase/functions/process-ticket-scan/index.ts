@@ -365,7 +365,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 9. Return success (no sensitive data like emails in response)
+    // 9. Return success with extended driver info
+    const originStop = booking?.stops_bookings_origin_stop_id_fkey || booking?.stops;
+    const destStop = booking?.stops_bookings_destination_stop_id_fkey;
+    
     return new Response(
       JSON.stringify({
         result: "checked_in",
@@ -377,10 +380,25 @@ Deno.serve(async (req) => {
           checked_in_at: now,
         },
         passenger: booking
-          ? `${booking.passenger_first_name} ${booking.passenger_last_name}`
+          ? {
+              name: `${booking.passenger_first_name} ${booking.passenger_last_name}`,
+              first_name: booking.passenger_first_name,
+              last_name: booking.passenger_last_name,
+              phone: booking.passenger_phone,
+              seat: booking.seats?.seat_number || null,
+              price: booking.price_paid,
+              extras: booking.extras,
+              origin: originStop ? `${originStop.name} (${originStop.city})` : null,
+              destination: destStop ? `${destStop.name} (${destStop.city})` : null,
+            }
           : null,
         trip: trip
-          ? { route: trip.routes?.name, date: trip.departure_date, time: trip.departure_time }
+          ? { 
+              route: trip.routes?.name, 
+              date: trip.departure_date, 
+              time: trip.departure_time,
+              arrival: trip.arrival_time,
+            }
           : null,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
