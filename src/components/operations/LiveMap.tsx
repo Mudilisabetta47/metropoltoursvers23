@@ -144,7 +144,7 @@ const VehicleDetailPanel = ({ vehicle, onClose }: VehicleDetailPanelProps) => {
 const LiveMap = () => {
   const mapRef = useRef<any>(null);
   const { vehicles } = useVehiclePositions();
-  const { token: mapboxToken, isLoading: tokenLoading } = useMapboxToken();
+  const { token: mapboxToken } = useMapboxToken();
   const [selectedVehicle, setSelectedVehicle] = useState<VehiclePosition | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mapStyle, setMapStyle] = useState<"dark" | "satellite">("dark");
