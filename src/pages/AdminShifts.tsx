@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
-import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, parseISO } from "date-fns";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, parseISO, differenceInDays, eachDayOfInterval } from "date-fns";
 import { de } from "date-fns/locale";
 import {
   Plus, Loader2, ChevronLeft, ChevronRight, Calendar, Clock,
-  Bus, Trash2, Copy, Printer
+  Bus, Trash2, Copy, Printer, MapPin, Navigation, Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -44,6 +46,25 @@ interface BusOption {
   license_plate: string;
 }
 
+interface TripOption {
+  id: string;
+  departure_date: string;
+  departure_time: string;
+  arrival_time: string;
+  bus_id: string;
+  route_id: string;
+  route_name: string;
+  bus_name: string;
+}
+
+interface TourOption {
+  id: string;
+  destination: string;
+  departure_date: string;
+  return_date: string;
+  duration_days: number;
+}
+
 const SHIFT_ROLES = [
   { value: "driver", label: "Fahrer", short: "F" },
   { value: "guide", label: "Reiseleiter", short: "RL" },
@@ -65,18 +86,25 @@ const AdminShifts = () => {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [buses, setBuses] = useState<BusOption[]>([]);
+  const [trips, setTrips] = useState<TripOption[]>([]);
+  const [tours, setTours] = useState<TourOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editModal, setEditModal] = useState(false);
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
+  const [multiDay, setMultiDay] = useState(false);
   const [form, setForm] = useState({
     user_id: "",
     shift_date: "",
+    shift_end_date: "", // for multi-day
     shift_start: "06:00",
     shift_end: "18:00",
     role: "driver",
     status: "scheduled",
     notes: "",
     assigned_bus_id: "",
+    assigned_trip_id: "",
+    assignment_type: "manual" as "manual" | "trip" | "tour",
+    selected_tour_id: "",
   });
 
   const weekDays = useMemo(() =>
@@ -95,7 +123,7 @@ const AdminShifts = () => {
     const startStr = format(currentWeek, "yyyy-MM-dd");
     const endStr = format(weekEnd, "yyyy-MM-dd");
 
-    const [shiftsRes, rolesRes, busesRes] = await Promise.all([
+    const [shiftsRes, rolesRes, busesRes, tripsRes, toursRes] = await Promise.all([
       supabase
         .from("employee_shifts")
         .select("*")
@@ -104,6 +132,20 @@ const AdminShifts = () => {
         .order("shift_start", { ascending: true }),
       supabase.from("user_roles").select("user_id, role"),
       supabase.from("buses").select("id, name, license_plate").eq("is_active", true),
+      supabase
+        .from("trips")
+        .select("id, departure_date, departure_time, arrival_time, bus_id, route_id, routes(name), buses(name)")
+        .eq("is_active", true)
+        .gte("departure_date", format(new Date(), "yyyy-MM-dd"))
+        .order("departure_date", { ascending: true })
+        .limit(100),
+      supabase
+        .from("package_tours")
+        .select("id, destination, departure_date, return_date, duration_days")
+        .eq("is_active", true)
+        .gte("departure_date", format(new Date(), "yyyy-MM-dd"))
+        .order("departure_date", { ascending: true })
+        .limit(50),
     ]);
 
     const userRoles: Record<string, string[]> = {};
@@ -131,39 +173,99 @@ const AdminShifts = () => {
 
     setShifts((shiftsRes.data as Shift[]) || []);
     setBuses((busesRes.data as BusOption[]) || []);
+    setTrips((tripsRes.data || []).map((t: any) => ({
+      id: t.id,
+      departure_date: t.departure_date,
+      departure_time: t.departure_time,
+      arrival_time: t.arrival_time,
+      bus_id: t.bus_id,
+      route_id: t.route_id,
+      route_name: t.routes?.name || "Unbekannte Route",
+      bus_name: t.buses?.name || "Unbekannt",
+    })));
+    setTours((toursRes.data as TourOption[]) || []);
     setIsLoading(false);
   };
 
   const openNew = (date?: Date, employeeId?: string) => {
     setEditingShift(null);
+    setMultiDay(false);
     setForm({
       user_id: employeeId || "",
       shift_date: date ? format(date, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
+      shift_end_date: "",
       shift_start: "06:00",
       shift_end: "18:00",
       role: "driver",
       status: "scheduled",
       notes: "",
       assigned_bus_id: "",
+      assigned_trip_id: "",
+      assignment_type: "manual",
+      selected_tour_id: "",
     });
     setEditModal(true);
   };
 
   const openEdit = (shift: Shift) => {
     setEditingShift(shift);
+    setMultiDay(false);
     const startTime = shift.shift_start ? format(new Date(shift.shift_start), "HH:mm") : "06:00";
     const endTime = shift.shift_end ? format(new Date(shift.shift_end), "HH:mm") : "18:00";
     setForm({
       user_id: shift.user_id,
       shift_date: shift.shift_date,
+      shift_end_date: "",
       shift_start: startTime,
       shift_end: endTime,
       role: shift.role,
       status: shift.status,
       notes: shift.notes || "",
       assigned_bus_id: shift.assigned_bus_id || "",
+      assigned_trip_id: shift.assigned_trip_id || "",
+      assignment_type: shift.assigned_trip_id ? "trip" : "manual",
+      selected_tour_id: "",
     });
     setEditModal(true);
+  };
+
+  // When a trip is selected, auto-fill bus, date, and times
+  const handleTripSelect = (tripId: string) => {
+    if (tripId === "none") {
+      setForm(f => ({ ...f, assigned_trip_id: "", assigned_bus_id: "" }));
+      return;
+    }
+    const trip = trips.find(t => t.id === tripId);
+    if (trip) {
+      setForm(f => ({
+        ...f,
+        assigned_trip_id: tripId,
+        assigned_bus_id: trip.bus_id,
+        shift_date: trip.departure_date,
+        shift_start: trip.departure_time.slice(0, 5),
+        shift_end: trip.arrival_time.slice(0, 5),
+      }));
+    }
+  };
+
+  // When a tour is selected, auto-fill dates for multi-day
+  const handleTourSelect = (tourId: string) => {
+    if (tourId === "none") {
+      setForm(f => ({ ...f, selected_tour_id: "" }));
+      setMultiDay(false);
+      return;
+    }
+    const tour = tours.find(t => t.id === tourId);
+    if (tour) {
+      setMultiDay(true);
+      setForm(f => ({
+        ...f,
+        selected_tour_id: tourId,
+        shift_date: tour.departure_date,
+        shift_end_date: tour.return_date,
+        notes: f.notes || `Reise: ${tour.destination}`,
+      }));
+    }
   };
 
   const saveShift = async () => {
@@ -172,33 +274,65 @@ const AdminShifts = () => {
       return;
     }
 
-    const shiftStartDt = `${form.shift_date}T${form.shift_start}:00`;
-    const shiftEndDt = form.shift_end ? `${form.shift_date}T${form.shift_end}:00` : null;
+    // Multi-day: create a shift for each day
+    if (multiDay && form.shift_end_date && form.shift_end_date > form.shift_date) {
+      const days = eachDayOfInterval({
+        start: parseISO(form.shift_date),
+        end: parseISO(form.shift_end_date),
+      });
 
-    const payload = {
-      user_id: form.user_id,
-      shift_date: form.shift_date,
-      shift_start: shiftStartDt,
-      shift_end: shiftEndDt,
-      role: form.role,
-      status: form.status,
-      notes: form.notes || null,
-      assigned_bus_id: form.assigned_bus_id || null,
-    };
+      const payloads = days.map(day => {
+        const dateStr = format(day, "yyyy-MM-dd");
+        return {
+          user_id: form.user_id,
+          shift_date: dateStr,
+          shift_start: `${dateStr}T${form.shift_start}:00`,
+          shift_end: form.shift_end ? `${dateStr}T${form.shift_end}:00` : null,
+          role: form.role,
+          status: form.status,
+          notes: form.notes || null,
+          assigned_bus_id: form.assigned_bus_id || null,
+          assigned_trip_id: form.assigned_trip_id || null,
+        };
+      });
 
-    let error;
-    if (editingShift) {
-      ({ error } = await supabase.from("employee_shifts").update(payload).eq("id", editingShift.id));
+      const { error } = await supabase.from("employee_shifts").insert(payloads);
+      if (error) {
+        toast({ title: "Fehler", description: error.message, variant: "destructive" });
+        return;
+      }
+      toast({ title: `${days.length} Schichten erstellt`, description: `${format(days[0], "dd.MM.")} – ${format(days[days.length - 1], "dd.MM.yyyy")}` });
     } else {
-      ({ error } = await supabase.from("employee_shifts").insert(payload));
+      // Single day
+      const shiftStartDt = `${form.shift_date}T${form.shift_start}:00`;
+      const shiftEndDt = form.shift_end ? `${form.shift_date}T${form.shift_end}:00` : null;
+
+      const payload = {
+        user_id: form.user_id,
+        shift_date: form.shift_date,
+        shift_start: shiftStartDt,
+        shift_end: shiftEndDt,
+        role: form.role,
+        status: form.status,
+        notes: form.notes || null,
+        assigned_bus_id: form.assigned_bus_id || null,
+        assigned_trip_id: form.assigned_trip_id || null,
+      };
+
+      let error;
+      if (editingShift) {
+        ({ error } = await supabase.from("employee_shifts").update(payload).eq("id", editingShift.id));
+      } else {
+        ({ error } = await supabase.from("employee_shifts").insert(payload));
+      }
+
+      if (error) {
+        toast({ title: "Fehler", description: error.message, variant: "destructive" });
+        return;
+      }
+      toast({ title: editingShift ? "Schicht aktualisiert" : "Schicht erstellt" });
     }
 
-    if (error) {
-      toast({ title: "Fehler", description: error.message, variant: "destructive" });
-      return;
-    }
-
-    toast({ title: editingShift ? "Schicht aktualisiert" : "Schicht erstellt" });
     setEditModal(false);
     loadData();
   };
@@ -224,6 +358,7 @@ const AdminShifts = () => {
       status: "scheduled",
       notes: shift.notes,
       assigned_bus_id: shift.assigned_bus_id,
+      assigned_trip_id: shift.assigned_trip_id,
     });
 
     toast({ title: "Schicht dupliziert", description: `Kopiert auf ${format(parseISO(nextDate), "dd.MM.yyyy")}` });
@@ -245,19 +380,27 @@ const AdminShifts = () => {
     return bus ? bus.name : null;
   };
 
+  const getTripInfo = (tripId: string | null) => {
+    if (!tripId) return null;
+    const trip = trips.find(t => t.id === tripId);
+    return trip ? trip.route_name : null;
+  };
+
   const getRoleShort = (role: string) => SHIFT_ROLES.find(r => r.value === role)?.short || "?";
 
-  // Get all employees that have shifts this week + all employees for the table
   const activeEmployeeIds = useMemo(() => {
     const ids = new Set(shifts.map(s => s.user_id));
     return employees.filter(e => ids.has(e.user_id));
   }, [shifts, employees]);
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const handlePrint = () => window.print();
 
   const kwNumber = format(currentWeek, "w", { locale: de });
+
+  // Count multi-day days for display
+  const multiDayCount = multiDay && form.shift_end_date && form.shift_date
+    ? differenceInDays(parseISO(form.shift_end_date), parseISO(form.shift_date)) + 1
+    : 0;
 
   return (
     <AdminLayout
@@ -278,7 +421,7 @@ const AdminShifts = () => {
         <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-emerald-400" /></div>
       ) : (
         <div className="space-y-4">
-          {/* Week Navigation — hidden on print */}
+          {/* Week Navigation */}
           <div className="flex items-center justify-between print:hidden">
             <Button variant="ghost" size="sm" className="text-zinc-400" onClick={() => setCurrentWeek(w => subWeeks(w, 1))}>
               <ChevronLeft className="w-4 h-4 mr-1" /> Vorherige
@@ -291,7 +434,7 @@ const AdminShifts = () => {
             </Button>
           </div>
 
-          {/* ===== PRINT HEADER — only visible on print ===== */}
+          {/* Print Header */}
           <div className="hidden print:block mb-4">
             <div className="text-center border-b-2 border-black pb-3 mb-4">
               <h1 className="text-2xl font-bold text-black">METROPOL TOURS — Dienstplan</h1>
@@ -302,10 +445,9 @@ const AdminShifts = () => {
             </div>
           </div>
 
-          {/* ===== MAIN TABLE — the office-style Dienstplan ===== */}
+          {/* Main Table */}
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm print:text-xs" id="shift-table">
-              {/* Table Header */}
               <thead>
                 <tr>
                   <th className="border border-zinc-700 print:border-gray-400 bg-zinc-800 print:bg-gray-100 text-left px-3 py-2 text-zinc-300 print:text-black font-semibold w-44 print:w-32">
@@ -333,7 +475,6 @@ const AdminShifts = () => {
                 </tr>
               </thead>
 
-              {/* Table Body — one row per employee */}
               <tbody>
                 {activeEmployeeIds.length === 0 ? (
                   <tr>
@@ -352,7 +493,6 @@ const AdminShifts = () => {
 
                     return (
                       <tr key={emp.user_id} className={empIdx % 2 === 0 ? "bg-zinc-900/50 print:bg-white" : "bg-zinc-900 print:bg-gray-50"}>
-                        {/* Employee name cell */}
                         <td className="border border-zinc-700 print:border-gray-400 px-3 py-2 font-medium text-white print:text-black whitespace-nowrap">
                           <div className="flex items-center justify-between">
                             <span>{getEmployeeName(emp.user_id)}</span>
@@ -362,7 +502,6 @@ const AdminShifts = () => {
                           </div>
                         </td>
 
-                        {/* Day cells */}
                         {weekDays.map(day => {
                           const dayShifts = empShifts.filter(s => isSameDay(parseISO(s.shift_date), day));
                           const isToday = isSameDay(day, new Date());
@@ -383,6 +522,7 @@ const AdminShifts = () => {
                                     const startTime = shift.shift_start ? format(new Date(shift.shift_start), "HH:mm") : "–";
                                     const endTime = shift.shift_end ? format(new Date(shift.shift_end), "HH:mm") : "–";
                                     const busName = getBusName(shift.assigned_bus_id);
+                                    const tripRoute = getTripInfo(shift.assigned_trip_id);
                                     const roleShort = getRoleShort(shift.role);
                                     const isCancelled = shift.status === "cancelled";
 
@@ -398,22 +538,25 @@ const AdminShifts = () => {
                                         }`}
                                         onClick={(e) => { e.stopPropagation(); openEdit(shift); }}
                                       >
-                                        {/* Time range */}
                                         <div className="font-mono font-semibold text-white print:text-black">
                                           {startTime}–{endTime}
                                         </div>
-                                        {/* Role badge */}
                                         <div className="text-zinc-400 print:text-gray-600">
                                           [{roleShort}]
                                           {busName && <span className="ml-1">🚌 {busName}</span>}
                                         </div>
-                                        {/* Notes */}
+                                        {tripRoute && (
+                                          <div className="text-blue-400 print:text-blue-700 flex items-center gap-0.5">
+                                            <Navigation className="w-2.5 h-2.5" />
+                                            <span className="truncate max-w-[90px]">{tripRoute}</span>
+                                          </div>
+                                        )}
                                         {shift.notes && (
                                           <div className="text-zinc-500 print:text-gray-500 italic truncate max-w-[100px] print:max-w-none">
                                             {shift.notes}
                                           </div>
                                         )}
-                                        {/* Hover actions — hidden on print */}
+                                        {/* Hover actions */}
                                         <div className="hidden group-hover:flex gap-1 absolute -top-2 -right-1 print:hidden">
                                           <button
                                             onClick={(e) => { e.stopPropagation(); duplicateShift(shift); }}
@@ -443,7 +586,6 @@ const AdminShifts = () => {
                           );
                         })}
 
-                        {/* Total hours cell */}
                         <td className="border border-zinc-700 print:border-gray-400 px-2 py-2 text-center font-mono font-bold text-emerald-400 print:text-black">
                           {totalHours.toFixed(1)}
                         </td>
@@ -482,7 +624,7 @@ const AdminShifts = () => {
             </table>
           </div>
 
-          {/* Legend — visible on both screen and print */}
+          {/* Legend */}
           <div className="flex flex-wrap gap-4 text-xs text-zinc-500 print:text-gray-600 mt-2 print:mt-4">
             <span className="font-semibold">Legende:</span>
             {SHIFT_ROLES.map(r => (
@@ -500,94 +642,36 @@ const AdminShifts = () => {
         </div>
       )}
 
-      {/* ===== PRINT STYLES ===== */}
+      {/* Print styles */}
       <style>{`
         @media print {
-          /* Hide everything except our content */
           body * { visibility: hidden; }
           #shift-table, #shift-table * { visibility: visible; }
-          
-          /* Actually, let's do it properly with the print classes */
           aside, header, .print\\:hidden { display: none !important; }
           main { margin: 0 !important; padding: 0 !important; }
-          
-          /* Make the page use the full width */
-          @page {
-            size: landscape;
-            margin: 10mm;
-          }
-          
-          /* Force light mode for print */
+          @page { size: landscape; margin: 10mm; }
           :root, body, html, .dark {
-            background: white !important;
-            color: black !important;
-            color-scheme: light !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            background: white !important; color: black !important;
+            color-scheme: light !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;
           }
-          
-          /* Override all dark mode colors */
           *, *::before, *::after {
-            visibility: visible !important;
-            background-color: transparent !important;
-            color: black !important;
-            border-color: #999 !important;
-            box-shadow: none !important;
+            visibility: visible !important; background-color: transparent !important;
+            color: black !important; border-color: #999 !important; box-shadow: none !important;
           }
-          
-          /* Keep table header background */
-          th {
-            background-color: #f3f4f6 !important;
-            color: black !important;
-            font-weight: 600 !important;
-          }
-
-          /* Shift cells keep subtle bg */
-          td .rounded {
-            border: 1px solid #ccc !important;
-            padding: 2px 4px !important;
-          }
-          
-          /* Hide sidebar and non-print elements */
-          aside, nav, header, .print\\:hidden {
-            display: none !important;
-          }
-          
-          .hidden.print\\:block {
-            display: block !important;
-            color: black !important;
-          }
-          
-          /* Print header styling */
-          .hidden.print\\:block h1,
-          .hidden.print\\:block h2,
-          .hidden.print\\:block p {
-            color: black !important;
-          }
-          
-          main {
-            margin: 0 !important;
-            padding: 0 !important;
-            background: white !important;
-          }
-          
-          table {
-            width: 100% !important;
-            border-collapse: collapse !important;
-            background: white !important;
-          }
-          
-          th, td {
-            border: 1px solid #999 !important;
-            padding: 4px 6px !important;
-            background: white !important;
-          }
+          th { background-color: #f3f4f6 !important; color: black !important; font-weight: 600 !important; }
+          td .rounded { border: 1px solid #ccc !important; padding: 2px 4px !important; }
+          aside, nav, header, .print\\:hidden { display: none !important; }
+          .hidden.print\\:block { display: block !important; color: black !important; }
+          .hidden.print\\:block h1, .hidden.print\\:block h2, .hidden.print\\:block p { color: black !important; }
+          main { margin: 0 !important; padding: 0 !important; background: white !important; }
+          table { width: 100% !important; border-collapse: collapse !important; background: white !important; }
+          th, td { border: 1px solid #999 !important; padding: 4px 6px !important; background: white !important; }
         }
       `}</style>
 
-      {/* ===== CREATE/EDIT MODAL ===== */}
+      {/* Create/Edit Modal */}
       <Dialog open={editModal} onOpenChange={setEditModal}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-lg">
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5 text-emerald-400" />
@@ -611,23 +695,114 @@ const AdminShifts = () => {
                         ? `${emp.first_name || ""} ${emp.last_name || ""}`.trim()
                         : emp.email}
                       {emp.roles.includes("driver") && " 🚌"}
+                      {emp.roles.includes("admin") && " 👑"}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Date + Role row */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* Assignment Type - only for new shifts */}
+            {!editingShift && (
               <div>
-                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Datum *</Label>
-                <Input
-                  type="date"
-                  value={form.shift_date}
-                  onChange={e => setForm(f => ({ ...f, shift_date: e.target.value }))}
-                  className="bg-zinc-800 border-zinc-700 text-white mt-1"
-                />
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider mb-2 block">Zuordnung</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { value: "manual" as const, label: "Manuell", icon: Clock, desc: "Zeiten frei eingeben" },
+                    { value: "trip" as const, label: "Linienfahrt", icon: Navigation, desc: "Bestehende Fahrt wählen" },
+                    { value: "tour" as const, label: "Reise", icon: MapPin, desc: "Pauschalreise zuordnen" },
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => {
+                        setForm(f => ({ ...f, assignment_type: opt.value, assigned_trip_id: "", selected_tour_id: "" }));
+                        if (opt.value !== "tour") setMultiDay(false);
+                      }}
+                      className={`p-3 rounded-lg border text-left transition-all ${
+                        form.assignment_type === opt.value
+                          ? "border-emerald-500 bg-emerald-500/10"
+                          : "border-zinc-700 bg-zinc-800/50 hover:border-zinc-600"
+                      }`}
+                    >
+                      <opt.icon className={`w-4 h-4 mb-1 ${form.assignment_type === opt.value ? "text-emerald-400" : "text-zinc-500"}`} />
+                      <div className="text-xs font-medium text-white">{opt.label}</div>
+                      <div className="text-[10px] text-zinc-500">{opt.desc}</div>
+                    </button>
+                  ))}
+                </div>
               </div>
+            )}
+
+            {/* Trip selection */}
+            {form.assignment_type === "trip" && !editingShift && (
+              <div>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider flex items-center gap-1">
+                  <Navigation className="w-3 h-3" /> Fahrt / Route auswählen
+                </Label>
+                <Select value={form.assigned_trip_id || "none"} onValueChange={handleTripSelect}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
+                    <SelectValue placeholder="Fahrt wählen..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 max-h-60">
+                    <SelectItem value="none" className="text-zinc-500">– Keine Fahrt –</SelectItem>
+                    {trips.map(t => (
+                      <SelectItem key={t.id} value={t.id} className="text-white">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{t.route_name}</span>
+                          <span className="text-zinc-400">
+                            {format(parseISO(t.departure_date), "dd.MM.yy")} | {t.departure_time.slice(0, 5)}–{t.arrival_time.slice(0, 5)}
+                          </span>
+                          <span className="text-zinc-500 text-[10px]">🚌 {t.bus_name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.assigned_trip_id && (
+                  <p className="text-[10px] text-emerald-400 mt-1 flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    Route, Bus, Datum & Zeiten wurden automatisch übernommen. Der Fahrer sieht die Route auf dem Handy.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Tour selection */}
+            {form.assignment_type === "tour" && !editingShift && (
+              <div>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider flex items-center gap-1">
+                  <MapPin className="w-3 h-3" /> Reise auswählen
+                </Label>
+                <Select value={form.selected_tour_id || "none"} onValueChange={handleTourSelect}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
+                    <SelectValue placeholder="Reise wählen..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 max-h-60">
+                    <SelectItem value="none" className="text-zinc-500">– Keine Reise –</SelectItem>
+                    {tours.map(t => (
+                      <SelectItem key={t.id} value={t.id} className="text-white">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{t.destination}</span>
+                          <span className="text-zinc-400">
+                            {format(parseISO(t.departure_date), "dd.MM.")}–{format(parseISO(t.return_date), "dd.MM.yy")}
+                          </span>
+                          <Badge className="bg-blue-500/20 text-blue-400 border-0 text-[9px]">{t.duration_days} Tage</Badge>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.selected_tour_id && (
+                  <p className="text-[10px] text-blue-400 mt-1 flex items-center gap-1">
+                    <Users className="w-3 h-3" />
+                    Es werden {multiDayCount} Schichten erstellt (eine pro Tag der Reise).
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Role + Status */}
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">Funktion</Label>
                 <Select value={form.role} onValueChange={v => setForm(f => ({ ...f, role: v }))}>
@@ -639,6 +814,57 @@ const AdminShifts = () => {
                   </SelectContent>
                 </Select>
               </div>
+              <div>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Status</Label>
+                <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v }))}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                    {SHIFT_STATUSES.map(s => (
+                      <SelectItem key={s.value} value={s.value} className="text-white">{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Date(s) */}
+            <div className="space-y-2">
+              {!editingShift && form.assignment_type === "manual" && (
+                <div className="flex items-center gap-2">
+                  <Switch checked={multiDay} onCheckedChange={setMultiDay} />
+                  <Label className="text-zinc-400 text-xs">Mehrtägiger Einsatz</Label>
+                </div>
+              )}
+              <div className={`grid ${multiDay ? "grid-cols-2" : "grid-cols-1"} gap-3`}>
+                <div>
+                  <Label className="text-zinc-400 text-xs uppercase tracking-wider">
+                    {multiDay ? "Von *" : "Datum *"}
+                  </Label>
+                  <Input
+                    type="date"
+                    value={form.shift_date}
+                    onChange={e => setForm(f => ({ ...f, shift_date: e.target.value }))}
+                    className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                  />
+                </div>
+                {multiDay && (
+                  <div>
+                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">Bis *</Label>
+                    <Input
+                      type="date"
+                      value={form.shift_end_date}
+                      min={form.shift_date}
+                      onChange={e => setForm(f => ({ ...f, shift_end_date: e.target.value }))}
+                      className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                    />
+                  </div>
+                )}
+              </div>
+              {multiDay && multiDayCount > 0 && (
+                <p className="text-[10px] text-amber-400">
+                  ⚡ {multiDayCount} Schichten werden erstellt (je eine pro Tag)
+                </p>
+              )}
             </div>
 
             {/* Time row */}
@@ -667,36 +893,45 @@ const AdminShifts = () => {
               </div>
             </div>
 
-            {/* Status + Bus row */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Status</Label>
-                <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v }))}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700">
-                    {SHIFT_STATUSES.map(s => (
-                      <SelectItem key={s.value} value={s.value} className="text-white">{s.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Bus - show always for manual, auto-filled for trip */}
+            <div>
+              <Label className="text-zinc-400 text-xs uppercase tracking-wider flex items-center gap-1">
+                <Bus className="w-3 h-3" /> Fahrzeug
+              </Label>
+              <Select value={form.assigned_bus_id || "none"} onValueChange={v => setForm(f => ({ ...f, assigned_bus_id: v === "none" ? "" : v }))}>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1"><SelectValue placeholder="Keins" /></SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  <SelectItem value="none" className="text-white">– Kein Fahrzeug –</SelectItem>
+                  {buses.map(b => (
+                    <SelectItem key={b.id} value={b.id} className="text-white">
+                      {b.name} ({b.license_plate})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Trip selection for edit mode */}
+            {editingShift && (
               <div>
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider flex items-center gap-1">
-                  <Bus className="w-3 h-3" /> Fahrzeug
+                  <Navigation className="w-3 h-3" /> Zugeordnete Fahrt
                 </Label>
-                <Select value={form.assigned_bus_id || "none"} onValueChange={v => setForm(f => ({ ...f, assigned_bus_id: v === "none" ? "" : v }))}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1"><SelectValue placeholder="Keins" /></SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700">
-                    <SelectItem value="none" className="text-white">– Kein Fahrzeug –</SelectItem>
-                    {buses.map(b => (
-                      <SelectItem key={b.id} value={b.id} className="text-white">
-                        {b.name} ({b.license_plate})
+                <Select value={form.assigned_trip_id || "none"} onValueChange={v => setForm(f => ({ ...f, assigned_trip_id: v === "none" ? "" : v }))}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
+                    <SelectValue placeholder="Keine Fahrt" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 max-h-60">
+                    <SelectItem value="none" className="text-zinc-500">– Keine Fahrt –</SelectItem>
+                    {trips.map(t => (
+                      <SelectItem key={t.id} value={t.id} className="text-white">
+                        {t.route_name} – {format(parseISO(t.departure_date), "dd.MM.yy")}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-            </div>
+            )}
 
             {/* Notes */}
             <div>
@@ -705,7 +940,7 @@ const AdminShifts = () => {
                 value={form.notes}
                 onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                 className="bg-zinc-800 border-zinc-700 text-white min-h-[60px] mt-1"
-                placeholder="z.B. Sonderfahrt Zagreb, Vertretung für M. Müller..."
+                placeholder="z.B. Reise Zagreb 6 Tage, Vertretung für M. Müller..."
               />
             </div>
           </div>
@@ -718,7 +953,7 @@ const AdminShifts = () => {
             )}
             <Button variant="ghost" onClick={() => setEditModal(false)} className="text-zinc-400">Abbrechen</Button>
             <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={saveShift}>
-              {editingShift ? "Speichern" : "Schicht anlegen"}
+              {editingShift ? "Speichern" : multiDay && multiDayCount > 1 ? `${multiDayCount} Schichten anlegen` : "Schicht anlegen"}
             </Button>
           </DialogFooter>
         </DialogContent>
