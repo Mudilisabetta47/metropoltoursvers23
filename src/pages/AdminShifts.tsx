@@ -567,7 +567,13 @@ const AdminShifts = () => {
                                             <span className="truncate max-w-[90px]">{tripRoute}</span>
                                           </div>
                                         )}
-                                        {shift.notes && (
+                                        {!tripRoute && destination && (
+                                          <div className="text-amber-400 print:text-amber-700 flex items-center gap-0.5">
+                                            <MapPin className="w-2.5 h-2.5" />
+                                            <span className="truncate max-w-[90px]">{destination}</span>
+                                          </div>
+                                        )}
+                                        {shift.notes && !shift.notes.startsWith("Ziel:") && (
                                           <div className="text-zinc-500 print:text-gray-500 italic truncate max-w-[100px] print:max-w-none">
                                             {shift.notes}
                                           </div>
