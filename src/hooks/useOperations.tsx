@@ -137,11 +137,24 @@ export const useVehiclePositions = () => {
     const fetchPositions = async () => {
       const { data, error } = await supabase
         .from('vehicle_positions')
-        .select('*')
+        .select('*, profiles!vehicle_positions_driver_user_id_fkey(first_name, last_name)')
         .order('updated_at', { ascending: false });
       
       if (!error && data) {
-        setVehicles(data as VehiclePosition[]);
+        const mapped = data.map((d: any) => ({
+          ...d,
+          driver_name: d.profiles 
+            ? `${d.profiles.first_name || ''} ${d.profiles.last_name || ''}`.trim() || null
+            : d.driver_name || null,
+        }));
+        setVehicles(mapped as VehiclePosition[]);
+      } else if (error) {
+        // Fallback without join if FK doesn't exist
+        const { data: fallback } = await supabase
+          .from('vehicle_positions')
+          .select('*')
+          .order('updated_at', { ascending: false });
+        if (fallback) setVehicles(fallback as VehiclePosition[]);
       }
       setIsLoading(false);
     };
