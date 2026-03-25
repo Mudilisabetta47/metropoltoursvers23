@@ -3,20 +3,22 @@ import { Html5Qrcode } from "html5-qrcode";
 import {
   Scan, CheckCircle2, XCircle, AlertTriangle, Loader2,
   LogOut, Bus, Clock, Camera, CameraOff,
-  History, Shield, List, CalendarDays
+  History, Shield, List, CalendarDays, MapPin, Timer
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow, format, startOfWeek, addDays } from "date-fns";
 import { de } from "date-fns/locale";
 
-type DriverTab = "scan" | "history" | "shifts";
+type DriverTab = "scan" | "history" | "shifts" | "route";
 
 const QR_PAYLOAD_REGEX = /^[a-zA-Z0-9\-_.]+$/;
 const MAX_PAYLOAD_LENGTH = 200;
