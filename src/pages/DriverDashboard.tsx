@@ -327,8 +327,13 @@ const DriverDashboard = () => {
             <div className="relative">
               <div
                 id={scannerContainerId}
-                style={{ minHeight: cameraActive ? 300 : 0, display: cameraActive ? 'block' : 'none' }}
                 className="w-full rounded-xl overflow-hidden"
+                style={{ 
+                  minHeight: cameraActive || cameraStarting ? 300 : 0, 
+                  height: cameraActive || cameraStarting ? 'auto' : 0,
+                  overflow: 'hidden',
+                  transition: 'min-height 0.3s ease'
+                }}
               />
               {!cameraActive && (
                 <button
