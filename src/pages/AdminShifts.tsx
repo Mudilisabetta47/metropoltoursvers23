@@ -540,6 +540,7 @@ const AdminShifts = () => {
                                     const roleShort = getRoleShort(shift.role);
                                     const destMatch = shift.notes?.match(/^Ziel: (.+?)(\n|$)/);
                                     const destination = destMatch ? destMatch[1] : null;
+                                    const isCancelled = shift.status === "cancelled";
 
                                     return (
                                       <div
