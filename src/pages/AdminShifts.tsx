@@ -328,7 +328,7 @@ const AdminShifts = () => {
         shift_end: shiftEndDt,
         role: form.role,
         status: form.status,
-        notes: form.notes || null,
+        notes: combinedNotes,
         assigned_bus_id: form.assigned_bus_id || null,
         assigned_trip_id: form.assigned_trip_id || null,
       };
