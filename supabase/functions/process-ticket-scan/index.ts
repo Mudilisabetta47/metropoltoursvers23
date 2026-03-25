@@ -209,7 +209,7 @@ Deno.serve(async (req) => {
     if (!resolvedTicket) {
       const { data: booking } = await supabase
         .from("bookings")
-        .select("id, ticket_number, passenger_first_name, passenger_last_name, passenger_email, status, price_paid, trip_id, trips(id, route_id, departure_date, departure_time, routes(name))")
+        .select("id, ticket_number, passenger_first_name, passenger_last_name, passenger_email, passenger_phone, status, price_paid, trip_id, extras, origin_stop_id, destination_stop_id, seat_id, seats(seat_number), stops!bookings_origin_stop_id_fkey(name, city), stops!bookings_destination_stop_id_fkey(name, city), trips(id, route_id, departure_date, departure_time, arrival_time, routes(name))")
         .eq("ticket_number", qrPayload.toUpperCase())
         .maybeSingle();
 
