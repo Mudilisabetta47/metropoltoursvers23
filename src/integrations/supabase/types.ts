@@ -502,6 +502,63 @@ export type Database = {
         }
         Relationships: []
       }
+      depots: {
+        Row: {
+          address: string | null
+          capacity_buses: number | null
+          city: string
+          code: string
+          contact_person: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          latitude: number | null
+          longitude: number | null
+          name: string
+          notes: string | null
+          phone: string | null
+          postal_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          capacity_buses?: number | null
+          city: string
+          code: string
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          capacity_buses?: number | null
+          city?: string
+          code?: string
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       driver_messages: {
         Row: {
           created_at: string
@@ -547,7 +604,11 @@ export type Database = {
           actual_start: string | null
           assigned_bus_id: string | null
           assigned_trip_id: string | null
+          break_duration_minutes: number | null
+          break_start: string | null
           created_at: string
+          depot_id: string | null
+          dispatch_location: string | null
           id: string
           notes: string | null
           role: string
@@ -563,7 +624,11 @@ export type Database = {
           actual_start?: string | null
           assigned_bus_id?: string | null
           assigned_trip_id?: string | null
+          break_duration_minutes?: number | null
+          break_start?: string | null
           created_at?: string
+          depot_id?: string | null
+          dispatch_location?: string | null
           id?: string
           notes?: string | null
           role?: string
@@ -579,7 +644,11 @@ export type Database = {
           actual_start?: string | null
           assigned_bus_id?: string | null
           assigned_trip_id?: string | null
+          break_duration_minutes?: number | null
+          break_start?: string | null
           created_at?: string
+          depot_id?: string | null
+          dispatch_location?: string | null
           id?: string
           notes?: string | null
           role?: string
@@ -603,6 +672,13 @@ export type Database = {
             columns: ["assigned_trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_shifts_depot_id_fkey"
+            columns: ["depot_id"]
+            isOneToOne: false
+            referencedRelation: "depots"
             referencedColumns: ["id"]
           },
         ]
