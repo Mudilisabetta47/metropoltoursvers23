@@ -947,6 +947,21 @@ const AdminShifts = () => {
               </div>
             )}
 
+            {/* Destination - for manual assignment */}
+            {(form.assignment_type === "manual" || editingShift) && (
+              <div>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider flex items-center gap-1">
+                  <MapPin className="w-3 h-3" /> Zielort / Reiseziel
+                </Label>
+                <Input
+                  value={form.destination}
+                  onChange={e => setForm(f => ({ ...f, destination: e.target.value }))}
+                  className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                  placeholder="z.B. Zagreb, Kroatien / Nizza, Frankreich..."
+                />
+              </div>
+            )}
+
             {/* Notes */}
             <div>
               <Label className="text-zinc-400 text-xs uppercase tracking-wider">Bemerkungen</Label>
@@ -954,7 +969,7 @@ const AdminShifts = () => {
                 value={form.notes}
                 onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                 className="bg-zinc-800 border-zinc-700 text-white min-h-[60px] mt-1"
-                placeholder="z.B. Reise Zagreb 6 Tage, Vertretung für M. Müller..."
+                placeholder="z.B. Vertretung für M. Müller, Sonderfahrt..."
               />
             </div>
           </div>
