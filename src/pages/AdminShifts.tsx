@@ -304,7 +304,7 @@ const AdminShifts = () => {
           shift_end: form.shift_end ? `${dateStr}T${form.shift_end}:00` : null,
           role: form.role,
           status: form.status,
-          notes: form.notes || null,
+           notes: combinedNotes,
           assigned_bus_id: form.assigned_bus_id || null,
           assigned_trip_id: form.assigned_trip_id || null,
         };
