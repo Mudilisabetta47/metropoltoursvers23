@@ -402,6 +402,9 @@ const DriverDashboard = () => {
             {/* Scan Result */}
             {scanResult && (() => {
               const styles = getResultStyles(scanResult.color);
+              const p = typeof scanResult.passenger === 'object' ? scanResult.passenger : null;
+              const passengerName = p?.name || (typeof scanResult.passenger === 'string' ? scanResult.passenger : null);
+              
               return (
                 <Card className={`border-2 ${styles.border} ${styles.bg} animate-in fade-in duration-300`}>
                   <CardContent className="p-5">
@@ -409,21 +412,75 @@ const DriverDashboard = () => {
                       <div className="shrink-0">{styles.icon}</div>
                       <div className="flex-1 min-w-0">
                         <p className={`font-bold text-xl ${styles.text}`}>{scanResult.message}</p>
-                        {scanResult.passenger && (
-                          <p className="text-zinc-300 text-sm mt-1">👤 {scanResult.passenger}</p>
-                        )}
-                        {scanResult.trip && (
-                          <p className="text-zinc-400 text-xs mt-1">
-                            🚌 {scanResult.trip.route} • {scanResult.trip.date} • {scanResult.trip.time}
-                          </p>
-                        )}
-                        {scanResult.checked_in_at && (
-                          <p className="text-zinc-500 text-xs mt-1">
-                            Eingecheckt: {new Date(scanResult.checked_in_at).toLocaleString("de-DE")}
-                          </p>
-                        )}
                       </div>
                     </div>
+
+                    {/* Passenger Details Card */}
+                    {(passengerName || p) && (
+                      <div className="mt-4 space-y-2 bg-zinc-800/50 rounded-lg p-3">
+                        <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Fahrgast-Info</h4>
+                        
+                        {passengerName && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">👤</span>
+                            <span className="text-white font-bold text-lg">{passengerName}</span>
+                          </div>
+                        )}
+                        
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          {p?.seat && (
+                            <div className="bg-zinc-700/50 rounded px-2 py-1.5">
+                              <span className="text-zinc-400 text-xs block">Sitzplatz</span>
+                              <span className="text-white font-bold">{p.seat}</span>
+                            </div>
+                          )}
+                          {p?.price != null && (
+                            <div className="bg-zinc-700/50 rounded px-2 py-1.5">
+                              <span className="text-zinc-400 text-xs block">Preis</span>
+                              <span className="text-white font-bold">{p.price.toFixed(2)} €</span>
+                            </div>
+                          )}
+                          {p?.origin && (
+                            <div className="bg-zinc-700/50 rounded px-2 py-1.5">
+                              <span className="text-zinc-400 text-xs block">Von</span>
+                              <span className="text-white text-xs font-medium">{p.origin}</span>
+                            </div>
+                          )}
+                          {p?.destination && (
+                            <div className="bg-zinc-700/50 rounded px-2 py-1.5">
+                              <span className="text-zinc-400 text-xs block">Nach</span>
+                              <span className="text-white text-xs font-medium">{p.destination}</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {p?.phone && (
+                          <div className="flex items-center gap-2 text-sm text-zinc-300">
+                            <span>📱</span>
+                            <a href={`tel:${p.phone}`} className="underline">{p.phone}</a>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Trip Info */}
+                    {scanResult.trip && (
+                      <div className="mt-3 bg-zinc-800/50 rounded-lg p-3">
+                        <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">Fahrt</h4>
+                        <p className="text-white font-medium">🚌 {scanResult.trip.route}</p>
+                        <p className="text-zinc-300 text-sm">
+                          📅 {scanResult.trip.date} • 🕐 {scanResult.trip.time}
+                          {scanResult.trip.arrival && ` → ${scanResult.trip.arrival}`}
+                        </p>
+                      </div>
+                    )}
+
+                    {scanResult.checked_in_at && (
+                      <p className="text-zinc-500 text-xs mt-2">
+                        Eingecheckt: {new Date(scanResult.checked_in_at).toLocaleString("de-DE")}
+                      </p>
+                    )}
+
                     <Button
                       onClick={() => { setScanResult(null); setManualTicket(""); }}
                       variant="outline"
