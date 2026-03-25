@@ -3,20 +3,22 @@ import { Html5Qrcode } from "html5-qrcode";
 import {
   Scan, CheckCircle2, XCircle, AlertTriangle, Loader2,
   LogOut, Bus, Clock, Camera, CameraOff,
-  History, Shield, List, CalendarDays
+  History, Shield, List, CalendarDays, MapPin, Timer
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import DriverRouteMap from "@/components/driver/DriverRouteMap";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow, format, startOfWeek, addDays } from "date-fns";
 import { de } from "date-fns/locale";
 
-type DriverTab = "scan" | "history" | "shifts";
+type DriverTab = "scan" | "history" | "shifts" | "route";
 
 const QR_PAYLOAD_REGEX = /^[a-zA-Z0-9\-_.]+$/;
 const MAX_PAYLOAD_LENGTH = 200;
@@ -67,6 +69,15 @@ const DriverDashboard = () => {
   // Shifts state
   const [shifts, setShifts] = useState<any[]>([]);
   const [shiftsLoading, setShiftsLoading] = useState(false);
+  
+  // Route & delay state
+  const { token: mapboxToken } = useMapboxToken();
+  const [todayShift, setTodayShift] = useState<any>(null);
+  const [routeStops, setRouteStops] = useState<any[]>([]);
+  const [delayMinutes, setDelayMinutes] = useState("");
+  const [delayReason, setDelayReason] = useState("");
+  const [reportingDelay, setReportingDelay] = useState(false);
+  const [showDelayForm, setShowDelayForm] = useState(false);
   const geoWatchRef = useRef<number | null>(null);
 
   // Geolocation tracking - send position every 30s
@@ -191,10 +202,83 @@ const DriverDashboard = () => {
     }
   }, [user]);
 
+  // Fetch today's route for route tab
+  const fetchTodayRoute = useCallback(async () => {
+    if (!user) return;
+    const today = format(new Date(), "yyyy-MM-dd");
+    
+    const { data: shift } = await supabase
+      .from("employee_shifts")
+      .select("*, buses(name, license_plate), trips(departure_time, arrival_time, route_id, routes(name, id))")
+      .eq("user_id", user.id)
+      .eq("shift_date", today)
+      .in("status", ["scheduled", "active"])
+      .order("shift_start", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    
+    setTodayShift(shift);
+    
+    if (shift?.trips?.route_id) {
+      const { data: stops } = await supabase
+        .from("stops")
+        .select("*")
+        .eq("route_id", shift.trips.route_id)
+        .order("stop_order", { ascending: true });
+      setRouteStops(stops || []);
+    } else {
+      setRouteStops([]);
+    }
+  }, [user]);
+
+  // Report delay
+  const reportDelay = async () => {
+    if (!user || !delayMinutes) return;
+    setReportingDelay(true);
+    try {
+      const mins = parseInt(delayMinutes);
+      if (isNaN(mins) || mins < 1) {
+        toast({ title: "Ungültige Minutenangabe", variant: "destructive" });
+        return;
+      }
+
+      // Update vehicle position with delay
+      await supabase
+        .from("vehicle_positions")
+        .update({ 
+          delay_minutes: mins, 
+          status: mins > 5 ? 'delayed' : 'on_time',
+          updated_at: new Date().toISOString() 
+        })
+        .eq("driver_user_id", user.id);
+
+      // Create incident for operations center
+      await supabase.from("incidents").insert({
+        type: "delay",
+        title: `Verspätung: ${mins} Min.`,
+        description: delayReason || `Fahrer meldet ${mins} Minuten Verspätung`,
+        severity: mins > 15 ? "warning" : "info",
+        source_type: "driver_report",
+        source_id: user.id,
+        status: "open",
+      });
+
+      toast({ title: `Verspätung von ${mins} Min. gemeldet` });
+      setDelayMinutes("");
+      setDelayReason("");
+      setShowDelayForm(false);
+    } catch (err) {
+      toast({ title: "Fehler beim Melden", variant: "destructive" });
+    } finally {
+      setReportingDelay(false);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === "history") fetchHistory();
     if (activeTab === "shifts") fetchShifts();
-  }, [activeTab, fetchHistory, fetchShifts]);
+    if (activeTab === "route") fetchTodayRoute();
+  }, [activeTab, fetchHistory, fetchShifts, fetchTodayRoute]);
 
   const processQrPayload = async (payload: string) => {
     if (scanning || !payload.trim()) return;
@@ -371,6 +455,7 @@ const DriverDashboard = () => {
 
   const tabs = [
     { id: "scan" as DriverTab, label: "Scanner", icon: Scan },
+    { id: "route" as DriverTab, label: "Route", icon: MapPin },
     { id: "shifts" as DriverTab, label: "Dienstplan", icon: CalendarDays },
     { id: "history" as DriverTab, label: "Verlauf", icon: History },
   ];
@@ -554,6 +639,108 @@ const DriverDashboard = () => {
                 </Card>
               );
             })()}
+          </div>
+        )}
+
+        {activeTab === "route" && (
+          <div className="space-y-4 max-w-md mx-auto">
+            {todayShift ? (
+              <>
+                <Card className="bg-zinc-900 border-zinc-800">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
+                        <Bus className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-white">
+                          {todayShift.trips?.routes?.name || "Heutige Route"}
+                        </h3>
+                        <p className="text-xs text-zinc-400">
+                          {todayShift.buses?.name} ({todayShift.buses?.license_plate})
+                          {todayShift.trips?.departure_time && ` • Ab ${todayShift.trips.departure_time.slice(0,5)}`}
+                        </p>
+                      </div>
+                    </div>
+
+                    {!showDelayForm ? (
+                      <Button
+                        onClick={() => setShowDelayForm(true)}
+                        variant="outline"
+                        className="w-full border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+                      >
+                        <Timer className="w-4 h-4 mr-2" /> Verspätung melden
+                      </Button>
+                    ) : (
+                      <div className="space-y-3 bg-amber-500/5 border border-amber-500/20 rounded-lg p-3">
+                        <h4 className="text-sm font-bold text-amber-400">Verspätung melden</h4>
+                        <div className="flex gap-2">
+                          <Input
+                            type="number"
+                            placeholder="Min."
+                            value={delayMinutes}
+                            onChange={(e) => setDelayMinutes(e.target.value)}
+                            className="bg-zinc-800 border-zinc-700 text-white w-20"
+                            min="1"
+                          />
+                          <Input
+                            placeholder="Grund (optional)"
+                            value={delayReason}
+                            onChange={(e) => setDelayReason(e.target.value)}
+                            className="bg-zinc-800 border-zinc-700 text-white flex-1"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={reportDelay}
+                            disabled={reportingDelay || !delayMinutes}
+                            className="flex-1 bg-amber-600 hover:bg-amber-700"
+                          >
+                            {reportingDelay ? <Loader2 className="w-4 h-4 animate-spin" /> : "Melden"}
+                          </Button>
+                          <Button
+                            onClick={() => { setShowDelayForm(false); setDelayMinutes(""); setDelayReason(""); }}
+                            variant="ghost"
+                            className="text-zinc-400"
+                          >
+                            Abbrechen
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {routeStops.length > 0 && (
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold text-zinc-300 px-1">Haltestellen</h3>
+                    {routeStops.map((stop, idx) => (
+                      <Card key={stop.id} className="bg-zinc-900 border-zinc-800">
+                        <CardContent className="p-3 flex items-center gap-3">
+                          <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                            {idx + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-white truncate">{stop.name}</p>
+                            <p className="text-xs text-zinc-500">{stop.city}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
+                {mapboxToken && routeStops.length > 1 && (
+                  <DriverRouteMap stops={routeStops} mapboxToken={mapboxToken} />
+                )}
+              </>
+            ) : (
+              <div className="text-center py-16 text-zinc-500">
+                <MapPin className="w-12 h-12 mx-auto mb-3 text-zinc-700" />
+                <p className="font-medium">Keine Route für heute</p>
+                <p className="text-xs text-zinc-600 mt-1">Du hast heute keinen Dienstplan zugewiesen.</p>
+              </div>
+            )}
           </div>
         )}
 

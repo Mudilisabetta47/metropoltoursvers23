@@ -20,7 +20,7 @@ type AuthMode = 'login' | 'register';
 
 export default function AuthPage() {
   const navigate = useNavigate();
-  const { user, signIn, signUp, isLoading } = useAuth();
+  const { user, roles, isDriver, signIn, signUp, isLoading } = useAuth();
   
   const [mode, setMode] = useState<AuthMode>('login');
   const [showPassword, setShowPassword] = useState(false);
@@ -36,10 +36,15 @@ export default function AuthPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (user && !isLoading) {
-      navigate('/');
+    if (user && !isLoading && roles.length > 0) {
+      // Drivers go directly to the driver portal
+      if (isDriver) {
+        navigate('/admin/driver');
+      } else {
+        navigate('/');
+      }
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, roles, isDriver, navigate]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
