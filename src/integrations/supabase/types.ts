@@ -2713,6 +2713,7 @@ export type Database = {
           created_at: string
           delay_minutes: number | null
           driver_name: string | null
+          driver_user_id: string | null
           eta_next_stop: string | null
           heading: number | null
           id: string
@@ -2731,6 +2732,7 @@ export type Database = {
           created_at?: string
           delay_minutes?: number | null
           driver_name?: string | null
+          driver_user_id?: string | null
           eta_next_stop?: string | null
           heading?: number | null
           id?: string
@@ -2749,6 +2751,7 @@ export type Database = {
           created_at?: string
           delay_minutes?: number | null
           driver_name?: string | null
+          driver_user_id?: string | null
           eta_next_stop?: string | null
           heading?: number | null
           id?: string
