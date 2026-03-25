@@ -22,11 +22,23 @@ const QR_PAYLOAD_REGEX = /^[a-zA-Z0-9\-_.]+$/;
 const MAX_PAYLOAD_LENGTH = 200;
 const SCAN_COOLDOWN_MS = 2000;
 
+interface PassengerInfo {
+  name: string;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  seat?: string;
+  price?: number;
+  extras?: any;
+  origin?: string;
+  destination?: string;
+}
+
 interface ScanResult {
   result: string;
   message: string;
   color: "green" | "yellow" | "red";
-  passenger?: string;
+  passenger?: PassengerInfo | string;
   ticket?: any;
   trip?: any;
   checked_in_at?: string;
