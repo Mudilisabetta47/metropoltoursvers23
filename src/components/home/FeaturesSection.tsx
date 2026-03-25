@@ -1,9 +1,9 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
 import { 
   MapPin, Bus, Ticket, Users,
-  School, Trophy, Plane, PartyPopper, ArrowRight, Loader2, Wifi, Shield, Zap
+  School, Trophy, Plane, PartyPopper, ArrowRight, Loader2, Shield, Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useServiceTypes, useCMSContent } from "@/hooks/useCMS";

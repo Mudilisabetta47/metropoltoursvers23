@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { MapPin, Calendar, Users, ArrowRight, ChevronLeft, ChevronRight, Plus, Minus, ChevronDown, Phone, Sparkles, Clock, Percent, Star, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -53,7 +53,7 @@ const FloatingParticle = ({ delay, size, x, y, duration }: { delay: number; size
 const HeroSlider = () => {
   const navigate = useNavigate();
   const { tours } = usePackageTours();
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [_currentSlide, setCurrentSlide] = useState(0);
   
   const [selectedDestination, setSelectedDestination] = useState<string>("");
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
