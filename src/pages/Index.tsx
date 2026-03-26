@@ -4,7 +4,7 @@ import HeroSlider from "@/components/home/HeroSlider";
 import FeaturesSection from "@/components/home/FeaturesSection";
 import PackageToursSection from "@/components/home/PackageToursSection";
 import WeekendTripsSection from "@/components/home/WeekendTripsSection";
-import PopularRoutesSection from "@/components/home/PopularRoutesSection";
+
 import TestimonialsSection from "@/components/home/TestimonialsSection";
 import NewsletterSection from "@/components/home/NewsletterSection";
 import CTASection from "@/components/home/CTASection";
@@ -19,7 +19,7 @@ const Index = () => {
         <FeaturesSection />
         <PackageToursSection />
         <WeekendTripsSection />
-        <PopularRoutesSection />
+        
         <TestimonialsSection />
         <NewsletterSection />
         <CTASection />
