@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowRight, Clock, Bus, MapPin } from "lucide-react";
+import { ArrowRight, Clock, Bus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";

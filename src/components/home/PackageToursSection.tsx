@@ -1,4 +1,4 @@
-import { MapPin, Calendar, Palmtree, Star, ArrowRight, Hotel, Bus, Users, Flame, Clock } from "lucide-react";
+import { MapPin, Calendar, Palmtree, Star, ArrowRight, Hotel, Bus, Flame, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
