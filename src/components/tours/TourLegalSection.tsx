@@ -107,14 +107,9 @@ const TourLegalSection = ({ legalSections, tariffs }: TourLegalSectionProps) => 
                     </AccordionTrigger>
                     <AccordionContent>
                       <div className="pb-4 pt-2 prose prose-sm prose-slate max-w-none">
-                        <div 
-                          className="text-muted-foreground whitespace-pre-wrap"
-                          dangerouslySetInnerHTML={{ 
-                            __html: section.content
-                              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                              .replace(/\n/g, '<br />') 
-                          }}
-                        />
+                        <div className="text-muted-foreground whitespace-pre-wrap">
+                          <ReactMarkdown>{section.content}</ReactMarkdown>
+                        </div>
                       </div>
                     </AccordionContent>
                   </AccordionItem>
