@@ -459,9 +459,14 @@ const TourCheckoutPage = () => {
 
       if (bookingError) throw bookingError;
 
-      await supabase.from("tour_dates")
-        .update({ booked_seats: selectedDate!.booked_seats + participants })
-        .eq("id", selectedDate!.id);
+      // Update booked_seats - try client-side, fall back silently (edge function will handle it)
+      try {
+        await supabase.from("tour_dates")
+          .update({ booked_seats: selectedDate!.booked_seats + participants })
+          .eq("id", selectedDate!.id);
+      } catch (e) {
+        console.warn("Client-side seat update skipped, edge function will handle:", e);
+      }
 
       // Route to PayPal payment
       if (selectedPaymentMethod === "paypal") {
