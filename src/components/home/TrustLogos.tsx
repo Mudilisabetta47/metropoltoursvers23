@@ -1,4 +1,4 @@
-import { Shield, Lock } from "lucide-react";
+import { Shield, Lock, CreditCard } from "lucide-react";
 
 const TrustLogos = () => {
   return (
@@ -6,6 +6,10 @@ const TrustLogos = () => {
       <div className="flex items-center gap-2 text-primary-foreground/60 text-sm">
         <Lock className="w-4 h-4" />
         <span>SSL-verschlüsselt</span>
+      </div>
+      <div className="flex items-center gap-2 text-primary-foreground/60 text-sm">
+        <CreditCard className="w-4 h-4" />
+        <span>Kreditkarte</span>
       </div>
       <div className="flex items-center gap-2 text-primary-foreground/60 text-sm">
         <img
