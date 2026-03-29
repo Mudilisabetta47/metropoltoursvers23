@@ -146,7 +146,7 @@ serve(async (req) => {
               locale: "de-DE",
               shipping_preference: "NO_SHIPPING",
               user_action: "PAY_NOW",
-              return_url: `${origin}/tour-checkout?tour=${booking.tour_id}&date=${booking.tour_date_id}&tariff=${booking.tariff_id}&pax=${booking.participants}&payment=paypal_success&paypal_order_id={ORDER_ID}`,
+              return_url: `${origin}/tour-checkout?tour=${booking.tour_id}&date=${booking.tour_date_id}&tariff=${booking.tariff_id}&pax=${booking.participants}&payment=paypal_success&booking_id=${bookingId}`,
               cancel_url: `${origin}/tour-checkout?tour=${booking.tour_id}&date=${booking.tour_date_id}&tariff=${booking.tariff_id}&pax=${booking.participants}&payment=cancelled`,
             },
           },
