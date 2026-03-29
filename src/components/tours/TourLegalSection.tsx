@@ -1,3 +1,4 @@
+import ReactMarkdown from "react-markdown";
 import { Scale, Shield, FileText, AlertTriangle, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -107,14 +108,9 @@ const TourLegalSection = ({ legalSections, tariffs }: TourLegalSectionProps) => 
                     </AccordionTrigger>
                     <AccordionContent>
                       <div className="pb-4 pt-2 prose prose-sm prose-slate max-w-none">
-                        <div 
-                          className="text-muted-foreground whitespace-pre-wrap"
-                          dangerouslySetInnerHTML={{ 
-                            __html: section.content
-                              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                              .replace(/\n/g, '<br />') 
-                          }}
-                        />
+                        <div className="text-muted-foreground whitespace-pre-wrap">
+                          <ReactMarkdown>{section.content}</ReactMarkdown>
+                        </div>
                       </div>
                     </AccordionContent>
                   </AccordionItem>
