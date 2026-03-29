@@ -64,7 +64,7 @@ import {
   ExtendedPackageTour,
 } from "@/hooks/useTourBuilder";
 
-type PaymentMethod = "paypal";
+type PaymentMethod = "paypal" | "stripe";
 type CheckoutStep = "summary" | "passengers" | "payment" | "confirmation";
 
 interface PassengerInfo {
@@ -465,6 +465,18 @@ const TourCheckoutPage = () => {
         .eq("id", selectedDate!.id);
       if (seatsError) {
         console.warn("Client-side seat update skipped:", seatsError.message);
+      }
+
+      // Route to Stripe payment (credit card)
+      if (selectedPaymentMethod === "stripe") {
+        const { data: stripeData, error: stripeError } = await supabase.functions.invoke("create-tour-payment", {
+          body: { bookingId: bookingData.id, couponCode: appliedCoupon?.code || null },
+        });
+        if (stripeError || !stripeData?.url) {
+          throw new Error(stripeData?.error || "Kreditkarten-Zahlung konnte nicht erstellt werden");
+        }
+        window.location.href = stripeData.url;
+        return;
       }
 
       // Route to PayPal payment
@@ -955,6 +967,7 @@ const TourCheckoutPage = () => {
                     </CardHeader>
                     <CardContent className="space-y-3">
                       {[
+                        { key: "stripe" as PaymentMethod, icon: CreditCard, label: "Kreditkarte", desc: "Visa, Mastercard, American Express" },
                         { key: "paypal" as PaymentMethod, icon: Wallet, label: "PayPal", desc: "Schnell & sicher mit PayPal bezahlen" },
                       ].map((method) => (
                         <div
