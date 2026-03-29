@@ -64,7 +64,7 @@ import {
   ExtendedPackageTour,
 } from "@/hooks/useTourBuilder";
 
-type PaymentMethod = "paypal";
+type PaymentMethod = "paypal" | "stripe";
 type CheckoutStep = "summary" | "passengers" | "payment" | "confirmation";
 
 interface PassengerInfo {
@@ -465,6 +465,18 @@ const TourCheckoutPage = () => {
         .eq("id", selectedDate!.id);
       if (seatsError) {
         console.warn("Client-side seat update skipped:", seatsError.message);
+      }
+
+      // Route to Stripe payment (credit card)
+      if (selectedPaymentMethod === "stripe") {
+        const { data: stripeData, error: stripeError } = await supabase.functions.invoke("create-tour-payment", {
+          body: { bookingId: bookingData.id, couponCode: appliedCoupon?.code || null },
+        });
+        if (stripeError || !stripeData?.url) {
+          throw new Error(stripeData?.error || "Kreditkarten-Zahlung konnte nicht erstellt werden");
+        }
+        window.location.href = stripeData.url;
+        return;
       }
 
       // Route to PayPal payment
@@ -955,6 +967,7 @@ const TourCheckoutPage = () => {
                     </CardHeader>
                     <CardContent className="space-y-3">
                       {[
+                        { key: "stripe" as PaymentMethod, icon: CreditCard, label: "Kreditkarte", desc: "Visa, Mastercard, American Express" },
                         { key: "paypal" as PaymentMethod, icon: Wallet, label: "PayPal", desc: "Schnell & sicher mit PayPal bezahlen" },
                       ].map((method) => (
                         <div
@@ -993,6 +1006,22 @@ const TourCheckoutPage = () => {
                   {/* Payment Info */}
                   <Card>
                     <CardContent className="p-5 space-y-5">
+                      {selectedPaymentMethod === "stripe" && (
+                        <div className="p-5 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <CreditCard className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-foreground">Kreditkarte</p>
+                              <p className="text-sm text-muted-foreground">
+                                Du wirst nach dem Klick auf „Jetzt buchen" zur sicheren Stripe-Zahlungsseite weitergeleitet. Die Buchung wird sofort bestätigt.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {selectedPaymentMethod === "paypal" && (
                         <div className="p-5 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl space-y-3">
                           <div className="flex items-center gap-3">
