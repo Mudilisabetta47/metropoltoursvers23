@@ -459,13 +459,12 @@ const TourCheckoutPage = () => {
 
       if (bookingError) throw bookingError;
 
-      // Update booked_seats - try client-side, fall back silently (edge function will handle it)
-      try {
-        await supabase.from("tour_dates")
-          .update({ booked_seats: selectedDate!.booked_seats + participants })
-          .eq("id", selectedDate!.id);
-      } catch (e) {
-        console.warn("Client-side seat update skipped, edge function will handle:", e);
+      // Update booked_seats - non-blocking, edge function handles it as fallback
+      const { error: seatsError } = await supabase.from("tour_dates")
+        .update({ booked_seats: selectedDate!.booked_seats + participants })
+        .eq("id", selectedDate!.id);
+      if (seatsError) {
+        console.warn("Client-side seat update skipped:", seatsError.message);
       }
 
       // Route to PayPal payment
