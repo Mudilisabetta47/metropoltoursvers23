@@ -115,7 +115,7 @@ const KarrierePage = () => {
                 Werde Teil unseres <span className="gradient-text">Teams</span>
               </h1>
               <p className="text-lg text-secondary-foreground/70 max-w-2xl mx-auto">
-                Wir verbinden Menschen mit ihren Traumreisezielen. Gestalte mit uns die Zukunft des Reisens auf dem Balkan.
+                Wir verbinden Menschen mit ihren Traumreisezielen. Gestalte mit uns die Zukunft des komfortablen Reisens in Europa.
               </p>
             </motion.div>
           </div>
