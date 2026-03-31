@@ -148,7 +148,7 @@ export default function AuthPage() {
         {/* Background Image */}
         <img 
           src={heroImage} 
-          alt="Reisen durch den Balkan" 
+          alt="Reisen durch Europa" 
           className="absolute inset-0 w-full h-full object-cover"
         />
         
