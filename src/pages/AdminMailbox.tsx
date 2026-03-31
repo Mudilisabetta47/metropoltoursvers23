@@ -462,6 +462,70 @@ const AdminMailbox = () => {
 
               <Separator className="bg-[#2a3040] mb-4" />
 
+              {/* Details Grid */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                {selectedApp.address && (
+                  <div className="bg-[#151920] rounded-lg p-3">
+                    <p className="text-xs text-zinc-500 mb-1">Adresse</p>
+                    <p className="text-sm text-zinc-300">{selectedApp.address}, {selectedApp.postal_code} {selectedApp.city}</p>
+                  </div>
+                )}
+                {selectedApp.earliest_start_date && (
+                  <div className="bg-[#151920] rounded-lg p-3">
+                    <p className="text-xs text-zinc-500 mb-1">Frühester Start</p>
+                    <p className="text-sm text-zinc-300">{selectedApp.earliest_start_date}</p>
+                  </div>
+                )}
+                {selectedApp.experience_years && (
+                  <div className="bg-[#151920] rounded-lg p-3">
+                    <p className="text-xs text-zinc-500 mb-1">Berufserfahrung</p>
+                    <p className="text-sm text-zinc-300">{selectedApp.experience_years}</p>
+                  </div>
+                )}
+                {selectedApp.desired_salary && (
+                  <div className="bg-[#151920] rounded-lg p-3">
+                    <p className="text-xs text-zinc-500 mb-1">Gehaltsvorstellung</p>
+                    <p className="text-sm text-zinc-300">{selectedApp.desired_salary}</p>
+                  </div>
+                )}
+                {selectedApp.how_found_us && (
+                  <div className="bg-[#151920] rounded-lg p-3">
+                    <p className="text-xs text-zinc-500 mb-1">Gefunden über</p>
+                    <p className="text-sm text-zinc-300">{selectedApp.how_found_us}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Resume Download */}
+              {selectedApp.resume_url && (
+                <div className="bg-[#151920] rounded-lg p-4 mb-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <FileText className="w-5 h-5 text-emerald-400" />
+                    <div>
+                      <p className="text-sm text-zinc-300 font-medium">{selectedApp.resume_filename || "Lebenslauf"}</p>
+                      <p className="text-xs text-zinc-500">Hochgeladene Datei</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-[#2a3040] text-zinc-300 h-8 text-xs gap-1.5"
+                    onClick={async () => {
+                      const { data } = await supabase.storage
+                        .from("job-applications")
+                        .createSignedUrl(selectedApp.resume_url!, 3600);
+                      if (data?.signedUrl) {
+                        window.open(data.signedUrl, "_blank");
+                      } else {
+                        toast({ title: "Fehler beim Laden der Datei", variant: "destructive" });
+                      }
+                    }}
+                  >
+                    <FileText className="w-3 h-3" />Herunterladen
+                  </Button>
+                </div>
+              )}
+
               {selectedApp.message ? (
                 <div className="bg-[#151920] rounded-lg p-4 mb-4">
                   <p className="text-xs text-zinc-500 mb-2 font-medium">Nachricht</p>
