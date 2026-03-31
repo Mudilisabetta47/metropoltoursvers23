@@ -257,7 +257,7 @@ const BookingsPage = () => {
 
   const handleCancelTourBooking = async (bookingId: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke('cancel-tour-booking', {
+      const { error } = await supabase.functions.invoke('cancel-tour-booking', {
         body: { bookingId }
       });
       if (error) throw error;
