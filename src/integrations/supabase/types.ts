@@ -3361,6 +3361,7 @@ export type Database = {
         Returns: boolean
       }
       cleanup_expired_holds: { Args: never; Returns: number }
+      complete_passenger_token: { Args: { p_token: string }; Returns: boolean }
       generate_inquiry_number: { Args: never; Returns: string }
       generate_ticket_number: { Args: never; Returns: string }
       get_audit_logs: {
@@ -3410,6 +3411,17 @@ export type Database = {
         Returns: {
           count: number
           severity: string
+        }[]
+      }
+      get_passenger_token: {
+        Args: { p_token: string }
+        Returns: {
+          booking_id: string
+          completed_at: string
+          created_at: string
+          expires_at: string
+          id: string
+          token: string
         }[]
       }
       get_scanner_stats_hourly: {
