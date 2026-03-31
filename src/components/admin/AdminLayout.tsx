@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, FileText, Bus, Users, DollarSign, Shield,
-  UserCheck, Settings, LogOut, Map, Mail, Calendar, Route,
+  UserCheck, Settings, LogOut, Map, Mail, Inbox, Calendar, Route,
   MapPin, ChevronDown, Calculator, Truck, ClipboardList
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -84,10 +84,16 @@ const menuSections: MenuSection[] = [
     ],
   },
   {
+    label: "Kommunikation",
+    items: [
+      { path: "/admin/mailbox", label: "Postfach", icon: Inbox, allowedRoles: MANAGEMENT },
+      { path: "/admin/templates", label: "E-Mail Vorlagen", icon: Mail, allowedRoles: MANAGEMENT },
+    ],
+  },
+  {
     label: "System",
     items: [
       { path: "/admin/cms", label: "Inhalte", icon: ClipboardList, allowedRoles: MANAGEMENT },
-      { path: "/admin/templates", label: "E-Mail Vorlagen", icon: Mail, allowedRoles: MANAGEMENT },
       { path: "/admin/legal", label: "Rechtliches", icon: Shield, allowedRoles: ADMIN_ONLY },
       { path: "/admin/employees", label: "Mitarbeiter", icon: Users, allowedRoles: ADMIN_ONLY },
       { path: "/admin/settings", label: "Einstellungen", icon: Settings, allowedRoles: ADMIN_ONLY },

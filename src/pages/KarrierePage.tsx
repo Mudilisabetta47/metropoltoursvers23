@@ -89,6 +89,19 @@ const KarrierePage = () => {
       job_listing_id: form.job_listing_id || null,
     });
 
+    // Also create a mailbox entry for the admin team
+    if (!error) {
+      await (supabase as any).from("admin_mailbox").insert({
+        folder: "inbox",
+        subject: `Neue Bewerbung: ${form.first_name} ${form.last_name}`,
+        body: `Neue Bewerbung eingegangen.\n\nName: ${form.first_name} ${form.last_name}\nE-Mail: ${form.email}\nTelefon: ${form.phone || "—"}\n\nNachricht:\n${form.message || "Keine Nachricht"}`,
+        sender_email: form.email,
+        sender_name: `${form.first_name} ${form.last_name}`,
+        source_type: "application",
+        tags: ["bewerbung"],
+      });
+    }
+
     if (error) {
       toast({ title: "Fehler beim Senden", description: "Bitte versuchen Sie es erneut.", variant: "destructive" });
     } else {

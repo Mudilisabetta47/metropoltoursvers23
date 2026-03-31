@@ -14,6 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_mail_templates: {
+        Row: {
+          body: string
+          category: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      admin_mailbox: {
+        Row: {
+          body: string
+          created_at: string
+          folder: string
+          id: string
+          is_archived: boolean
+          is_read: boolean
+          is_starred: boolean
+          recipient_email: string | null
+          recipient_name: string | null
+          replied_at: string | null
+          reply_body: string | null
+          sender_email: string | null
+          sender_name: string | null
+          source_id: string | null
+          source_type: string
+          subject: string
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          folder?: string
+          id?: string
+          is_archived?: boolean
+          is_read?: boolean
+          is_starred?: boolean
+          recipient_email?: string | null
+          recipient_name?: string | null
+          replied_at?: string | null
+          reply_body?: string | null
+          sender_email?: string | null
+          sender_name?: string | null
+          source_id?: string | null
+          source_type?: string
+          subject: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          folder?: string
+          id?: string
+          is_archived?: boolean
+          is_read?: boolean
+          is_starred?: boolean
+          recipient_email?: string | null
+          recipient_name?: string | null
+          replied_at?: string | null
+          reply_body?: string | null
+          sender_email?: string | null
+          sender_name?: string | null
+          source_id?: string | null
+          source_type?: string
+          subject?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           id: string
@@ -811,6 +907,107 @@ export type Database = {
           status?: string
           title?: string
           type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      job_applications: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          internal_notes: string | null
+          is_read: boolean
+          job_listing_id: string | null
+          last_name: string
+          message: string | null
+          phone: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          internal_notes?: string | null
+          is_read?: boolean
+          job_listing_id?: string | null
+          last_name: string
+          message?: string | null
+          phone?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          internal_notes?: string | null
+          is_read?: boolean
+          job_listing_id?: string | null
+          last_name?: string
+          message?: string | null
+          phone?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_applications_job_listing_id_fkey"
+            columns: ["job_listing_id"]
+            isOneToOne: false
+            referencedRelation: "job_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_listings: {
+        Row: {
+          benefits: string[]
+          created_at: string
+          department: string
+          description: string | null
+          employment_type: string
+          id: string
+          is_active: boolean
+          location: string
+          requirements: string[]
+          salary_range: string | null
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          benefits?: string[]
+          created_at?: string
+          department?: string
+          description?: string | null
+          employment_type?: string
+          id?: string
+          is_active?: boolean
+          location?: string
+          requirements?: string[]
+          salary_range?: string | null
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          benefits?: string[]
+          created_at?: string
+          department?: string
+          description?: string | null
+          employment_type?: string
+          id?: string
+          is_active?: boolean
+          location?: string
+          requirements?: string[]
+          salary_range?: string | null
+          sort_order?: number
+          title?: string
           updated_at?: string
         }
         Relationships: []
