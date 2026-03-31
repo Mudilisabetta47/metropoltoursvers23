@@ -104,7 +104,7 @@ const Countdown = ({ targetDate }: { targetDate: string }) => {
 
 const BookingsPage = () => {
   const { user, profile } = useAuth();
-  const { downloadTicket, isDownloading } = useTicketDownload();
+  const { downloadTicket } = useTicketDownload();
   const [filter, setFilter] = useState<"all" | "upcoming" | "past" | "cancelled">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedBooking, setExpandedBooking] = useState<string | null>(null);
