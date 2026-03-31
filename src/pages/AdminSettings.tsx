@@ -28,7 +28,8 @@ type SettingsSection =
   | "templates"
   | "operations"
   | "vehicles"
-  | "depots";
+  | "depots"
+  | "legal";
 
 const sections: { key: SettingsSection; label: string; icon: any; description: string }[] = [
   { key: "general", label: "Allgemein", icon: Building2, description: "Firmendaten & Grundeinstellungen" },
@@ -43,6 +44,7 @@ const sections: { key: SettingsSection; label: string; icon: any; description: s
   { key: "templates", label: "Vorlagen", icon: Mail, description: "E-Mail- & Dokumentvorlagen" },
   { key: "operations", label: "Leitstand / Ops", icon: Activity, description: "Tracking, Scanner, Alarme" },
   { key: "vehicles", label: "Fahrzeuge", icon: Truck, description: "Flotte, Wartung, Disposition" },
+  { key: "legal", label: "Rechtstexte", icon: Shield, description: "AGB, Datenschutz, Impressum bearbeiten" },
 ];
 
 /* ─── Field row helper ─── */
