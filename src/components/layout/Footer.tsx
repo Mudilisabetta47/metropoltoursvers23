@@ -41,7 +41,7 @@ const Footer = () => {
 
   const trustBadges = [
     { icon: Shield, text: "Sichere Zahlung" },
-    { icon: Award, text: "Über 20 Jahre Erfahrung" },
+    { icon: Award, text: "SSL-gesicherter Checkout" },
     { icon: Headphones, text: "24/7 Kundenservice" },
     { icon: CreditCard, text: "Flexible Zahlungsarten" },
   ];
