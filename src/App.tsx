@@ -47,6 +47,7 @@ const KarrierePage = lazy(() => import("./pages/KarrierePage"));
 const WeekendTripsPage = lazy(() => import("./pages/WeekendTripsPage"));
 const WeekendTripDetailPage = lazy(() => import("./pages/WeekendTripDetailPage"));
 const AdminWeekendTripBuilder = lazy(() => import("./pages/AdminWeekendTripBuilder"));
+const AdminMailbox = lazy(() => import("./pages/AdminMailbox"));
 const PassengerDataPage = lazy(() => import("./pages/PassengerDataPage"));
 const DriverDashboard = lazy(() => import("./pages/DriverDashboard"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
