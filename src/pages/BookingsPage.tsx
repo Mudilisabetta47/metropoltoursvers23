@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { 
   Bus, Calendar, MapPin, Clock, ArrowRight, Download, X, ChevronDown, Search, 
-  Loader2, Ticket, Mail, Timer, FileText, RotateCcw, Shield, AlertTriangle,
+  Loader2, Ticket, Mail, Timer, FileText, RotateCcw, Shield,
   CheckCircle2, Plane, Users, CreditCard
 } from "lucide-react";
 import { format, differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
