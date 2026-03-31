@@ -169,6 +169,12 @@ const AdminSettings = () => {
   const [editingDepot, setEditingDepot] = useState<string | null>(null);
   const [showDepotForm, setShowDepotForm] = useState(false);
 
+  // Legal state
+  const [legalDocs, setLegalDocs] = useState<any[]>([]);
+  const [legalForm, setLegalForm] = useState({ document_type: "agb", version: "v1", title: "", content: "" });
+  const [showLegalForm, setShowLegalForm] = useState(false);
+  const [_isLoadingLegal, setIsLoadingLegal] = useState(false);
+
   useEffect(() => {
     loadTours();
     loadSettings();
