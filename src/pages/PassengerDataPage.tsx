@@ -78,9 +78,9 @@ const PassengerDataPage = () => {
 
   const handleSubmit = async () => {
     // Validate
-    const incomplete = passengers.some(p => !p.first_name.trim() || !p.last_name.trim());
+    const incomplete = passengers.some(p => !p.first_name.trim() || !p.last_name.trim() || !p.date_of_birth);
     if (incomplete) {
-      toast({ title: "Bitte alle Namen ausfüllen", variant: "destructive" });
+      toast({ title: "Bitte alle Namen und Geburtsdaten ausfüllen", variant: "destructive" });
       return;
     }
 
