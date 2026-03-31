@@ -114,7 +114,7 @@ const TourBookingsTab = () => {
     let success = 0;
     for (const id of ids) {
       try {
-        await supabase.functions.invoke("send-booking-confirmation", { body: { bookingId: id } });
+        await supabase.functions.invoke("send-booking-confirmation", { body: { tourBookingId: id } });
         success++;
       } catch { /* skip */ }
     }
