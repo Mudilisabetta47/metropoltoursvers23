@@ -70,7 +70,7 @@ const TourBookingsTab = () => {
         .eq("id", bookingId);
       if (error) throw error;
       try {
-        await supabase.functions.invoke("send-booking-confirmation", { body: { bookingId } });
+        await supabase.functions.invoke("send-booking-confirmation", { body: { tourBookingId: bookingId } });
         toast({ title: "✅ Zahlung bestätigt & Mail gesendet" });
       } catch {
         toast({ title: "✅ Zahlung bestätigt (Mail fehlgeschlagen)" });
