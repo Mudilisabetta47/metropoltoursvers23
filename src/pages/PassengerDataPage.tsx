@@ -194,8 +194,8 @@ const PassengerDataPage = () => {
                 </div>
               </div>
               <div>
-                <Label>Geburtsdatum</Label>
-                <Input type="date" value={pax.date_of_birth} onChange={e => updatePassenger(idx, "date_of_birth", e.target.value)} />
+                <Label>Geburtsdatum *</Label>
+                <Input type="date" value={pax.date_of_birth} onChange={e => updatePassenger(idx, "date_of_birth", e.target.value)} required />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
