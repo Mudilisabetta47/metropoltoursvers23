@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, FileText, Bus, Users, DollarSign, Shield,
-  UserCheck, Settings, LogOut, Map, Mail, Calendar, Route,
+  UserCheck, Settings, LogOut, Map, Mail, Inbox, Calendar, Route,
   MapPin, ChevronDown, Calculator, Truck, ClipboardList
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
