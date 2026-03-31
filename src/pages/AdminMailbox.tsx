@@ -62,6 +62,15 @@ interface JobApplication {
   is_read: boolean;
   created_at: string;
   job_listing_id: string | null;
+  resume_url: string | null;
+  resume_filename: string | null;
+  address: string | null;
+  city: string | null;
+  postal_code: string | null;
+  earliest_start_date: string | null;
+  experience_years: string | null;
+  desired_salary: string | null;
+  how_found_us: string | null;
 }
 
 const FOLDERS = [
