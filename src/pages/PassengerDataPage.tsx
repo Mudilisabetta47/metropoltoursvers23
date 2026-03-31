@@ -33,13 +33,10 @@ const PassengerDataPage = () => {
 
   const loadToken = async () => {
     const { data: tokenData, error } = await supabase
-      .from("passenger_data_tokens" as any)
-      .select("*")
-      .eq("token", token!)
-      .maybeSingle();
+      .rpc("get_passenger_token" as any, { p_token: token! });
 
-    if (error || !tokenData) { setStatus("error"); return; }
-    const td = tokenData as any;
+    if (error || !tokenData || (Array.isArray(tokenData) && tokenData.length === 0)) { setStatus("error"); return; }
+    const td = Array.isArray(tokenData) ? tokenData[0] : tokenData;
 
     if (td.completed_at) { setStatus("completed"); return; }
     if (new Date(td.expires_at) < new Date()) { setStatus("expired"); return; }
