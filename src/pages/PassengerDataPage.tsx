@@ -91,9 +91,7 @@ const PassengerDataPage = () => {
 
       // Mark token as completed
       await supabase
-        .from("passenger_data_tokens" as any)
-        .update({ completed_at: new Date().toISOString() })
-        .eq("token", token!);
+        .rpc("complete_passenger_token" as any, { p_token: token! });
 
       setStatus("completed");
       toast({ title: "✅ Daten gespeichert!" });
