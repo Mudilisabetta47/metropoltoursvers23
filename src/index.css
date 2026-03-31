@@ -293,4 +293,21 @@
   .scroll-smooth {
     scroll-behavior: smooth;
   }
+
+  /* Admin dark-theme inputs: ensure white text on dark backgrounds */
+  input[class*="bg-[#151920]"],
+  textarea[class*="bg-[#151920]"],
+  select[class*="bg-[#151920]"],
+  input[class*="bg-[#1a1f2a]"],
+  textarea[class*="bg-[#1a1f2a]"],
+  select[class*="bg-[#1a1f2a]"] {
+    color: white !important;
+  }
+
+  input[class*="bg-[#151920]"]::placeholder,
+  textarea[class*="bg-[#151920]"]::placeholder,
+  input[class*="bg-[#1a1f2a]"]::placeholder,
+  textarea[class*="bg-[#1a1f2a]"]::placeholder {
+    color: rgba(255, 255, 255, 0.4) !important;
+  }
 }
