@@ -913,9 +913,15 @@ export type Database = {
       }
       job_applications: {
         Row: {
+          address: string | null
+          city: string | null
           created_at: string
+          desired_salary: string | null
+          earliest_start_date: string | null
           email: string
+          experience_years: string | null
           first_name: string
+          how_found_us: string | null
           id: string
           internal_notes: string | null
           is_read: boolean
@@ -923,13 +929,22 @@ export type Database = {
           last_name: string
           message: string | null
           phone: string | null
+          postal_code: string | null
+          resume_filename: string | null
+          resume_url: string | null
           status: string
           updated_at: string
         }
         Insert: {
+          address?: string | null
+          city?: string | null
           created_at?: string
+          desired_salary?: string | null
+          earliest_start_date?: string | null
           email: string
+          experience_years?: string | null
           first_name: string
+          how_found_us?: string | null
           id?: string
           internal_notes?: string | null
           is_read?: boolean
@@ -937,13 +952,22 @@ export type Database = {
           last_name: string
           message?: string | null
           phone?: string | null
+          postal_code?: string | null
+          resume_filename?: string | null
+          resume_url?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
+          address?: string | null
+          city?: string | null
           created_at?: string
+          desired_salary?: string | null
+          earliest_start_date?: string | null
           email?: string
+          experience_years?: string | null
           first_name?: string
+          how_found_us?: string | null
           id?: string
           internal_notes?: string | null
           is_read?: boolean
@@ -951,6 +975,9 @@ export type Database = {
           last_name?: string
           message?: string | null
           phone?: string | null
+          postal_code?: string | null
+          resume_filename?: string | null
+          resume_url?: string | null
           status?: string
           updated_at?: string
         }
