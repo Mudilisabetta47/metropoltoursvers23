@@ -590,7 +590,7 @@ const AdminMailbox = () => {
             <div>
               <Label className="text-zinc-400 text-xs">Nachricht</Label>
               <Textarea value={compose.body} onChange={e => setCompose(p => ({ ...p, body: e.target.value }))}
-                className="bg-[#151920] border-[#2a3040] mt-1 min-h-[200px]" />
+                className="bg-[#151920] border-[#2a3040] mt-1 min-h-[200px] text-white" />
             </div>
           </div>
           <DialogFooter>
