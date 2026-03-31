@@ -1,16 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import {
   Inbox, Send, Star, Archive, Search, RefreshCw, Mail, MailOpen,
-  Trash2, Reply, Plus, Tag, Filter, Clock, User, Briefcase,
-  ChevronRight, FileText, MoreHorizontal, StarOff, ArrowLeft,
-  Eye, EyeOff, CheckCircle2, XCircle, MessageSquare
+  Trash2, Reply, Plus, User, Briefcase, FileText, Eye, EyeOff
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
