@@ -564,12 +564,12 @@ const AdminMailbox = () => {
             <div>
               <Label className="text-zinc-400 text-xs">An</Label>
               <Input value={compose.to} onChange={e => setCompose(p => ({ ...p, to: e.target.value }))}
-                className="bg-[#151920] border-[#2a3040] mt-1" placeholder="empfaenger@email.de" />
+                className="bg-[#151920] border-[#2a3040] mt-1 text-white" placeholder="empfaenger@email.de" />
             </div>
             <div>
               <Label className="text-zinc-400 text-xs">Betreff</Label>
               <Input value={compose.subject} onChange={e => setCompose(p => ({ ...p, subject: e.target.value }))}
-                className="bg-[#151920] border-[#2a3040] mt-1" />
+                className="bg-[#151920] border-[#2a3040] mt-1 text-white" />
             </div>
             {templates.length > 0 && (
               <div>
@@ -590,7 +590,7 @@ const AdminMailbox = () => {
             <div>
               <Label className="text-zinc-400 text-xs">Nachricht</Label>
               <Textarea value={compose.body} onChange={e => setCompose(p => ({ ...p, body: e.target.value }))}
-                className="bg-[#151920] border-[#2a3040] mt-1 min-h-[200px]" />
+                className="bg-[#151920] border-[#2a3040] mt-1 min-h-[200px] text-white" />
             </div>
           </div>
           <DialogFooter>
