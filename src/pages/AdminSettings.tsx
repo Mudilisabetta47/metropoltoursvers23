@@ -861,10 +861,6 @@ const AdminSettings = () => {
     </div>
   );
 
-  const [legalDocs, setLegalDocs] = useState<any[]>([]);
-  const [legalForm, setLegalForm] = useState({ document_type: "agb", version: "v1", title: "", content: "" });
-  const [showLegalForm, setShowLegalForm] = useState(false);
-  const [isLoadingLegal, setIsLoadingLegal] = useState(false);
 
   const loadLegalDocs = async () => {
     setIsLoadingLegal(true);
