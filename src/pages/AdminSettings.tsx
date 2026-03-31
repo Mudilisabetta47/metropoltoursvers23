@@ -855,13 +855,111 @@ const AdminSettings = () => {
     </div>
   );
 
+  const [legalDocs, setLegalDocs] = useState<any[]>([]);
+  const [legalForm, setLegalForm] = useState({ document_type: "agb", version: "v1", title: "", content: "" });
+  const [showLegalForm, setShowLegalForm] = useState(false);
+  const [isLoadingLegal, setIsLoadingLegal] = useState(false);
+
+  const loadLegalDocs = async () => {
+    setIsLoadingLegal(true);
+    const { data } = await supabase.from("tour_legal_documents").select("*").order("document_type, created_at desc");
+    setLegalDocs(data || []);
+    setIsLoadingLegal(false);
+  };
+
+  useEffect(() => { if (activeSection === "legal") loadLegalDocs(); }, [activeSection]);
+
+  const saveLegalDoc = async () => {
+    if (!legalForm.title || !legalForm.content) { toast({ title: "Bitte Titel und Inhalt ausfüllen" }); return; }
+    await supabase.from("tour_legal_documents").update({ is_current: false }).eq("document_type", legalForm.document_type);
+    await supabase.from("tour_legal_documents").insert({ ...legalForm, is_current: true });
+    toast({ title: "✅ Rechtstext gespeichert" });
+    setShowLegalForm(false);
+    setLegalForm({ document_type: "agb", version: "v1", title: "", content: "" });
+    loadLegalDocs();
+  };
+
+  const getLegalTypeLabel = (t: string) => {
+    switch (t) { case "agb": return "AGB"; case "datenschutz": return "Datenschutz"; case "impressum": return "Impressum"; case "sicherungsschein": return "Sicherungsschein"; case "widerruf": return "Widerrufsbelehrung"; default: return t; }
+  };
+
+  const legalGrouped = legalDocs.reduce((acc: Record<string, any[]>, d: any) => { if (!acc[d.document_type]) acc[d.document_type] = []; acc[d.document_type].push(d); return acc; }, {});
+
+  const renderLegal = () => (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-zinc-500">Rechtstexte werden auf den öffentlichen Seiten (Impressum, Datenschutz, AGB) angezeigt.</p>
+        <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-8 text-xs" onClick={() => setShowLegalForm(true)}>
+          <Plus className="w-3 h-3 mr-1" /> Neue Version
+        </Button>
+      </div>
+
+      {showLegalForm && (
+        <SectionCard title="Neuen Rechtstext anlegen">
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Dokumenttyp">
+              <Select value={legalForm.document_type} onValueChange={v => setLegalForm(f => ({ ...f, document_type: v }))}>
+                <SelectTrigger className="bg-[#1a1f2a] border-[#2a3040] text-white"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="agb">AGB</SelectItem>
+                  <SelectItem value="datenschutz">Datenschutz</SelectItem>
+                  <SelectItem value="impressum">Impressum</SelectItem>
+                  <SelectItem value="sicherungsschein">Sicherungsschein</SelectItem>
+                  <SelectItem value="widerruf">Widerrufsbelehrung</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Version">
+              <Input value={legalForm.version} onChange={e => setLegalForm(f => ({ ...f, version: e.target.value }))} className="bg-[#1a1f2a] border-[#2a3040] text-white" placeholder="v1.0" />
+            </Field>
+          </div>
+          <Field label="Titel">
+            <Input value={legalForm.title} onChange={e => setLegalForm(f => ({ ...f, title: e.target.value }))} className="bg-[#1a1f2a] border-[#2a3040] text-white" placeholder="z.B. AGB – Stand März 2026" />
+          </Field>
+          <Field label="Inhalt" hint="Zeilenumbrüche werden auf der Website als <br> dargestellt.">
+            <textarea value={legalForm.content} onChange={e => setLegalForm(f => ({ ...f, content: e.target.value }))} className="w-full bg-[#1a1f2a] border border-[#2a3040] text-white rounded-md p-3 text-sm min-h-[200px] resize-y" placeholder="Inhalt des Rechtstextes..." />
+          </Field>
+          <div className="flex gap-2">
+            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-8 text-xs" onClick={saveLegalDoc}>
+              <Save className="w-3 h-3 mr-1" /> Speichern & Aktivieren
+            </Button>
+            <Button size="sm" variant="ghost" className="text-zinc-400 h-8 text-xs" onClick={() => setShowLegalForm(false)}>Abbrechen</Button>
+          </div>
+        </SectionCard>
+      )}
+
+      {Object.entries(legalGrouped).map(([type, versions]) => (
+        <SectionCard key={type} title={getLegalTypeLabel(type)}>
+          <div className="space-y-2">
+            {(versions as any[]).map((v: any) => (
+              <div key={v.id} className="bg-[#1a1f2a] rounded-lg p-3 flex items-center justify-between">
+                <div>
+                  <div className="text-sm text-white font-medium">{v.title}</div>
+                  <div className="text-xs text-zinc-500">{v.version} • {new Date(v.created_at).toLocaleDateString("de-DE")}</div>
+                </div>
+                {v.is_current ? (
+                  <span className="text-xs bg-emerald-600 text-white px-2 py-0.5 rounded">✓ Aktiv</span>
+                ) : (
+                  <span className="text-xs bg-zinc-700 text-zinc-400 px-2 py-0.5 rounded">Archiv</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+      ))}
+      {Object.keys(legalGrouped).length === 0 && !showLegalForm && (
+        <p className="text-zinc-500 text-center py-8 text-sm">Noch keine Rechtstexte angelegt. Klicke auf "Neue Version" um einen Text hinzuzufügen.</p>
+      )}
+    </div>
+  );
+
   const renderMap: Record<SettingsSection, () => JSX.Element> = {
     general: renderGeneral, booking: renderBooking, routes: renderRoutes,
     tours: renderTours,
     finance: renderFinance, crm: renderCRM, staff: renderStaff,
     notifications: renderNotifications, templates: renderTemplates,
     operations: renderOperations, vehicles: renderVehicles,
-    depots: renderDepots,
+    depots: renderDepots, legal: renderLegal,
   };
 
   const activeInfo = sections.find(s => s.key === activeSection)!;
