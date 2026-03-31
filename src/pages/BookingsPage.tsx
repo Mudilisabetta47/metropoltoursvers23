@@ -627,7 +627,7 @@ const BookingsPage = () => {
                       <Download className="w-4 h-4" />
                       Rechnung herunterladen
                     </Button>
-                    {upcoming && tb.status !== 'cancelled' && (
+                    {upcoming && (
                       <>
                         <Button variant="outline" size="sm" className="justify-start gap-2">
                           <RotateCcw className="w-4 h-4" />
