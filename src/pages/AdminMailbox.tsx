@@ -569,7 +569,7 @@ const AdminMailbox = () => {
             <div>
               <Label className="text-zinc-400 text-xs">Betreff</Label>
               <Input value={compose.subject} onChange={e => setCompose(p => ({ ...p, subject: e.target.value }))}
-                className="bg-[#151920] border-[#2a3040] mt-1" />
+                className="bg-[#151920] border-[#2a3040] mt-1 text-white" />
             </div>
             {templates.length > 0 && (
               <div>
