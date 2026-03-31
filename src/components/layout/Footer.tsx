@@ -89,7 +89,7 @@ const Footer = () => {
             </Link>
             <p className="text-muted-foreground text-sm mb-6 max-w-sm">
               Ihr zuverlässiger Partner für komfortable Busreisen in ganz Europa. 
-              Seit über 20 Jahren bringen wir Sie sicher und bequem ans Ziel – 
+              Wir bringen Sie sicher und bequem ans Ziel – 
               ob Linienfahrt, Pauschalreise oder Gruppenausflug.
             </p>
             
