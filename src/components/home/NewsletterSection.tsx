@@ -14,10 +14,24 @@ const NewsletterSection = () => {
     e.preventDefault();
     if (!email) return;
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setIsSubmitted(true);
-    setIsLoading(false);
-    toast.success("Erfolgreich angemeldet! 🎉");
+    try {
+      const { createClient } = await import("@supabase/supabase-js");
+      const { supabase } = await import("@/integrations/supabase/client");
+      await (supabase as any).from('admin_mailbox').insert({
+        subject: `Newsletter-Anmeldung: ${email}`,
+        body: `Neue Newsletter-Anmeldung:\n\nE-Mail: ${email}`,
+        sender_email: email,
+        source_type: 'newsletter',
+        folder: 'inbox',
+        tags: ['newsletter'],
+      });
+      setIsSubmitted(true);
+      toast.success("Erfolgreich angemeldet! 🎉");
+    } catch {
+      toast.error("Fehler beim Anmelden. Bitte erneut versuchen.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

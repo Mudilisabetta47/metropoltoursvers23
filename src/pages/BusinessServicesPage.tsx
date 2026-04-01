@@ -106,36 +106,10 @@ const BusinessServicesPage = () => {
     setIsSubmitting(true);
 
     try {
-      const inquiryNumber = `SRV-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
       const selectedService = services.find(s => s.slug === formData.service);
-      
-      const { error } = await supabase
-        .from('package_tour_inquiries')
-        .insert({
-          inquiry_number: inquiryNumber,
-          tour_id: formData.service,
-          destination: formData.destination || selectedService?.name || formData.service,
-          first_name: formData.firstName,
-          last_name: formData.lastName || '-',
-          email: formData.email,
-          phone: formData.phone || null,
-          participants: parseInt(formData.participants) || 1,
-          departure_date: formData.date || 'Nach Vereinbarung',
-          message: [
-            formData.company && `Firma: ${formData.company}`,
-            formData.pickup && `Abfahrtsort: ${formData.pickup}`,
-            formData.destination && `Zielort: ${formData.destination}`,
-            formData.returnDate && `Rückreise: ${formData.returnDate}`,
-            formData.message
-          ].filter(Boolean).join('\n'),
-          total_price: 0,
-          status: 'pending'
-        });
 
-      if (error) throw error;
-
-      // Also send to admin mailbox
-      await supabase.from('admin_mailbox').insert({
+      // Send to admin mailbox
+      const { error } = await (supabase as any).from('admin_mailbox').insert({
         subject: `Gruppenanfrage: ${selectedService?.name || formData.service}`,
         body: [
           `Service: ${selectedService?.name || formData.service}`,
@@ -148,7 +122,7 @@ const BusinessServicesPage = () => {
           formData.returnDate && `Rückfahrt: ${formData.returnDate}`,
           formData.pickup && `Abfahrtsort: ${formData.pickup}`,
           formData.destination && `Zielort: ${formData.destination}`,
-          `\nNachricht:\n${formData.message}`
+          formData.message && `\nNachricht:\n${formData.message}`
         ].filter(Boolean).join('\n'),
         sender_name: `${formData.firstName} ${formData.lastName}`,
         sender_email: formData.email,
@@ -156,6 +130,8 @@ const BusinessServicesPage = () => {
         folder: 'inbox',
         tags: ['gruppenanfrage', selectedService?.slug || 'sonstiges']
       });
+
+      if (error) throw error;
 
       setSubmitted(true);
       toast({
