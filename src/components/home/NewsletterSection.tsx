@@ -15,7 +15,6 @@ const NewsletterSection = () => {
     if (!email) return;
     setIsLoading(true);
     try {
-      const { createClient } = await import("@supabase/supabase-js");
       const { supabase } = await import("@/integrations/supabase/client");
       await (supabase as any).from('admin_mailbox').insert({
         subject: `Newsletter-Anmeldung: ${email}`,
