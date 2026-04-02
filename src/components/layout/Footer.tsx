@@ -104,16 +104,16 @@ const Footer = () => {
                 info@metropol-tours.de
               </a>
               <a 
-                href="tel:+4940123456789" 
+                href="tel:+49511123456789" 
                 className="flex items-center gap-2 hover:text-primary transition-colors"
                 aria-label="Telefon METROPOL TOURS"
               >
                 <Phone className="w-4 h-4" />
-                +49 40 123 456 789
+                +49 511 123 456 789
               </a>
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-                <span>Hamburg, Deutschland</span>
+                <span>Hannover, Deutschland</span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
