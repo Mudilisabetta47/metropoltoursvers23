@@ -77,7 +77,7 @@ const slides: Slide[] = [
 const HeroSlider = () => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [direction, setDirection] = useState(1);
+  const [_direction, setDirection] = useState(1);
 
   const nextSlide = useCallback(() => {
     setDirection(1);
