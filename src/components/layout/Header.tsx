@@ -128,5 +128,6 @@ const Header = () => {
         </nav>
         </div>
       </div>
+    </header>;
 };
 export default Header;
