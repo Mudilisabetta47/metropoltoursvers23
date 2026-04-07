@@ -49,7 +49,7 @@ const Header = () => {
     await signOut();
     navigate('/');
   };
-  return <header className={cn("fixed top-0 left-0 right-0 z-50 transition-all duration-300", isScrolled ? "bg-background/98 backdrop-blur-xl shadow-lg border-b border-border/50" : "bg-background/95 backdrop-blur-md border-b border-border/30")}>
+  return <header className={cn("fixed top-0 left-0 right-0 z-[70] transition-all duration-300", isScrolled || isMenuOpen ? "bg-background/98 backdrop-blur-xl shadow-lg border-b border-border/50" : "bg-background/95 backdrop-blur-md border-b border-border/30")}>
       <div className="container mx-auto px-4">
         <div className={cn("flex items-center justify-between transition-all duration-300", isScrolled ? "h-16" : "h-18 lg:h-20")}>
           {/* Logo */}
