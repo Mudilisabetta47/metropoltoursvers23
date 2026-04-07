@@ -49,7 +49,7 @@ const Header = () => {
     await signOut();
     navigate('/');
   };
-  return <header className={cn("fixed top-0 left-0 right-0 z-50 transition-all duration-300", isScrolled ? "bg-background/98 backdrop-blur-xl shadow-lg border-b border-border/50" : "bg-background/95 backdrop-blur-md border-b border-border/30")}>
+  return <header className={cn("fixed top-0 left-0 right-0 z-[70] transition-all duration-300", isScrolled || isMenuOpen ? "bg-background/98 backdrop-blur-xl shadow-lg border-b border-border/50" : "bg-background/95 backdrop-blur-md border-b border-border/30")}>
       <div className="container mx-auto px-4">
         <div className={cn("flex items-center justify-between transition-all duration-300", isScrolled ? "h-16" : "h-18 lg:h-20")}>
           {/* Logo */}
@@ -98,7 +98,8 @@ const Header = () => {
       </div>
 
       {/* Mobile Menu */}
-      <div className={cn("lg:hidden absolute top-full left-0 right-0 bg-background/98 backdrop-blur-xl border-b border-border shadow-xl transition-all duration-300 overflow-hidden", isMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0")}>
+      <div className={cn("lg:hidden fixed inset-0 bg-background z-[60] transition-all duration-300 overflow-auto", isMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none")}>
+        <div className="pt-20 pb-8">
         <nav className="container mx-auto px-4 py-4 flex flex-col gap-1">
           {navLinks.map(link => <Link key={link.path} to={link.path} onClick={() => setIsMenuOpen(false)} className={cn("px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-between", isActive(link.path) ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted")}>
               {link.name}
@@ -125,6 +126,7 @@ const Header = () => {
             </Button>
           </div>
         </nav>
+        </div>
       </div>
     </header>;
 };
