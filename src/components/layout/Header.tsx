@@ -98,7 +98,7 @@ const Header = () => {
       </div>
 
       {/* Mobile Menu */}
-      <div className={cn("lg:hidden fixed top-0 left-0 right-0 bottom-0 bg-background z-40 transition-all duration-300 overflow-auto", isMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none")}>
+      <div className={cn("lg:hidden fixed inset-0 bg-background z-[60] transition-all duration-300 overflow-auto", isMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none")}>
         <div className="pt-20 pb-8">
         <nav className="container mx-auto px-4 py-4 flex flex-col gap-1">
           {navLinks.map(link => <Link key={link.path} to={link.path} onClick={() => setIsMenuOpen(false)} className={cn("px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-between", isActive(link.path) ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted")}>
