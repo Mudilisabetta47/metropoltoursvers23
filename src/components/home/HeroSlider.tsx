@@ -133,7 +133,7 @@ const HeroSlider = () => {
   const SlideIcon = slide.icon;
 
   return (
-    <section className="relative h-[95vh] min-h-[700px] overflow-hidden">
+    <section className="relative h-auto min-h-screen lg:h-[95vh] lg:min-h-[700px] overflow-hidden">
       {/* Background Images */}
       <AnimatePresence mode="popLayout" initial={false}>
         <motion.div
@@ -157,7 +157,7 @@ const HeroSlider = () => {
       </AnimatePresence>
 
       {/* Content */}
-      <div className="relative z-10 h-full flex flex-col justify-center">
+      <div className="relative z-10 h-full flex flex-col justify-center pt-20 pb-32 lg:pt-0 lg:pb-0">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:gap-12">
             {/* Left: Slide Text */}
@@ -186,7 +186,7 @@ const HeroSlider = () => {
                     initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.7, delay: 0.3 }}
-                    className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-5 leading-[1.05]"
+                    className="text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-3 lg:mb-5 leading-[1.05]"
                   >
                     <span className="block">{slide.title}</span>
                     <span className="block text-primary">{slide.highlight}</span>
@@ -196,7 +196,7 @@ const HeroSlider = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.5 }}
-                    className="text-lg md:text-xl text-white/80 mb-8 max-w-xl leading-relaxed"
+                    className="text-base md:text-xl text-white/80 mb-5 lg:mb-8 max-w-xl leading-relaxed"
                   >
                     {slide.subtitle}
                   </motion.p>
@@ -209,7 +209,7 @@ const HeroSlider = () => {
                   >
                     <Button
                       size="lg"
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg font-bold rounded-2xl shadow-xl shadow-primary/30 gap-3 group"
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-4 lg:px-8 lg:py-6 text-base lg:text-lg font-bold rounded-2xl shadow-xl shadow-primary/30 gap-3 group"
                       onClick={() => navigate(slide.link)}
                     >
                       {slide.cta}
@@ -225,15 +225,15 @@ const HeroSlider = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.5 }}
-              className="mt-8 lg:mt-0 w-full lg:w-[420px] shrink-0"
+              className="mt-6 lg:mt-0 w-full lg:w-[420px] shrink-0"
             >
-              <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 border border-white/20 shadow-2xl">
-                <h3 className="text-white font-bold text-lg mb-5 flex items-center gap-2">
+              <div className="bg-white/10 backdrop-blur-xl rounded-2xl lg:rounded-3xl p-4 lg:p-6 border border-white/20 shadow-2xl">
+                <h3 className="text-white font-bold text-base lg:text-lg mb-3 lg:mb-5 flex items-center gap-2">
                   <Search className="w-5 h-5 text-primary" />
                   Reise finden
                 </h3>
 
-                <div className="space-y-4">
+                <div className="space-y-3 lg:space-y-4">
                   {/* Destination */}
                   <div>
                     <label className="block text-xs font-semibold text-white/60 mb-1.5 uppercase tracking-wider">Reiseziel</label>
@@ -249,7 +249,7 @@ const HeroSlider = () => {
                           <ChevronDown className="w-4 h-4 text-white/40" />
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-[380px] p-0 bg-card border border-border shadow-2xl rounded-2xl overflow-hidden" align="start">
+                      <PopoverContent className="w-[min(380px,calc(100vw-2rem))] p-0 bg-card border border-border shadow-2xl rounded-2xl overflow-hidden" align="start">
                         <div className="max-h-[300px] overflow-auto">
                           {uniqueDestinations.map((tour) => (
                             <button
@@ -289,11 +289,11 @@ const HeroSlider = () => {
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0 bg-card border shadow-xl rounded-2xl" align="start">
-                        <CalendarComponent
+                         <CalendarComponent
                           mode="range"
                           selected={dateRange}
                           onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
-                          numberOfMonths={2}
+                          numberOfMonths={1}
                           disabled={(date) => date < new Date()}
                           className="p-3 pointer-events-auto"
                           locale={de}
@@ -377,7 +377,7 @@ const HeroSlider = () => {
       </div>
 
       {/* Slider Navigation */}
-      <div className="absolute bottom-6 left-0 right-0 z-20">
+      <div className="absolute bottom-4 lg:bottom-6 left-0 right-0 z-20">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -389,17 +389,17 @@ const HeroSlider = () => {
               ))}
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={prevSlide} className="w-10 h-10 rounded-full border-2 border-white/30 flex items-center justify-center text-white hover:bg-white/10 hover:border-white/50 transition-all backdrop-blur-sm">
-                <ChevronLeft className="w-4 h-4" />
+              <button onClick={prevSlide} className="w-8 h-8 lg:w-10 lg:h-10 rounded-full border-2 border-white/30 flex items-center justify-center text-white hover:bg-white/10 hover:border-white/50 transition-all backdrop-blur-sm">
+                <ChevronLeft className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
               </button>
-              <button onClick={nextSlide} className="w-10 h-10 rounded-full border-2 border-white/30 flex items-center justify-center text-white hover:bg-white/10 hover:border-white/50 transition-all backdrop-blur-sm">
-                <ChevronRight className="w-4 h-4" />
+              <button onClick={nextSlide} className="w-8 h-8 lg:w-10 lg:h-10 rounded-full border-2 border-white/30 flex items-center justify-center text-white hover:bg-white/10 hover:border-white/50 transition-all backdrop-blur-sm">
+                <ChevronRight className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
               </button>
             </div>
           </div>
 
           {/* Trust bar */}
-          <div className="mt-4 flex items-center gap-3 lg:gap-5 flex-wrap">
+          <div className="mt-3 lg:mt-4 flex items-center gap-2 lg:gap-5 flex-wrap hidden sm:flex">
             <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
               <div className="flex">
                 {[...Array(5)].map((_, i) => (
