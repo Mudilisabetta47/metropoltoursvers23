@@ -38,29 +38,23 @@ export function Logo({ size = 'md', className }: LogoProps) {
         iconSizes[size]
       )}>
         <svg viewBox="0 0 40 40" fill="none" className="w-full h-full">
-          {/* Shield shape */}
-          <path
-            d="M20 2L36 8V20C36 30 28 36 20 38C12 36 4 30 4 20V8L20 2Z"
-            fill="hsl(var(--primary))"
-            opacity="0.15"
-          />
-          <path
-            d="M20 2L36 8V20C36 30 28 36 20 38C12 36 4 30 4 20V8L20 2Z"
-            stroke="hsl(var(--primary))"
-            strokeWidth="1.5"
-            fill="none"
-          />
-          {/* Stylized M letter */}
-          <path
-            d="M12 27V14L16.5 22L20 14L23.5 22L28 14V27"
-            stroke="hsl(var(--primary))"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
-          {/* Small star accent */}
-          <circle cx="20" cy="10" r="1.5" fill="hsl(var(--primary))" />
+          {/* Bus body */}
+          <rect x="4" y="12" width="32" height="18" rx="4" fill="hsl(var(--primary))" opacity="0.15" stroke="hsl(var(--primary))" strokeWidth="1.5" />
+          {/* Windshield */}
+          <rect x="26" y="14.5" width="8" height="10" rx="2" fill="hsl(var(--primary))" opacity="0.25" />
+          {/* Windows */}
+          <rect x="7" y="15" width="5" height="5" rx="1" stroke="hsl(var(--primary))" strokeWidth="1.2" fill="none" />
+          <rect x="14" y="15" width="5" height="5" rx="1" stroke="hsl(var(--primary))" strokeWidth="1.2" fill="none" />
+          <rect x="21" y="15" width="5" height="5" rx="1" stroke="hsl(var(--primary))" strokeWidth="1.2" fill="none" />
+          {/* Wheels */}
+          <circle cx="12" cy="32" r="3" fill="hsl(var(--primary))" opacity="0.3" stroke="hsl(var(--primary))" strokeWidth="1.2" />
+          <circle cx="12" cy="32" r="1.2" fill="hsl(var(--primary))" />
+          <circle cx="28" cy="32" r="3" fill="hsl(var(--primary))" opacity="0.3" stroke="hsl(var(--primary))" strokeWidth="1.2" />
+          <circle cx="28" cy="32" r="1.2" fill="hsl(var(--primary))" />
+          {/* Headlight */}
+          <circle cx="34" cy="25" r="1.5" fill="hsl(var(--primary))" />
+          {/* Road line accent */}
+          <line x1="2" y1="38" x2="38" y2="38" stroke="hsl(var(--primary))" strokeWidth="1" opacity="0.3" strokeDasharray="3 2" />
         </svg>
       </div>
 
@@ -109,26 +103,17 @@ export function LogoLight({ size = 'md', className }: LogoProps) {
         iconSizes[size]
       )}>
         <svg viewBox="0 0 40 40" fill="none" className="w-full h-full">
-          <path
-            d="M20 2L36 8V20C36 30 28 36 20 38C12 36 4 30 4 20V8L20 2Z"
-            fill="white"
-            opacity="0.15"
-          />
-          <path
-            d="M20 2L36 8V20C36 30 28 36 20 38C12 36 4 30 4 20V8L20 2Z"
-            stroke="white"
-            strokeWidth="1.5"
-            fill="none"
-          />
-          <path
-            d="M12 27V14L16.5 22L20 14L23.5 22L28 14V27"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
-          <circle cx="20" cy="10" r="1.5" fill="white" />
+          <rect x="4" y="12" width="32" height="18" rx="4" fill="white" opacity="0.15" stroke="white" strokeWidth="1.5" />
+          <rect x="26" y="14.5" width="8" height="10" rx="2" fill="white" opacity="0.25" />
+          <rect x="7" y="15" width="5" height="5" rx="1" stroke="white" strokeWidth="1.2" fill="none" />
+          <rect x="14" y="15" width="5" height="5" rx="1" stroke="white" strokeWidth="1.2" fill="none" />
+          <rect x="21" y="15" width="5" height="5" rx="1" stroke="white" strokeWidth="1.2" fill="none" />
+          <circle cx="12" cy="32" r="3" fill="white" opacity="0.3" stroke="white" strokeWidth="1.2" />
+          <circle cx="12" cy="32" r="1.2" fill="white" />
+          <circle cx="28" cy="32" r="3" fill="white" opacity="0.3" stroke="white" strokeWidth="1.2" />
+          <circle cx="28" cy="32" r="1.2" fill="white" />
+          <circle cx="34" cy="25" r="1.5" fill="white" />
+          <line x1="2" y1="38" x2="38" y2="38" stroke="white" strokeWidth="1" opacity="0.3" strokeDasharray="3 2" />
         </svg>
       </div>
 
