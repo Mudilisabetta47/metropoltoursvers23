@@ -152,6 +152,21 @@ export default {
           "0%": { strokeDashoffset: "0" },
           "100%": { strokeDashoffset: "-10" },
         },
+        "exhaust-1": {
+          "0%": { opacity: "0", transform: "translate(0, 0) scale(0.5)" },
+          "30%": { opacity: "0.3" },
+          "100%": { opacity: "0", transform: "translate(-8px, -4px) scale(1.5)" },
+        },
+        "exhaust-2": {
+          "0%": { opacity: "0", transform: "translate(0, 0) scale(0.4)" },
+          "30%": { opacity: "0.2" },
+          "100%": { opacity: "0", transform: "translate(-6px, -6px) scale(1.2)" },
+        },
+        "exhaust-3": {
+          "0%": { opacity: "0", transform: "translate(0, 0) scale(0.3)" },
+          "30%": { opacity: "0.25" },
+          "100%": { opacity: "0", transform: "translate(-7px, -2px) scale(1.3)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
