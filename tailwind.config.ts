@@ -136,6 +136,22 @@ export default {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-3px)" },
         },
+        "bus-drive": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-0.5px)" },
+        },
+        "wheel-spin": {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
+        "headlight-pulse": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.4" },
+        },
+        "road-move": {
+          "0%": { strokeDashoffset: "0" },
+          "100%": { strokeDashoffset: "-10" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
