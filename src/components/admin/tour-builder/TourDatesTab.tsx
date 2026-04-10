@@ -85,7 +85,7 @@ const TourDatesTab = ({ tourId, dates, tariffs, onCreate, onUpdate, onDelete }: 
       // Calculate duration from dates
       const departure = parseISO(dialog.date.departure_date || format(new Date(), 'yyyy-MM-dd'));
       const returnD = parseISO(dialog.date.return_date || format(new Date(), 'yyyy-MM-dd'));
-      const duration = differenceInDays(returnD, departure) + 1;
+      const duration = differenceInDays(returnD, departure);
 
       const fullDateData = {
         tour_id: tourId,
