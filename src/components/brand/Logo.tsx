@@ -64,7 +64,7 @@ export function Logo({ size = 'md', className }: LogoProps) {
         <BusSvg />
       </div>
       <div className="flex flex-col leading-none">
-        <span className={cn('font-bold tracking-wide text-primary-foreground', textSizes[size])}>
+        <span className={cn('font-bold tracking-wide text-foreground', textSizes[size])}>
           METROPOL
         </span>
         <span className={cn('font-medium text-primary uppercase', subtextSizes[size])}>
