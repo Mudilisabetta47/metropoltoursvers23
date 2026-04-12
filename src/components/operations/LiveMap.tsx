@@ -127,8 +127,8 @@ const LiveMap = () => {
         </div>
 
 
-        {/* Vehicle Detail Panel */}
-        <VehicleDetailPanel 
+        {/* Vehicle Action Panel */}
+        <VehicleActionPanel 
           vehicle={selectedVehicle} 
           onClose={() => setSelectedVehicle(null)} 
         />
@@ -234,8 +234,8 @@ const LiveMap = () => {
         </div>
       </div>
 
-      {/* Vehicle Detail Panel */}
-      <VehicleDetailPanel 
+      {/* Vehicle Action Panel */}
+      <VehicleActionPanel 
         vehicle={selectedVehicle} 
         onClose={() => setSelectedVehicle(null)} 
       />
