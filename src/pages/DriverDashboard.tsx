@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import DriverRouteMap from "@/components/driver/DriverRouteMap";
+import LocationShareButton from "@/components/driver/LocationShareButton";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -501,9 +502,12 @@ const DriverDashboard = () => {
             <p className="text-[10px] text-zinc-500">Fahrer-Dashboard</p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => signOut()} className="text-zinc-400 hover:text-white">
-          <LogOut className="w-4 h-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <LocationShareButton userId={user.id} />
+          <Button variant="ghost" size="sm" onClick={() => signOut()} className="text-zinc-400 hover:text-white">
+            <LogOut className="w-4 h-4" />
+          </Button>
+        </div>
       </header>
 
       {/* Main Content */}
