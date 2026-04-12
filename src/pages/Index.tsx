@@ -8,6 +8,7 @@ import WeekendTripsSection from "@/components/home/WeekendTripsSection";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
 import NewsletterSection from "@/components/home/NewsletterSection";
 import CTASection from "@/components/home/CTASection";
+import NearestStopFinder from "@/components/home/NearestStopFinder";
 import ScrollToTopButton from "@/components/home/ScrollToTopButton";
 
 const Index = () => {
@@ -20,6 +21,7 @@ const Index = () => {
         <PackageToursSection />
         <WeekendTripsSection />
         
+        <NearestStopFinder />
         <TestimonialsSection />
         <NewsletterSection />
         <CTASection />
