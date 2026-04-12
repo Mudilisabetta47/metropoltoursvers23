@@ -314,8 +314,9 @@ const TourCheckoutPage = () => {
       }).select("id, booking_number").single();
       if (bookingError) throw bookingError;
 
-      const { error: seatsError } = await supabase.from("tour_dates").update({ booked_seats: selectedDate!.booked_seats + participants }).eq("id", selectedDate!.id);
-      if (seatsError) console.warn("Client-side seat update skipped:", seatsError.message);
+      const { data: seatsReserved, error: seatsError } = await supabase.rpc("reserve_tour_seats", { p_tour_date_id: selectedDate!.id, p_seats: participants });
+      if (seatsError) console.warn("Seat reservation skipped:", seatsError.message);
+      else if (!seatsReserved) console.warn("Seats could not be reserved - may be sold out");
 
       if (selectedPaymentMethod === "stripe") {
         const { data: stripeData, error: stripeError } = await supabase.functions.invoke("create-tour-payment", { body: { bookingId: bookingData.id, couponCode: appliedCoupon?.code || null } });
