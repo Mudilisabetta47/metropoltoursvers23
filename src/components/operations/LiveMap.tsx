@@ -5,8 +5,6 @@ import { useMapboxToken } from "@/hooks/useMapboxToken";
 import {
   Bus,
   MapPin,
-  Clock,
-  Users,
   Maximize2,
   Minimize2,
   Layers,
@@ -14,132 +12,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import VehicleActionPanel from "./VehicleActionPanel";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-interface VehicleDetailPanelProps {
-  vehicle: VehiclePosition | null;
-  onClose: () => void;
-}
-
-const VehicleDetailPanel = ({ vehicle, onClose }: VehicleDetailPanelProps) => {
-  if (!vehicle) return null;
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "on_time":
-        return "text-emerald-400 bg-emerald-500/20";
-      case "delayed":
-        return "text-amber-400 bg-amber-500/20";
-      case "stopped":
-        return "text-blue-400 bg-blue-500/20";
-      case "offline":
-        return "text-zinc-400 bg-zinc-500/20";
-      case "incident":
-        return "text-red-400 bg-red-500/20";
-      default:
-        return "text-zinc-400 bg-zinc-500/20";
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "on_time":
-        return "Pünktlich";
-      case "delayed":
-        return "Verspätet";
-      case "stopped":
-        return "Angehalten";
-      case "offline":
-        return "Offline";
-      case "incident":
-        return "Störung";
-      default:
-        return status;
-    }
-  };
-
-  return (
-    <div className="absolute bottom-4 left-4 w-80 bg-zinc-900/95 backdrop-blur-sm border border-zinc-700 rounded-xl shadow-2xl z-10">
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-primary/20 rounded-lg">
-              <Bus className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-white">
-                Bus #{vehicle.bus_id.slice(0, 8)}
-              </h3>
-              <p className="text-xs text-zinc-400">
-                {vehicle.driver_name || "Kein Fahrer zugewiesen"}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-zinc-400 hover:text-white transition-colors"
-          >
-            ✕
-          </button>
-        </div>
-
-        <Badge className={cn("mb-3", getStatusColor(vehicle.status))}>
-          {getStatusLabel(vehicle.status)}
-          {vehicle.delay_minutes > 0 && ` (+${vehicle.delay_minutes} min)`}
-        </Badge>
-
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="p-2 bg-zinc-800/50 rounded-lg">
-            <div className="text-zinc-400 text-xs mb-1 flex items-center gap-1">
-              <MapPin className="w-3 h-3" />
-              Position
-            </div>
-            <div className="text-white text-xs">
-              {vehicle.latitude.toFixed(4)}, {vehicle.longitude.toFixed(4)}
-            </div>
-          </div>
-
-          <div className="p-2 bg-zinc-800/50 rounded-lg">
-            <div className="text-zinc-400 text-xs mb-1 flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              Geschwindigkeit
-            </div>
-            <div className="text-white text-xs">{vehicle.speed_kmh} km/h</div>
-          </div>
-
-          <div className="p-2 bg-zinc-800/50 rounded-lg">
-            <div className="text-zinc-400 text-xs mb-1 flex items-center gap-1">
-              <Users className="w-3 h-3" />
-              Passagiere
-            </div>
-            <div className="text-white text-xs">{vehicle.passenger_count} an Bord</div>
-          </div>
-
-          <div className="p-2 bg-zinc-800/50 rounded-lg">
-            <div className="text-zinc-400 text-xs mb-1">ETA</div>
-            <div className="text-white text-xs">
-              {vehicle.eta_next_stop
-                ? new Date(vehicle.eta_next_stop).toLocaleTimeString("de-DE", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                : "-"}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex gap-2 mt-4">
-          <Button size="sm" variant="outline" className="flex-1 text-xs border-zinc-700">
-            Route anzeigen
-          </Button>
-          <Button size="sm" className="flex-1 text-xs bg-primary">
-            Kontaktieren
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-};
+// Removed old VehicleDetailPanel - using VehicleActionPanel instead
 
 const LiveMap = () => {
   const mapRef = useRef<any>(null);
