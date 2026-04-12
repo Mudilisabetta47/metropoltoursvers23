@@ -3617,6 +3617,10 @@ export type Database = {
           read_ct: number
         }[]
       }
+      reserve_tour_seats: {
+        Args: { p_seats: number; p_tour_date_id: string }
+        Returns: boolean
+      }
       reveal_booking_pii: {
         Args: { p_booking_id: string }
         Returns: {
