@@ -12,6 +12,7 @@ import { de } from "date-fns/locale";
 
 interface DriverMessage {
   id: string;
+  recipient_id: string | null;
   subject: string;
   message: string;
   priority: string;
