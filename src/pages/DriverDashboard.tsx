@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import DriverRouteMap from "@/components/driver/DriverRouteMap";
 import LocationShareButton from "@/components/driver/LocationShareButton";
+import DriverNotificationOverlay from "@/components/driver/DriverNotificationOverlay";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
