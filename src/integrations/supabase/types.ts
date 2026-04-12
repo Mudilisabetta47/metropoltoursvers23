@@ -694,6 +694,48 @@ export type Database = {
         }
         Relationships: []
       }
+      driver_navigation: {
+        Row: {
+          created_at: string
+          destination_address: string | null
+          destination_lat: number
+          destination_lng: number
+          destination_name: string
+          driver_user_id: string
+          id: string
+          notes: string | null
+          sent_by: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          destination_address?: string | null
+          destination_lat: number
+          destination_lng: number
+          destination_name: string
+          driver_user_id: string
+          id?: string
+          notes?: string | null
+          sent_by: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          destination_address?: string | null
+          destination_lat?: number
+          destination_lng?: number
+          destination_name?: string
+          driver_user_id?: string
+          id?: string
+          notes?: string | null
+          sent_by?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string

@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import DriverRouteMap from "@/components/driver/DriverRouteMap";
 import LocationShareButton from "@/components/driver/LocationShareButton";
+import DriverNotificationOverlay from "@/components/driver/DriverNotificationOverlay";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -510,8 +511,11 @@ const DriverDashboard = () => {
         </div>
       </header>
 
+      {/* Realtime Notifications Overlay */}
+      <DriverNotificationOverlay userId={user.id} />
+
       {/* Main Content */}
-      <main className="flex-1 overflow-auto p-4 pb-24">
+      <main className="flex-1 overflow-auto p-4 pb-24 pt-6">
         {activeTab === "scan" && (
           <div className="space-y-4 max-w-md mx-auto">
             {/* Camera Scanner - container is ALWAYS in DOM */}
