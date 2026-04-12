@@ -511,8 +511,11 @@ const DriverDashboard = () => {
         </div>
       </header>
 
+      {/* Realtime Notifications Overlay */}
+      <DriverNotificationOverlay userId={user.id} />
+
       {/* Main Content */}
-      <main className="flex-1 overflow-auto p-4 pb-24">
+      <main className="flex-1 overflow-auto p-4 pb-24 pt-6">
         {activeTab === "scan" && (
           <div className="space-y-4 max-w-md mx-auto">
             {/* Camera Scanner - container is ALWAYS in DOM */}
