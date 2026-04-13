@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import AutomationPanel from "@/components/admin/AutomationPanel";
+import BookingGuestsPanel from "@/components/admin/BookingGuestsPanel";
 import { cn } from "@/lib/utils";
 
 interface TourBooking {
