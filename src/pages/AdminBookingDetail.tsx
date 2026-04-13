@@ -507,39 +507,17 @@ const AdminBookingDetail = () => {
 
         {/* ─── GUESTS ─── */}
         <TabsContent value="guests">
-          <SectionCard title={`Reisende (${passengers.length}/${booking.participants})`} actions={missingPassengerData && <Badge className="bg-amber-500/20 text-amber-300 text-[10px] border border-amber-600/40">Daten unvollständig</Badge>}>
-            {passengers.length === 0 ? (
-              <p className="text-zinc-500 text-sm py-6 text-center">Keine Passagierdaten hinterlegt</p>
-            ) : (
-              <Table>
-                <TableHeader><TableRow className="border-[#252b38]">
-                  <TableHead className="text-zinc-400 text-xs">#</TableHead>
-                  <TableHead className="text-zinc-400 text-xs">Vorname</TableHead>
-                  <TableHead className="text-zinc-400 text-xs">Nachname</TableHead>
-                  <TableHead className="text-zinc-400 text-xs">Geburtsdatum</TableHead>
-                  <TableHead className="text-zinc-400 text-xs">Hinweise</TableHead>
-                  <TableHead className="text-zinc-400 text-xs">Check-in</TableHead>
-                  <TableHead className="text-zinc-400 text-xs">Status</TableHead>
-                </TableRow></TableHeader>
-                <TableBody>
-                  {passengers.map((p: any, i: number) => {
-                    const hasData = (p.firstName || p.first_name) && (p.lastName || p.last_name);
-                    return (
-                      <TableRow key={i} className={cn("border-[#252b38]", i % 2 === 0 ? "bg-[#151920]" : "bg-[#1a1f2a]")}>
-                        <TableCell className="text-zinc-500 text-xs">{i + 1}</TableCell>
-                        <TableCell className="text-zinc-200 text-xs">{p.firstName || p.first_name || "–"}</TableCell>
-                        <TableCell className="text-zinc-200 text-xs">{p.lastName || p.last_name || "–"}</TableCell>
-                        <TableCell className="text-zinc-400 text-xs">{p.birthDate || p.birth_date || "–"}</TableCell>
-                        <TableCell className="text-zinc-400 text-xs">{p.notes || p.special_needs || "–"}</TableCell>
-                        <TableCell><Badge className="bg-zinc-700/50 text-zinc-400 text-[10px] border border-zinc-600/40">Offen</Badge></TableCell>
-                        <TableCell>{hasData ? <Badge className="bg-emerald-500/20 text-emerald-300 text-[10px] border border-emerald-600/40">✓ Vollständig</Badge> : <Badge className="bg-amber-500/20 text-amber-300 text-[10px] border border-amber-600/40">Fehlt</Badge>}</TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            )}
-          </SectionCard>
+          <BookingGuestsPanel
+            bookingId={booking.id}
+            bookingNumber={booking.booking_number}
+            contactEmail={booking.contact_email}
+            contactFirstName={booking.contact_first_name}
+            contactLastName={booking.contact_last_name}
+            participants={booking.participants}
+            passengerDetails={passengers}
+            userId={user?.id}
+            onReload={loadBooking}
+          />
         </TabsContent>
 
         {/* ─── PAYMENTS ─── */}
