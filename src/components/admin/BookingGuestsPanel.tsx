@@ -1,10 +1,6 @@
 import { useState } from "react";
-import { format } from "date-fns";
-import { de } from "date-fns/locale";
 import {
-  User, Edit3, Save, X, Send, Upload, Download, FileText, AlertTriangle,
-  CheckCircle2, Loader2, Link2, Copy, Phone, Mail, Calendar, CreditCard,
-  ShieldCheck, Utensils, Accessibility, Baby, Heart
+  User, Edit3, Save, X, Upload, Loader2, Link2, Calendar, ShieldCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
