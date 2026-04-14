@@ -58,6 +58,7 @@ const VehicleActionPanel = ({ vehicle, onClose }: VehicleActionPanelProps) => {
   const { user } = useAuth();
   const [view, setView] = useState<PanelView>("info");
   const [sending, setSending] = useState(false);
+  const [driverPhone, setDriverPhone] = useState<string | null>(null);
 
   // Message state
   const [msgSubject, setMsgSubject] = useState("");
@@ -67,6 +68,12 @@ const VehicleActionPanel = ({ vehicle, onClose }: VehicleActionPanelProps) => {
   // Navigation state
   const [navDestination, setNavDestination] = useState("");
   const [navNotes, setNavNotes] = useState("");
+
+  useEffect(() => {
+    if (!vehicle?.driver_user_id) { setDriverPhone(null); return; }
+    supabase.from("profiles").select("phone").eq("user_id", vehicle.driver_user_id).maybeSingle()
+      .then(({ data }) => setDriverPhone(data?.phone ?? null));
+  }, [vehicle?.driver_user_id]);
 
   if (!vehicle) return null;
 
