@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Bus, MapPin, Send, Navigation, AlertTriangle, X,
-  MessageSquare, Loader2
+  MessageSquare, Loader2, Phone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +58,7 @@ const VehicleActionPanel = ({ vehicle, onClose }: VehicleActionPanelProps) => {
   const { user } = useAuth();
   const [view, setView] = useState<PanelView>("info");
   const [sending, setSending] = useState(false);
+  const [driverPhone, setDriverPhone] = useState<string | null>(null);
 
   // Message state
   const [msgSubject, setMsgSubject] = useState("");
@@ -67,6 +68,12 @@ const VehicleActionPanel = ({ vehicle, onClose }: VehicleActionPanelProps) => {
   // Navigation state
   const [navDestination, setNavDestination] = useState("");
   const [navNotes, setNavNotes] = useState("");
+
+  useEffect(() => {
+    if (!vehicle?.driver_user_id) { setDriverPhone(null); return; }
+    supabase.from("profiles").select("phone").eq("user_id", vehicle.driver_user_id).maybeSingle()
+      .then(({ data }) => setDriverPhone(data?.phone ?? null));
+  }, [vehicle?.driver_user_id]);
 
   if (!vehicle) return null;
 
@@ -233,6 +240,23 @@ const VehicleActionPanel = ({ vehicle, onClose }: VehicleActionPanelProps) => {
                     : "-"}
                 </div>
               </div>
+            </div>
+
+            {/* Call Driver Button */}
+            <div className="mt-3">
+              {driverPhone ? (
+                <a href={`tel:${driverPhone}`} className="block">
+                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700" size="sm">
+                    <Phone className="w-4 h-4 mr-2" />
+                    Fahrer anrufen ({driverPhone})
+                  </Button>
+                </a>
+              ) : (
+                <Button className="w-full" size="sm" variant="secondary" disabled>
+                  <Phone className="w-4 h-4 mr-2" />
+                  {vehicle.driver_user_id ? "Keine Telefonnummer hinterlegt" : "Kein Fahrer zugewiesen"}
+                </Button>
+              )}
             </div>
           </>
         )}
