@@ -81,6 +81,7 @@ const menuSections: MenuSection[] = [
     items: [
       { path: "/admin/finances", label: "Buchhaltung", icon: DollarSign, allowedRoles: MANAGEMENT },
       { path: "/admin/cost-estimate", label: "Kalkulation", icon: Calculator, allowedRoles: MANAGEMENT },
+      { path: "/admin/coupons", label: "Gutscheine", icon: DollarSign, allowedRoles: MANAGEMENT },
     ],
   },
   {
