@@ -241,6 +241,23 @@ const VehicleActionPanel = ({ vehicle, onClose }: VehicleActionPanelProps) => {
                 </div>
               </div>
             </div>
+
+            {/* Call Driver Button */}
+            <div className="mt-3">
+              {driverPhone ? (
+                <a href={`tel:${driverPhone}`} className="block">
+                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700" size="sm">
+                    <Phone className="w-4 h-4 mr-2" />
+                    Fahrer anrufen ({driverPhone})
+                  </Button>
+                </a>
+              ) : (
+                <Button className="w-full" size="sm" variant="secondary" disabled>
+                  <Phone className="w-4 h-4 mr-2" />
+                  {vehicle.driver_user_id ? "Keine Telefonnummer hinterlegt" : "Kein Fahrer zugewiesen"}
+                </Button>
+              )}
+            </div>
           </>
         )}
 
