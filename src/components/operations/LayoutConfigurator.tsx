@@ -33,6 +33,7 @@ const DEFAULT_LAYOUT: PanelConfig[] = [
   { id: "logs", label: "Protokolle", icon: "📋", visible: true, zone: "right" },
   { id: "messaging", label: "Fahrer-Nachrichten", icon: "💬", visible: false, zone: "right" },
   { id: "maintenance", label: "Wartungsplaner", icon: "🔧", visible: false, zone: "right" },
+  { id: "radio", label: "Funk (Walkie-Talkie)", icon: "📻", visible: true, zone: "right" },
 ];
 
 const STORAGE_KEY = "ops-layout-config";
