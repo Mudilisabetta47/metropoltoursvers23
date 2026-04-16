@@ -20,7 +20,7 @@ import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow, format, startOfWeek, addDays } from "date-fns";
 import { de } from "date-fns/locale";
 
-type DriverTab = "scan" | "history" | "shifts" | "route";
+type DriverTab = "scan" | "history" | "shifts" | "route" | "radio";
 
 const QR_PAYLOAD_REGEX = /^[a-zA-Z0-9\-_.]+$/;
 const MAX_PAYLOAD_LENGTH = 200;
