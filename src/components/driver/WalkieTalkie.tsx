@@ -150,10 +150,50 @@ export default function WalkieTalkie() {
 
   // ---- Get microphone ----
   const getMic = async (): Promise<MediaStream> => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-    localStreamRef.current = stream;
-    setupAnalyser(stream);
-    return stream;
+    // Check permission proactively
+    if (navigator.permissions) {
+      try {
+        const status = await navigator.permissions.query({ name: "microphone" as PermissionName });
+        if (status.state === "denied") {
+          toast({
+            title: "Mikrofon blockiert",
+            description: "Bitte erlaube den Mikrofon-Zugriff in deinen Browser-Einstellungen.",
+            variant: "destructive",
+          });
+          throw new Error("Microphone permission denied");
+        }
+      } catch (permErr: any) {
+        if (permErr.message === "Microphone permission denied") throw permErr;
+        // permissions API not supported, continue anyway
+      }
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      toast({
+        title: "Nicht unterstützt",
+        description: "Dein Browser unterstützt kein Mikrofon. Bitte nutze Chrome oder Safari.",
+        variant: "destructive",
+      });
+      throw new Error("getUserMedia not supported");
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      localStreamRef.current = stream;
+      setupAnalyser(stream);
+      return stream;
+    } catch (err: any) {
+      let msg = "Mikrofon konnte nicht aktiviert werden.";
+      if (err.name === "NotAllowedError") {
+        msg = "Mikrofon-Zugriff verweigert. Bitte erlaube ihn in den Browser-Einstellungen und lade die Seite neu.";
+      } else if (err.name === "NotFoundError") {
+        msg = "Kein Mikrofon gefunden. Bitte schließe ein Mikrofon an.";
+      } else if (err.name === "NotReadableError") {
+        msg = "Mikrofon wird von einer anderen App verwendet.";
+      }
+      toast({ title: "Mikrofon-Fehler", description: msg, variant: "destructive" });
+      throw err;
+    }
   };
 
   const setupAnalyser = (stream: MediaStream) => {
