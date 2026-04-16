@@ -1,52 +1,39 @@
 project_id = "wberoibxqpffhnyvjnci"
 
-[functions.send-booking-confirmation]
-verify_jwt = false
-
-[functions.generate-ticket-pdf]
-verify_jwt = false
-
-[functions.lookup-booking]
-verify_jwt = false
-
-[functions.generate-tour-documents]
-verify_jwt = false
-
-[functions.process-ticket-scan]
-verify_jwt = false
-
-[functions.travel-advisor]
-verify_jwt = false
-
-[functions.create-tour-payment]
-verify_jwt = false
-
-[functions.verify-tour-payment]
-verify_jwt = false
-
-[functions.get-mapbox-token]
-verify_jwt = false
-
-[functions.invite-employee]
-verify_jwt = false
-
-[functions.send-automation-email]
-verify_jwt = false
-
-[functions.generate-tour-description]
-verify_jwt = false
-
-[functions.process-email-automations]
-verify_jwt = false
-
-[functions.cancel-tour-booking]
-verify_jwt = false
-
-[functions.create-paypal-order]
-verify_jwt = false
-
-[functions.capture-paypal-order]
-verify_jwt = false
-
-[functions.process-email-queue]
-verify_jwt = true
+[functions]
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.cancel-tour-booking]
+    verify_jwt = false
+  [functions.capture-paypal-order]
+    verify_jwt = false
+  [functions.create-paypal-order]
+    verify_jwt = false
+  [functions.create-tour-payment]
+    verify_jwt = false
+  [functions.generate-ticket-pdf]
+    verify_jwt = false
+  [functions.generate-tour-description]
+    verify_jwt = false
+  [functions.generate-tour-documents]
+    verify_jwt = false
+  [functions.get-mapbox-token]
+    verify_jwt = false
+  [functions.invite-employee]
+    verify_jwt = false
+  [functions.lookup-booking]
+    verify_jwt = false
+  [functions.process-email-automations]
+    verify_jwt = false
+  [functions.process-email-queue]
+    verify_jwt = true
+  [functions.process-ticket-scan]
+    verify_jwt = false
+  [functions.send-automation-email]
+    verify_jwt = false
+  [functions.send-booking-confirmation]
+    verify_jwt = false
+  [functions.travel-advisor]
+    verify_jwt = false
+  [functions.verify-tour-payment]
+    verify_jwt = false
