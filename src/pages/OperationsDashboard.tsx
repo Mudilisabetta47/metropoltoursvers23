@@ -29,6 +29,7 @@ import ShiftHandoverPanel from "@/components/operations/ShiftHandoverPanel";
 import DriverMessaging from "@/components/operations/DriverMessaging";
 import MaintenancePlanner from "@/components/operations/MaintenancePlanner";
 import DelayPrediction from "@/components/operations/DelayPrediction";
+import WalkieTalkie from "@/components/driver/WalkieTalkie";
 import IncidentNotifications from "@/components/operations/IncidentNotifications";
 import LayoutConfigurator, { useLayoutConfig, PanelConfig } from "@/components/operations/LayoutConfigurator";
 
@@ -48,6 +49,7 @@ const PANEL_COMPONENTS: Record<string, React.FC> = {
   logs: LogsPanel,
   messaging: DriverMessaging,
   maintenance: MaintenancePlanner,
+  radio: WalkieTalkie,
 };
 
 const OperationsDashboard = () => {
