@@ -11,6 +11,7 @@ import {
   Html,
   Link,
   Preview,
+  Section,
   Text,
 } from 'npm:@react-email/components@0.0.22'
 
@@ -22,37 +23,45 @@ interface SignupEmailProps {
 }
 
 export const SignupEmail = ({
-  siteName,
   siteUrl,
   recipient,
   confirmationUrl,
 }: SignupEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="de" dir="ltr">
     <Head />
-    <Preview>Confirm your email for {siteName}</Preview>
+    <Preview>Bestätige deine E-Mail für METROPOL TOURS</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirm your email</Heading>
-        <Text style={text}>
-          Thanks for signing up for{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          !
-        </Text>
-        <Text style={text}>
-          Please confirm your email address (
-          <Link href={`mailto:${recipient}`} style={link}>
-            {recipient}
-          </Link>
-          ) by clicking the button below:
-        </Text>
-        <Button style={button} href={confirmationUrl}>
-          Verify Email
-        </Button>
-        <Text style={footer}>
-          If you didn't create an account, you can safely ignore this email.
-        </Text>
+        <Section style={header}>
+          <Heading style={brand}>METROPOL TOURS</Heading>
+        </Section>
+        <Section style={content}>
+          <Heading style={h1}>Willkommen an Bord! 🚌</Heading>
+          <Text style={text}>
+            Schön, dass du dich bei{' '}
+            <Link href={siteUrl} style={link}>
+              <strong>METROPOL TOURS</strong>
+            </Link>{' '}
+            registriert hast. Bitte bestätige deine E-Mail-Adresse (
+            <Link href={`mailto:${recipient}`} style={link}>
+              {recipient}
+            </Link>
+            ), um dein Konto zu aktivieren.
+          </Text>
+          <Section style={buttonContainer}>
+            <Button style={button} href={confirmationUrl}>
+              E-Mail bestätigen
+            </Button>
+          </Section>
+          <Text style={footer}>
+            Falls du dich nicht registriert hast, kannst du diese E-Mail einfach ignorieren.
+          </Text>
+        </Section>
+        <Section style={brandFooter}>
+          <Text style={brandFooterText}>
+            METROPOL TOURS · Premium Reisebusunternehmen aus Hannover
+          </Text>
+        </Section>
       </Container>
     </Body>
   </Html>
@@ -60,27 +69,16 @@ export const SignupEmail = ({
 
 export default SignupEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const link = { color: 'inherit', textDecoration: 'underline' }
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const main = { backgroundColor: '#ffffff', fontFamily: '"DM Sans", -apple-system, BlinkMacSystemFont, sans-serif', margin: 0, padding: '40px 20px' }
+const container = { maxWidth: '560px', margin: '0 auto', backgroundColor: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid hsl(145, 15%, 90%)' }
+const header = { background: 'linear-gradient(135deg, hsl(145, 100%, 40%) 0%, hsl(145, 85%, 50%) 100%)', padding: '28px 32px', textAlign: 'center' as const }
+const brand = { color: '#ffffff', fontSize: '20px', fontWeight: 'bold' as const, letterSpacing: '2px', margin: 0 }
+const content = { padding: '32px' }
+const h1 = { fontSize: '24px', fontWeight: 'bold' as const, color: 'hsl(220, 20%, 10%)', margin: '0 0 20px' }
+const text = { fontSize: '15px', color: 'hsl(220, 10%, 30%)', lineHeight: '1.6', margin: '0 0 20px' }
+const buttonContainer = { textAlign: 'center' as const, margin: '32px 0' }
+const button = { backgroundColor: 'hsl(145, 100%, 40%)', color: '#ffffff', fontSize: '15px', fontWeight: 'bold' as const, borderRadius: '12px', padding: '14px 32px', textDecoration: 'none', display: 'inline-block' }
+const link = { color: 'hsl(145, 100%, 35%)', textDecoration: 'underline' }
+const footer = { fontSize: '13px', color: 'hsl(220, 10%, 45%)', margin: '24px 0 0', lineHeight: '1.5' }
+const brandFooter = { borderTop: '1px solid hsl(145, 15%, 92%)', padding: '20px 32px', textAlign: 'center' as const, backgroundColor: 'hsl(150, 10%, 98%)' }
+const brandFooterText = { fontSize: '12px', color: 'hsl(220, 10%, 45%)', margin: 0 }
