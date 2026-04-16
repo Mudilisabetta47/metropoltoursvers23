@@ -9,6 +9,7 @@ import {
   Head,
   Heading,
   Html,
+  Link,
   Preview,
   Section,
   Text,
@@ -43,8 +44,27 @@ export const RecoveryEmail = ({ confirmationUrl }: RecoveryEmailProps) => (
           </Text>
         </Section>
         <Section style={brandFooter}>
+          <Text style={brandFooterStrong}>METROPOL TOURS</Text>
+          <Text style={brandFooterText}>Premium Reisebusunternehmen aus Hannover</Text>
           <Text style={brandFooterText}>
-            METROPOL TOURS · Premium Reisebusunternehmen aus Hannover
+            Hauptbahnhof Hannover · 30159 Hannover · Deutschland
+          </Text>
+          <Text style={brandFooterText}>
+            <Link href="tel:+4951112345678" style={footerLink}>+49 511 1234 5678</Link>
+            {' · '}
+            <Link href="mailto:info@metours.de" style={footerLink}>info@metours.de</Link>
+          </Text>
+          <Text style={brandFooterLinks}>
+            <Link href="https://www.metours.de" style={footerLink}>Website</Link>
+            {' · '}
+            <Link href="https://www.metours.de/impressum" style={footerLink}>Impressum</Link>
+            {' · '}
+            <Link href="https://www.metours.de/datenschutz" style={footerLink}>Datenschutz</Link>
+            {' · '}
+            <Link href="https://www.metours.de/agb" style={footerLink}>AGB</Link>
+          </Text>
+          <Text style={brandFooterCopy}>
+            © {new Date().getFullYear()} METROPOL TOURS. Alle Rechte vorbehalten.
           </Text>
         </Section>
       </Container>
@@ -64,5 +84,9 @@ const text = { fontSize: '15px', color: 'hsl(220, 10%, 30%)', lineHeight: '1.6',
 const buttonContainer = { textAlign: 'center' as const, margin: '32px 0' }
 const button = { backgroundColor: 'hsl(145, 100%, 40%)', color: '#ffffff', fontSize: '15px', fontWeight: 'bold' as const, borderRadius: '12px', padding: '14px 32px', textDecoration: 'none', display: 'inline-block' }
 const footer = { fontSize: '13px', color: 'hsl(220, 10%, 45%)', margin: '24px 0 0', lineHeight: '1.5' }
-const brandFooter = { borderTop: '1px solid hsl(145, 15%, 92%)', padding: '20px 32px', textAlign: 'center' as const, backgroundColor: 'hsl(150, 10%, 98%)' }
-const brandFooterText = { fontSize: '12px', color: 'hsl(220, 10%, 45%)', margin: 0 }
+const brandFooter = { borderTop: '1px solid hsl(145, 15%, 92%)', padding: '24px 32px', textAlign: 'center' as const, backgroundColor: 'hsl(150, 10%, 98%)' }
+const brandFooterStrong = { fontSize: '13px', fontWeight: 'bold' as const, color: 'hsl(145, 100%, 30%)', letterSpacing: '1px', margin: '0 0 6px' }
+const brandFooterText = { fontSize: '12px', color: 'hsl(220, 10%, 45%)', margin: '0 0 4px', lineHeight: '1.5' }
+const brandFooterLinks = { fontSize: '12px', color: 'hsl(220, 10%, 45%)', margin: '12px 0 8px' }
+const brandFooterCopy = { fontSize: '11px', color: 'hsl(220, 10%, 55%)', margin: '8px 0 0' }
+const footerLink = { color: 'hsl(145, 100%, 35%)', textDecoration: 'none' }
