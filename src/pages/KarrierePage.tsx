@@ -107,6 +107,13 @@ const KarrierePage = () => {
     }
     setIsSubmitting(true);
 
+    const human = await protect('job_application');
+    if (!human) {
+      toast({ title: "Sicherheitsprüfung fehlgeschlagen.", variant: "destructive" });
+      setIsSubmitting(false);
+      return;
+    }
+
     let resume_url: string | null = null;
     let resume_filename: string | null = null;
 
