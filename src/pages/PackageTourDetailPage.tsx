@@ -18,6 +18,7 @@ import Footer from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { usePackageTour, PackageTour } from "@/hooks/useCMS";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 
@@ -72,6 +73,7 @@ const PackageTourDetailPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { protect } = useRecaptcha();
   
   const { tour: dbTour, isLoading, error } = usePackageTour(tourId || '');
   
@@ -138,6 +140,12 @@ const PackageTourDetailPage = () => {
     setIsSubmitting(true);
     
     try {
+      const human = await protect('tour_inquiry');
+      if (!human) {
+        toast({ title: "Sicherheitsprüfung fehlgeschlagen", description: "Bitte erneut versuchen.", variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+      }
       const { data: generatedNumber, error: numberError } = await supabase
         .rpc('generate_inquiry_number' as never);
 

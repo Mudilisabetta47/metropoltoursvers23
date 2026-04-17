@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTicketDownload } from "@/hooks/useTicketDownload";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 interface Booking {
   id: string;
@@ -105,6 +106,7 @@ const Countdown = ({ targetDate }: { targetDate: string }) => {
 const BookingsPage = () => {
   const { user, profile } = useAuth();
   const { downloadTicket } = useTicketDownload();
+  const { protect } = useRecaptcha();
   const [filter, setFilter] = useState<"all" | "upcoming" | "past" | "cancelled">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedBooking, setExpandedBooking] = useState<string | null>(null);
@@ -210,6 +212,12 @@ const BookingsPage = () => {
     setGuestTourBooking(null);
     
     try {
+      const human = await protect('booking_lookup');
+      if (!human) {
+        toast.error('Sicherheitsprüfung fehlgeschlagen.');
+        setIsLookingUp(false);
+        return;
+      }
       const { data, error } = await supabase.functions.invoke('lookup-booking', {
         body: { 
           ticketNumber: ticketNumber.trim().toUpperCase(),

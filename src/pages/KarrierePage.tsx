@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 interface JobListing {
   id: string;
@@ -51,6 +52,7 @@ const fadeUp = {
 
 const KarrierePage = () => {
   const { toast } = useToast();
+  const { protect } = useRecaptcha();
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
