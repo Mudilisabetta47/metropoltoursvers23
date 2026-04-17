@@ -22,6 +22,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useServiceTypes } from "@/hooks/useCMS";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 const iconMap: Record<string, React.ElementType> = {
   School, Users, MapPin, Trophy, Plane, PartyPopper,
@@ -83,6 +84,7 @@ const fadeUp = {
 const BusinessServicesPage = () => {
   const { toast } = useToast();
   const { services, isLoading } = useServiceTypes();
+  const { protect } = useRecaptcha();
   
   const [formData, setFormData] = useState({
     service: "",
@@ -106,6 +108,12 @@ const BusinessServicesPage = () => {
     setIsSubmitting(true);
 
     try {
+      const human = await protect('group_inquiry');
+      if (!human) {
+        toast({ title: "Sicherheitsprüfung fehlgeschlagen", description: "Bitte erneut versuchen.", variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+      }
       const selectedService = services.find(s => s.slug === formData.service);
 
       // Send to admin mailbox

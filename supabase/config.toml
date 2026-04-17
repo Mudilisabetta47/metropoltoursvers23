@@ -37,3 +37,7 @@ project_id = "wberoibxqpffhnyvjnci"
     verify_jwt = false
   [functions.verify-tour-payment]
     verify_jwt = false
+  [functions.get-recaptcha-key]
+    verify_jwt = false
+  [functions.verify-recaptcha]
+    verify_jwt = false

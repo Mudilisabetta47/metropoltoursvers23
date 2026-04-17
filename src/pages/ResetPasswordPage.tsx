@@ -9,9 +9,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import heroImage from '@/assets/hero-group-travel.jpg';
+import { useRecaptcha } from '@/hooks/useRecaptcha';
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
+  const { protect } = useRecaptcha();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -51,6 +53,12 @@ export default function ResetPasswordPage() {
     setIsSubmitting(true);
 
     try {
+      const human = await protect('password_change');
+      if (!human) {
+        toast.error('Sicherheitsprüfung fehlgeschlagen.');
+        setIsSubmitting(false);
+        return;
+      }
       const { error } = await supabase.auth.updateUser({ password });
 
       if (error) {

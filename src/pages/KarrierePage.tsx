@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 interface JobListing {
   id: string;
@@ -51,6 +52,7 @@ const fadeUp = {
 
 const KarrierePage = () => {
   const { toast } = useToast();
+  const { protect } = useRecaptcha();
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
@@ -104,6 +106,13 @@ const KarrierePage = () => {
       return;
     }
     setIsSubmitting(true);
+
+    const human = await protect('job_application');
+    if (!human) {
+      toast({ title: "Sicherheitsprüfung fehlgeschlagen.", variant: "destructive" });
+      setIsSubmitting(false);
+      return;
+    }
 
     let resume_url: string | null = null;
     let resume_filename: string | null = null;

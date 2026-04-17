@@ -239,6 +239,14 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
             © {currentYear} METROPOL TOURS GmbH. Alle Rechte vorbehalten.
+            <br />
+            <span className="text-xs text-muted-foreground/70">
+              Diese Website ist durch reCAPTCHA geschützt. Es gelten die{" "}
+              <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">Datenschutzerklärung</a>
+              {" "}und{" "}
+              <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">Nutzungsbedingungen</a>
+              {" "}von Google.
+            </span>
           </p>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <span>🇩🇪 Made in Germany</span>
