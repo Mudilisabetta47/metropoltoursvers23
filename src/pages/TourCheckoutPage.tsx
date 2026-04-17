@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTourDocuments } from "@/hooks/useTourDocuments";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 import {
   TourTariff, TourDate, TourRoute, TourLuggageAddon, TourExtra, ExtendedPackageTour,
 } from "@/hooks/useTourBuilder";
