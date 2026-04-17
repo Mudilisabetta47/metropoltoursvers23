@@ -71,6 +71,7 @@ const TourCheckoutPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { openDocument, downloadAllDocuments, isGenerating } = useTourDocuments();
+  const { protect } = useRecaptcha();
 
   const tourId = searchParams.get("tour") || "";
   const dateId = searchParams.get("date") || "";
@@ -294,6 +295,12 @@ const TourCheckoutPage = () => {
   const processBooking = async () => {
     setIsProcessing(true);
     try {
+      const human = await protect('tour_checkout');
+      if (!human) {
+        toast.error("Sicherheitsprüfung fehlgeschlagen. Bitte erneut versuchen.");
+        setIsProcessing(false);
+        return;
+      }
       const bookingNum = `MT-${Date.now().toString(36).toUpperCase()}`;
       const passengerDetails = passengerInfo.map((p, i) => ({ index: i + 1, firstName: p.firstName, lastName: p.lastName, email: p.email, phone: p.phone }));
       const luggageAddonsData = Object.entries(selectedAddons).filter(([_, qty]) => qty > 0).map(([addonId, qty]) => {
