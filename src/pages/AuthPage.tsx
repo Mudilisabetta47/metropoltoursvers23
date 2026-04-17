@@ -88,6 +88,11 @@ export default function AuthPage() {
     setIsSubmitting(true);
     
     try {
+      const human = await protect(mode === 'login' ? 'login' : 'signup');
+      if (!human) {
+        toast.error('Sicherheitsprüfung fehlgeschlagen. Bitte erneut versuchen.');
+        return;
+      }
       if (mode === 'login') {
         const { error } = await signIn(formData.email, formData.password);
         
