@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useRecaptcha } from '@/hooks/useRecaptcha';
 
 import { z } from 'zod';
 import { motion } from 'framer-motion';
@@ -21,6 +22,7 @@ type AuthMode = 'login' | 'register';
 export default function AuthPage() {
   const navigate = useNavigate();
   const { user, roles, isDriver, signIn, signUp, isLoading } = useAuth();
+  const { protect } = useRecaptcha();
   
   const [mode, setMode] = useState<AuthMode>('login');
   const [showPassword, setShowPassword] = useState(false);
@@ -293,6 +295,11 @@ export default function AuthPage() {
                             return;
                           }
                           try {
+                            const human = await protect('password_reset');
+                            if (!human) {
+                              toast.error('Sicherheitsprüfung fehlgeschlagen.');
+                              return;
+                            }
                             const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
                               redirectTo: `${window.location.origin}/reset-password`,
                             });

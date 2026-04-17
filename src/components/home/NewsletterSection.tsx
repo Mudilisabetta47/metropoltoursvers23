@@ -4,17 +4,25 @@ import { Mail, Send, Check, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 const NewsletterSection = () => {
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { protect } = useRecaptcha();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
     setIsLoading(true);
     try {
+      const human = await protect('newsletter_signup');
+      if (!human) {
+        toast.error("Sicherheitsprüfung fehlgeschlagen. Bitte erneut versuchen.");
+        setIsLoading(false);
+        return;
+      }
       const { supabase } = await import("@/integrations/supabase/client");
       await (supabase as any).from('admin_mailbox').insert({
         subject: `Newsletter-Anmeldung: ${email}`,
