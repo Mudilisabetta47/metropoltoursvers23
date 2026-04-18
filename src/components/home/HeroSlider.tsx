@@ -33,7 +33,7 @@ const slides: Slide[] = [
     badge: "All-Inclusive Reisen",
     title: "Traumhafte",
     highlight: "Pauschalreisen",
-    subtitle: "Kroatien, Montenegro, Albanien & mehr – mit Hotel, Transfer und Rundum-Sorglos-Paket ab Hannover.",
+    subtitle: "Kroatien, Frankreich, Italien & Spanien – mit Hotel, Transfer und Rundum-Sorglos-Paket ab Hannover.",
     cta: "Pauschalreisen entdecken",
     link: "/reisen",
     icon: Bus,
