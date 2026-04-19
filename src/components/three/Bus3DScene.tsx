@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import busPhoto from "@/assets/metropol-bus-real.jpg";
+import busPhoto from "@/assets/metropol-bus-hero.jpg";
 
 /* ─── Real Metropol Tours bus showcase ─── */
 export default function Bus3DScene() {
