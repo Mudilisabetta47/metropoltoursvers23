@@ -145,20 +145,54 @@ const ComingSoonPage = () => {
 
   return (
     <div
-      className="fixed inset-0 bg-[#030608] overflow-hidden flex flex-col"
+      className="fixed inset-0 overflow-hidden flex flex-col"
+      style={{
+        background:
+          "radial-gradient(ellipse at top, #0a1f1a 0%, #050b0e 40%, #020407 100%)",
+      }}
       onMouseMove={handleMouseMove}
     >
       {/* ── Background layers ── */}
       <div className="absolute inset-0 pointer-events-none">
+        {/* Aurora gradient blobs */}
+        <motion.div
+          animate={{
+            x: [0, 60, -40, 0],
+            y: [0, -40, 30, 0],
+            scale: [1, 1.15, 0.95, 1],
+          }}
+          transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-32 -left-32 w-[700px] h-[700px] rounded-full bg-primary/[0.18] blur-[140px]"
+        />
+        <motion.div
+          animate={{
+            x: [0, -80, 50, 0],
+            y: [0, 50, -30, 0],
+            scale: [1, 0.9, 1.1, 1],
+          }}
+          transition={{ duration: 28, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="absolute -bottom-40 -right-32 w-[800px] h-[800px] rounded-full bg-emerald-500/[0.12] blur-[160px]"
+        />
+        <motion.div
+          animate={{
+            x: [0, 40, -50, 0],
+            y: [0, -30, 20, 0],
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 5 }}
+          className="absolute top-1/4 right-1/4 w-[500px] h-[500px] rounded-full bg-cyan-400/[0.08] blur-[140px]"
+        />
+
         {/* Noise texture */}
-        <div className="absolute inset-0 opacity-[0.015]" style={{
+        <div className="absolute inset-0 opacity-[0.025]" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`,
         }} />
 
-        {/* Grid */}
-        <div className="absolute inset-0 opacity-[0.02]" style={{
+        {/* Subtle grid */}
+        <div className="absolute inset-0 opacity-[0.025]" style={{
           backgroundImage: `linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)`,
           backgroundSize: '80px 80px',
+          maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)',
+          WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)',
         }} />
 
         {/* Mouse spotlight */}
@@ -167,18 +201,12 @@ const ComingSoonPage = () => {
           style={{
             x: spotlightX,
             y: spotlightY,
-            background: 'radial-gradient(circle, hsl(var(--primary) / 0.06) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, hsl(var(--primary) / 0.10) 0%, transparent 70%)',
           }}
         />
 
-        {/* Central glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[600px]">
-          <div className="absolute inset-0 bg-primary/[0.04] blur-[180px] rounded-full" />
-          <div className="absolute top-1/4 left-1/4 w-1/2 h-1/2 bg-blue-500/[0.03] blur-[120px] rounded-full" />
-        </div>
-
         {/* Vignette */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(3,6,8,0.8)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_25%,rgba(2,4,7,0.85)_100%)]" />
 
         {/* Top & bottom accent lines */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
