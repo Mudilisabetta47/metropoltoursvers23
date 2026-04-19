@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
-import sliderPauschalreisen from "@/assets/slider-pauschalreisen.jpg";
+import sliderPauschalreisen from "@/assets/metropol-bus-real.jpg";
 import sliderWochenendtrips from "@/assets/slider-wochenendtrips.jpg";
 import sliderGruppenreisen from "@/assets/slider-gruppenreisen.jpg";
 import sliderStrandurlaub from "@/assets/slider-strandurlaub.jpg";
