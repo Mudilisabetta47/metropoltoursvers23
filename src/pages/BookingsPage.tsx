@@ -633,6 +633,13 @@ const BookingsPage = () => {
               
               <div className="flex flex-col gap-2">
                 <h4 className="font-semibold text-foreground text-sm">Aktionen</h4>
+                {tb.status !== 'cancelled' && (
+                  <WalletPassButton
+                    bookingId={tb.id}
+                    ticketNumber={tb.booking_number}
+                    bookingType="tour"
+                  />
+                )}
                 {(tb.status === 'confirmed' || tb.status === 'paid' || tb.status === 'pending') && (
                   <>
                     <Button variant="outline" size="sm" className="justify-start gap-2">
@@ -643,13 +650,6 @@ const BookingsPage = () => {
                       <Download className="w-4 h-4" />
                       Rechnung herunterladen
                     </Button>
-                    {upcoming && (
-                      <WalletPassButton
-                        bookingId={tb.id}
-                        ticketNumber={tb.booking_number}
-                        bookingType="tour"
-                      />
-                    )}
                     {upcoming && (
                       <>
                         <Button variant="outline" size="sm" className="justify-start gap-2">
