@@ -266,8 +266,9 @@ export function WalletPassButton({
               <iframe
                 src={pass.pass_url}
                 title="Boarding Pass"
-                className="w-full h-72 border-0"
-                sandbox="allow-same-origin"
+                className="w-full h-80 border-0 bg-white"
+                sandbox="allow-scripts allow-popups"
+                referrerPolicy="no-referrer"
               />
             ) : (
               <div className="h-64 flex items-center justify-center text-muted-foreground text-sm">
