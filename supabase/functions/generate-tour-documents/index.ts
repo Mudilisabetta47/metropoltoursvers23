@@ -41,7 +41,7 @@ const COMPANY = {
   name: "METROPOL TOURS GmbH",
   address: "Musterstraße 1, 20095 Hamburg",
   phone: "+49 176 47144200",
-  email: "info@metours.de",
+  email: "kundenservice@metours.de",
   ustId: "DE123456789",
   steuerNr: "12/345/67890",
   hrb: "HRB 12345",
