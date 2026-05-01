@@ -145,11 +145,11 @@ body{margin:0;font-family:-apple-system,system-ui,sans-serif;background:#0f1218;
     // Wenn schon vorhanden → zurückgeben
     let existingQuery = admin.from("wallet_passes")
       .select("*").eq("booking_type", booking_type).eq("pass_type", pass_type)
-      .eq("is_voided", false).maybeSingle();
+      .eq("is_voided", false);
     existingQuery = booking_type === "tour"
       ? existingQuery.eq("tour_booking_id", booking_id)
       : existingQuery.eq("booking_id", booking_id);
-    const { data: existing } = await existingQuery;
+    const { data: existing } = await existingQuery.maybeSingle();
     let pass = existing;
     if (!pass) {
       const serial = `MT-${ticketNumber}-${randomToken(8)}`;
