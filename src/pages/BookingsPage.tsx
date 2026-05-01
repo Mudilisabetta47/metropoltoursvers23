@@ -515,6 +515,13 @@ const BookingsPage = () => {
                       <FileText className="w-4 h-4" />
                       Buchungsbestätigung
                     </Button>
+                    {upcoming && (
+                      <WalletPassButton
+                        bookingId={booking.id}
+                        ticketNumber={booking.ticket_number}
+                        bookingType="bus"
+                      />
+                    )}
                     {!isGuest && upcoming && (
                       <Button
                         variant="outline"
