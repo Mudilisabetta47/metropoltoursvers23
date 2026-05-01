@@ -497,11 +497,12 @@ const BookingsPage = () => {
               {/* Actions */}
               <div className="flex flex-col gap-2">
                 <h4 className="font-semibold text-foreground text-sm">Aktionen</h4>
-                <WalletPassDebugBadge bookingId={booking.id} bookingStatus={booking.status} />
+                <WalletPassDebugBadge bookingId={booking.id} bookingStatus={booking.status} bookingType="bus" />
                 {booking.status !== "cancelled" && (
                   <WalletPassButton
                     bookingId={booking.id}
                     ticketNumber={booking.ticket_number}
+                    customerEmail={isGuest ? lookupEmail : undefined}
                     bookingType="bus"
                   />
                 )}
@@ -641,22 +642,23 @@ const BookingsPage = () => {
               
               <div className="flex flex-col gap-2">
                 <h4 className="font-semibold text-foreground text-sm">Aktionen</h4>
-                <WalletPassDebugBadge bookingId={tb.id} bookingStatus={tb.status} />
+                <WalletPassDebugBadge bookingId={tb.id} bookingStatus={tb.status} bookingType="tour" />
                 {tb.status !== 'cancelled' && (
                   <WalletPassButton
                     bookingId={tb.id}
                     ticketNumber={tb.booking_number}
+                    customerEmail={tb.contact_email}
                     bookingType="tour"
                   />
                 )}
                 {(tb.status === 'confirmed' || tb.status === 'paid' || tb.status === 'pending') && (
                   <>
-                    <Button variant="outline" size="sm" className="justify-start gap-2">
-                      <FileText className="w-4 h-4" />
+                    <Button variant="outline" size="sm" className="justify-start gap-2" onClick={() => handleOpenTourDocument(tb, "confirmation")} disabled={isGeneratingTourDocument}>
+                      {isGeneratingTourDocument ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
                       Buchungsbestätigung
                     </Button>
-                    <Button variant="outline" size="sm" className="justify-start gap-2">
-                      <Download className="w-4 h-4" />
+                    <Button variant="outline" size="sm" className="justify-start gap-2" onClick={() => handleOpenTourDocument(tb, "invoice")} disabled={isGeneratingTourDocument}>
+                      {isGeneratingTourDocument ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                       Rechnung herunterladen
                     </Button>
                     {upcoming && (
