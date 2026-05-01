@@ -4,7 +4,7 @@ import {
   LayoutDashboard, FileText, Bus, Users, DollarSign, Shield,
   UserCheck, Settings, LogOut, Map, Mail, Inbox, Calendar, Route,
   MapPin, ChevronDown, Calculator, Truck, ClipboardList, Search,
-  Bell, ChevronRight, Sparkles, Activity, Command, ChevronsLeft,
+  ChevronRight, Sparkles, Activity, Command, ChevronsLeft,
   ChevronsRight, Menu, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
