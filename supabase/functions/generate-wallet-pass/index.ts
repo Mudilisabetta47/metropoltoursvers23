@@ -192,12 +192,19 @@ serve(async (req) => {
       let b: any = {};
       if (type === "tour") {
         const { data } = await admin.from("tour_bookings")
-          .select("booking_number, contact_first_name, contact_last_name, status")
+          .select(`booking_number, contact_first_name, contact_last_name, status, participants,
+                   tour_dates ( departure_date, return_date ),
+                   package_tours ( title, destination ),
+                   pickup_stops:tour_pickup_stops!tour_bookings_pickup_stop_id_fkey ( name, city )`)
           .eq("id", pass.tour_booking_id).maybeSingle();
         b = toPassDisplay("tour", data);
       } else {
         const { data } = await admin.from("bookings")
-          .select("ticket_number, passenger_first_name, passenger_last_name, status")
+          .select(`ticket_number, passenger_first_name, passenger_last_name, status,
+                   trips ( departure_date, departure_time, arrival_time, routes ( name ) ),
+                   origin_stop:stops!bookings_origin_stop_id_fkey ( name, city ),
+                   destination_stop:stops!bookings_destination_stop_id_fkey ( name, city ),
+                   seats ( seat_number )`)
           .eq("id", pass.booking_id).maybeSingle();
         b = toPassDisplay("bus", data);
       }
