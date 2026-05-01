@@ -158,7 +158,7 @@ serve(async (req) => {
                 : `<p style="color:#555;font-size:14px;">Es wurde keine Rückerstattung vorgenommen.</p>`
             }
             ${reason ? `<p style="color:#555;font-size:14px;"><strong>Grund:</strong> ${reason}</p>` : ""}
-            <p style="color:#555;font-size:14px;">Bei Fragen kontaktieren Sie uns gerne unter info@metours.de.</p>
+            <p style="color:#555;font-size:14px;">Bei Fragen kontaktieren Sie uns gerne unter kundenservice@metours.de.</p>
             <hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
             <p style="color:#999;font-size:11px;text-align:center;">
               METROPOL TOURS Reiseorganisation<br/>
@@ -192,7 +192,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           from: "METROPOL TOURS <booking@app.metours.de>",
-          to: ["info@metours.de", "buchung@metours.de"],
+          to: ["kundenservice@metours.de", "kundenservice@metours.de"],
           subject: `⚠️ Stornierung: ${booking.booking_number} – ${tour?.destination}`,
           html: `<p>Buchung <strong>${booking.booking_number}</strong> wurde von ${user.email} storniert.</p>
                  <p>Kunde: ${booking.contact_first_name} ${booking.contact_last_name} (${booking.contact_email})</p>

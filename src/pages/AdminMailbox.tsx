@@ -211,7 +211,7 @@ const AdminMailbox = () => {
       body: compose.body,
       recipient_email: compose.to,
       sender_name: "Metropol Tours",
-      sender_email: "info@metours.de",
+      sender_email: "kundenservice@metours.de",
       source_type: "manual",
       is_read: true,
     });
@@ -235,7 +235,7 @@ const AdminMailbox = () => {
       recipient_email: selectedMail.sender_email,
       recipient_name: selectedMail.sender_name,
       sender_name: "Metropol Tours",
-      sender_email: "info@metours.de",
+      sender_email: "kundenservice@metours.de",
       source_type: "reply",
       source_id: selectedMail.id,
       is_read: true,

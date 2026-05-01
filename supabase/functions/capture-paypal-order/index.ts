@@ -170,7 +170,7 @@ serve(async (req) => {
     <p>Ihr METROPOL TOURS Team</p>
   </div>
   <div class="footer">
-    <p>Bei Fragen: info@metours.de | Tel: +49 176 47144200</p>
+    <p>Bei Fragen: kundenservice@metours.de | Tel: +49 176 47144200</p>
     <p>© ${new Date().getFullYear()} METROPOL TOURS – Komfortabel reisen</p>
   </div>
 </div></body></html>`,

@@ -79,7 +79,7 @@ const AdminSettings = () => {
   /* ─── State for all sections ─── */
   const [general, setGeneral] = useState({
     name: "METROPOL TOURS GmbH", address: "Musterstraße 1, 12345 Berlin",
-    phone: "+49 30 123456", email: "info@metours.de", website: "www.metours.de",
+    phone: "+49 30 123456", email: "kundenservice@metours.de", website: "www.metours.de",
     tax_id: "DE123456789", register: "HRB 12345, Amtsgericht Berlin", ceo: "Max Mustermann",
     timezone: "Europe/Berlin", language: "de", currency: "EUR", date_format: "DD.MM.YYYY",
   });

@@ -37,13 +37,13 @@ const COMPANY = {
   name: "METROPOL TOURS GmbH",
   address: "Musterstraße 1, 20095 Hamburg",
   phone: "+49 176 47144200",
-  email: "info@metours.de",
+  email: "kundenservice@metours.de",
   web: "metours.de",
   ustId: "DE123456789",
   hrb: "HRB 12345",
 };
 
-const ADMIN_EMAILS = ["info@metours.de", "buchung@metours.de"];
+const ADMIN_EMAILS = ["kundenservice@metours.de", "kundenservice@metours.de"];
 
 // Animated bus GIF (public CDN hosted animated travel GIFs)
 const BUS_GIF = "https://media.giphy.com/media/3o7btNa0RUYa5E7iiQ/giphy.gif";
