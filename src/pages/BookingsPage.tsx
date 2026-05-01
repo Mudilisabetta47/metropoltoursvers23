@@ -21,6 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTicketDownload } from "@/hooks/useTicketDownload";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { WalletPassButton } from "@/components/bookings/WalletPassButton";
+import { WalletPassDebugBadge } from "@/components/bookings/WalletPassDebugBadge";
 
 interface Booking {
   id: string;
@@ -490,6 +491,7 @@ const BookingsPage = () => {
               {/* Actions */}
               <div className="flex flex-col gap-2">
                 <h4 className="font-semibold text-foreground text-sm">Aktionen</h4>
+                <WalletPassDebugBadge bookingId={booking.id} bookingStatus={booking.status} />
                 {booking.status !== "cancelled" && (
                   <WalletPassButton
                     bookingId={booking.id}
@@ -633,6 +635,7 @@ const BookingsPage = () => {
               
               <div className="flex flex-col gap-2">
                 <h4 className="font-semibold text-foreground text-sm">Aktionen</h4>
+                <WalletPassDebugBadge bookingId={tb.id} bookingStatus={tb.status} />
                 {tb.status !== 'cancelled' && (
                   <WalletPassButton
                     bookingId={tb.id}
