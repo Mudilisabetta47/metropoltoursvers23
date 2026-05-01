@@ -104,27 +104,79 @@ export default function AdminIncidentWorkflow() {
   const toggleStep = async (idx: number) => {
     if (!detail) return;
     const newProgress = [...(detail.sop_progress || [])];
-    newProgress[idx] = { ...newProgress[idx], completed: !newProgress[idx].completed, completed_at: !newProgress[idx].completed ? new Date().toISOString() : null };
+    const wasDone = !!(newProgress[idx].done ?? newProgress[idx].completed);
+    newProgress[idx] = {
+      ...newProgress[idx],
+      done: !wasDone,
+      completed: !wasDone, // legacy compat
+      completed_at: !wasDone ? new Date().toISOString() : null,
+    };
     const { error } = await supabase.from("incidents").update({ sop_progress: newProgress }).eq("id", detail.id);
     if (error) return toast.error(error.message);
-    setDetail({ ...detail, sop_progress: newProgress });
+    // Trigger may auto-resolve → reload
+    const { data: refreshed } = await supabase.from("incidents").select("*").eq("id", detail.id).maybeSingle();
+    if (refreshed) setDetail(refreshed);
+    if (refreshed?.status === "resolved") toast.success("Alle SOP-Schritte erledigt – Vorfall automatisch gelöst");
     load();
   };
 
-  const escalate = async () => {
+  const changeStatus = async (newStatus: string) => {
     if (!detail) return;
-    const { error } = await supabase.from("incidents").update({ status: "escalated", escalated_at: new Date().toISOString() }).eq("id", detail.id);
+    const { error } = await supabase.rpc("transition_incident_status", {
+      p_incident_id: detail.id,
+      p_new_status: newStatus,
+      p_note: null,
+    });
     if (error) return toast.error(error.message);
-    setDetail({ ...detail, status: "escalated", escalated_at: new Date().toISOString() }); load();
-    toast.success("Vorfall eskaliert");
+    const { data: refreshed } = await supabase.from("incidents").select("*").eq("id", detail.id).maybeSingle();
+    if (refreshed) setDetail(refreshed);
+    load();
+    toast.success(`Status: ${newStatus}`);
   };
 
-  const resolve = async () => {
-    if (!detail) return;
-    const { error } = await supabase.from("incidents").update({ status: "resolved", resolved_at: new Date().toISOString() }).eq("id", detail.id);
+  const uploadDoc = async (file: File) => {
+    if (!detail || !file) return;
+    if (file.size > 20 * 1024 * 1024) return toast.error("Maximal 20 MB pro Datei");
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${detail.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const up = await supabase.storage.from("incident-documents").upload(path, file, { contentType: file.type });
+      if (up.error) throw up.error;
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase.from("incident_documents").insert({
+        incident_id: detail.id,
+        file_path: path,
+        file_name: file.name,
+        file_size: file.size,
+        mime_type: file.type,
+        category: docCategory,
+        uploaded_by: user?.id ?? null,
+      });
+      if (error) throw error;
+      const { data } = await supabase.from("incident_documents").select("*").eq("incident_id", detail.id).order("created_at", { ascending: false });
+      setDocs(data || []);
+      toast.success("Anhang hochgeladen");
+    } catch (e: any) {
+      toast.error(e.message || "Upload fehlgeschlagen");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const downloadDoc = async (doc: any) => {
+    const { data, error } = await supabase.storage.from("incident-documents").createSignedUrl(doc.file_path, 300);
+    if (error || !data?.signedUrl) return toast.error("Download nicht möglich");
+    window.open(data.signedUrl, "_blank");
+  };
+
+  const deleteDoc = async (doc: any) => {
+    if (!confirm(`Anhang "${doc.file_name}" wirklich löschen?`)) return;
+    await supabase.storage.from("incident-documents").remove([doc.file_path]);
+    const { error } = await supabase.from("incident_documents").delete().eq("id", doc.id);
     if (error) return toast.error(error.message);
-    setDetail({ ...detail, status: "resolved", resolved_at: new Date().toISOString() }); load();
-    toast.success("Vorfall gelöst");
+    setDocs(docs.filter(d => d.id !== doc.id));
+    toast.success("Anhang gelöscht");
   };
 
   const saveSop = async () => {
