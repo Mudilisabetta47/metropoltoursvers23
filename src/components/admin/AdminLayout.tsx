@@ -59,6 +59,9 @@ const menuSections: MenuSection[] = [
     label: "Disposition",
     items: [
       { path: "/admin/ops", label: "Leitstand", icon: Activity, allowedRoles: OPS_STAFF },
+      { path: "/admin/dispo-board", label: "Dispo-Board", icon: ClipboardList, allowedRoles: OPS_STAFF },
+      { path: "/admin/incident-workflow", label: "Vorfall-Workflow", icon: Shield, allowedRoles: OPS_STAFF },
+      { path: "/admin/sla-monitor", label: "SLA & Pünktlichkeit", icon: Activity, allowedRoles: MANAGEMENT },
       { path: "/admin/departures", label: "Fahrten", icon: Calendar, allowedRoles: ALL_STAFF },
       { path: "/admin/shifts", label: "Dienstpläne", icon: ClipboardList, allowedRoles: MANAGEMENT },
       { path: "/admin/tour-builder", label: "Reisen", icon: Map, allowedRoles: MANAGEMENT },

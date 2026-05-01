@@ -58,6 +58,9 @@ const AdminDriverCompliance = lazy(() => import("./pages/AdminDriverCompliance")
 const AdminPayroll = lazy(() => import("./pages/AdminPayroll"));
 const AdminB2BCustomers = lazy(() => import("./pages/AdminB2BCustomers"));
 const AdminComplaints = lazy(() => import("./pages/AdminComplaints"));
+const AdminDispoBoard = lazy(() => import("./pages/AdminDispoBoard"));
+const AdminSLAMonitor = lazy(() => import("./pages/AdminSLAMonitor"));
+const AdminIncidentWorkflow = lazy(() => import("./pages/AdminIncidentWorkflow"));
 const PassengerDataPage = lazy(() => import("./pages/PassengerDataPage"));
 const DriverDashboard = lazy(() => import("./pages/DriverDashboard"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
@@ -167,6 +170,9 @@ const App = () => (
               <Route path="/admin/payroll" element={<AdminPayroll />} />
               <Route path="/admin/b2b" element={<AdminB2BCustomers />} />
               <Route path="/admin/complaints" element={<AdminComplaints />} />
+              <Route path="/admin/dispo-board" element={<AdminDispoBoard />} />
+              <Route path="/admin/sla-monitor" element={<AdminSLAMonitor />} />
+              <Route path="/admin/incident-workflow" element={<AdminIncidentWorkflow />} />
               <Route path="/passagierdaten" element={<PassengerDataPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
