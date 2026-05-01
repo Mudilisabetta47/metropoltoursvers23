@@ -324,15 +324,18 @@ export default function AdminIncidentWorkflow() {
                   <div className="rounded-lg bg-zinc-900 p-4 border border-zinc-800">
                     <h4 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider mb-3 flex items-center gap-2"><ListChecks className="w-4 h-4" />SOP-Checkliste</h4>
                     <div className="space-y-2">
-                      {(detail.sop_progress || []).map((step: any, i: number) => (
-                        <label key={i} className={`flex items-start gap-3 p-2 rounded cursor-pointer hover:bg-zinc-800 transition ${step.completed ? "opacity-60" : ""}`}>
-                          <input type="checkbox" checked={!!step.completed} onChange={() => toggleStep(i)} className="mt-1" />
-                          <div className="flex-1">
-                            <div className={`text-sm ${step.completed ? "line-through text-zinc-500" : "text-white"}`}><span className="font-mono text-xs text-emerald-400 mr-2">#{step.order}</span>{step.text}</div>
-                            {step.completed_at && <div className="text-xs text-zinc-500 mt-0.5">Erledigt {fmtDateTime(step.completed_at)}</div>}
-                          </div>
-                        </label>
-                      ))}
+                      {(detail.sop_progress || []).map((step: any, i: number) => {
+                        const isDone = !!(step.done ?? step.completed);
+                        return (
+                          <label key={i} className={`flex items-start gap-3 p-2 rounded cursor-pointer hover:bg-zinc-800 transition ${isDone ? "opacity-60" : ""}`}>
+                            <input type="checkbox" checked={isDone} onChange={() => toggleStep(i)} className="mt-1" />
+                            <div className="flex-1">
+                              <div className={`text-sm ${isDone ? "line-through text-zinc-500" : "text-white"}`}><span className="font-mono text-xs text-emerald-400 mr-2">#{step.order}</span>{step.text}</div>
+                              {step.completed_at && <div className="text-xs text-zinc-500 mt-0.5">Erledigt {fmtDateTime(step.completed_at)}</div>}
+                            </div>
+                          </label>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -343,9 +346,66 @@ export default function AdminIncidentWorkflow() {
                   </div>
                 )}
 
-                <div className="flex gap-2">
-                  {detail.status !== "resolved" && <Button onClick={escalate} variant="outline" className="border-red-500/50 text-red-400 hover:bg-red-500/10"><ArrowUp className="w-4 h-4 mr-2" />Eskalieren</Button>}
-                  {detail.status !== "resolved" && <Button onClick={resolve} className="bg-emerald-500 hover:bg-emerald-600 text-black"><CheckCircle2 className="w-4 h-4 mr-2" />Als gelöst markieren</Button>}
+                {/* Anhänge */}
+                <div className="rounded-lg bg-zinc-900 p-4 border border-zinc-800">
+                  <h4 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <Paperclip className="w-4 h-4" />Anhänge ({docs.length})
+                  </h4>
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <Select value={docCategory} onValueChange={setDocCategory}>
+                      <SelectTrigger className="bg-white text-black w-40 h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="photo">Foto</SelectItem>
+                        <SelectItem value="report">Bericht</SelectItem>
+                        <SelectItem value="police">Polizei-Akt</SelectItem>
+                        <SelectItem value="insurance">Versicherung</SelectItem>
+                        <SelectItem value="invoice">Rechnung</SelectItem>
+                        <SelectItem value="other">Sonstiges</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <label className="inline-flex items-center gap-2 cursor-pointer rounded-md bg-zinc-800 hover:bg-zinc-700 text-white px-3 h-9 text-sm">
+                      <Upload className="w-4 h-4" />{uploading ? "Lade hoch…" : "Datei wählen"}
+                      <input type="file" className="hidden" disabled={uploading} accept="image/*,application/pdf" onChange={e => { const f = e.target.files?.[0]; if (f) uploadDoc(f); e.currentTarget.value = ""; }} />
+                    </label>
+                    <span className="text-xs text-zinc-500">max. 20 MB · Bilder, PDF</span>
+                  </div>
+                  {docs.length === 0 ? (
+                    <div className="text-xs text-zinc-600">Noch keine Anhänge</div>
+                  ) : (
+                    <div className="space-y-2">
+                      {docs.map(d => (
+                        <div key={d.id} className="flex items-center gap-3 p-2 rounded bg-zinc-950/60 border border-zinc-800">
+                          <FileText className="w-4 h-4 text-zinc-400 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm text-white truncate">{d.file_name}</div>
+                            <div className="text-xs text-zinc-500">{d.category} · {((d.file_size || 0) / 1024).toFixed(0)} KB · {fmtDateTime(d.created_at)}</div>
+                          </div>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-zinc-400 hover:text-white" onClick={() => downloadDoc(d)}><Download className="w-4 h-4" /></Button>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10" onClick={() => deleteDoc(d)}><Trash2 className="w-4 h-4" /></Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Status-Aktionen (rollenbasiert via RPC) */}
+                <div className="rounded-lg bg-zinc-900 p-4 border border-zinc-800">
+                  <h4 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider mb-3">Status ändern</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {detail.status === "open" && (
+                      <Button onClick={() => changeStatus("in_progress")} variant="outline" className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10"><PlayCircle className="w-4 h-4 mr-2" />In Bearbeitung (Fahrer/Office)</Button>
+                    )}
+                    {detail.status !== "resolved" && detail.status !== "escalated" && (
+                      <Button onClick={() => changeStatus("escalated")} variant="outline" className="border-red-500/50 text-red-400 hover:bg-red-500/10"><ArrowUp className="w-4 h-4 mr-2" />Eskalieren (Office/Admin)</Button>
+                    )}
+                    {detail.status !== "resolved" && (
+                      <Button onClick={() => changeStatus("resolved")} className="bg-emerald-500 hover:bg-emerald-600 text-black"><CheckCircle2 className="w-4 h-4 mr-2" />Als gelöst markieren (Office/Admin)</Button>
+                    )}
+                    {detail.status === "resolved" && (
+                      <Button onClick={() => changeStatus("open")} variant="outline" className="border-zinc-600">Erneut öffnen</Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-2">Übergänge werden serverseitig nach Rolle geprüft und im Audit-Log protokolliert.</p>
                 </div>
               </div>
             </>
