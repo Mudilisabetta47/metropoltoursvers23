@@ -60,7 +60,7 @@ function computeState(row: any | null): PassStatus {
 }
 
 export function WalletPassButton({
-  bookingId, ticketNumber, variant = "outline", size = "sm", className,
+  bookingId, ticketNumber, variant = "outline", size = "sm", className, bookingType = "bus",
 }: WalletPassButtonProps) {
   const [loading, setLoading] = useState(false);
   const [statusLoading, setStatusLoading] = useState(true);
