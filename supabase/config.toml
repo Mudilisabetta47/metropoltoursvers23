@@ -41,3 +41,15 @@ project_id = "wberoibxqpffhnyvjnci"
     verify_jwt = false
   [functions.verify-recaptcha]
     verify_jwt = false
+  [functions.generate-wallet-pass]
+    verify_jwt = false
+  [functions.waitlist-notify]
+    verify_jwt = false
+  [functions.cancel-booking-refund]
+    verify_jwt = true
+  [functions.rebook-booking]
+    verify_jwt = true
+  [functions.send-customer-push]
+    verify_jwt = false
+  [functions.update-bus-position]
+    verify_jwt = true

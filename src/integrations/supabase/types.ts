@@ -379,6 +379,63 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_changes: {
+        Row: {
+          actor_id: string | null
+          actor_type: string
+          booking_id: string
+          created_at: string
+          description: string | null
+          event_type: string
+          field_name: string | null
+          id: string
+          metadata: Json | null
+          new_value: string | null
+          old_value: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_type?: string
+          booking_id: string
+          created_at?: string
+          description?: string | null
+          event_type: string
+          field_name?: string | null
+          id?: string
+          metadata?: Json | null
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_type?: string
+          booking_id?: string
+          created_at?: string
+          description?: string | null
+          event_type?: string
+          field_name?: string | null
+          id?: string
+          metadata?: Json | null
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_changes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_changes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_agent_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           booked_by_agent_id: string | null
@@ -527,6 +584,54 @@ export type Database = {
           },
         ]
       }
+      bus_positions_live: {
+        Row: {
+          bus_id: string | null
+          delay_minutes: number | null
+          driver_id: string | null
+          eta_next_stop: string | null
+          heading: number | null
+          id: string
+          lat: number
+          lng: number
+          next_stop_id: string | null
+          speed_kmh: number | null
+          status: string
+          trip_id: string
+          updated_at: string
+        }
+        Insert: {
+          bus_id?: string | null
+          delay_minutes?: number | null
+          driver_id?: string | null
+          eta_next_stop?: string | null
+          heading?: number | null
+          id?: string
+          lat: number
+          lng: number
+          next_stop_id?: string | null
+          speed_kmh?: number | null
+          status?: string
+          trip_id: string
+          updated_at?: string
+        }
+        Update: {
+          bus_id?: string | null
+          delay_minutes?: number | null
+          driver_id?: string | null
+          eta_next_stop?: string | null
+          heading?: number | null
+          id?: string
+          lat?: number
+          lng?: number
+          next_stop_id?: string | null
+          speed_kmh?: number | null
+          status?: string
+          trip_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       buses: {
         Row: {
           amenities: string[] | null
@@ -557,6 +662,39 @@ export type Database = {
           license_plate?: string
           name?: string
           total_seats?: number
+        }
+        Relationships: []
+      }
+      cancellation_policies: {
+        Row: {
+          applies_to: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_default: boolean
+          name: string
+          tiers: Json
+          updated_at: string
+        }
+        Insert: {
+          applies_to?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name: string
+          tiers?: Json
+          updated_at?: string
+        }
+        Update: {
+          applies_to?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name?: string
+          tiers?: Json
+          updated_at?: string
         }
         Relationships: []
       }
@@ -873,6 +1011,84 @@ export type Database = {
           valid_until?: string | null
         }
         Relationships: []
+      }
+      customer_reviews: {
+        Row: {
+          booking_id: string | null
+          cleanliness_rating: number | null
+          comfort_rating: number | null
+          comment: string | null
+          created_at: string
+          driver_rating: number | null
+          id: string
+          is_published: boolean
+          is_verified: boolean
+          photos: Json | null
+          punctuality_rating: number | null
+          reply_at: string | null
+          reply_text: string | null
+          stars: number
+          title: string | null
+          tour_date_id: string | null
+          trip_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          cleanliness_rating?: number | null
+          comfort_rating?: number | null
+          comment?: string | null
+          created_at?: string
+          driver_rating?: number | null
+          id?: string
+          is_published?: boolean
+          is_verified?: boolean
+          photos?: Json | null
+          punctuality_rating?: number | null
+          reply_at?: string | null
+          reply_text?: string | null
+          stars: number
+          title?: string | null
+          tour_date_id?: string | null
+          trip_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          cleanliness_rating?: number | null
+          comfort_rating?: number | null
+          comment?: string | null
+          created_at?: string
+          driver_rating?: number | null
+          id?: string
+          is_published?: boolean
+          is_verified?: boolean
+          photos?: Json | null
+          punctuality_rating?: number | null
+          reply_at?: string | null
+          reply_text?: string | null
+          stars?: number
+          title?: string | null
+          tour_date_id?: string | null
+          trip_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_agent_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       depots: {
         Row: {
@@ -2097,6 +2313,126 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth_key: string
+          booking_id: string | null
+          created_at: string
+          device_info: string | null
+          endpoint: string
+          id: string
+          is_active: boolean
+          last_used_at: string | null
+          p256dh: string
+          user_id: string | null
+        }
+        Insert: {
+          auth_key: string
+          booking_id?: string | null
+          created_at?: string
+          device_info?: string | null
+          endpoint: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          p256dh: string
+          user_id?: string | null
+        }
+        Update: {
+          auth_key?: string
+          booking_id?: string | null
+          created_at?: string
+          device_info?: string | null
+          endpoint?: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          p256dh?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "push_subscriptions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_agent_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rebooking_requests: {
+        Row: {
+          booking_id: string
+          created_at: string
+          current_trip_id: string
+          id: string
+          new_seat_id: string | null
+          new_trip_id: string
+          notes: string | null
+          payment_intent_id: string | null
+          price_difference: number
+          processed_at: string | null
+          processed_by: string | null
+          rebooking_fee: number
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          current_trip_id: string
+          id?: string
+          new_seat_id?: string | null
+          new_trip_id: string
+          notes?: string | null
+          payment_intent_id?: string | null
+          price_difference?: number
+          processed_at?: string | null
+          processed_by?: string | null
+          rebooking_fee?: number
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          current_trip_id?: string
+          id?: string
+          new_seat_id?: string | null
+          new_trip_id?: string
+          notes?: string | null
+          payment_intent_id?: string | null
+          price_difference?: number
+          processed_at?: string | null
+          processed_by?: string | null
+          rebooking_fee?: number
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rebooking_requests_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rebooking_requests_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_agent_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       routes: {
         Row: {
@@ -4112,6 +4448,120 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist_entries: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          notified_at: string | null
+          notify_email: boolean
+          notify_push: boolean
+          pax: number
+          phone: string | null
+          position: number | null
+          status: string
+          tour_date_id: string | null
+          trip_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          notified_at?: string | null
+          notify_email?: boolean
+          notify_push?: boolean
+          pax?: number
+          phone?: string | null
+          position?: number | null
+          status?: string
+          tour_date_id?: string | null
+          trip_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          notified_at?: string | null
+          notify_email?: boolean
+          notify_push?: boolean
+          pax?: number
+          phone?: string | null
+          position?: number | null
+          status?: string
+          tour_date_id?: string | null
+          trip_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      wallet_passes: {
+        Row: {
+          auth_token: string
+          booking_id: string
+          created_at: string
+          id: string
+          is_voided: boolean
+          last_updated: string
+          pass_type: string
+          pass_url: string | null
+          serial_number: string
+          update_tag: string | null
+        }
+        Insert: {
+          auth_token: string
+          booking_id: string
+          created_at?: string
+          id?: string
+          is_voided?: boolean
+          last_updated?: string
+          pass_type: string
+          pass_url?: string | null
+          serial_number: string
+          update_tag?: string | null
+        }
+        Update: {
+          auth_token?: string
+          booking_id?: string
+          created_at?: string
+          id?: string
+          is_voided?: boolean
+          last_updated?: string
+          pass_type?: string
+          pass_url?: string | null
+          serial_number?: string
+          update_tag?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_passes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_passes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_agent_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_logs: {
         Row: {
           error_message: string | null
@@ -4417,6 +4867,23 @@ export type Database = {
           },
         ]
       }
+      customer_360: {
+        Row: {
+          avg_review_stars: number | null
+          cancelled_bookings: number | null
+          email: string | null
+          first_name: string | null
+          last_booking_at: string | null
+          last_name: string | null
+          lifetime_value: number | null
+          member_since: string | null
+          phone: string | null
+          review_count: number | null
+          total_bookings: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       profiles_agent_view: {
         Row: {
           created_at: string | null
@@ -4452,6 +4919,15 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_refund: {
+        Args: { p_booking_id: string; p_departure_date?: string }
+        Returns: {
+          days_before: number
+          refund_amount: number
+          refund_percent: number
+          tier_label: string
+        }[]
+      }
       calculate_trip_price: {
         Args: {
           p_destination_stop_id: string
