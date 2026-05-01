@@ -5,7 +5,7 @@ import {
   UserCheck, Settings, LogOut, Map, Mail, Inbox, Calendar, Route,
   MapPin, ChevronDown, Calculator, Truck, ClipboardList, Search,
   ChevronRight, Sparkles, Activity, Command, ChevronsLeft,
-  ChevronsRight, Menu, X
+  ChevronsRight, Menu, X, IdCard, Wallet, Building2, MessageCircleWarning
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -82,9 +82,19 @@ const menuSections: MenuSection[] = [
     ],
   },
   {
+    label: "Personal",
+    items: [
+      { path: "/admin/driver-compliance", label: "Fahrer-Compliance", icon: IdCard, allowedRoles: MANAGEMENT },
+      { path: "/admin/payroll", label: "Lohnabrechnung", icon: Wallet, allowedRoles: ADMIN_ONLY },
+      { path: "/admin/employees", label: "Mitarbeiter", icon: Users, allowedRoles: ADMIN_ONLY },
+    ],
+  },
+  {
     label: "CRM",
     items: [
-      { path: "/admin/customers", label: "Kunden", icon: UserCheck, allowedRoles: BOOKING_STAFF },
+      { path: "/admin/customers", label: "Privatkunden", icon: UserCheck, allowedRoles: BOOKING_STAFF },
+      { path: "/admin/b2b", label: "B2B-Kunden", icon: Building2, allowedRoles: MANAGEMENT },
+      { path: "/admin/complaints", label: "Reklamationen", icon: MessageCircleWarning, allowedRoles: BOOKING_STAFF },
     ],
   },
   {
