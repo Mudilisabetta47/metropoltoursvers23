@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { UnifiedDashboard } from "@/components/admin/core/UnifiedDashboard";
 
 // Status color system
 const statusColors: Record<string, string> = {
@@ -191,7 +192,10 @@ const AdminDashboard = () => {
         </div>
       }
     >
-      <div className="space-y-5">
+      <div className="space-y-6">
+        {/* Unified Live KPI Dashboard */}
+        <UnifiedDashboard />
+
         {/* KPI Cards - Professional naming with secondary info */}
         <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3">
           <Card className="bg-zinc-900/80 border-zinc-800 hover:border-zinc-700 transition-colors cursor-pointer" onClick={() => navigate("/admin/tour-bookings")}>

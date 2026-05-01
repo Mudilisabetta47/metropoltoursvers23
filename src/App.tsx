@@ -49,6 +49,7 @@ const WeekendTripDetailPage = lazy(() => import("./pages/WeekendTripDetailPage")
 const AdminWeekendTripBuilder = lazy(() => import("./pages/AdminWeekendTripBuilder"));
 const AdminMailbox = lazy(() => import("./pages/AdminMailbox"));
 const AdminCoupons = lazy(() => import("./pages/AdminCoupons"));
+const AdminAuditLog = lazy(() => import("./pages/AdminAuditLog"));
 const PassengerDataPage = lazy(() => import("./pages/PassengerDataPage"));
 const DriverDashboard = lazy(() => import("./pages/DriverDashboard"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
@@ -149,6 +150,7 @@ const App = () => (
               <Route path="/admin/cost-estimate" element={<AdminCostEstimate />} />
               <Route path="/admin/mailbox" element={<AdminMailbox />} />
               <Route path="/admin/coupons" element={<AdminCoupons />} />
+              <Route path="/admin/audit" element={<AdminAuditLog />} />
               <Route path="/passagierdaten" element={<PassengerDataPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
