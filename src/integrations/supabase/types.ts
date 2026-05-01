@@ -1480,11 +1480,15 @@ export type Database = {
           assigned_to: string | null
           created_at: string
           description: string | null
+          escalated_at: string | null
           id: string
           resolution_notes: string | null
           resolved_at: string | null
           resolved_by: string | null
           severity: string
+          sla_due_at: string | null
+          sop_progress: Json | null
+          sop_template_id: string | null
           source_id: string | null
           source_type: string | null
           status: string
@@ -1496,11 +1500,15 @@ export type Database = {
           assigned_to?: string | null
           created_at?: string
           description?: string | null
+          escalated_at?: string | null
           id?: string
           resolution_notes?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
           severity?: string
+          sla_due_at?: string | null
+          sop_progress?: Json | null
+          sop_template_id?: string | null
           source_id?: string | null
           source_type?: string | null
           status?: string
@@ -1512,11 +1520,15 @@ export type Database = {
           assigned_to?: string | null
           created_at?: string
           description?: string | null
+          escalated_at?: string | null
           id?: string
           resolution_notes?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
           severity?: string
+          sla_due_at?: string | null
+          sop_progress?: Json | null
+          sop_template_id?: string | null
           source_id?: string | null
           source_type?: string | null
           status?: string
@@ -2402,6 +2414,48 @@ export type Database = {
           status?: string
           summary?: string
           to_user_id?: string | null
+        }
+        Relationships: []
+      }
+      sop_templates: {
+        Row: {
+          auto_escalate_minutes: number | null
+          created_at: string
+          description: string | null
+          escalate_to_role: string | null
+          id: string
+          incident_type: string
+          is_active: boolean
+          name: string
+          severity: string | null
+          steps: Json
+          updated_at: string
+        }
+        Insert: {
+          auto_escalate_minutes?: number | null
+          created_at?: string
+          description?: string | null
+          escalate_to_role?: string | null
+          id?: string
+          incident_type: string
+          is_active?: boolean
+          name: string
+          severity?: string | null
+          steps?: Json
+          updated_at?: string
+        }
+        Update: {
+          auto_escalate_minutes?: number | null
+          created_at?: string
+          description?: string | null
+          escalate_to_role?: string | null
+          id?: string
+          incident_type?: string
+          is_active?: boolean
+          name?: string
+          severity?: string | null
+          steps?: Json
+          updated_at?: string
         }
         Relationships: []
       }
@@ -3687,6 +3741,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      trip_otp_log: {
+        Row: {
+          actual_arrival: string | null
+          actual_departure: string | null
+          delay_minutes: number | null
+          delay_reason: string | null
+          id: string
+          recorded_at: string
+          scheduled_arrival: string | null
+          scheduled_departure: string
+          trip_id: string
+        }
+        Insert: {
+          actual_arrival?: string | null
+          actual_departure?: string | null
+          delay_minutes?: number | null
+          delay_reason?: string | null
+          id?: string
+          recorded_at?: string
+          scheduled_arrival?: string | null
+          scheduled_departure: string
+          trip_id: string
+        }
+        Update: {
+          actual_arrival?: string | null
+          actual_departure?: string | null
+          delay_minutes?: number | null
+          delay_reason?: string | null
+          id?: string
+          recorded_at?: string
+          scheduled_arrival?: string | null
+          scheduled_departure?: string
+          trip_id?: string
+        }
+        Relationships: []
       }
       trips: {
         Row: {
