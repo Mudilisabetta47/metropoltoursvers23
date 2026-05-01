@@ -50,6 +50,10 @@ const AdminWeekendTripBuilder = lazy(() => import("./pages/AdminWeekendTripBuild
 const AdminMailbox = lazy(() => import("./pages/AdminMailbox"));
 const AdminCoupons = lazy(() => import("./pages/AdminCoupons"));
 const AdminAuditLog = lazy(() => import("./pages/AdminAuditLog"));
+const AdminFleetCompliance = lazy(() => import("./pages/AdminFleetCompliance"));
+const AdminTollVignettes = lazy(() => import("./pages/AdminTollVignettes"));
+const AdminFuelLog = lazy(() => import("./pages/AdminFuelLog"));
+const AdminWorkshops = lazy(() => import("./pages/AdminWorkshops"));
 const PassengerDataPage = lazy(() => import("./pages/PassengerDataPage"));
 const DriverDashboard = lazy(() => import("./pages/DriverDashboard"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
@@ -151,6 +155,10 @@ const App = () => (
               <Route path="/admin/mailbox" element={<AdminMailbox />} />
               <Route path="/admin/coupons" element={<AdminCoupons />} />
               <Route path="/admin/audit" element={<AdminAuditLog />} />
+              <Route path="/admin/fleet-compliance" element={<AdminFleetCompliance />} />
+              <Route path="/admin/toll-vignettes" element={<AdminTollVignettes />} />
+              <Route path="/admin/fuel-log" element={<AdminFuelLog />} />
+              <Route path="/admin/workshops" element={<AdminWorkshops />} />
               <Route path="/passagierdaten" element={<PassengerDataPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -73,6 +73,15 @@ const menuSections: MenuSection[] = [
     ],
   },
   {
+    label: "Flotten-Management",
+    items: [
+      { path: "/admin/fleet-compliance", label: "Compliance & TÜV", icon: Shield, allowedRoles: MANAGEMENT },
+      { path: "/admin/fuel-log", label: "Tankungen", icon: Activity, allowedRoles: MANAGEMENT },
+      { path: "/admin/toll-vignettes", label: "Maut & Vignetten", icon: Calculator, allowedRoles: MANAGEMENT },
+      { path: "/admin/workshops", label: "Werkstätten", icon: Truck, allowedRoles: MANAGEMENT },
+    ],
+  },
+  {
     label: "CRM",
     items: [
       { path: "/admin/customers", label: "Kunden", icon: UserCheck, allowedRoles: BOOKING_STAFF },
