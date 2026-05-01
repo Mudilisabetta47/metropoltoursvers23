@@ -644,6 +644,13 @@ const BookingsPage = () => {
                       Rechnung herunterladen
                     </Button>
                     {upcoming && (
+                      <WalletPassButton
+                        bookingId={tb.id}
+                        ticketNumber={tb.booking_number}
+                        bookingType="tour"
+                      />
+                    )}
+                    {upcoming && (
                       <>
                         <Button variant="outline" size="sm" className="justify-start gap-2">
                           <RotateCcw className="w-4 h-4" />
