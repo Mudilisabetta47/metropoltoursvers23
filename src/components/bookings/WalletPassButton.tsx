@@ -198,6 +198,10 @@ export function WalletPassButton({
     return new Date(iso).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
   };
 
+  const passOpenUrl = pass?.pass_html
+    ? `data:text/html;charset=utf-8,${encodeURIComponent(pass.pass_html)}`
+    : pass?.pass_url;
+
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 flex-wrap">
@@ -289,7 +293,7 @@ export function WalletPassButton({
           {pass && (
             <div className="space-y-2">
               <Button asChild className="w-full" size="lg">
-                <a href={pass.pass_url} target="_blank" rel="noopener noreferrer">
+                <a href={passOpenUrl} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="w-4 h-4 mr-2" />
                   Pass öffnen & speichern
                 </a>
