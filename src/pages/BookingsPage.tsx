@@ -21,6 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTicketDownload } from "@/hooks/useTicketDownload";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { WalletPassButton } from "@/components/bookings/WalletPassButton";
+import { WalletPassDebugBadge } from "@/components/bookings/WalletPassDebugBadge";
 
 interface Booking {
   id: string;
