@@ -190,8 +190,13 @@ serve(async (req) => {
       pass = ins.data;
     }
 
+    const previewHtml = renderPassHtml(toPassDisplay(booking_type, booking));
     return new Response(JSON.stringify({
-      ok: true, pass_url: pass!.pass_url, serial: pass!.serial_number, pass_type,
+      ok: true,
+      pass_url: pass!.pass_url,
+      pass_html: previewHtml,
+      serial: pass!.serial_number,
+      pass_type,
     }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (err: any) {
