@@ -101,8 +101,8 @@ export default function AdminPayroll() {
   };
 
   const bulkActions: BulkAction<any>[] = [
-    { label: "Freigeben", icon: CheckCircle2, onClick: bulkApprove },
-    { label: "DATEV-Export", icon: FileDown, onClick: exportDATEV },
+    { label: "Freigeben", icon: CheckCircle2, onClick: async (s) => { await bulkApprove(s); } },
+    { label: "DATEV-Export", icon: FileDown, onClick: (s) => { exportDATEV(s); } },
   ];
 
   const columns: DataTableColumn<any>[] = [
