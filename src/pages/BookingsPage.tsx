@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTicketDownload } from "@/hooks/useTicketDownload";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
+import { WalletPassButton } from "@/components/bookings/WalletPassButton";
 
 interface Booking {
   id: string;
@@ -514,6 +515,13 @@ const BookingsPage = () => {
                       <FileText className="w-4 h-4" />
                       Buchungsbestätigung
                     </Button>
+                    {upcoming && (
+                      <WalletPassButton
+                        bookingId={booking.id}
+                        ticketNumber={booking.ticket_number}
+                        bookingType="bus"
+                      />
+                    )}
                     {!isGuest && upcoming && (
                       <Button
                         variant="outline"
@@ -635,6 +643,13 @@ const BookingsPage = () => {
                       <Download className="w-4 h-4" />
                       Rechnung herunterladen
                     </Button>
+                    {upcoming && (
+                      <WalletPassButton
+                        bookingId={tb.id}
+                        ticketNumber={tb.booking_number}
+                        bookingType="tour"
+                      />
+                    )}
                     {upcoming && (
                       <>
                         <Button variant="outline" size="sm" className="justify-start gap-2">
