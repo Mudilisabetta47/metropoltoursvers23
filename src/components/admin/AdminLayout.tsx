@@ -12,6 +12,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AppRole } from "@/types/database";
+import { CommandPalette } from "@/components/admin/core/CommandPalette";
+import { NotificationBell } from "@/components/admin/core/NotificationBell";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -109,6 +111,7 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [now, setNow] = useState(new Date());
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 30_000);
@@ -333,7 +336,10 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
 
           {/* Search (command palette style) */}
           <div className="ml-auto flex items-center gap-2">
-            <button className="hidden md:flex items-center gap-2 cockpit-glass rounded-lg px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-300 hover:border-zinc-600 transition-colors w-64 group">
+            <button
+              onClick={() => setPaletteOpen(true)}
+              className="hidden md:flex items-center gap-2 cockpit-glass rounded-lg px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-300 hover:border-zinc-600 transition-colors w-64 group"
+            >
               <Search className="w-3.5 h-3.5" />
               <span className="flex-1 text-left">Suchen oder Befehl…</span>
               <kbd className="hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white/5 border cockpit-border text-[10px] font-cockpit-mono text-zinc-400">
@@ -342,10 +348,7 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
             </button>
 
             {/* Notifications */}
-            <button className="relative size-9 rounded-lg cockpit-glass hover:border-zinc-600 flex items-center justify-center text-zinc-400 hover:text-white transition-colors">
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-[#00CC36] ring-2 ring-[#0b0e14] brand-glow-sm" />
-            </button>
+            <NotificationBell />
 
             {/* Time */}
             <div className="hidden xl:flex items-center gap-2 text-[10px] font-cockpit-mono text-zinc-500 px-3 border-l cockpit-border">
@@ -376,6 +379,9 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
           {children}
         </div>
       </main>
+
+      {/* Global Command Palette (⌘K) */}
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
     </div>
   );
 };
