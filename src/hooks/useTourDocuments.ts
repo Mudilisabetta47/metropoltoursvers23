@@ -45,17 +45,25 @@ export const useTourDocuments = () => {
     options: UseTourDocumentsOptions,
     documentType: DocumentType
   ) => {
+    const printWindow = window.open("", "_blank");
+    printWindow?.document.write('<!doctype html><html><body style="font-family:system-ui;padding:24px">Dokument wird vorbereitet…</body></html>');
+    printWindow?.document.close();
+
     const docs = await generateDocument(options, documentType);
-    if (!docs) return;
+    if (!docs) {
+      printWindow?.close();
+      return;
+    }
 
     const html = docs[documentType];
     if (!html) {
       toast.error("Dokument nicht verfügbar");
+      printWindow?.close();
       return;
     }
 
-    const printWindow = window.open("", "_blank");
     if (printWindow) {
+      printWindow.document.open();
       printWindow.document.write(html);
       printWindow.document.close();
     } else {

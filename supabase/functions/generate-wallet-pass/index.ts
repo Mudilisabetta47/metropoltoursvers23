@@ -41,7 +41,7 @@ serve(async (req) => {
       if (type === "tour") {
         const { data } = await admin.from("tour_bookings")
           .select("booking_number, contact_first_name, contact_last_name, status")
-          .eq("id", pass.booking_id).maybeSingle();
+          .eq("id", pass.tour_booking_id).maybeSingle();
         b = {
           ticket_number: data?.booking_number ?? "—",
           passenger_first_name: data?.contact_first_name ?? "",
@@ -92,10 +92,8 @@ body{margin:0;font-family:-apple-system,system-ui,sans-serif;background:#0f1218;
       { global: { headers: { Authorization: authHeader } } }
     );
     const { data: { user } } = await userClient.auth.getUser();
-    if (!user) return new Response(JSON.stringify({ error: "unauthorized" }),
-      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    const { booking_id, pass_type = "apple", booking_type = "bus" } = await req.json();
+    const { booking_id, ticket_number, email, pass_type = "apple", booking_type = "bus" } = await req.json();
     if (!booking_id) return new Response(JSON.stringify({ error: "booking_id required" }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
@@ -103,47 +101,68 @@ body{margin:0;font-family:-apple-system,system-ui,sans-serif;background:#0f1218;
     let booking: any = null;
     let ownerId: string | null = null;
     let ticketNumber: string | null = null;
+    let bookingEmail: string | null = null;
 
     if (booking_type === "tour") {
       const { data } = await admin.from("tour_bookings")
-        .select("id, user_id, booking_number")
+        .select("id, user_id, booking_number, contact_email")
         .eq("id", booking_id).maybeSingle();
       if (data) {
         booking = data;
         ownerId = data.user_id;
         ticketNumber = data.booking_number;
+        bookingEmail = data.contact_email;
       }
     } else {
       const { data } = await admin.from("bookings")
-        .select("id, user_id, ticket_number")
+        .select("id, user_id, ticket_number, passenger_email")
         .eq("id", booking_id).maybeSingle();
       if (data) {
         booking = data;
         ownerId = data.user_id;
         ticketNumber = data.ticket_number;
+        bookingEmail = data.passenger_email;
       }
     }
-    if (!booking) throw new Error("Buchung nicht gefunden");
+    if (!booking) return new Response(JSON.stringify({ error: "Buchung nicht gefunden" }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", user.id);
-    const isStaff = (roles ?? []).some(r => ["admin","office","agent"].includes(r.role));
-    if (ownerId !== user.id && !isStaff) {
-      return new Response(JSON.stringify({ error: "forbidden" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const requestedEmail = String(email ?? "").trim().toLowerCase();
+    const emailMatchesBooking = !!requestedEmail && requestedEmail === String(bookingEmail ?? "").trim().toLowerCase();
+    const ticketMatchesBooking = !ticket_number || String(ticket_number).trim().toUpperCase() === String(ticketNumber ?? "").trim().toUpperCase();
+    let isStaff = false;
+    if (user) {
+      const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", user.id);
+      isStaff = (roles ?? []).some(r => ["admin","office","agent"].includes(r.role));
+    }
+    const userEmailMatches = !!user?.email && String(user.email).trim().toLowerCase() === String(bookingEmail ?? "").trim().toLowerCase();
+    const allowed = isStaff || (!!user && (ownerId === user.id || userEmailMatches)) || (emailMatchesBooking && ticketMatchesBooking);
+    if (!allowed) {
+      return new Response(JSON.stringify({ error: "Kein Zugriff auf diese Buchung" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // Wenn schon vorhanden → zurückgeben
-    const { data: existing } = await admin.from("wallet_passes")
-      .select("*").eq("booking_id", booking_id).eq("pass_type", pass_type)
-      .eq("is_voided", false).maybeSingle();
+    let existingQuery = admin.from("wallet_passes")
+      .select("*").eq("booking_type", booking_type).eq("pass_type", pass_type)
+      .eq("is_voided", false)
+      .order("last_updated", { ascending: false })
+      .limit(1);
+    existingQuery = booking_type === "tour"
+      ? existingQuery.eq("tour_booking_id", booking_id)
+      : existingQuery.eq("booking_id", booking_id);
+    const { data: existing } = await existingQuery.maybeSingle();
     let pass = existing;
     if (!pass) {
       const serial = `MT-${ticketNumber}-${randomToken(8)}`;
       const token = randomToken(24);
       const passUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-wallet-pass?action=view&serial=${serial}&token=${token}&type=${booking_type}`;
       const ins = await admin.from("wallet_passes").insert({
-        booking_id, pass_type, serial_number: serial, auth_token: token, pass_url: passUrl,
+        booking_id: booking_type === "bus" ? booking_id : null,
+        tour_booking_id: booking_type === "tour" ? booking_id : null,
+        booking_type, pass_type, serial_number: serial, auth_token: token, pass_url: passUrl,
       }).select().single();
+      if (ins.error) throw ins.error;
       pass = ins.data;
     }
 
@@ -152,7 +171,8 @@ body{margin:0;font-family:-apple-system,system-ui,sans-serif;background:#0f1218;
     }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    console.error("generate-wallet-pass failed", err);
+    return new Response(JSON.stringify({ error: err.message || "Wallet-Pass konnte nicht erstellt werden" }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
