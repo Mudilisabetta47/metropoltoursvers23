@@ -30,13 +30,30 @@ serve(async (req) => {
       // Public Pass-Ansicht (per Serial)
       const serial = url.searchParams.get("serial");
       const token = url.searchParams.get("token");
+      const type = url.searchParams.get("type") ?? "bus";
       if (!serial || !token) return new Response("Missing params", { status: 400, headers: corsHeaders });
       const { data: pass } = await admin.from("wallet_passes")
-        .select("*, bookings(ticket_number, passenger_first_name, passenger_last_name, passenger_email, trip_id, seat_id, status)")
+        .select("*")
         .eq("serial_number", serial).eq("auth_token", token).maybeSingle();
       if (!pass) return new Response("Pass not found", { status: 404, headers: corsHeaders });
 
-      const b: any = pass.bookings;
+      let b: any = {};
+      if (type === "tour") {
+        const { data } = await admin.from("tour_bookings")
+          .select("booking_number, contact_first_name, contact_last_name, status")
+          .eq("id", pass.booking_id).maybeSingle();
+        b = {
+          ticket_number: data?.booking_number ?? "—",
+          passenger_first_name: data?.contact_first_name ?? "",
+          passenger_last_name: data?.contact_last_name ?? "",
+          status: data?.status ?? "—",
+        };
+      } else {
+        const { data } = await admin.from("bookings")
+          .select("ticket_number, passenger_first_name, passenger_last_name, status")
+          .eq("id", pass.booking_id).maybeSingle();
+        b = data ?? { ticket_number: "—", passenger_first_name: "", passenger_last_name: "", status: "—" };
+      }
       const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Boarding Pass · ${b.ticket_number}</title>
 <style>
