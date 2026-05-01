@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, AlertTriangle, FileCheck2, Workflow, ArrowUp, CheckCircle2, ListChecks } from "lucide-react";
+import { Plus, AlertTriangle, FileCheck2, Workflow, ArrowUp, CheckCircle2, ListChecks, Paperclip, Upload, Trash2, Download, FileText, PlayCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -48,6 +48,9 @@ export default function AdminIncidentWorkflow() {
   const [form, setForm] = useState<any>({ severity: "warning", status: "open", type: "delay" });
   const [sopForm, setSopForm] = useState<any>({ incident_type: "delay", severity: "normal", steps: [], is_active: true, auto_escalate_minutes: 30 });
   const [detail, setDetail] = useState<any | null>(null);
+  const [docs, setDocs] = useState<any[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [docCategory, setDocCategory] = useState<string>("photo");
 
   const load = async () => {
     setLoading(true);
@@ -59,6 +62,19 @@ export default function AdminIncidentWorkflow() {
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+
+  // Load documents whenever a detail is opened
+  useEffect(() => {
+    if (!detail?.id) { setDocs([]); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("incident_documents")
+        .select("*")
+        .eq("incident_id", detail.id)
+        .order("created_at", { ascending: false });
+      setDocs(data || []);
+    })();
+  }, [detail?.id]);
 
   const stats = useMemo(() => ({
     open: incidents.filter(i => i.status !== "resolved").length,
@@ -88,27 +104,79 @@ export default function AdminIncidentWorkflow() {
   const toggleStep = async (idx: number) => {
     if (!detail) return;
     const newProgress = [...(detail.sop_progress || [])];
-    newProgress[idx] = { ...newProgress[idx], completed: !newProgress[idx].completed, completed_at: !newProgress[idx].completed ? new Date().toISOString() : null };
+    const wasDone = !!(newProgress[idx].done ?? newProgress[idx].completed);
+    newProgress[idx] = {
+      ...newProgress[idx],
+      done: !wasDone,
+      completed: !wasDone, // legacy compat
+      completed_at: !wasDone ? new Date().toISOString() : null,
+    };
     const { error } = await supabase.from("incidents").update({ sop_progress: newProgress }).eq("id", detail.id);
     if (error) return toast.error(error.message);
-    setDetail({ ...detail, sop_progress: newProgress });
+    // Trigger may auto-resolve → reload
+    const { data: refreshed } = await supabase.from("incidents").select("*").eq("id", detail.id).maybeSingle();
+    if (refreshed) setDetail(refreshed);
+    if (refreshed?.status === "resolved") toast.success("Alle SOP-Schritte erledigt – Vorfall automatisch gelöst");
     load();
   };
 
-  const escalate = async () => {
+  const changeStatus = async (newStatus: string) => {
     if (!detail) return;
-    const { error } = await supabase.from("incidents").update({ status: "escalated", escalated_at: new Date().toISOString() }).eq("id", detail.id);
+    const { error } = await supabase.rpc("transition_incident_status", {
+      p_incident_id: detail.id,
+      p_new_status: newStatus,
+      p_note: null,
+    });
     if (error) return toast.error(error.message);
-    setDetail({ ...detail, status: "escalated", escalated_at: new Date().toISOString() }); load();
-    toast.success("Vorfall eskaliert");
+    const { data: refreshed } = await supabase.from("incidents").select("*").eq("id", detail.id).maybeSingle();
+    if (refreshed) setDetail(refreshed);
+    load();
+    toast.success(`Status: ${newStatus}`);
   };
 
-  const resolve = async () => {
-    if (!detail) return;
-    const { error } = await supabase.from("incidents").update({ status: "resolved", resolved_at: new Date().toISOString() }).eq("id", detail.id);
+  const uploadDoc = async (file: File) => {
+    if (!detail || !file) return;
+    if (file.size > 20 * 1024 * 1024) return toast.error("Maximal 20 MB pro Datei");
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${detail.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const up = await supabase.storage.from("incident-documents").upload(path, file, { contentType: file.type });
+      if (up.error) throw up.error;
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase.from("incident_documents").insert({
+        incident_id: detail.id,
+        file_path: path,
+        file_name: file.name,
+        file_size: file.size,
+        mime_type: file.type,
+        category: docCategory,
+        uploaded_by: user?.id ?? null,
+      });
+      if (error) throw error;
+      const { data } = await supabase.from("incident_documents").select("*").eq("incident_id", detail.id).order("created_at", { ascending: false });
+      setDocs(data || []);
+      toast.success("Anhang hochgeladen");
+    } catch (e: any) {
+      toast.error(e.message || "Upload fehlgeschlagen");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const downloadDoc = async (doc: any) => {
+    const { data, error } = await supabase.storage.from("incident-documents").createSignedUrl(doc.file_path, 300);
+    if (error || !data?.signedUrl) return toast.error("Download nicht möglich");
+    window.open(data.signedUrl, "_blank");
+  };
+
+  const deleteDoc = async (doc: any) => {
+    if (!confirm(`Anhang "${doc.file_name}" wirklich löschen?`)) return;
+    await supabase.storage.from("incident-documents").remove([doc.file_path]);
+    const { error } = await supabase.from("incident_documents").delete().eq("id", doc.id);
     if (error) return toast.error(error.message);
-    setDetail({ ...detail, status: "resolved", resolved_at: new Date().toISOString() }); load();
-    toast.success("Vorfall gelöst");
+    setDocs(docs.filter(d => d.id !== doc.id));
+    toast.success("Anhang gelöscht");
   };
 
   const saveSop = async () => {
@@ -256,15 +324,18 @@ export default function AdminIncidentWorkflow() {
                   <div className="rounded-lg bg-zinc-900 p-4 border border-zinc-800">
                     <h4 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider mb-3 flex items-center gap-2"><ListChecks className="w-4 h-4" />SOP-Checkliste</h4>
                     <div className="space-y-2">
-                      {(detail.sop_progress || []).map((step: any, i: number) => (
-                        <label key={i} className={`flex items-start gap-3 p-2 rounded cursor-pointer hover:bg-zinc-800 transition ${step.completed ? "opacity-60" : ""}`}>
-                          <input type="checkbox" checked={!!step.completed} onChange={() => toggleStep(i)} className="mt-1" />
-                          <div className="flex-1">
-                            <div className={`text-sm ${step.completed ? "line-through text-zinc-500" : "text-white"}`}><span className="font-mono text-xs text-emerald-400 mr-2">#{step.order}</span>{step.text}</div>
-                            {step.completed_at && <div className="text-xs text-zinc-500 mt-0.5">Erledigt {fmtDateTime(step.completed_at)}</div>}
-                          </div>
-                        </label>
-                      ))}
+                      {(detail.sop_progress || []).map((step: any, i: number) => {
+                        const isDone = !!(step.done ?? step.completed);
+                        return (
+                          <label key={i} className={`flex items-start gap-3 p-2 rounded cursor-pointer hover:bg-zinc-800 transition ${isDone ? "opacity-60" : ""}`}>
+                            <input type="checkbox" checked={isDone} onChange={() => toggleStep(i)} className="mt-1" />
+                            <div className="flex-1">
+                              <div className={`text-sm ${isDone ? "line-through text-zinc-500" : "text-white"}`}><span className="font-mono text-xs text-emerald-400 mr-2">#{step.order}</span>{step.text}</div>
+                              {step.completed_at && <div className="text-xs text-zinc-500 mt-0.5">Erledigt {fmtDateTime(step.completed_at)}</div>}
+                            </div>
+                          </label>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -275,9 +346,66 @@ export default function AdminIncidentWorkflow() {
                   </div>
                 )}
 
-                <div className="flex gap-2">
-                  {detail.status !== "resolved" && <Button onClick={escalate} variant="outline" className="border-red-500/50 text-red-400 hover:bg-red-500/10"><ArrowUp className="w-4 h-4 mr-2" />Eskalieren</Button>}
-                  {detail.status !== "resolved" && <Button onClick={resolve} className="bg-emerald-500 hover:bg-emerald-600 text-black"><CheckCircle2 className="w-4 h-4 mr-2" />Als gelöst markieren</Button>}
+                {/* Anhänge */}
+                <div className="rounded-lg bg-zinc-900 p-4 border border-zinc-800">
+                  <h4 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <Paperclip className="w-4 h-4" />Anhänge ({docs.length})
+                  </h4>
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <Select value={docCategory} onValueChange={setDocCategory}>
+                      <SelectTrigger className="bg-white text-black w-40 h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="photo">Foto</SelectItem>
+                        <SelectItem value="report">Bericht</SelectItem>
+                        <SelectItem value="police">Polizei-Akt</SelectItem>
+                        <SelectItem value="insurance">Versicherung</SelectItem>
+                        <SelectItem value="invoice">Rechnung</SelectItem>
+                        <SelectItem value="other">Sonstiges</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <label className="inline-flex items-center gap-2 cursor-pointer rounded-md bg-zinc-800 hover:bg-zinc-700 text-white px-3 h-9 text-sm">
+                      <Upload className="w-4 h-4" />{uploading ? "Lade hoch…" : "Datei wählen"}
+                      <input type="file" className="hidden" disabled={uploading} accept="image/*,application/pdf" onChange={e => { const f = e.target.files?.[0]; if (f) uploadDoc(f); e.currentTarget.value = ""; }} />
+                    </label>
+                    <span className="text-xs text-zinc-500">max. 20 MB · Bilder, PDF</span>
+                  </div>
+                  {docs.length === 0 ? (
+                    <div className="text-xs text-zinc-600">Noch keine Anhänge</div>
+                  ) : (
+                    <div className="space-y-2">
+                      {docs.map(d => (
+                        <div key={d.id} className="flex items-center gap-3 p-2 rounded bg-zinc-950/60 border border-zinc-800">
+                          <FileText className="w-4 h-4 text-zinc-400 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm text-white truncate">{d.file_name}</div>
+                            <div className="text-xs text-zinc-500">{d.category} · {((d.file_size || 0) / 1024).toFixed(0)} KB · {fmtDateTime(d.created_at)}</div>
+                          </div>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-zinc-400 hover:text-white" onClick={() => downloadDoc(d)}><Download className="w-4 h-4" /></Button>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10" onClick={() => deleteDoc(d)}><Trash2 className="w-4 h-4" /></Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Status-Aktionen (rollenbasiert via RPC) */}
+                <div className="rounded-lg bg-zinc-900 p-4 border border-zinc-800">
+                  <h4 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider mb-3">Status ändern</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {detail.status === "open" && (
+                      <Button onClick={() => changeStatus("in_progress")} variant="outline" className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10"><PlayCircle className="w-4 h-4 mr-2" />In Bearbeitung (Fahrer/Office)</Button>
+                    )}
+                    {detail.status !== "resolved" && detail.status !== "escalated" && (
+                      <Button onClick={() => changeStatus("escalated")} variant="outline" className="border-red-500/50 text-red-400 hover:bg-red-500/10"><ArrowUp className="w-4 h-4 mr-2" />Eskalieren (Office/Admin)</Button>
+                    )}
+                    {detail.status !== "resolved" && (
+                      <Button onClick={() => changeStatus("resolved")} className="bg-emerald-500 hover:bg-emerald-600 text-black"><CheckCircle2 className="w-4 h-4 mr-2" />Als gelöst markieren (Office/Admin)</Button>
+                    )}
+                    {detail.status === "resolved" && (
+                      <Button onClick={() => changeStatus("open")} variant="outline" className="border-zinc-600">Erneut öffnen</Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-2">Übergänge werden serverseitig nach Rolle geprüft und im Audit-Log protokolliert.</p>
                 </div>
               </div>
             </>
