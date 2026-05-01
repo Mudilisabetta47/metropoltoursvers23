@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, AlertTriangle, FileCheck2, Workflow, ArrowUp, CheckCircle2, ListChecks } from "lucide-react";
+import { Plus, AlertTriangle, FileCheck2, Workflow, ArrowUp, CheckCircle2, ListChecks, Paperclip, Upload, Trash2, Download, FileText, PlayCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
