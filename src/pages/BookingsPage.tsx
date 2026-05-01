@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTicketDownload } from "@/hooks/useTicketDownload";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
+import { WalletPassButton } from "@/components/bookings/WalletPassButton";
 
 interface Booking {
   id: string;
