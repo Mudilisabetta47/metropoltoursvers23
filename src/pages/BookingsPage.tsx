@@ -635,6 +635,7 @@ const BookingsPage = () => {
               
               <div className="flex flex-col gap-2">
                 <h4 className="font-semibold text-foreground text-sm">Aktionen</h4>
+                <WalletPassDebugBadge bookingId={tb.id} bookingStatus={tb.status} />
                 {tb.status !== 'cancelled' && (
                   <WalletPassButton
                     bookingId={tb.id}
