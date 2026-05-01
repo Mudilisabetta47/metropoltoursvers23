@@ -4511,7 +4511,8 @@ export type Database = {
       wallet_passes: {
         Row: {
           auth_token: string
-          booking_id: string
+          booking_id: string | null
+          booking_type: string
           created_at: string
           id: string
           is_voided: boolean
@@ -4519,11 +4520,13 @@ export type Database = {
           pass_type: string
           pass_url: string | null
           serial_number: string
+          tour_booking_id: string | null
           update_tag: string | null
         }
         Insert: {
           auth_token: string
-          booking_id: string
+          booking_id?: string | null
+          booking_type?: string
           created_at?: string
           id?: string
           is_voided?: boolean
@@ -4531,11 +4534,13 @@ export type Database = {
           pass_type: string
           pass_url?: string | null
           serial_number: string
+          tour_booking_id?: string | null
           update_tag?: string | null
         }
         Update: {
           auth_token?: string
-          booking_id?: string
+          booking_id?: string | null
+          booking_type?: string
           created_at?: string
           id?: string
           is_voided?: boolean
@@ -4543,6 +4548,7 @@ export type Database = {
           pass_type?: string
           pass_url?: string | null
           serial_number?: string
+          tour_booking_id?: string | null
           update_tag?: string | null
         }
         Relationships: [
@@ -4558,6 +4564,13 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings_agent_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_passes_tour_booking_id_fkey"
+            columns: ["tour_booking_id"]
+            isOneToOne: false
+            referencedRelation: "tour_bookings"
             referencedColumns: ["id"]
           },
         ]
