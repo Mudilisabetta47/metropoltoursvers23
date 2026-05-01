@@ -130,8 +130,8 @@ export function WalletPassButton({
   };
 
   const copyLink = async () => {
-    if (!pass?.pass_url) return;
-    await navigator.clipboard.writeText(pass.pass_url);
+    if (!passOpenUrl) return;
+    await navigator.clipboard.writeText(passOpenUrl);
     setCopied(true);
     toast.success("Link kopiert");
     setTimeout(() => setCopied(false), 2000);
