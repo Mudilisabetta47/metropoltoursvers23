@@ -60,7 +60,7 @@ function computeState(row: any | null): PassStatus {
 }
 
 export function WalletPassButton({
-  bookingId, ticketNumber, variant = "outline", size = "sm", className,
+  bookingId, ticketNumber, variant = "outline", size = "sm", className, bookingType = "bus",
 }: WalletPassButtonProps) {
   const [loading, setLoading] = useState(false);
   const [statusLoading, setStatusLoading] = useState(true);
@@ -97,7 +97,7 @@ export function WalletPassButton({
           .eq("booking_id", bookingId);
       }
       const { data, error } = await supabase.functions.invoke("generate-wallet-pass", {
-        body: { booking_id: bookingId, pass_type: passType },
+        body: { booking_id: bookingId, pass_type: passType, booking_type: bookingType },
       });
       if (error) throw error;
       if (!data?.pass_url) throw new Error("Pass konnte nicht erstellt werden");

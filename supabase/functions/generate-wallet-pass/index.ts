@@ -30,13 +30,30 @@ serve(async (req) => {
       // Public Pass-Ansicht (per Serial)
       const serial = url.searchParams.get("serial");
       const token = url.searchParams.get("token");
+      const type = url.searchParams.get("type") ?? "bus";
       if (!serial || !token) return new Response("Missing params", { status: 400, headers: corsHeaders });
       const { data: pass } = await admin.from("wallet_passes")
-        .select("*, bookings(ticket_number, passenger_first_name, passenger_last_name, passenger_email, trip_id, seat_id, status)")
+        .select("*")
         .eq("serial_number", serial).eq("auth_token", token).maybeSingle();
       if (!pass) return new Response("Pass not found", { status: 404, headers: corsHeaders });
 
-      const b: any = pass.bookings;
+      let b: any = {};
+      if (type === "tour") {
+        const { data } = await admin.from("tour_bookings")
+          .select("booking_number, contact_first_name, contact_last_name, status")
+          .eq("id", pass.booking_id).maybeSingle();
+        b = {
+          ticket_number: data?.booking_number ?? "—",
+          passenger_first_name: data?.contact_first_name ?? "",
+          passenger_last_name: data?.contact_last_name ?? "",
+          status: data?.status ?? "—",
+        };
+      } else {
+        const { data } = await admin.from("bookings")
+          .select("ticket_number, passenger_first_name, passenger_last_name, status")
+          .eq("id", pass.booking_id).maybeSingle();
+        b = data ?? { ticket_number: "—", passenger_first_name: "", passenger_last_name: "", status: "—" };
+      }
       const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Boarding Pass · ${b.ticket_number}</title>
 <style>
@@ -78,29 +95,52 @@ body{margin:0;font-family:-apple-system,system-ui,sans-serif;background:#0f1218;
     if (!user) return new Response(JSON.stringify({ error: "unauthorized" }),
       { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    const { booking_id, pass_type = "apple" } = await req.json();
+    const { booking_id, pass_type = "apple", booking_type = "bus" } = await req.json();
     if (!booking_id) return new Response(JSON.stringify({ error: "booking_id required" }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    const { data: booking } = await admin.from("bookings")
-      .select("id, user_id, ticket_number").eq("id", booking_id).maybeSingle();
+    // Tour- oder Bus-Buchung laden
+    let booking: any = null;
+    let ownerId: string | null = null;
+    let ticketNumber: string | null = null;
+
+    if (booking_type === "tour") {
+      const { data } = await admin.from("tour_bookings")
+        .select("id, user_id, booking_number")
+        .eq("id", booking_id).maybeSingle();
+      if (data) {
+        booking = data;
+        ownerId = data.user_id;
+        ticketNumber = data.booking_number;
+      }
+    } else {
+      const { data } = await admin.from("bookings")
+        .select("id, user_id, ticket_number")
+        .eq("id", booking_id).maybeSingle();
+      if (data) {
+        booking = data;
+        ownerId = data.user_id;
+        ticketNumber = data.ticket_number;
+      }
+    }
     if (!booking) throw new Error("Buchung nicht gefunden");
 
     const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", user.id);
     const isStaff = (roles ?? []).some(r => ["admin","office","agent"].includes(r.role));
-    if (booking.user_id !== user.id && !isStaff) {
+    if (ownerId !== user.id && !isStaff) {
       return new Response(JSON.stringify({ error: "forbidden" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // Wenn schon vorhanden → zurückgeben
     const { data: existing } = await admin.from("wallet_passes")
-      .select("*").eq("booking_id", booking_id).eq("pass_type", pass_type).maybeSingle();
+      .select("*").eq("booking_id", booking_id).eq("pass_type", pass_type)
+      .eq("is_voided", false).maybeSingle();
     let pass = existing;
     if (!pass) {
-      const serial = `MT-${booking.ticket_number}-${randomToken(8)}`;
+      const serial = `MT-${ticketNumber}-${randomToken(8)}`;
       const token = randomToken(24);
-      const passUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-wallet-pass?action=view&serial=${serial}&token=${token}`;
+      const passUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-wallet-pass?action=view&serial=${serial}&token=${token}&type=${booking_type}`;
       const ins = await admin.from("wallet_passes").insert({
         booking_id, pass_type, serial_number: serial, auth_token: token, pass_url: passUrl,
       }).select().single();
