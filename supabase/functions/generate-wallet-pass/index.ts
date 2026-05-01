@@ -233,7 +233,10 @@ serve(async (req) => {
 
     if (booking_type === "tour") {
       const { data } = await admin.from("tour_bookings")
-        .select("id, user_id, booking_number, contact_email, contact_first_name, contact_last_name, status")
+        .select(`id, user_id, booking_number, contact_email, contact_first_name, contact_last_name, status, participants,
+                 tour_dates ( departure_date, return_date ),
+                 package_tours ( title, destination ),
+                 pickup_stops:tour_pickup_stops!tour_bookings_pickup_stop_id_fkey ( name, city )`)
         .eq("id", booking_id).maybeSingle();
       if (data) {
         booking = data;
@@ -243,7 +246,11 @@ serve(async (req) => {
       }
     } else {
       const { data } = await admin.from("bookings")
-        .select("id, user_id, ticket_number, passenger_email, passenger_first_name, passenger_last_name, status")
+        .select(`id, user_id, ticket_number, passenger_email, passenger_first_name, passenger_last_name, status,
+                 trips ( departure_date, departure_time, arrival_time, routes ( name ) ),
+                 origin_stop:stops!bookings_origin_stop_id_fkey ( name, city ),
+                 destination_stop:stops!bookings_destination_stop_id_fkey ( name, city ),
+                 seats ( seat_number )`)
         .eq("id", booking_id).maybeSingle();
       if (data) {
         booking = data;
