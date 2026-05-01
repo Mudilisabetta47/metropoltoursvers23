@@ -118,7 +118,6 @@ const menuSections: MenuSection[] = [
       { path: "/admin/cms", label: "Inhalte", icon: ClipboardList, allowedRoles: MANAGEMENT },
       { path: "/admin/audit", label: "Audit-Log", icon: Shield, allowedRoles: ADMIN_ONLY },
       { path: "/admin/legal", label: "Rechtliches", icon: Shield, allowedRoles: ADMIN_ONLY },
-      { path: "/admin/employees", label: "Mitarbeiter", icon: Users, allowedRoles: ADMIN_ONLY },
       { path: "/admin/settings", label: "Einstellungen", icon: Settings, allowedRoles: ADMIN_ONLY },
     ],
   },
