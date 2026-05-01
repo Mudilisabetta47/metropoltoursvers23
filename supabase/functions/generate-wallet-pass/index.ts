@@ -15,6 +15,61 @@ function randomToken(len = 32) {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
+function escapeHtml(value: unknown) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function toPassDisplay(bookingType: string, booking: any) {
+  return {
+    ticket_number: bookingType === "tour" ? booking?.booking_number : booking?.ticket_number,
+    passenger_first_name: bookingType === "tour" ? booking?.contact_first_name : booking?.passenger_first_name,
+    passenger_last_name: bookingType === "tour" ? booking?.contact_last_name : booking?.passenger_last_name,
+    status: booking?.status,
+  };
+}
+
+function renderPassHtml(b: any) {
+  const ticketNumber = String(b.ticket_number ?? "—");
+  const qrValue = encodeURIComponent(ticketNumber);
+  const safeTicket = escapeHtml(ticketNumber);
+  const safeFirstName = escapeHtml(b.passenger_first_name);
+  const safeLastName = escapeHtml(b.passenger_last_name);
+  const safeStatus = escapeHtml(b.status ?? "—");
+
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Boarding Pass · ${safeTicket}</title>
+<style>
+body{margin:0;font-family:-apple-system,system-ui,sans-serif;background:#0f1218;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.pass{width:100%;max-width:380px;background:linear-gradient(160deg,#00CC36 0%,#019b29 100%);border-radius:24px;padding:24px;color:#000;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.brand{font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:2px;opacity:.7}
+.label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;opacity:.6;margin-top:14px}
+.value{font-size:20px;font-weight:700;margin-top:2px}
+.row{display:flex;gap:24px;justify-content:space-between}
+.qr{margin-top:24px;background:#fff;padding:16px;border-radius:12px;text-align:center}
+.qr img{width:200px;height:200px}
+.barcode{font-family:'Courier New',monospace;font-weight:bold;font-size:11px;letter-spacing:2px;margin-top:8px}
+</style></head><body>
+<div class="pass">
+  <div class="brand">Metropol Tours · Boarding Pass</div>
+  <div class="label">Passagier</div>
+  <div class="value">${safeFirstName} ${safeLastName}</div>
+  <div class="row">
+    <div><div class="label">Ticket</div><div class="value">${safeTicket}</div></div>
+    <div><div class="label">Status</div><div class="value">${safeStatus}</div></div>
+  </div>
+  <div class="qr">
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrValue}" alt="QR">
+    <div class="barcode">${safeTicket}</div>
+  </div>
+</div>
+</body></html>`;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
