@@ -129,7 +129,7 @@ serve(async (req) => {
 
     if (booking_type === "tour") {
       const { data } = await admin.from("tour_bookings")
-        .select("id, user_id, booking_number, contact_email")
+        .select("id, user_id, booking_number, contact_email, contact_first_name, contact_last_name, status")
         .eq("id", booking_id).maybeSingle();
       if (data) {
         booking = data;
@@ -139,7 +139,7 @@ serve(async (req) => {
       }
     } else {
       const { data } = await admin.from("bookings")
-        .select("id, user_id, ticket_number, passenger_email")
+        .select("id, user_id, ticket_number, passenger_email, passenger_first_name, passenger_last_name, status")
         .eq("id", booking_id).maybeSingle();
       if (data) {
         booking = data;
