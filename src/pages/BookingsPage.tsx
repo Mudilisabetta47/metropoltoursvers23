@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTicketDownload } from "@/hooks/useTicketDownload";
+import { useTourDocuments } from "@/hooks/useTourDocuments";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { WalletPassButton } from "@/components/bookings/WalletPassButton";
 import { WalletPassDebugBadge } from "@/components/bookings/WalletPassDebugBadge";
@@ -108,6 +109,7 @@ const Countdown = ({ targetDate }: { targetDate: string }) => {
 const BookingsPage = () => {
   const { user, profile } = useAuth();
   const { downloadTicket } = useTicketDownload();
+  const { openDocument, isGenerating: isGeneratingTourDocument } = useTourDocuments();
   const { protect } = useRecaptcha();
   const [filter, setFilter] = useState<"all" | "upcoming" | "past" | "cancelled">("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -249,6 +251,10 @@ const BookingsPage = () => {
       await downloadTicket(bookingId);
     }
     setDownloadingId(null);
+  };
+
+  const handleOpenTourDocument = async (booking: TourBooking, type: "confirmation" | "invoice") => {
+    await openDocument({ bookingId: booking.id, bookingNumber: booking.booking_number }, type);
   };
 
   const handleCancelBooking = async (bookingId: string) => {
