@@ -1475,6 +1475,50 @@ export type Database = {
         }
         Relationships: []
       }
+      incident_documents: {
+        Row: {
+          category: string | null
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          incident_id: string
+          mime_type: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          incident_id: string
+          mime_type?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          incident_id?: string
+          mime_type?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_documents_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incidents: {
         Row: {
           assigned_to: string | null
@@ -4578,6 +4622,10 @@ export type Database = {
           phone: string
           user_id: string
         }[]
+      }
+      transition_incident_status: {
+        Args: { p_incident_id: string; p_new_status: string; p_note?: string }
+        Returns: boolean
       }
     }
     Enums: {
