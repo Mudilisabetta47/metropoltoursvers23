@@ -23,6 +23,10 @@ export const useTicketDownload = () => {
         body = options;
       }
 
+      const printWindow = window.open('', '_blank');
+      printWindow?.document.write('<!doctype html><html><body style="font-family:system-ui;padding:24px">Ticket wird vorbereitet…</body></html>');
+      printWindow?.document.close();
+
       const { data, error } = await supabase.functions.invoke('generate-ticket-pdf', {
         body,
       });
@@ -34,8 +38,8 @@ export const useTicketDownload = () => {
       }
 
       // Create a new window with the ticket HTML and trigger print/save
-      const printWindow = window.open('', '_blank');
       if (printWindow) {
+        printWindow.document.open();
         printWindow.document.write(data.ticketHtml);
         printWindow.document.close();
         
