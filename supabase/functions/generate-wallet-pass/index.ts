@@ -41,7 +41,7 @@ serve(async (req) => {
       if (type === "tour") {
         const { data } = await admin.from("tour_bookings")
           .select("booking_number, contact_first_name, contact_last_name, status")
-          .eq("id", pass.booking_id).maybeSingle();
+          .eq("id", pass.tour_booking_id).maybeSingle();
         b = {
           ticket_number: data?.booking_number ?? "—",
           passenger_first_name: data?.contact_first_name ?? "",
