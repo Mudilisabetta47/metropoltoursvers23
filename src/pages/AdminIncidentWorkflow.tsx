@@ -48,6 +48,9 @@ export default function AdminIncidentWorkflow() {
   const [form, setForm] = useState<any>({ severity: "warning", status: "open", type: "delay" });
   const [sopForm, setSopForm] = useState<any>({ incident_type: "delay", severity: "normal", steps: [], is_active: true, auto_escalate_minutes: 30 });
   const [detail, setDetail] = useState<any | null>(null);
+  const [docs, setDocs] = useState<any[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [docCategory, setDocCategory] = useState<string>("photo");
 
   const load = async () => {
     setLoading(true);
@@ -59,6 +62,19 @@ export default function AdminIncidentWorkflow() {
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+
+  // Load documents whenever a detail is opened
+  useEffect(() => {
+    if (!detail?.id) { setDocs([]); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("incident_documents")
+        .select("*")
+        .eq("incident_id", detail.id)
+        .order("created_at", { ascending: false });
+      setDocs(data || []);
+    })();
+  }, [detail?.id]);
 
   const stats = useMemo(() => ({
     open: incidents.filter(i => i.status !== "resolved").length,
