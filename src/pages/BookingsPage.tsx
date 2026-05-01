@@ -606,7 +606,7 @@ const BookingsPage = () => {
         </div>
 
         {/* Expanded details */}
-        <div className={cn("overflow-hidden transition-all duration-300", isExpanded ? "max-h-96" : "max-h-0")}>
+        <div className={cn("transition-all duration-300", isExpanded ? "max-h-none opacity-100" : "max-h-0 opacity-0 overflow-hidden")}>
           <div className="px-5 lg:px-6 pb-5 lg:pb-6 pt-3 border-t border-border">
             <div className="grid sm:grid-cols-2 gap-6">
               <div className="space-y-3 text-sm">
