@@ -24,6 +24,7 @@ interface WalletPassButtonProps {
 
 interface PassData {
   pass_url: string;
+  pass_html?: string;
   serial: string;
   pass_type: "apple" | "google";
 }
@@ -105,7 +106,7 @@ export function WalletPassButton({
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       if (!data?.pass_url) throw new Error("Pass konnte nicht erstellt werden");
-      setPass({ pass_url: data.pass_url, serial: data.serial, pass_type: passType });
+      setPass({ pass_url: data.pass_url, pass_html: data.pass_html, serial: data.serial, pass_type: passType });
       await loadStatus();
     } catch (e: any) {
       toast.error(e.message || "Wallet-Pass konnte nicht erstellt werden");
@@ -129,8 +130,8 @@ export function WalletPassButton({
   };
 
   const copyLink = async () => {
-    if (!pass?.pass_url) return;
-    await navigator.clipboard.writeText(pass.pass_url);
+    if (!passOpenUrl) return;
+    await navigator.clipboard.writeText(passOpenUrl);
     setCopied(true);
     toast.success("Link kopiert");
     setTimeout(() => setCopied(false), 2000);
@@ -196,6 +197,10 @@ export function WalletPassButton({
     if (!iso) return null;
     return new Date(iso).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
   };
+
+  const passOpenUrl = pass?.pass_html
+    ? `data:text/html;charset=utf-8,${encodeURIComponent(pass.pass_html)}`
+    : pass?.pass_url;
 
   return (
     <div className="space-y-2">
@@ -263,13 +268,20 @@ export function WalletPassButton({
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
             ) : pass ? (
-              <iframe
-                src={pass.pass_url}
-                title="Boarding Pass"
-                className="w-full h-80 border-0 bg-white"
-                sandbox="allow-scripts allow-popups"
-                referrerPolicy="no-referrer"
-              />
+              pass.pass_html ? (
+                <iframe
+                  srcDoc={pass.pass_html}
+                  title="Boarding Pass"
+                  className="w-full h-80 border-0 bg-white"
+                  sandbox="allow-scripts allow-popups"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="h-64 flex flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground p-6">
+                  <Wallet className="w-8 h-8 text-primary" />
+                  Pass wurde erstellt. Bitte über den Button unten öffnen.
+                </div>
+              )
             ) : (
               <div className="h-64 flex items-center justify-center text-muted-foreground text-sm">
                 Pass wird geladen…
@@ -281,7 +293,7 @@ export function WalletPassButton({
           {pass && (
             <div className="space-y-2">
               <Button asChild className="w-full" size="lg">
-                <a href={pass.pass_url} target="_blank" rel="noopener noreferrer">
+                <a href={passOpenUrl} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="w-4 h-4 mr-2" />
                   Pass öffnen & speichern
                 </a>
