@@ -525,7 +525,10 @@ const BookingsPage = () => {
                       variant="outline"
                       size="sm"
                       className="justify-start gap-2"
-                      onClick={() => handleDownloadTicket(booking.id)}
+                      onClick={() => isGuest
+                        ? handleDownloadTicket(booking.id, booking.ticket_number, lookupEmail)
+                        : handleDownloadTicket(booking.id)
+                      }
                       disabled={downloadingId === booking.id}
                     >
                       <FileText className="w-4 h-4" />
