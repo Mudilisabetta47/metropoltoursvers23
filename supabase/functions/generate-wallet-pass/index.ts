@@ -97,45 +97,14 @@ serve(async (req) => {
         const { data } = await admin.from("tour_bookings")
           .select("booking_number, contact_first_name, contact_last_name, status")
           .eq("id", pass.tour_booking_id).maybeSingle();
-        b = {
-          ticket_number: data?.booking_number ?? "—",
-          passenger_first_name: data?.contact_first_name ?? "",
-          passenger_last_name: data?.contact_last_name ?? "",
-          status: data?.status ?? "—",
-        };
+        b = toPassDisplay("tour", data);
       } else {
         const { data } = await admin.from("bookings")
           .select("ticket_number, passenger_first_name, passenger_last_name, status")
           .eq("id", pass.booking_id).maybeSingle();
-        b = data ?? { ticket_number: "—", passenger_first_name: "", passenger_last_name: "", status: "—" };
+        b = toPassDisplay("bus", data);
       }
-      const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Boarding Pass · ${b.ticket_number}</title>
-<style>
-body{margin:0;font-family:-apple-system,system-ui,sans-serif;background:#0f1218;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
-.pass{width:100%;max-width:380px;background:linear-gradient(160deg,#00CC36 0%,#019b29 100%);border-radius:24px;padding:24px;color:#000;box-shadow:0 30px 80px rgba(0,0,0,.5)}
-.brand{font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:2px;opacity:.7}
-.label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;opacity:.6;margin-top:14px}
-.value{font-size:20px;font-weight:700;margin-top:2px}
-.row{display:flex;gap:24px;justify-content:space-between}
-.qr{margin-top:24px;background:#fff;padding:16px;border-radius:12px;text-align:center}
-.qr img{width:200px;height:200px}
-.barcode{font-family:'Courier New',monospace;font-weight:bold;font-size:11px;letter-spacing:2px;margin-top:8px}
-</style></head><body>
-<div class="pass">
-  <div class="brand">Metropol Tours · Boarding Pass</div>
-  <div class="label">Passagier</div>
-  <div class="value">${b.passenger_first_name} ${b.passenger_last_name}</div>
-  <div class="row">
-    <div><div class="label">Ticket</div><div class="value">${b.ticket_number}</div></div>
-    <div><div class="label">Status</div><div class="value">${b.status}</div></div>
-  </div>
-  <div class="qr">
-    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(b.ticket_number)}" alt="QR">
-    <div class="barcode">${b.ticket_number}</div>
-  </div>
-</div>
-</body></html>`;
+      const html = renderPassHtml(b);
       return new Response(html, { status: 200, headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8" } });
     }
 
