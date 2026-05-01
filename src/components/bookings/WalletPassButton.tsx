@@ -15,6 +15,7 @@ import {
 interface WalletPassButtonProps {
   bookingId: string;
   ticketNumber: string;
+  customerEmail?: string;
   variant?: "outline" | "default" | "ghost";
   size?: "sm" | "default";
   className?: string;
@@ -60,7 +61,7 @@ function computeState(row: any | null): PassStatus {
 }
 
 export function WalletPassButton({
-  bookingId, ticketNumber, variant = "outline", size = "sm", className, bookingType = "bus",
+  bookingId, ticketNumber, customerEmail, variant = "outline", size = "sm", className, bookingType = "bus",
 }: WalletPassButtonProps) {
   const [loading, setLoading] = useState(false);
   const [statusLoading, setStatusLoading] = useState(true);
@@ -74,7 +75,8 @@ export function WalletPassButton({
     const { data, error } = await supabase
       .from("wallet_passes")
       .select("pass_type, pass_url, serial_number, last_updated, is_voided")
-      .eq("booking_id", bookingId)
+      .eq(bookingType === "tour" ? "tour_booking_id" : "booking_id", bookingId)
+      .eq("booking_type", bookingType)
       .order("last_updated", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -83,7 +85,7 @@ export function WalletPassButton({
     }
     setStatus(computeState(data));
     setStatusLoading(false);
-  }, [bookingId]);
+  }, [bookingId, bookingType]);
 
   useEffect(() => { loadStatus(); }, [loadStatus]);
 
@@ -94,12 +96,14 @@ export function WalletPassButton({
       if (forceNew) {
         await supabase.from("wallet_passes")
           .update({ is_voided: true })
-          .eq("booking_id", bookingId);
+          .eq(bookingType === "tour" ? "tour_booking_id" : "booking_id", bookingId)
+          .eq("booking_type", bookingType);
       }
       const { data, error } = await supabase.functions.invoke("generate-wallet-pass", {
-        body: { booking_id: bookingId, pass_type: passType, booking_type: bookingType },
+        body: { booking_id: bookingId, ticket_number: ticketNumber, email: customerEmail, pass_type: passType, booking_type: bookingType },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       if (!data?.pass_url) throw new Error("Pass konnte nicht erstellt werden");
       setPass({ pass_url: data.pass_url, serial: data.serial, pass_type: passType });
       await loadStatus();
