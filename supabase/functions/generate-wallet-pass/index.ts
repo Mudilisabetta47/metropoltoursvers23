@@ -145,7 +145,9 @@ body{margin:0;font-family:-apple-system,system-ui,sans-serif;background:#0f1218;
     // Wenn schon vorhanden → zurückgeben
     let existingQuery = admin.from("wallet_passes")
       .select("*").eq("booking_type", booking_type).eq("pass_type", pass_type)
-      .eq("is_voided", false);
+      .eq("is_voided", false)
+      .order("last_updated", { ascending: false })
+      .limit(1);
     existingQuery = booking_type === "tour"
       ? existingQuery.eq("tour_booking_id", booking_id)
       : existingQuery.eq("booking_id", booking_id);
