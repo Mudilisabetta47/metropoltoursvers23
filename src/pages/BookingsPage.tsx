@@ -490,6 +490,13 @@ const BookingsPage = () => {
               {/* Actions */}
               <div className="flex flex-col gap-2">
                 <h4 className="font-semibold text-foreground text-sm">Aktionen</h4>
+                {booking.status !== "cancelled" && (
+                  <WalletPassButton
+                    bookingId={booking.id}
+                    ticketNumber={booking.ticket_number}
+                    bookingType="bus"
+                  />
+                )}
                 {(booking.status === "confirmed" || booking.status === "pending") && (
                   <>
                     <Button
@@ -515,13 +522,6 @@ const BookingsPage = () => {
                       <FileText className="w-4 h-4" />
                       Buchungsbestätigung
                     </Button>
-                    {upcoming && (
-                      <WalletPassButton
-                        bookingId={booking.id}
-                        ticketNumber={booking.ticket_number}
-                        bookingType="bus"
-                      />
-                    )}
                     {!isGuest && upcoming && (
                       <Button
                         variant="outline"
