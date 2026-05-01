@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 interface Props {
   bookingId: string;
   bookingStatus: string;
+  bookingType?: "bus" | "tour";
   className?: string;
 }
 
@@ -20,7 +21,7 @@ const detectOS = (): { label: string; icon: typeof Apple } => {
   return { label: "Desktop · Link teilen", icon: Monitor };
 };
 
-export function WalletPassDebugBadge({ bookingId, bookingStatus, className }: Props) {
+export function WalletPassDebugBadge({ bookingId, bookingStatus, bookingType = "bus", className }: Props) {
   const [passExists, setPassExists] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -29,7 +30,8 @@ export function WalletPassDebugBadge({ bookingId, bookingStatus, className }: Pr
       const { data } = await supabase
         .from("wallet_passes")
         .select("id, is_voided")
-        .eq("booking_id", bookingId)
+        .eq(bookingType === "tour" ? "tour_booking_id" : "booking_id", bookingId)
+        .eq("booking_type", bookingType)
         .order("last_updated", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -37,7 +39,7 @@ export function WalletPassDebugBadge({ bookingId, bookingStatus, className }: Pr
       setPassExists(!!data && !data.is_voided);
     })();
     return () => { cancelled = true; };
-  }, [bookingId]);
+  }, [bookingId, bookingType]);
 
   const os = detectOS();
   const OsIcon = os.icon;
