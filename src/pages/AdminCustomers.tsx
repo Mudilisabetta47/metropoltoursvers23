@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { Users, Plus, ChevronRight, Loader2 } from "lucide-react";
+import { Users, Plus, ChevronRight, Loader2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -115,6 +115,7 @@ const AdminCustomers = () => {
                     <TableCell className="text-emerald-400 font-semibold">{c.total_spent.toFixed(2)}€</TableCell>
                     <TableCell className="text-zinc-300">{format(new Date(c.last_booking), "dd.MM.yy", { locale: de })}</TableCell>
                     <TableCell className="text-right">
+                      <Button size="sm" variant="ghost" className="text-emerald-400 h-7" title="Customer 360°" onClick={() => navigate(`/admin/customers/by-email/${encodeURIComponent(c.email)}`)}><User className="w-3 h-3 mr-1" />360°</Button>
                       <Button size="sm" variant="ghost" className="text-zinc-400 h-7" onClick={() => setSelectedCustomer(c)}><ChevronRight className="w-3 h-3" /></Button>
                     </TableCell>
                   </TableRow>
