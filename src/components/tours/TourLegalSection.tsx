@@ -32,11 +32,11 @@ const TourLegalSection = ({ legalSections, tariffs }: TourLegalSectionProps) => 
       <Card className="rounded-2xl border-border/60 shadow-sm bg-gradient-to-br from-card to-primary/5">
         <CardContent className="p-6 md:p-7">
           <p className="text-xs uppercase tracking-[0.18em] text-primary font-semibold mb-2">Storno & Reiseschutz</p>
-          <h3 className="text-2xl md:text-3xl font-semibold mb-2">Faire Bedingungen, klar geregelt</h3>
+          <h3 className="text-2xl md:text-3xl font-semibold mb-2">Faire Bedingungen für Ihre Reise – klar geregelt</h3>
           <p className="text-foreground/80 leading-relaxed max-w-3xl">
-            Wir wissen, dass Pläne sich ändern können. Deshalb bieten wir transparente Stornoregeln,
-            einen 100 %igen Insolvenzschutz nach deutschem Reiserecht (§651r BGB) und auf Wunsch eine
-            Reiseversicherung unserer Partner ERGO und HanseMerkur.
+            Wir wissen, dass Pläne sich ändern können. Deshalb bieten wir für jede Busreise
+            transparente Stornoregeln, einen 100 %igen Insolvenzschutz nach deutschem Reiserecht
+            (§651r BGB) und auf Wunsch eine Reiseversicherung unserer Partner ERGO und HanseMerkur.
           </p>
         </CardContent>
       </Card>
