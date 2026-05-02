@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MapPin, Share2, Heart, ChevronRight, Clock, Bus, Hotel, Coffee, Images, X, ChevronLeft as ChevronLeftIcon, Sun } from "lucide-react";
+import { MapPin, Share2, Heart, ChevronRight, Clock, Bus, Hotel, Coffee, Images, X, ChevronLeft as ChevronLeftIcon, Sun, ShieldCheck, Lock, BadgeCheck, Wallet, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -138,29 +138,32 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
 
       {/* Title Bar */}
       <div className="bg-card border-b border-border">
-        <div className="max-w-[1240px] mx-auto px-4 py-4">
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div className="max-w-[1240px] mx-auto px-4 py-5">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5">
             <div className="flex-1 min-w-0">
               {/* Badges */}
-              <div className="flex flex-wrap gap-2 mb-2">
+              <div className="flex flex-wrap gap-2 mb-3">
                 {tour.is_featured && (
-                  <Badge className="bg-primary text-primary-foreground text-xs">★ Top-Empfehlung</Badge>
+                  <Badge className="bg-primary text-primary-foreground text-xs gap-1">
+                    <BadgeCheck className="w-3 h-3" /> Top-Empfehlung
+                  </Badge>
                 )}
                 {tour.discount_percent && tour.discount_percent > 0 && (
-                  <Badge variant="destructive" className="text-xs">-{tour.discount_percent}% Frühbucher</Badge>
+                  <Badge variant="destructive" className="text-xs">−{tour.discount_percent}% Frühbucher</Badge>
                 )}
                 {tour.category && (
                   <Badge variant="secondary" className="text-xs">{tour.category}</Badge>
                 )}
               </div>
 
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                {tour.destination} – {tour.duration_days} Tage {tour.category ? `(${tour.category})` : ''}
+              <h1 className="text-2xl md:text-[2rem] font-bold text-foreground leading-tight tracking-tight mb-2">
+                {tour.destination}
+                <span className="text-muted-foreground font-medium"> · {tour.duration_days} Tage</span>
               </h1>
 
               {/* Hotel-Style: Sonnen-Sterne · Adresse · Karte anzeigen */}
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm mb-2">
-                <div className="flex items-center gap-0.5" aria-label="5 Sterne">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm mb-3">
+                <div className="flex items-center gap-0.5" aria-label="5 Sterne Komfort">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Sun key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
                   ))}
@@ -180,23 +183,19 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
                 </button>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  {tour.location}, {tour.country}
+              {/* Inklusiv-Chips */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground bg-primary/10 border border-primary/20 rounded-full px-2.5 py-1">
+                  <Bus className="w-3.5 h-3.5 text-primary" /> Komfort-Bus inkl.
                 </span>
-                <span className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  {tour.duration_days} Tage / {(tour.duration_days || 1) - 1} Nächte
-                </span>
-                <span className="flex items-center gap-1">
-                  <Bus className="w-3.5 h-3.5 text-primary" /> Bus inkl.
-                </span>
-                <span className="flex items-center gap-1">
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground bg-primary/10 border border-primary/20 rounded-full px-2.5 py-1">
                   <Hotel className="w-3.5 h-3.5 text-primary" /> Hotel inkl.
                 </span>
-                <span className="flex items-center gap-1">
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground bg-primary/10 border border-primary/20 rounded-full px-2.5 py-1">
                   <Coffee className="w-3.5 h-3.5 text-primary" /> Frühstück inkl.
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-muted/50 border border-border rounded-full px-2.5 py-1">
+                  <Clock className="w-3.5 h-3.5" /> {tour.duration_days} Tage / {Math.max((tour.duration_days || 1) - 1, 0)} Nächte
                 </span>
               </div>
             </div>
@@ -223,7 +222,7 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
                   <p className="text-sm font-semibold text-foreground">{ratingLabel}</p>
                   <p className="text-xs text-muted-foreground">{reviewCount} Bewertungen</p>
                 </div>
-                <div className="w-11 h-11 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg">
+                <div className="w-11 h-11 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg shadow-md shadow-primary/30">
                   {rating}
                 </div>
               </div>
@@ -318,12 +317,75 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
         </div>
       </div>
 
+      {/* Trust-Bar – seriöse Vertrauenssignale */}
+      <div className="max-w-[1240px] mx-auto px-4 mt-4">
+        <div className="bg-card rounded-xl border border-border px-4 py-3 grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground leading-tight">Reisesicherungsschein</p>
+              <p className="text-xs text-muted-foreground leading-tight">100 % Insolvenzschutz inkl.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <BadgeCheck className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground leading-tight">Kostenlose Stornierung</p>
+              <p className="text-xs text-muted-foreground leading-tight">Bis 14 Tage vor Abreise</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Lock className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground leading-tight">SSL-verschlüsselt</p>
+              <p className="text-xs text-muted-foreground leading-tight">Sichere Zahlung & DSGVO</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Wallet className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground leading-tight">Bestpreis-Garantie</p>
+              <p className="text-xs text-muted-foreground leading-tight">Keine versteckten Gebühren</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Short description */}
       {tour.short_description && (
         <div className="max-w-[1240px] mx-auto px-4 mt-4">
-          <p className="text-muted-foreground text-sm">{tour.short_description}</p>
+          <p className="text-foreground/80 text-base leading-relaxed">{tour.short_description}</p>
         </div>
       )}
+
+      {/* Persönliche Beratung – seriöser Touch */}
+      <div className="max-w-[1240px] mx-auto px-4 mt-4">
+        <div className="rounded-xl border border-border bg-gradient-to-r from-primary/5 via-card to-card px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0">
+              <Phone className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground leading-tight">Persönliche Reiseberatung</p>
+              <p className="text-xs text-muted-foreground leading-tight">Mo–Fr 9–18 Uhr · kostenfrei aus dem deutschen Festnetz</p>
+            </div>
+          </div>
+          <a
+            href="tel:+4951112345670"
+            className="text-sm font-bold text-primary hover:underline shrink-0"
+          >
+            +49 511 123 456-70
+          </a>
+        </div>
+      </div>
 
       {/* Map Dialog – zeigt Reiseziel auf OpenStreetMap */}
       <Dialog open={mapOpen} onOpenChange={setMapOpen}>
