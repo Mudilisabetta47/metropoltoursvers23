@@ -17,6 +17,14 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
+
+  // Build map query from destination + location
+  const mapQuery = encodeURIComponent(
+    [tour.destination, tour.location, tour.country].filter(Boolean).join(", ")
+  );
+  const osmEmbedUrl = `https://www.openstreetmap.org/export/embed.html?layer=mapnik&search=${mapQuery}`;
+  const osmFullUrl = `https://www.openstreetmap.org/search?query=${mapQuery}`;
 
   // Build gallery from available images
   const allImages: string[] = [];
