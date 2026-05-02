@@ -347,13 +347,21 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
               In Karte öffnen ↗
             </a>
           </div>
-          <iframe
-            title={`Karte ${tour.destination}`}
-            src={osmEmbedUrl}
-            className="w-full h-[70vh] border-0"
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
+          <div className="relative">
+            {geocoding && !coords && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/60 backdrop-blur-sm">
+                <span className="text-xs text-muted-foreground">Standort wird ermittelt …</span>
+              </div>
+            )}
+            <iframe
+              key={osmEmbedUrl}
+              title={`Karte ${tour.destination}`}
+              src={osmEmbedUrl}
+              className="w-full h-[70vh] border-0"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
         </DialogContent>
       </Dialog>
 
