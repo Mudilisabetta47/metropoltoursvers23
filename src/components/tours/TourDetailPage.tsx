@@ -169,6 +169,12 @@ const TourDetailPage = () => {
           tour={tourData.tour}
           heroImage={getHeroImage()}
           lowestPrice={lowestPrice}
+          onShowMap={() => {
+            setActiveTab("route");
+            setTimeout(() => {
+              document.getElementById('tour-route-map')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 60);
+          }}
         />
 
         {/* Tab Navigation */}
