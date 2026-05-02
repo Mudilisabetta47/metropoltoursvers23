@@ -86,6 +86,31 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice }: TourHer
                 {tour.destination} – {tour.duration_days} Tage {tour.category ? `(${tour.category})` : ''}
               </h1>
 
+              {/* Hotel-Style: Sonnen-Sterne · Adresse · Karte anzeigen */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm mb-2">
+                <div className="flex items-center gap-0.5" aria-label="5 Sterne">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Sun key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <span className="text-border">|</span>
+                <span className="flex items-center gap-1.5 text-foreground">
+                  <MapPin className="w-4 h-4 text-muted-foreground" />
+                  {tour.location}{tour.country ? `, ${tour.country}` : ''}
+                </span>
+                <span className="text-muted-foreground">·</span>
+                <a
+                  href="#tour-route-map"
+                  className="text-primary hover:underline font-medium"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById('tour-route-map')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                >
+                  Karte anzeigen
+                </a>
+              </div>
+
               <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
