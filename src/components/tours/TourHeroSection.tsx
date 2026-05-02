@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MapPin, Share2, Heart, ChevronRight, Clock, Bus, Hotel, Coffee, Images, X, ChevronLeft as ChevronLeftIcon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,12 +19,75 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
   const [isSaved, setIsSaved] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
 
-  // Build map query from destination + location
-  const mapQuery = encodeURIComponent(
-    [tour.destination, tour.location, tour.country].filter(Boolean).join(", ")
-  );
-  const osmEmbedUrl = `https://www.openstreetmap.org/export/embed.html?layer=mapnik&search=${mapQuery}`;
+  // Build query from most-specific → broader (Adresse hat Vorrang vor reiner Region)
+  const queryString = [tour.location, tour.destination, tour.country]
+    .filter(Boolean)
+    .join(", ");
+  const mapQuery = encodeURIComponent(queryString);
   const osmFullUrl = `https://www.openstreetmap.org/search?query=${mapQuery}`;
+
+  // Geocoded coords (lat/lon) – wenn vorhanden zoomen wir präzise
+  const [coords, setCoords] = useState<{ lat: number; lon: number; bbox?: [number, number, number, number] } | null>(null);
+  const [geocoding, setGeocoding] = useState(false);
+
+  useEffect(() => {
+    if (!mapOpen || coords || !queryString) return;
+    let cancelled = false;
+    setGeocoding(true);
+    // Versuche zuerst die spezifischste Adresse, dann sukzessive breiter
+    const candidates = [
+      [tour.location, tour.country].filter(Boolean).join(", "),
+      [tour.destination, tour.location, tour.country].filter(Boolean).join(", "),
+      [tour.destination, tour.country].filter(Boolean).join(", "),
+      [tour.location, tour.country].filter(Boolean).join(", "),
+      tour.destination,
+    ].filter((q) => q && q.trim().length > 0);
+
+    (async () => {
+      for (const q of candidates) {
+        try {
+          const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=0&q=${encodeURIComponent(q)}`;
+          const res = await fetch(url, { headers: { "Accept": "application/json" } });
+          if (!res.ok) continue;
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            const hit = data[0];
+            const lat = parseFloat(hit.lat);
+            const lon = parseFloat(hit.lon);
+            let bbox: [number, number, number, number] | undefined;
+            if (Array.isArray(hit.boundingbox) && hit.boundingbox.length === 4) {
+              const [s, n, w, e] = hit.boundingbox.map((v: string) => parseFloat(v));
+              bbox = [w, s, e, n];
+            }
+            if (!cancelled && Number.isFinite(lat) && Number.isFinite(lon)) {
+              setCoords({ lat, lon, bbox });
+            }
+            break;
+          }
+        } catch {
+          // try next candidate
+        }
+      }
+      if (!cancelled) setGeocoding(false);
+    })();
+
+    return () => { cancelled = true; };
+  }, [mapOpen, coords, queryString, tour.destination, tour.location, tour.country]);
+
+  // Map-URL: bei bekannten Koordinaten präzise bbox + Marker, sonst Freitextsuche-Fallback
+  const osmEmbedUrl = (() => {
+    if (coords) {
+      const marker = `&marker=${coords.lat}%2C${coords.lon}`;
+      if (coords.bbox) {
+        const [w, s, e, n] = coords.bbox;
+        return `https://www.openstreetmap.org/export/embed.html?bbox=${w}%2C${s}%2C${e}%2C${n}&layer=mapnik${marker}`;
+      }
+      // Fallback: ~0.05° Box um den Punkt (≈ Stadtzoom)
+      const d = 0.04;
+      return `https://www.openstreetmap.org/export/embed.html?bbox=${coords.lon - d}%2C${coords.lat - d}%2C${coords.lon + d}%2C${coords.lat + d}&layer=mapnik${marker}`;
+    }
+    return `https://www.openstreetmap.org/export/embed.html?layer=mapnik&search=${mapQuery}`;
+  })();
 
   // Build gallery from available images
   const allImages: string[] = [];
@@ -284,13 +347,21 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
               In Karte öffnen ↗
             </a>
           </div>
-          <iframe
-            title={`Karte ${tour.destination}`}
-            src={osmEmbedUrl}
-            className="w-full h-[70vh] border-0"
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
+          <div className="relative">
+            {geocoding && !coords && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/60 backdrop-blur-sm">
+                <span className="text-xs text-muted-foreground">Standort wird ermittelt …</span>
+              </div>
+            )}
+            <iframe
+              key={osmEmbedUrl}
+              title={`Karte ${tour.destination}`}
+              src={osmEmbedUrl}
+              className="w-full h-[70vh] border-0"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
         </DialogContent>
       </Dialog>
 
