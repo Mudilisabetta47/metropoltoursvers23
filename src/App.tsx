@@ -64,6 +64,10 @@ const AdminIncidentWorkflow = lazy(() => import("./pages/AdminIncidentWorkflow")
 const PassengerDataPage = lazy(() => import("./pages/PassengerDataPage"));
 const DriverDashboard = lazy(() => import("./pages/DriverDashboard"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const AdminWallboard = lazy(() => import("./pages/AdminWallboard"));
+const WallboardLive = lazy(() => import("./pages/WallboardLive"));
+const AdminCustomerDetail = lazy(() => import("./pages/AdminCustomerDetail"));
+const AdminFleetMaintenance = lazy(() => import("./pages/AdminFleetMaintenance"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -141,6 +145,12 @@ const App = () => (
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin/booking/:bookingId" element={<AdminBookingDetail />} />
               <Route path="/admin/customers" element={<AdminCustomers />} />
+              <Route path="/admin/customers/by-email/:customerId" element={<AdminCustomerDetail />} />
+              <Route path="/admin/customers/:customerId" element={<AdminCustomerDetail />} />
+              <Route path="/admin/wallboard" element={<AdminWallboard />} />
+              <Route path="/admin/wallboard/live" element={<WallboardLive />} />
+              <Route path="/wallboard/:token" element={<WallboardLive />} />
+              <Route path="/admin/fleet-maintenance" element={<AdminFleetMaintenance />} />
               <Route path="/admin/finances" element={<AdminFinances />} />
               <Route path="/admin/departures" element={<AdminDepartures />} />
               <Route path="/admin/templates" element={<AdminTemplates />} />
