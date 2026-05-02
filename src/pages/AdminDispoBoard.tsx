@@ -115,7 +115,7 @@ export default function AdminDispoBoard() {
 
   // Pool of unassigned drivers/buses
   const assignedDriverIds = new Set(shifts.filter(s => s.assigned_trip_id).map(s => s.user_id));
-  const unassignedDrivers = drivers.filter(d => !assignedDriverIds.has(d.id));
+  const unassignedDrivers = drivers.filter(d => !assignedDriverIds.has(d.user_id));
   const assignedBusIds = new Set(trips.filter(t => t.bus_id).map(t => t.bus_id));
   const unassignedBuses = buses.filter(b => !assignedBusIds.has(b.id));
 
@@ -131,7 +131,7 @@ export default function AdminDispoBoard() {
           <div className="col-span-12 lg:col-span-3 space-y-4">
             <Pool title="Verfügbare Fahrer" icon={User} count={unassignedDrivers.length}>
               {unassignedDrivers.map(d => (
-                <div key={d.id} draggable onDragStart={() => setDragData({ type: "driver", id: d.id })}
+                <div key={d.user_id} draggable onDragStart={() => setDragData({ type: "driver", id: d.user_id })}
                   className="cursor-move rounded-lg bg-zinc-800 hover:bg-zinc-700 p-3 border border-zinc-700 hover:border-emerald-500 transition">
                   <div className="text-sm font-medium text-white">{d.first_name} {d.last_name}</div>
                   <div className="text-xs text-zinc-500">{d.email}</div>
