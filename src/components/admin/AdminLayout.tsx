@@ -5,7 +5,7 @@ import {
   UserCheck, Settings, LogOut, Map, Mail, Inbox, Calendar, Route,
   MapPin, ChevronDown, Calculator, Truck, ClipboardList, Search,
   ChevronRight, Sparkles, Activity, Command, ChevronsLeft,
-  ChevronsRight, Menu, X, IdCard, Wallet, Building2, MessageCircleWarning
+  ChevronsRight, Menu, X, IdCard, Wallet, Building2, MessageCircleWarning, Tv, Wrench
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -45,6 +45,7 @@ const menuSections: MenuSection[] = [
     label: "Cockpit",
     items: [
       { path: "/admin/dashboard", label: "Übersicht", icon: LayoutDashboard, allowedRoles: BOOKING_STAFF },
+      { path: "/admin/wallboard", label: "Wallboard (TV)", icon: Tv, allowedRoles: MANAGEMENT },
     ],
   },
   {
@@ -79,6 +80,7 @@ const menuSections: MenuSection[] = [
     label: "Flotten-Management",
     items: [
       { path: "/admin/fleet-compliance", label: "Compliance & TÜV", icon: Shield, allowedRoles: MANAGEMENT },
+      { path: "/admin/fleet-maintenance", label: "Wartungs-Manager", icon: Wrench, allowedRoles: MANAGEMENT },
       { path: "/admin/fuel-log", label: "Tankungen", icon: Activity, allowedRoles: MANAGEMENT },
       { path: "/admin/toll-vignettes", label: "Maut & Vignetten", icon: Calculator, allowedRoles: MANAGEMENT },
       { path: "/admin/workshops", label: "Werkstätten", icon: Truck, allowedRoles: MANAGEMENT },
