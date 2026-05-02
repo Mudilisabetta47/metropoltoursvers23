@@ -317,12 +317,75 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
         </div>
       </div>
 
+      {/* Trust-Bar – seriöse Vertrauenssignale */}
+      <div className="max-w-[1240px] mx-auto px-4 mt-4">
+        <div className="bg-card rounded-xl border border-border px-4 py-3 grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground leading-tight">Reisesicherungsschein</p>
+              <p className="text-xs text-muted-foreground leading-tight">100 % Insolvenzschutz inkl.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <BadgeCheck className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground leading-tight">Kostenlose Stornierung</p>
+              <p className="text-xs text-muted-foreground leading-tight">Bis 14 Tage vor Abreise</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Lock className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground leading-tight">SSL-verschlüsselt</p>
+              <p className="text-xs text-muted-foreground leading-tight">Sichere Zahlung & DSGVO</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Wallet className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground leading-tight">Bestpreis-Garantie</p>
+              <p className="text-xs text-muted-foreground leading-tight">Keine versteckten Gebühren</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Short description */}
       {tour.short_description && (
         <div className="max-w-[1240px] mx-auto px-4 mt-4">
-          <p className="text-muted-foreground text-sm">{tour.short_description}</p>
+          <p className="text-foreground/80 text-base leading-relaxed">{tour.short_description}</p>
         </div>
       )}
+
+      {/* Persönliche Beratung – seriöser Touch */}
+      <div className="max-w-[1240px] mx-auto px-4 mt-4">
+        <div className="rounded-xl border border-border bg-gradient-to-r from-primary/5 via-card to-card px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0">
+              <Phone className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground leading-tight">Persönliche Reiseberatung</p>
+              <p className="text-xs text-muted-foreground leading-tight">Mo–Fr 9–18 Uhr · kostenfrei aus dem deutschen Festnetz</p>
+            </div>
+          </div>
+          <a
+            href="tel:+4951112345670"
+            className="text-sm font-bold text-primary hover:underline shrink-0"
+          >
+            +49 511 123 456-70
+          </a>
+        </div>
+      </div>
 
       {/* Map Dialog – zeigt Reiseziel auf OpenStreetMap */}
       <Dialog open={mapOpen} onOpenChange={setMapOpen}>
