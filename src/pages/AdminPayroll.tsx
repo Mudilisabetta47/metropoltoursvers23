@@ -41,22 +41,29 @@ export default function AdminPayroll() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data }, { data: roles }] = await Promise.all([
-      supabase.from("payroll_entries").select("*").order("entry_date", { ascending: false }).limit(1000),
-      supabase.from("user_roles").select("user_id").eq("role", "driver"),
-    ]);
-    setRows(data || []);
-    const driverIds = (roles || []).map((r: any) => r.user_id);
-    if (driverIds.length) {
-      const { data: profs } = await supabase.from("profiles").select("id, first_name, last_name, email").in("id", driverIds);
-      setDrivers(profs || []);
+    try {
+      const [{ data }, { data: roles }] = await Promise.all([
+        supabase.from("payroll_entries").select("*").order("entry_date", { ascending: false }).limit(1000),
+        supabase.from("user_roles").select("user_id").eq("role", "driver"),
+      ]);
+      setRows(data || []);
+      const driverIds = (roles || []).map((r: any) => r.user_id);
+      if (driverIds.length) {
+        const { data: profs } = await supabase.from("profiles").select("id, user_id, first_name, last_name, email").in("user_id", driverIds);
+        setDrivers(profs || []);
+      } else {
+        setDrivers([]);
+      }
+    } catch (e: any) {
+      toast.error("Laden fehlgeschlagen: " + (e?.message || e));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
   useEffect(() => { load(); }, []);
 
   const driverName = (id: string) => {
-    const p = drivers.find(d => d.id === id);
+    const p = drivers.find(d => d.user_id === id) || drivers.find(d => d.id === id);
     return p ? `${p.first_name || ""} ${p.last_name || ""}`.trim() || p.email : id?.slice(0, 8);
   };
 
