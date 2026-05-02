@@ -29,13 +29,13 @@ const TourInfoSection = ({ tour }: TourInfoSectionProps) => {
       <Card className="rounded-2xl border-border/60 shadow-sm">
         <CardHeader className="pb-4">
           <p className="text-xs uppercase tracking-[0.18em] text-primary font-semibold mb-2">Reisebeschreibung</p>
-          <CardTitle className="font-serif text-2xl md:text-3xl font-semibold leading-tight">
+          <CardTitle className="text-2xl md:text-3xl font-semibold leading-tight">
             Das erwartet Sie in {tour.destination}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="prose prose-slate max-w-none">
-            <p className="text-foreground/90 leading-[1.8] text-[15px] md:text-base first-letter:text-4xl first-letter:font-serif first-letter:font-semibold first-letter:text-primary first-letter:mr-1 first-letter:float-left first-letter:leading-[0.9] first-letter:mt-1">
+            <p className="text-foreground/90 leading-[1.8] text-[15px] md:text-base first-letter:text-4xl first-letter:first-letter:font-semibold first-letter:text-primary first-letter:mr-1 first-letter:float-left first-letter:leading-[0.9] first-letter:mt-1">
               {tour.description || `Erleben Sie ${tour.destination} auf eine Art, die Sie so noch nicht kennen. ${tour.location ? `${tour.location} ` : ""}verzaubert mit authentischen Eindrücken, kulinarischen Höhepunkten und Momenten, die lange in Erinnerung bleiben. Wir kümmern uns um die Organisation – Sie genießen ab dem ersten Augenblick.`}
             </p>
           </div>
@@ -69,7 +69,7 @@ const TourInfoSection = ({ tour }: TourInfoSectionProps) => {
             <>
               <Separator />
               <div>
-                <h4 className="font-serif text-lg font-semibold text-foreground mb-4">Reise-Highlights</h4>
+                <h4 className="text-lg font-semibold text-foreground mb-4">Reise-Highlights</h4>
                 <div className="grid sm:grid-cols-2 gap-3">
                   {tour.highlights.map((highlight, index) => (
                     <div
@@ -111,7 +111,7 @@ const TourInfoSection = ({ tour }: TourInfoSectionProps) => {
       <Card className="rounded-2xl border-border/60 shadow-sm bg-gradient-to-br from-card to-primary/5">
         <CardHeader className="pb-4">
           <p className="text-xs uppercase tracking-[0.18em] text-primary font-semibold mb-2">Warum METROPOL TOURS</p>
-          <CardTitle className="font-serif text-2xl font-semibold">Sicher reisen mit gutem Gefühl</CardTitle>
+          <CardTitle className="text-2xl font-semibold">Sicher reisen mit gutem Gefühl</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid sm:grid-cols-2 gap-4">
@@ -137,7 +137,7 @@ const TourInfoSection = ({ tour }: TourInfoSectionProps) => {
       <Card className="rounded-2xl border-border/60 shadow-sm">
         <CardHeader className="pb-4">
           <p className="text-xs uppercase tracking-[0.18em] text-primary font-semibold mb-2">Ihr Reisebus</p>
-          <CardTitle className="font-serif text-2xl font-semibold">Komfort auf höchstem Niveau</CardTitle>
+          <CardTitle className="text-2xl font-semibold">Komfort auf höchstem Niveau</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -161,7 +161,7 @@ const TourInfoSection = ({ tour }: TourInfoSectionProps) => {
           <Separator className="my-6" />
 
           <div className="rounded-xl bg-muted/40 border border-border/60 p-5">
-            <h4 className="font-serif text-lg font-semibold text-foreground mb-3">Ausstattung im Detail</h4>
+            <h4 className="text-lg font-semibold text-foreground mb-3">Ausstattung im Detail</h4>
             <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm text-foreground/80">
               {[
                 "Moderne, klimatisierte Reisebusse (4–5 Sterne)",

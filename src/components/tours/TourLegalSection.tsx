@@ -32,7 +32,7 @@ const TourLegalSection = ({ legalSections, tariffs }: TourLegalSectionProps) => 
       <Card className="rounded-2xl border-border/60 shadow-sm bg-gradient-to-br from-card to-primary/5">
         <CardContent className="p-6 md:p-7">
           <p className="text-xs uppercase tracking-[0.18em] text-primary font-semibold mb-2">Storno & Reiseschutz</p>
-          <h3 className="font-serif text-2xl md:text-3xl font-semibold mb-2">Faire Bedingungen, klar geregelt</h3>
+          <h3 className="text-2xl md:text-3xl font-semibold mb-2">Faire Bedingungen, klar geregelt</h3>
           <p className="text-foreground/80 leading-relaxed max-w-3xl">
             Wir wissen, dass Pläne sich ändern können. Deshalb bieten wir transparente Stornoregeln,
             einen 100 %igen Insolvenzschutz nach deutschem Reiserecht (§651r BGB) und auf Wunsch eine
@@ -113,7 +113,7 @@ const TourLegalSection = ({ legalSections, tariffs }: TourLegalSectionProps) => 
             </div>
             <div className="flex-1">
               <p className="text-xs uppercase tracking-[0.18em] text-blue-700 font-semibold mb-1">Empfehlung</p>
-              <h4 className="font-serif text-xl font-semibold text-blue-950 mb-2">
+              <h4 className="text-xl font-semibold text-blue-950 mb-2">
                 Reiserücktritts­versicherung – für ein gutes Gefühl
               </h4>
               <p className="text-sm text-blue-900/90 mb-3 leading-relaxed">
@@ -183,7 +183,7 @@ const TourLegalSection = ({ legalSections, tariffs }: TourLegalSectionProps) => 
               <Phone className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h4 className="font-serif text-lg font-semibold text-foreground">Noch Fragen zu den Bedingungen?</h4>
+              <h4 className="text-lg font-semibold text-foreground">Noch Fragen zu den Bedingungen?</h4>
               <p className="text-sm text-muted-foreground">Unser Reiseteam berät Sie gerne persönlich – Mo–Fr 9–18 Uhr.</p>
             </div>
           </div>
