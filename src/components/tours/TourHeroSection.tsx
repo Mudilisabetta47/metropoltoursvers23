@@ -10,9 +10,10 @@ interface TourHeroSectionProps {
   tour: ExtendedPackageTour;
   heroImage: string;
   lowestPrice?: number;
+  onShowMap?: () => void;
 }
 
-const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice }: TourHeroSectionProps) => {
+const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap }: TourHeroSectionProps) => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
