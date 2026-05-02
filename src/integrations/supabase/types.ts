@@ -1012,6 +1012,36 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_notes: {
+        Row: {
+          author_id: string | null
+          body: string
+          created_at: string
+          customer_user_id: string
+          id: string
+          pinned: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          created_at?: string
+          customer_user_id: string
+          id?: string
+          pinned?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          customer_user_id?: string
+          id?: string
+          pinned?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customer_reviews: {
         Row: {
           booking_id: string | null
@@ -1089,6 +1119,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      customer_tags: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string | null
+          customer_user_id: string
+          id: string
+          tag: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_user_id: string
+          id?: string
+          tag: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_user_id?: string
+          id?: string
+          tag?: string
+        }
+        Relationships: []
       }
       depots: {
         Row: {
@@ -1633,6 +1690,112 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      fleet_inspections: {
+        Row: {
+          bus_id: string
+          cost_eur: number | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          document_url: string | null
+          id: string
+          inspection_type: string
+          km_at_service: number | null
+          performed_at: string
+          workshop: string | null
+        }
+        Insert: {
+          bus_id: string
+          cost_eur?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          document_url?: string | null
+          id?: string
+          inspection_type: string
+          km_at_service?: number | null
+          performed_at: string
+          workshop?: string | null
+        }
+        Update: {
+          bus_id?: string
+          cost_eur?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          document_url?: string | null
+          id?: string
+          inspection_type?: string
+          km_at_service?: number | null
+          performed_at?: string
+          workshop?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fleet_inspections_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fleet_maintenance: {
+        Row: {
+          bus_id: string
+          created_at: string
+          current_km: number | null
+          id: string
+          next_inspection_date: string | null
+          next_inspection_km: number | null
+          notes: string | null
+          oil_change_date: string | null
+          oil_change_km: number | null
+          tachograph_date: string | null
+          tuev_date: string | null
+          updated_at: string
+          uvv_date: string | null
+        }
+        Insert: {
+          bus_id: string
+          created_at?: string
+          current_km?: number | null
+          id?: string
+          next_inspection_date?: string | null
+          next_inspection_km?: number | null
+          notes?: string | null
+          oil_change_date?: string | null
+          oil_change_km?: number | null
+          tachograph_date?: string | null
+          tuev_date?: string | null
+          updated_at?: string
+          uvv_date?: string | null
+        }
+        Update: {
+          bus_id?: string
+          created_at?: string
+          current_km?: number | null
+          id?: string
+          next_inspection_date?: string | null
+          next_inspection_km?: number | null
+          notes?: string | null
+          oil_change_date?: string | null
+          oil_change_km?: number | null
+          tachograph_date?: string | null
+          tuev_date?: string | null
+          updated_at?: string
+          uvv_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fleet_maintenance_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: true
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fuel_log: {
         Row: {
@@ -4505,6 +4668,36 @@ export type Database = {
           trip_id?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      wallboard_tokens: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          label: string
+          last_used_at: string | null
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          label: string
+          last_used_at?: string | null
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          last_used_at?: string | null
+          token?: string
         }
         Relationships: []
       }
