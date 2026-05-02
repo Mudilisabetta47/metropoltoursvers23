@@ -148,7 +148,7 @@ export default function AdminPayroll() {
               <Label>Fahrer *</Label>
               <Select value={form.driver_id} onValueChange={v => setForm({ ...form, driver_id: v })}>
                 <SelectTrigger className="bg-white text-black"><SelectValue placeholder="Fahrer wählen" /></SelectTrigger>
-                <SelectContent>{drivers.map(d => <SelectItem key={d.id} value={d.id}>{d.first_name} {d.last_name}</SelectItem>)}</SelectContent>
+                <SelectContent>{drivers.map(d => <SelectItem key={d.user_id} value={d.user_id}>{d.first_name} {d.last_name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div><Label>Datum *</Label><Input type="date" className="bg-white text-black" value={form.entry_date} onChange={e => setForm({ ...form, entry_date: e.target.value })} /></div>
