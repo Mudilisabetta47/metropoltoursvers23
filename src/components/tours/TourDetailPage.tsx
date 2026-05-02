@@ -217,7 +217,9 @@ const TourDetailPage = () => {
                 />
               )}
               {activeTab === "route" && (
-                <TourRoutesSection routes={tourData.routes} luggageAddons={tourData.luggageAddons} />
+                <div id="tour-route-map" className="scroll-mt-36">
+                  <TourRoutesSection routes={tourData.routes} luggageAddons={tourData.luggageAddons} />
+                </div>
               )}
               {activeTab === "infos" && (
                 <TourInfoSection tour={tourData.tour} />
