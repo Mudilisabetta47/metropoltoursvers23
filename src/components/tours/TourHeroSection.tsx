@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MapPin, Share2, Heart, ChevronRight, Clock, Bus, Hotel, Coffee, Images, X, ChevronLeft as ChevronLeftIcon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
