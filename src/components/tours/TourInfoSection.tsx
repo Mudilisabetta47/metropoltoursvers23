@@ -111,7 +111,11 @@ const TourInfoSection = ({ tour }: TourInfoSectionProps) => {
       <Card className="rounded-2xl border-border/60 shadow-sm bg-gradient-to-br from-card to-primary/5">
         <CardHeader className="pb-4">
           <p className="text-xs uppercase tracking-[0.18em] text-primary font-semibold mb-2">Warum METROPOL TOURS</p>
-          <CardTitle className="text-2xl font-semibold">Sicher reisen mit gutem Gefühl</CardTitle>
+          <CardTitle className="text-2xl font-semibold">Sicher nach {tour.destination} reisen – mit gutem Gefühl</CardTitle>
+          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+            Ihre Busreise nach {tour.destination} ist bei METROPOL TOURS in besten Händen –
+            geprüfter deutscher Reiseveranstalter mit Insolvenzschutz und persönlicher Betreuung.
+          </p>
         </CardHeader>
         <CardContent>
           <div className="grid sm:grid-cols-2 gap-4">
@@ -136,8 +140,12 @@ const TourInfoSection = ({ tour }: TourInfoSectionProps) => {
       {/* Bus Amenities */}
       <Card className="rounded-2xl border-border/60 shadow-sm">
         <CardHeader className="pb-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-primary font-semibold mb-2">Ihr Reisebus</p>
-          <CardTitle className="text-2xl font-semibold">Komfort auf höchstem Niveau</CardTitle>
+          <p className="text-xs uppercase tracking-[0.18em] text-primary font-semibold mb-2">Ihr Reisebus nach {tour.destination}</p>
+          <CardTitle className="text-2xl font-semibold">Komfortable Busreise nach {tour.destination}</CardTitle>
+          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+            Entspannt nach {tour.destination} reisen: Moderne 4–5-Sterne-Reisebusse mit großzügigem
+            Sitzabstand, WLAN und Bordservice – damit Ihr Urlaub schon ab der Abfahrt beginnt.
+          </p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
