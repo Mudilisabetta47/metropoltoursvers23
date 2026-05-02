@@ -5,7 +5,7 @@ import {
   UserCheck, Settings, LogOut, Map, Mail, Inbox, Calendar, Route,
   MapPin, ChevronDown, Calculator, Truck, ClipboardList, Search,
   ChevronRight, Sparkles, Activity, Command, ChevronsLeft,
-  ChevronsRight, Menu, X, IdCard, Wallet, Building2, MessageCircleWarning, Tv, Wrench
+  ChevronsRight, Menu, X, IdCard, Wallet, Building2, MessageCircleWarning, Tv, Wrench, TrendingUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -108,6 +108,7 @@ const menuSections: MenuSection[] = [
       { path: "/admin/finances", label: "Buchhaltung", icon: DollarSign, allowedRoles: MANAGEMENT },
       { path: "/admin/cost-estimate", label: "Kalkulation", icon: Calculator, allowedRoles: MANAGEMENT },
       { path: "/admin/coupons", label: "Gutscheine", icon: Sparkles, allowedRoles: MANAGEMENT },
+      { path: "/admin/dynamic-pricing", label: "Dynamic Pricing", icon: TrendingUp, allowedRoles: MANAGEMENT },
     ],
   },
   {

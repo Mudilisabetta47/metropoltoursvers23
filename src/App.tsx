@@ -68,6 +68,7 @@ const AdminWallboard = lazy(() => import("./pages/AdminWallboard"));
 const WallboardLive = lazy(() => import("./pages/WallboardLive"));
 const AdminCustomerDetail = lazy(() => import("./pages/AdminCustomerDetail"));
 const AdminFleetMaintenance = lazy(() => import("./pages/AdminFleetMaintenance"));
+const AdminDynamicPricing = lazy(() => import("./pages/AdminDynamicPricing"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -151,6 +152,7 @@ const App = () => (
               <Route path="/admin/wallboard/live" element={<WallboardLive />} />
               <Route path="/wallboard/:token" element={<WallboardLive />} />
               <Route path="/admin/fleet-maintenance" element={<AdminFleetMaintenance />} />
+              <Route path="/admin/dynamic-pricing" element={<AdminDynamicPricing />} />
               <Route path="/admin/finances" element={<AdminFinances />} />
               <Route path="/admin/departures" element={<AdminDepartures />} />
               <Route path="/admin/templates" element={<AdminTemplates />} />
