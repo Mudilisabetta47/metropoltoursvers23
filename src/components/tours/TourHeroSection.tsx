@@ -105,7 +105,11 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
                   className="text-primary hover:underline font-medium"
                   onClick={(e) => {
                     e.preventDefault();
-                    document.getElementById('tour-route-map')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    if (onShowMap) {
+                      onShowMap();
+                    } else {
+                      document.getElementById('tour-route-map')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
                   }}
                 >
                   Karte anzeigen
