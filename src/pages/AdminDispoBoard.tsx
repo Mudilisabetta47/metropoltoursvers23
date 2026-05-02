@@ -11,7 +11,7 @@ const fmtTime = (d: string | null) => d ? new Date(d).toLocaleTimeString("de-DE"
 type Shift = { id: string; user_id: string; shift_date: string; shift_start: string; shift_end: string | null; assigned_bus_id: string | null; assigned_trip_id: string | null; role: string; status: string };
 type Trip = { id: string; departure_date: string; departure_time: string; arrival_time: string; route_id: string; bus_id: string | null };
 type Bus = { id: string; name: string; license_plate: string };
-type Driver = { id: string; first_name: string | null; last_name: string | null; email: string };
+type Driver = { id: string; user_id: string; first_name: string | null; last_name: string | null; email: string };
 
 export default function AdminDispoBoard() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
@@ -35,16 +35,18 @@ export default function AdminDispoBoard() {
     setShifts((s.data as any) || []); setTrips((t.data as any) || []); setBuses(b.data || []); setRoutes(r.data || []);
     const driverIds = (dr.data || []).map((x: any) => x.user_id);
     if (driverIds.length) {
-      const { data: profs } = await supabase.from("profiles").select("id, first_name, last_name, email").in("id", driverIds);
-      setDrivers(profs || []);
+      const { data: profs } = await supabase.from("profiles").select("id, user_id, first_name, last_name, email").in("user_id", driverIds);
+      setDrivers((profs as Driver[]) || []);
+    } else {
+      setDrivers([]);
     }
     setLoading(false);
   };
   useEffect(() => { load(); }, [date]);
 
-  const driverName = (id: string) => {
-    const d = drivers.find(x => x.id === id);
-    return d ? `${d.first_name || ""} ${d.last_name || ""}`.trim() || d.email : "—";
+  const driverName = (userId: string) => {
+    const d = drivers.find(x => x.user_id === userId);
+    return d ? `${d.first_name || ""} ${d.last_name || ""}`.trim() || d.email : userId?.slice(0, 8) || "—";
   };
   const busName = (id: string | null) => buses.find(b => b.id === id);
   const routeName = (id: string) => {
