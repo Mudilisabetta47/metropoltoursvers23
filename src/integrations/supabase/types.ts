@@ -814,6 +814,48 @@ export type Database = {
         }
         Relationships: []
       }
+      competitor_prices: {
+        Row: {
+          captured_at: string
+          captured_by: string | null
+          competitor_name: string
+          currency: string
+          destination_city: string
+          id: string
+          notes: string | null
+          origin_city: string
+          price: number
+          source_url: string | null
+          travel_date: string
+        }
+        Insert: {
+          captured_at?: string
+          captured_by?: string | null
+          competitor_name: string
+          currency?: string
+          destination_city: string
+          id?: string
+          notes?: string | null
+          origin_city: string
+          price: number
+          source_url?: string | null
+          travel_date: string
+        }
+        Update: {
+          captured_at?: string
+          captured_by?: string | null
+          competitor_name?: string
+          currency?: string
+          destination_city?: string
+          id?: string
+          notes?: string | null
+          origin_city?: string
+          price?: number
+          source_url?: string | null
+          travel_date?: string
+        }
+        Relationships: []
+      }
       complaint_messages: {
         Row: {
           attachments: Json | null
@@ -1386,6 +1428,95 @@ export type Database = {
           training_type?: string
         }
         Relationships: []
+      }
+      dynamic_pricing_rules: {
+        Row: {
+          adjustment_type: string
+          adjustment_value: number
+          applies_to_all: boolean
+          created_at: string | null
+          created_by: string | null
+          date_from: string | null
+          date_to: string | null
+          days_before_max: number | null
+          days_before_min: number | null
+          description: string | null
+          hour_from: number | null
+          hour_to: number | null
+          id: string
+          is_active: boolean
+          max_price: number | null
+          min_price: number | null
+          name: string
+          occupancy_max: number | null
+          occupancy_min: number | null
+          priority: number
+          route_id: string | null
+          tour_id: string | null
+          updated_at: string | null
+          weekdays: number[] | null
+        }
+        Insert: {
+          adjustment_type?: string
+          adjustment_value?: number
+          applies_to_all?: boolean
+          created_at?: string | null
+          created_by?: string | null
+          date_from?: string | null
+          date_to?: string | null
+          days_before_max?: number | null
+          days_before_min?: number | null
+          description?: string | null
+          hour_from?: number | null
+          hour_to?: number | null
+          id?: string
+          is_active?: boolean
+          max_price?: number | null
+          min_price?: number | null
+          name: string
+          occupancy_max?: number | null
+          occupancy_min?: number | null
+          priority?: number
+          route_id?: string | null
+          tour_id?: string | null
+          updated_at?: string | null
+          weekdays?: number[] | null
+        }
+        Update: {
+          adjustment_type?: string
+          adjustment_value?: number
+          applies_to_all?: boolean
+          created_at?: string | null
+          created_by?: string | null
+          date_from?: string | null
+          date_to?: string | null
+          days_before_max?: number | null
+          days_before_min?: number | null
+          description?: string | null
+          hour_from?: number | null
+          hour_to?: number | null
+          id?: string
+          is_active?: boolean
+          max_price?: number | null
+          min_price?: number | null
+          name?: string
+          occupancy_max?: number | null
+          occupancy_min?: number | null
+          priority?: number
+          route_id?: string | null
+          tour_id?: string | null
+          updated_at?: string | null
+          weekdays?: number[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dynamic_pricing_rules_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "routes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_send_log: {
         Row: {
@@ -2440,6 +2571,50 @@ export type Database = {
             columns: ["route_id"]
             isOneToOne: false
             referencedRelation: "routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pricing_log: {
+        Row: {
+          applied_at: string | null
+          id: string
+          new_price: number | null
+          old_price: number | null
+          reason: string | null
+          rule_id: string | null
+          rule_name: string | null
+          tour_date_id: string | null
+          trip_id: string | null
+        }
+        Insert: {
+          applied_at?: string | null
+          id?: string
+          new_price?: number | null
+          old_price?: number | null
+          reason?: string | null
+          rule_id?: string | null
+          rule_name?: string | null
+          tour_date_id?: string | null
+          trip_id?: string | null
+        }
+        Update: {
+          applied_at?: string | null
+          id?: string
+          new_price?: number | null
+          old_price?: number | null
+          reason?: string | null
+          rule_id?: string | null
+          rule_name?: string | null
+          tour_date_id?: string | null
+          trip_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_log_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "dynamic_pricing_rules"
             referencedColumns: ["id"]
           },
         ]
