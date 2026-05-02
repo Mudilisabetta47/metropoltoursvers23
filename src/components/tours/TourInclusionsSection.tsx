@@ -26,7 +26,7 @@ const TourInclusionsSection = ({ inclusions, tariffs, selectedTariff, onSelectTa
       <Card className="rounded-2xl border-border/60 shadow-sm">
         <CardHeader className="pb-4">
           <p className="text-xs uppercase tracking-[0.18em] text-primary font-semibold mb-2">Tarifauswahl</p>
-          <CardTitle className="font-serif text-2xl font-semibold">Wählen Sie Ihre Option</CardTitle>
+          <CardTitle className="text-2xl font-semibold">Wählen Sie Ihre Option</CardTitle>
           <CardDescription className="mt-1">
             Alle Tarife beinhalten Bus, Hotel & Frühstück – Sie entscheiden über Komfort & Flexibilität.
           </CardDescription>
