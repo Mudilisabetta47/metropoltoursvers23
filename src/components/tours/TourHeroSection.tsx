@@ -262,6 +262,38 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
         </div>
       )}
 
+      {/* Map Dialog – zeigt Reiseziel auf OpenStreetMap */}
+      <Dialog open={mapOpen} onOpenChange={setMapOpen}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-card">
+            <div className="flex items-center gap-2 min-w-0">
+              <MapPin className="w-5 h-5 text-primary shrink-0" />
+              <div className="min-w-0">
+                <p className="font-semibold text-foreground truncate">{tour.destination}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {tour.location}{tour.country ? `, ${tour.country}` : ''}
+                </p>
+              </div>
+            </div>
+            <a
+              href={osmFullUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-primary hover:underline font-medium shrink-0 ml-3"
+            >
+              In Karte öffnen ↗
+            </a>
+          </div>
+          <iframe
+            title={`Karte ${tour.destination}`}
+            src={osmEmbedUrl}
+            className="w-full h-[70vh] border-0"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        </DialogContent>
+      </Dialog>
+
       {/* Lightbox Dialog */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className="max-w-5xl p-0 bg-black border-0">
