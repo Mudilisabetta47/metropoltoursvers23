@@ -17,6 +17,14 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
+
+  // Build map query from destination + location
+  const mapQuery = encodeURIComponent(
+    [tour.destination, tour.location, tour.country].filter(Boolean).join(", ")
+  );
+  const osmEmbedUrl = `https://www.openstreetmap.org/export/embed.html?layer=mapnik&search=${mapQuery}`;
+  const osmFullUrl = `https://www.openstreetmap.org/search?query=${mapQuery}`;
 
   // Build gallery from available images
   const allImages: string[] = [];
@@ -100,20 +108,13 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
                   {tour.location}{tour.country ? `, ${tour.country}` : ''}
                 </span>
                 <span className="text-muted-foreground">·</span>
-                <a
-                  href="#tour-route-map"
+                <button
+                  type="button"
                   className="text-primary hover:underline font-medium"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (onShowMap) {
-                      onShowMap();
-                    } else {
-                      document.getElementById('tour-route-map')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                  }}
+                  onClick={() => setMapOpen(true)}
                 >
                   Karte anzeigen
-                </a>
+                </button>
               </div>
 
               <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
@@ -260,6 +261,38 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
           <p className="text-muted-foreground text-sm">{tour.short_description}</p>
         </div>
       )}
+
+      {/* Map Dialog – zeigt Reiseziel auf OpenStreetMap */}
+      <Dialog open={mapOpen} onOpenChange={setMapOpen}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-card">
+            <div className="flex items-center gap-2 min-w-0">
+              <MapPin className="w-5 h-5 text-primary shrink-0" />
+              <div className="min-w-0">
+                <p className="font-semibold text-foreground truncate">{tour.destination}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {tour.location}{tour.country ? `, ${tour.country}` : ''}
+                </p>
+              </div>
+            </div>
+            <a
+              href={osmFullUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-primary hover:underline font-medium shrink-0 ml-3"
+            >
+              In Karte öffnen ↗
+            </a>
+          </div>
+          <iframe
+            title={`Karte ${tour.destination}`}
+            src={osmEmbedUrl}
+            className="w-full h-[70vh] border-0"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Lightbox Dialog */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
