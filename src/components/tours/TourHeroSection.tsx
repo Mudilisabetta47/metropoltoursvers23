@@ -108,20 +108,13 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
                   {tour.location}{tour.country ? `, ${tour.country}` : ''}
                 </span>
                 <span className="text-muted-foreground">·</span>
-                <a
-                  href="#tour-route-map"
+                <button
+                  type="button"
                   className="text-primary hover:underline font-medium"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (onShowMap) {
-                      onShowMap();
-                    } else {
-                      document.getElementById('tour-route-map')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                  }}
+                  onClick={() => setMapOpen(true)}
                 >
                   Karte anzeigen
-                </a>
+                </button>
               </div>
 
               <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
