@@ -20,7 +20,7 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
   const [mapOpen, setMapOpen] = useState(false);
 
   // Build query from most-specific → broader (Adresse hat Vorrang vor reiner Region)
-  const queryString = [tour.address, tour.location, tour.destination, tour.country]
+  const queryString = [tour.location, tour.destination, tour.country]
     .filter(Boolean)
     .join(", ");
   const mapQuery = encodeURIComponent(queryString);
@@ -36,7 +36,7 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
     setGeocoding(true);
     // Versuche zuerst die spezifischste Adresse, dann sukzessive breiter
     const candidates = [
-      [tour.address, tour.location, tour.country].filter(Boolean).join(", "),
+      [tour.location, tour.country].filter(Boolean).join(", "),
       [tour.destination, tour.location, tour.country].filter(Boolean).join(", "),
       [tour.destination, tour.country].filter(Boolean).join(", "),
       [tour.location, tour.country].filter(Boolean).join(", "),
@@ -72,7 +72,7 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
     })();
 
     return () => { cancelled = true; };
-  }, [mapOpen, coords, queryString, tour.address, tour.destination, tour.location, tour.country]);
+  }, [mapOpen, coords, queryString, tour.destination, tour.location, tour.country]);
 
   // Map-URL: bei bekannten Koordinaten präzise bbox + Marker, sonst Freitextsuche-Fallback
   const osmEmbedUrl = (() => {
