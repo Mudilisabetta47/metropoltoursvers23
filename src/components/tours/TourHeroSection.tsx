@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MapPin, Share2, Heart, ChevronRight, Clock, Bus, Hotel, Coffee, Images, X, ChevronLeft as ChevronLeftIcon } from "lucide-react";
+import { MapPin, Share2, Heart, ChevronRight, Clock, Bus, Hotel, Coffee, Images, X, ChevronLeft as ChevronLeftIcon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -10,9 +10,10 @@ interface TourHeroSectionProps {
   tour: ExtendedPackageTour;
   heroImage: string;
   lowestPrice?: number;
+  onShowMap?: () => void;
 }
 
-const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice }: TourHeroSectionProps) => {
+const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap }: TourHeroSectionProps) => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
@@ -85,6 +86,35 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice }: TourHer
               <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
                 {tour.destination} – {tour.duration_days} Tage {tour.category ? `(${tour.category})` : ''}
               </h1>
+
+              {/* Hotel-Style: Sonnen-Sterne · Adresse · Karte anzeigen */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm mb-2">
+                <div className="flex items-center gap-0.5" aria-label="5 Sterne">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Sun key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <span className="text-border">|</span>
+                <span className="flex items-center gap-1.5 text-foreground">
+                  <MapPin className="w-4 h-4 text-muted-foreground" />
+                  {tour.location}{tour.country ? `, ${tour.country}` : ''}
+                </span>
+                <span className="text-muted-foreground">·</span>
+                <a
+                  href="#tour-route-map"
+                  className="text-primary hover:underline font-medium"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onShowMap) {
+                      onShowMap();
+                    } else {
+                      document.getElementById('tour-route-map')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                  }}
+                >
+                  Karte anzeigen
+                </a>
+              </div>
 
               <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">

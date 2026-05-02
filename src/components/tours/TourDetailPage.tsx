@@ -169,6 +169,12 @@ const TourDetailPage = () => {
           tour={tourData.tour}
           heroImage={getHeroImage()}
           lowestPrice={lowestPrice}
+          onShowMap={() => {
+            setActiveTab("route");
+            setTimeout(() => {
+              document.getElementById('tour-route-map')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 60);
+          }}
         />
 
         {/* Tab Navigation */}
@@ -211,7 +217,9 @@ const TourDetailPage = () => {
                 />
               )}
               {activeTab === "route" && (
-                <TourRoutesSection routes={tourData.routes} luggageAddons={tourData.luggageAddons} />
+                <div id="tour-route-map" className="scroll-mt-36">
+                  <TourRoutesSection routes={tourData.routes} luggageAddons={tourData.luggageAddons} />
+                </div>
               )}
               {activeTab === "infos" && (
                 <TourInfoSection tour={tourData.tour} />
