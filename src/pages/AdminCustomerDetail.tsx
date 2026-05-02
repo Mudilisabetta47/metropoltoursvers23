@@ -53,13 +53,21 @@ const AdminCustomerDetail = () => {
     if (!customerId) return;
     setLoading(true);
 
-    // Load profile (try by user_id first, fallback profiles.id)
+    // Decode (route may pass an email)
+    const key = decodeURIComponent(customerId);
+    const isEmail = key.includes("@");
+
     let prof: Profile | null = null;
-    const r1 = await supabase.from("profiles").select("*").eq("user_id", customerId).maybeSingle();
-    if (r1.data) prof = r1.data as Profile;
-    else {
-      const r2 = await supabase.from("profiles").select("*").eq("id", customerId).maybeSingle();
-      if (r2.data) prof = r2.data as Profile;
+    if (isEmail) {
+      const r = await supabase.from("profiles").select("*").eq("email", key).maybeSingle();
+      if (r.data) prof = r.data as Profile;
+    } else {
+      const r1 = await supabase.from("profiles").select("*").eq("user_id", key).maybeSingle();
+      if (r1.data) prof = r1.data as Profile;
+      else {
+        const r2 = await supabase.from("profiles").select("*").eq("id", key).maybeSingle();
+        if (r2.data) prof = r2.data as Profile;
+      }
     }
     setProfile(prof);
 
