@@ -70,8 +70,8 @@ const AdminCustomerDetail = () => {
       supabase.from("customer_tags" as any).select("*").eq("customer_user_id", uid),
       supabase.from("customer_notes" as any).select("*").eq("customer_user_id", uid).order("pinned", { ascending: false }).order("created_at", { ascending: false }),
       supabase.from("bookings").select("id,ticket_number,price_paid,status,created_at,passenger_first_name,passenger_last_name").eq("user_id", uid).order("created_at", { ascending: false }).limit(100),
-      supabase.from("package_tour_inquiries").select("id,inquiry_number,status,created_at,destination,passenger_count").eq("user_id" as any, uid).order("created_at", { ascending: false }).limit(50),
-      supabase.from("complaints").select("id,ticket_number,status,subject,created_at").eq("user_id" as any, uid).order("created_at", { ascending: false }).limit(50),
+      (supabase.from("package_tour_inquiries") as any).select("id,inquiry_number,status,created_at,destination,passenger_count").eq("user_id", uid).order("created_at", { ascending: false }).limit(50),
+      (supabase.from("complaints") as any).select("id,ticket_number,status,subject,created_at").eq("user_id", uid).order("created_at", { ascending: false }).limit(50),
     ]);
 
     setTags((tagsRes.data as any) ?? []);
