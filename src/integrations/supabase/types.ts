@@ -2340,7 +2340,7 @@ export type Database = {
           country: string
           created_at: string
           current_participants: number | null
-          departure_date: string
+          departure_date: string | null
           description: string | null
           destination: string
           discount_percent: number | null
@@ -2364,7 +2364,7 @@ export type Database = {
           price_from: number
           publish_status: string | null
           published_at: string | null
-          return_date: string
+          return_date: string | null
           short_description: string | null
           slug: string | null
           tags: string[] | null
@@ -2375,7 +2375,7 @@ export type Database = {
           country?: string
           created_at?: string
           current_participants?: number | null
-          departure_date: string
+          departure_date?: string | null
           description?: string | null
           destination: string
           discount_percent?: number | null
@@ -2399,7 +2399,7 @@ export type Database = {
           price_from: number
           publish_status?: string | null
           published_at?: string | null
-          return_date: string
+          return_date?: string | null
           short_description?: string | null
           slug?: string | null
           tags?: string[] | null
@@ -2410,7 +2410,7 @@ export type Database = {
           country?: string
           created_at?: string
           current_participants?: number | null
-          departure_date?: string
+          departure_date?: string | null
           description?: string | null
           destination?: string
           discount_percent?: number | null
@@ -2434,7 +2434,7 @@ export type Database = {
           price_from?: number
           publish_status?: string | null
           published_at?: string | null
-          return_date?: string
+          return_date?: string | null
           short_description?: string | null
           slug?: string | null
           tags?: string[] | null
