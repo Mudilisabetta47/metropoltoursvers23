@@ -12,6 +12,25 @@ import {
   Armchair, Star, TrendingUp, Sparkles,
 } from "lucide-react";
 
+interface TourTariffMini {
+  id: string;
+  name: string;
+  price_modifier: number | null;
+  is_recommended: boolean | null;
+  is_active: boolean | null;
+}
+
+interface TourDateMini {
+  id: string;
+  departure_date: string;
+  return_date: string | null;
+  price_basic: number | null;
+  total_seats: number | null;
+  booked_seats: number | null;
+  status: string | null;
+  is_active: boolean | null;
+}
+
 interface WeekendTrip {
   id: string;
   destination: string;
@@ -25,6 +44,8 @@ interface WeekendTrip {
   location: string;
   is_active: boolean;
   is_featured: boolean;
+  tour_dates: TourDateMini[];
+  tour_tariffs: TourTariffMini[];
 }
 
 const fadeUp = {
@@ -35,15 +56,26 @@ const fadeUp = {
   }),
 };
 
+const formatDateShort = (iso: string) => {
+  try {
+    return new Date(iso).toLocaleDateString("de-DE", { day: "2-digit", month: "short", year: "numeric" });
+  } catch { return iso; }
+};
+
 const WeekendTripsPage = () => {
   const navigate = useNavigate();
 
   const { data: trips, isLoading } = useQuery({
-    queryKey: ["weekend-trips-page"],
+    queryKey: ["weekend-trips-page-v2"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("package_tours")
-        .select("id, destination, slug, country, image_url, short_description, highlights, duration_days, price_from, location, is_active, is_featured")
+        .select(`
+          id, destination, slug, country, image_url, short_description, highlights,
+          duration_days, price_from, location, is_active, is_featured,
+          tour_dates(id, departure_date, return_date, price_basic, total_seats, booked_seats, status, is_active),
+          tour_tariffs(id, name, price_modifier, is_recommended, is_active)
+        `)
         .eq("is_active", true)
         .eq("category", "weekend")
         .order("is_featured", { ascending: false })
