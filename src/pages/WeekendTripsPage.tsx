@@ -20,11 +20,9 @@ interface WeekendTrip {
   image_url: string | null;
   short_description: string | null;
   highlights: string[];
-  duration: string | null;
-  distance: string | null;
-  base_price: number;
-  departure_city: string;
-  via_stops: { city: string; name: string; surcharge: number }[];
+  duration_days: number | null;
+  price_from: number;
+  location: string;
   is_active: boolean;
   is_featured: boolean;
 }
@@ -43,13 +41,15 @@ const WeekendTripsPage = () => {
   const { data: trips, isLoading } = useQuery({
     queryKey: ["weekend-trips-page"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("weekend_trips")
-        .select("*")
+      const { data, error } = await supabase
+        .from("package_tours")
+        .select("id, destination, slug, country, image_url, short_description, highlights, duration_days, price_from, location, is_active, is_featured")
         .eq("is_active", true)
-        .order("sort_order");
+        .eq("category", "weekend")
+        .order("is_featured", { ascending: false })
+        .order("destination");
       if (error) throw error;
-      return data as WeekendTrip[];
+      return (data || []) as unknown as WeekendTrip[];
     },
   });
 
@@ -162,7 +162,7 @@ const WeekendTripsPage = () => {
                         <p className="text-white/80 text-sm mt-1">{trip.short_description}</p>
                       </div>
                       <Badge className="absolute top-4 right-4 bg-primary border-0 shadow-lg text-sm">
-                        ab {trip.base_price}€
+                        ab {trip.price_from}€
                       </Badge>
                     </div>
 
@@ -171,23 +171,17 @@ const WeekendTripsPage = () => {
                       <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                         <div className="flex items-center gap-1.5">
                           <Clock className="w-4 h-4 text-primary" />
-                          {trip.duration || "–"}
+                          {trip.duration_days ? `${trip.duration_days} Tage` : "–"}
                         </div>
                         <div className="flex items-center gap-1.5">
                           <MapPin className="w-4 h-4 text-primary" />
-                          {trip.distance || "–"}
+                          {trip.country}
                         </div>
                       </div>
 
-                      {/* Stops */}
+                      {/* Departure */}
                       <div className="flex items-center gap-1.5 mb-4 text-xs flex-wrap">
-                        <span className="text-muted-foreground">{trip.departure_city}</span>
-                        {(trip.via_stops || []).map((stop, idx) => (
-                          <div key={idx} className="flex items-center">
-                            <ArrowRight className="w-3 h-3 mx-1 text-muted-foreground/40" />
-                            <span className="text-muted-foreground">{stop.city}</span>
-                          </div>
-                        ))}
+                        <span className="text-muted-foreground">{trip.location}</span>
                         <ArrowRight className="w-3 h-3 mx-1 text-muted-foreground/40" />
                         <span className="font-bold text-primary">{trip.destination}</span>
                       </div>

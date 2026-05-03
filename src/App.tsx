@@ -127,7 +127,7 @@ const App = () => (
               <Route path="/business" element={<BusinessServicesPage />} />
               <Route path="/bookings" element={<BookingsPage />} />
               <Route path="/wochenendtrips" element={<WeekendTripsPage />} />
-              <Route path="/wochenendtrips/:destination" element={<WeekendTripDetailPage />} />
+              <Route path="/wochenendtrips/:tourId" element={<TourDetailPage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/imprint" element={<ImprintPage />} />
