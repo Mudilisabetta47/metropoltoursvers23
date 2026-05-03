@@ -45,7 +45,8 @@ const PackageToursSection = () => {
     return imageMap[fallbackKey] || tourCroatia;
   };
 
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return "Termine auf Anfrage";
     try {
       return format(parseISO(dateStr), 'dd. MMM yyyy', { locale: de });
     } catch {
@@ -53,18 +54,19 @@ const PackageToursSection = () => {
     }
   };
 
-  const getUrgencyInfo = (tour: { max_participants: number | null; current_participants: number | null; departure_date: string }) => {
+  const getUrgencyInfo = (tour: { max_participants: number | null; current_participants: number | null; departure_date: string | null }) => {
     const remaining = (tour.max_participants || 50) - (tour.current_participants || 0);
-    const daysUntil = differenceInDays(parseISO(tour.departure_date), new Date());
-    
     if (remaining <= 5 && remaining > 0) {
       return { text: `Nur noch ${remaining} Plätze!`, type: "critical" as const };
     }
     if (remaining <= 10 && remaining > 0) {
       return { text: `Noch ${remaining} Plätze frei`, type: "warning" as const };
     }
-    if (daysUntil <= 14 && daysUntil > 0) {
-      return { text: `In ${daysUntil} Tagen`, type: "soon" as const };
+    if (tour.departure_date) {
+      const daysUntil = differenceInDays(parseISO(tour.departure_date), new Date());
+      if (daysUntil <= 14 && daysUntil > 0) {
+        return { text: `In ${daysUntil} Tagen`, type: "soon" as const };
+      }
     }
     return null;
   };
