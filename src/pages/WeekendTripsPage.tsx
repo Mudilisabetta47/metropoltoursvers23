@@ -20,11 +20,9 @@ interface WeekendTrip {
   image_url: string | null;
   short_description: string | null;
   highlights: string[];
-  duration: string | null;
-  distance: string | null;
-  base_price: number;
-  departure_city: string;
-  via_stops: { city: string; name: string; surcharge: number }[];
+  duration_days: number | null;
+  price_from: number;
+  location: string;
   is_active: boolean;
   is_featured: boolean;
 }
@@ -43,13 +41,15 @@ const WeekendTripsPage = () => {
   const { data: trips, isLoading } = useQuery({
     queryKey: ["weekend-trips-page"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("weekend_trips")
-        .select("*")
+      const { data, error } = await supabase
+        .from("package_tours")
+        .select("id, destination, slug, country, image_url, short_description, highlights, duration_days, price_from, location, is_active, is_featured")
         .eq("is_active", true)
-        .order("sort_order");
+        .eq("category", "weekend")
+        .order("is_featured", { ascending: false })
+        .order("destination");
       if (error) throw error;
-      return data as WeekendTrip[];
+      return (data || []) as unknown as WeekendTrip[];
     },
   });
 
