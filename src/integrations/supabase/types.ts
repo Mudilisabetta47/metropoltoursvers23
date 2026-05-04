@@ -5484,6 +5484,17 @@ export type Database = {
         Args: { p_incident_id: string; p_new_status: string; p_note?: string }
         Returns: boolean
       }
+      validate_coupon: {
+        Args: { _code: string; _subtotal: number }
+        Returns: {
+          amount_off: number
+          code: string
+          description: string
+          error: string
+          percent_off: number
+          valid: boolean
+        }[]
+      }
     }
     Enums: {
       app_role: "customer" | "agent" | "admin" | "office" | "driver"
