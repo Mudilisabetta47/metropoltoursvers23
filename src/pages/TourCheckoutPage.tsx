@@ -251,11 +251,17 @@ const TourCheckoutPage = () => {
     if (!couponCode.trim()) return;
     setIsValidatingCoupon(true); setCouponError("");
     try {
-      const { data, error } = await supabase.from("coupons").select("*").eq("code", couponCode.toUpperCase().trim()).eq("is_active", true).maybeSingle();
-      if (error || !data) { setCouponError("Ungültiger Gutscheincode"); return; }
-      if (data.valid_until && new Date(data.valid_until) < new Date()) { setCouponError("Gutschein ist abgelaufen"); return; }
-      if (data.max_redemptions && data.times_redeemed >= data.max_redemptions) { setCouponError("Gutschein bereits vollständig eingelöst"); return; }
-      if (data.min_amount && subtotal < data.min_amount) { setCouponError(`Mindestbestellwert: ${data.min_amount}€`); return; }
+      const { data: rows, error } = await (supabase as any).rpc("validate_coupon", { _code: couponCode.trim(), _subtotal: subtotal });
+      const data = Array.isArray(rows) ? rows[0] : rows;
+      if (error || !data) { setCouponError("Fehler bei der Gutscheinprüfung"); return; }
+      if (!data.valid) {
+        const err = data.error as string | null;
+        if (err === "expired") setCouponError("Gutschein ist abgelaufen");
+        else if (err === "redeemed") setCouponError("Gutschein bereits vollständig eingelöst");
+        else if (err && err.startsWith("min_amount:")) setCouponError(`Mindestbestellwert: ${err.split(":")[1]}€`);
+        else setCouponError("Ungültiger Gutscheincode");
+        return;
+      }
       setAppliedCoupon({ code: data.code, percent_off: data.percent_off, amount_off: data.amount_off, description: data.description });
       toast.success("Gutschein angewendet!");
     } catch { setCouponError("Fehler bei der Gutscheinprüfung"); }
