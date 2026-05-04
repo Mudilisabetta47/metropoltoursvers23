@@ -578,7 +578,7 @@ const ReisenPage = () => {
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Calendar className="w-3.5 h-3.5" />
-                                Abfahrt: {format(parseISO(tour.departure_date), "EE, dd. MMM", { locale: de })}
+                                Abfahrt: {tour.departure_date ? format(parseISO(tour.departure_date), "EE, dd. MMM", { locale: de }) : "Auf Anfrage"}
                               </span>
                               <span className="flex items-center gap-1">
                                 <Clock className="w-3.5 h-3.5" />
