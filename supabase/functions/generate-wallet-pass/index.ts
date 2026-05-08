@@ -236,7 +236,7 @@ serve(async (req) => {
         .select(`id, user_id, booking_number, contact_email, contact_first_name, contact_last_name, status, participants,
                  tour_dates ( departure_date, return_date ),
                  package_tours ( title, destination ),
-                 pickup_stops:tour_pickup_stops!tour_bookings_pickup_stop_id_fkey ( name, city )`)
+                 pickup_stops:tour_pickup_stops!tour_bookings_pickup_stop_id_fkey ( location_name, city )`)
         .eq("id", booking_id).maybeSingle();
       if (data) {
         booking = data;
