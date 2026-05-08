@@ -195,7 +195,7 @@ serve(async (req) => {
           .select(`booking_number, contact_first_name, contact_last_name, status, participants,
                    tour_dates ( departure_date, return_date ),
                    package_tours ( title, destination ),
-                   pickup_stops:tour_pickup_stops!tour_bookings_pickup_stop_id_fkey ( name, city )`)
+                   pickup_stops:tour_pickup_stops!tour_bookings_pickup_stop_id_fkey ( location_name, city )`)
           .eq("id", pass.tour_booking_id).maybeSingle();
         b = toPassDisplay("tour", data);
       } else {
