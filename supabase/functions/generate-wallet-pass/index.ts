@@ -235,7 +235,7 @@ serve(async (req) => {
       const { data } = await admin.from("tour_bookings")
         .select(`id, user_id, booking_number, contact_email, contact_first_name, contact_last_name, status, participants,
                  tour_dates ( departure_date, return_date ),
-                 package_tours ( title, destination ),
+                 package_tours ( destination ),
                  pickup_stops:tour_pickup_stops!tour_bookings_pickup_stop_id_fkey ( location_name, city )`)
         .eq("id", booking_id).maybeSingle();
       if (data) {
