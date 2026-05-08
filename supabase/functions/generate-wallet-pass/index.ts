@@ -51,7 +51,7 @@ function toPassDisplay(bookingType: string, booking: any) {
       passenger_last_name: booking?.contact_last_name,
       status: booking?.status,
       date: formatDateDE(td.departure_date),
-      from_label: pickup?.city || pickup?.name || "Abfahrtsort",
+      from_label: pickup?.city || pickup?.location_name || "Abfahrtsort",
       to_label: tour?.destination || tour?.title || tour?.name || "Reiseziel",
       depart_time: formatTimeDE(td.departure_time) ?? "—",
       arrive_time: formatDateDE(td.return_date),
