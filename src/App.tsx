@@ -15,6 +15,7 @@ const SearchPage = lazy(() => import("./pages/SearchPage"));
 const CheckoutPage = lazy(() => import("./pages/CheckoutPage"));
 const ServicePage = lazy(() => import("./pages/ServicePage"));
 const ReisenPage = lazy(() => import("./pages/ReisenPage"));
+const BusreisenPage = lazy(() => import("./pages/BusreisenPage"));
 const BusinessServicesPage = lazy(() => import("./pages/BusinessServicesPage"));
 const BookingsPage = lazy(() => import("./pages/BookingsPage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
@@ -124,6 +125,7 @@ const App = () => (
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/service" element={<ServicePage />} />
               <Route path="/reisen" element={<ReisenPage />} />
+              <Route path="/busreisen" element={<BusreisenPage />} />
               <Route path="/business" element={<BusinessServicesPage />} />
               <Route path="/bookings" element={<BookingsPage />} />
               <Route path="/wochenendtrips" element={<WeekendTripsPage />} />
