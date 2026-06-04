@@ -375,6 +375,26 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
               </kbd>
             </button>
 
+            {/* Theme Toggle (Auto / Light / Dark) */}
+            <button
+              onClick={() => {
+                const next = themeMode === "auto"
+                  ? (themeResolved === "dark" ? "light" : "dark")
+                  : themeMode === "dark" ? "light" : "auto";
+                setThemeMode(next);
+              }}
+              title={
+                themeMode === "auto" ? `Auto (System: ${themeResolved === "dark" ? "Dunkel" : "Hell"})`
+                : themeMode === "dark" ? "Dunkel-Modus" : "Hell-Modus"
+              }
+              className="size-9 rounded-lg flex items-center justify-center text-zinc-400 hover:text-[#00CC36] hover:bg-white/[0.04] transition-colors"
+              aria-label="Theme wechseln"
+            >
+              {themeMode === "auto" ? <MonitorSmartphone className="w-4 h-4" />
+                : themeMode === "dark" ? <Moon className="w-4 h-4" />
+                : <Sun className="w-4 h-4" />}
+            </button>
+
             {/* Notifications */}
             <NotificationBell />
 
