@@ -5,7 +5,8 @@ import {
   UserCheck, Settings, LogOut, Map, Mail, Inbox, Calendar, Route,
   MapPin, ChevronDown, Calculator, Truck, ClipboardList, Search,
   ChevronRight, Sparkles, Activity, Command, ChevronsLeft,
-  ChevronsRight, Menu, X, IdCard, Wallet, Building2, MessageCircleWarning, Tv, Wrench, TrendingUp
+  ChevronsRight, Menu, X, IdCard, Wallet, Building2, MessageCircleWarning, Tv, Wrench, TrendingUp,
+  Sun, Moon, MonitorSmartphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,6 +15,7 @@ import { cn } from "@/lib/utils";
 import type { AppRole } from "@/types/database";
 import { CommandPalette } from "@/components/admin/core/CommandPalette";
 import { NotificationBell } from "@/components/admin/core/NotificationBell";
+import { useCockpitTheme } from "@/hooks/useCockpitTheme";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -137,6 +139,7 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
   const [mobileOpen, setMobileOpen] = useState(false);
   const [now, setNow] = useState(new Date());
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const { mode: themeMode, resolved: themeResolved, setMode: setThemeMode } = useCockpitTheme();
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 30_000);
