@@ -113,7 +113,8 @@ const OperationsDashboard = () => {
   });
 
   return (
-    <div className="h-screen bg-[#080c12] text-zinc-100 flex flex-col overflow-hidden">
+    <div data-cockpit-scope className="h-screen bg-[#080c12] text-zinc-100 flex flex-col overflow-hidden">
+      <CockpitThemeMount />
       <IncidentNotifications />
       <SystemStatusBar />
 
