@@ -20,6 +20,8 @@ import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow, format, startOfWeek, addDays } from "date-fns";
 import { de } from "date-fns/locale";
+import { CockpitThemeMount } from "@/hooks/useCockpitTheme";
+
 
 type DriverTab = "scan" | "history" | "shifts" | "route" | "radio";
 
@@ -493,7 +495,8 @@ const DriverDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
+    <div data-cockpit-scope className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
+      <CockpitThemeMount />
       {/* Header */}
       <header className="bg-zinc-900 border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">

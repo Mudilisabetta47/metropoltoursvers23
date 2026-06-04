@@ -5,7 +5,8 @@ import {
   UserCheck, Settings, LogOut, Map, Mail, Inbox, Calendar, Route,
   MapPin, ChevronDown, Calculator, Truck, ClipboardList, Search,
   ChevronRight, Sparkles, Activity, Command, ChevronsLeft,
-  ChevronsRight, Menu, X, IdCard, Wallet, Building2, MessageCircleWarning, Tv, Wrench, TrendingUp
+  ChevronsRight, Menu, X, IdCard, Wallet, Building2, MessageCircleWarning, Tv, Wrench, TrendingUp,
+  Sun, Moon, MonitorSmartphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,6 +15,7 @@ import { cn } from "@/lib/utils";
 import type { AppRole } from "@/types/database";
 import { CommandPalette } from "@/components/admin/core/CommandPalette";
 import { NotificationBell } from "@/components/admin/core/NotificationBell";
+import { useCockpitTheme } from "@/hooks/useCockpitTheme";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -137,6 +139,7 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
   const [mobileOpen, setMobileOpen] = useState(false);
   const [now, setNow] = useState(new Date());
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const { mode: themeMode, resolved: themeResolved, setMode: setThemeMode } = useCockpitTheme();
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 30_000);
@@ -370,6 +373,26 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
               <kbd className="hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white/5 border cockpit-border text-[10px] font-cockpit-mono text-zinc-400">
                 <Command className="w-2.5 h-2.5" />K
               </kbd>
+            </button>
+
+            {/* Theme Toggle (Auto / Light / Dark) */}
+            <button
+              onClick={() => {
+                const next = themeMode === "auto"
+                  ? (themeResolved === "dark" ? "light" : "dark")
+                  : themeMode === "dark" ? "light" : "auto";
+                setThemeMode(next);
+              }}
+              title={
+                themeMode === "auto" ? `Auto (System: ${themeResolved === "dark" ? "Dunkel" : "Hell"})`
+                : themeMode === "dark" ? "Dunkel-Modus" : "Hell-Modus"
+              }
+              className="size-9 rounded-lg flex items-center justify-center text-zinc-400 hover:text-[#00CC36] hover:bg-white/[0.04] transition-colors"
+              aria-label="Theme wechseln"
+            >
+              {themeMode === "auto" ? <MonitorSmartphone className="w-4 h-4" />
+                : themeMode === "dark" ? <Moon className="w-4 h-4" />
+                : <Sun className="w-4 h-4" />}
             </button>
 
             {/* Notifications */}

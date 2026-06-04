@@ -1,0 +1,208 @@
+/* =====================================================================
+   COCKPIT LIGHT THEME
+   Aktiv, wenn <html data-cockpit-theme="light">.
+   Skin-Layer über die hartcodierten Dark-Klassen im Admin/Operations/
+   Driver-Bereich. Brand-Grün (#00CC36) bleibt unverändert.
+   ===================================================================== */
+
+:root[data-cockpit-theme="light"] {
+  --cockpit-bg: #f6f8fb;
+  --cockpit-panel: #ffffff;
+  --cockpit-panel-2: #f1f4f9;
+  --cockpit-border: rgba(15, 23, 42, 0.10);
+  --cockpit-border-strong: rgba(15, 23, 42, 0.16);
+  --cockpit-text: #0f172a;
+  --cockpit-text-muted: #475569;
+  --cockpit-text-subtle: #64748b;
+  --cockpit-text-faint: #94a3b8;
+}
+
+/* ---------- cockpit-* Utilities ---------- */
+[data-cockpit-theme="light"] .cockpit-bg {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -20%, rgba(0, 204, 54, 0.10), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 100% 100%, rgba(0, 204, 54, 0.05), transparent 50%),
+    var(--cockpit-bg);
+  color: var(--cockpit-text);
+}
+[data-cockpit-theme="light"] .cockpit-glass {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.65) 100%);
+  border: 1px solid var(--cockpit-border);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 8px 32px -16px rgba(15, 23, 42, 0.18);
+  color: var(--cockpit-text);
+}
+[data-cockpit-theme="light"] .cockpit-glass-strong {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid var(--cockpit-border-strong);
+  color: var(--cockpit-text);
+}
+[data-cockpit-theme="light"] .cockpit-border { border-color: var(--cockpit-border) !important; }
+[data-cockpit-theme="light"] .cockpit-divider {
+  background: linear-gradient(90deg, transparent, rgba(15, 23, 42, 0.12), transparent);
+}
+[data-cockpit-theme="light"] .cockpit-active-rail {
+  background: linear-gradient(90deg, rgba(0, 204, 54, 0.16) 0%, rgba(0, 204, 54, 0.03) 100%);
+  border-left: 2px solid #00CC36;
+  color: #047a26;
+}
+[data-cockpit-theme="light"] .cockpit-grid::before {
+  background-image:
+    linear-gradient(rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+}
+[data-cockpit-theme="light"] .cockpit-group-label { color: rgba(71, 85, 105, 0.85); }
+
+/* ---------- Hartcodierte Tailwind Arbitrary-Backgrounds ---------- */
+[data-cockpit-theme="light"] .bg-\[\#0b0e14\],
+[data-cockpit-theme="light"] .bg-\[\#080c12\],
+[data-cockpit-theme="light"] .bg-\[\#0e1420\],
+[data-cockpit-theme="light"] .bg-\[\#0f1218\],
+[data-cockpit-theme="light"] .bg-\[\#0f1320\],
+[data-cockpit-theme="light"] .bg-\[\#0a0d12\] {
+  background-color: var(--cockpit-panel) !important;
+}
+[data-cockpit-theme="light"] .bg-\[\#0b0e14\]\/80,
+[data-cockpit-theme="light"] .bg-\[\#0b0e14\]\/70,
+[data-cockpit-theme="light"] .bg-\[\#0b0e14\]\/60 {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+}
+[data-cockpit-theme="light"] .bg-\[\#151920\],
+[data-cockpit-theme="light"] .bg-\[\#1a1f2a\],
+[data-cockpit-theme="light"] .bg-\[\#1a2436\],
+[data-cockpit-theme="light"] .bg-\[\#161a23\],
+[data-cockpit-theme="light"] .bg-\[\#11151c\],
+[data-cockpit-theme="light"] .bg-\[\#121620\] {
+  background-color: var(--cockpit-panel-2) !important;
+  color: var(--cockpit-text) !important;
+}
+
+/* Black / zinc darks → light surfaces */
+[data-cockpit-theme="light"] .bg-black { background-color: var(--cockpit-panel) !important; }
+[data-cockpit-theme="light"] .bg-black\/70,
+[data-cockpit-theme="light"] .bg-black\/60,
+[data-cockpit-theme="light"] .bg-black\/50,
+[data-cockpit-theme="light"] .bg-black\/40 {
+  background-color: rgba(15, 23, 42, 0.25) !important;
+}
+[data-cockpit-theme="light"] .bg-zinc-900,
+[data-cockpit-theme="light"] .bg-zinc-950,
+[data-cockpit-theme="light"] .bg-neutral-900,
+[data-cockpit-theme="light"] .bg-neutral-950,
+[data-cockpit-theme="light"] .bg-slate-900,
+[data-cockpit-theme="light"] .bg-slate-950,
+[data-cockpit-theme="light"] .bg-gray-900,
+[data-cockpit-theme="light"] .bg-gray-950 {
+  background-color: var(--cockpit-panel) !important;
+  color: var(--cockpit-text) !important;
+}
+[data-cockpit-theme="light"] .bg-zinc-800,
+[data-cockpit-theme="light"] .bg-neutral-800,
+[data-cockpit-theme="light"] .bg-slate-800,
+[data-cockpit-theme="light"] .bg-gray-800 {
+  background-color: var(--cockpit-panel-2) !important;
+  color: var(--cockpit-text) !important;
+}
+
+/* Subtile white overlays auf Dark werden im Light kaum sichtbar → invertieren */
+[data-cockpit-theme="light"] .bg-white\/\[0\.04\],
+[data-cockpit-theme="light"] .bg-white\/\[0\.06\],
+[data-cockpit-theme="light"] .bg-white\/\[0\.08\],
+[data-cockpit-theme="light"] .bg-white\/5,
+[data-cockpit-theme="light"] .bg-white\/10 {
+  background-color: rgba(15, 23, 42, 0.06) !important;
+}
+[data-cockpit-theme="light"] .hover\:bg-white\/\[0\.04\]:hover,
+[data-cockpit-theme="light"] .hover\:bg-white\/5:hover,
+[data-cockpit-theme="light"] .hover\:bg-white\/10:hover {
+  background-color: rgba(15, 23, 42, 0.06) !important;
+}
+
+/* ---------- Text-Farben ---------- */
+[data-cockpit-theme="light"] .cockpit-bg .text-white,
+[data-cockpit-theme="light"] .cockpit-bg .text-zinc-100,
+[data-cockpit-theme="light"] .cockpit-bg .text-zinc-200,
+[data-cockpit-theme="light"] .cockpit-bg .text-neutral-100,
+[data-cockpit-theme="light"] .cockpit-bg .text-slate-100,
+[data-cockpit-theme="light"] .cockpit-bg .text-gray-100,
+[data-cockpit-theme="light"] [data-cockpit-scope] .text-white,
+[data-cockpit-theme="light"] [data-cockpit-scope] .text-zinc-100,
+[data-cockpit-theme="light"] [data-cockpit-scope] .text-zinc-200,
+[data-cockpit-theme="light"] [data-cockpit-scope] .text-neutral-100,
+[data-cockpit-theme="light"] [data-cockpit-scope] .text-slate-100,
+[data-cockpit-theme="light"] [data-cockpit-scope] .text-gray-100 {
+  color: var(--cockpit-text) !important;
+}
+[data-cockpit-theme="light"] .cockpit-bg .text-zinc-300,
+[data-cockpit-theme="light"] .cockpit-bg .text-zinc-400,
+[data-cockpit-theme="light"] .cockpit-bg .text-neutral-300,
+[data-cockpit-theme="light"] .cockpit-bg .text-neutral-400,
+[data-cockpit-theme="light"] .cockpit-bg .text-slate-300,
+[data-cockpit-theme="light"] .cockpit-bg .text-slate-400,
+[data-cockpit-theme="light"] .cockpit-bg .text-gray-300,
+[data-cockpit-theme="light"] .cockpit-bg .text-gray-400,
+[data-cockpit-theme="light"] [data-cockpit-scope] .text-zinc-300,
+[data-cockpit-theme="light"] [data-cockpit-scope] .text-zinc-400,
+[data-cockpit-theme="light"] [data-cockpit-scope] .text-neutral-300,
+[data-cockpit-theme="light"] [data-cockpit-scope] .text-neutral-400,
+[data-cockpit-theme="light"] [data-cockpit-scope] .text-slate-300,
+[data-cockpit-theme="light"] [data-cockpit-scope] .text-slate-400,
+[data-cockpit-theme="light"] [data-cockpit-scope] .text-gray-300,
+[data-cockpit-theme="light"] [data-cockpit-scope] .text-gray-400 {
+  color: var(--cockpit-text-muted) !important;
+}
+[data-cockpit-theme="light"] .cockpit-bg .text-zinc-500,
+[data-cockpit-theme="light"] .cockpit-bg .text-zinc-600,
+[data-cockpit-theme="light"] .cockpit-bg .text-neutral-500,
+[data-cockpit-theme="light"] .cockpit-bg .text-slate-500,
+[data-cockpit-theme="light"] .cockpit-bg .text-gray-500,
+[data-cockpit-theme="light"] [data-cockpit-scope] .text-zinc-500,
+[data-cockpit-theme="light"] [data-cockpit-scope] .text-zinc-600,
+[data-cockpit-theme="light"] [data-cockpit-scope] .text-neutral-500,
+[data-cockpit-theme="light"] [data-cockpit-scope] .text-slate-500,
+[data-cockpit-theme="light"] [data-cockpit-scope] .text-gray-500 {
+  color: var(--cockpit-text-subtle) !important;
+}
+[data-cockpit-theme="light"] .cockpit-bg .text-zinc-700,
+[data-cockpit-theme="light"] [data-cockpit-scope] .text-zinc-700 {
+  color: var(--cockpit-text-faint) !important;
+}
+
+/* Borders */
+[data-cockpit-theme="light"] .border-white\/5,
+[data-cockpit-theme="light"] .border-white\/10,
+[data-cockpit-theme="light"] .border-white\/\[0\.06\],
+[data-cockpit-theme="light"] .border-white\/\[0\.08\] {
+  border-color: var(--cockpit-border) !important;
+}
+[data-cockpit-theme="light"] .border-\[\#1a2436\],
+[data-cockpit-theme="light"] .border-\[\#1a1f2a\],
+[data-cockpit-theme="light"] .border-\[\#151920\] {
+  border-color: var(--cockpit-border-strong) !important;
+}
+
+/* Ring/Outline pulse dot (Sidebar Logo) */
+[data-cockpit-theme="light"] .ring-\[\#0b0e14\] {
+  --tw-ring-color: var(--cockpit-panel) !important;
+}
+
+/* Inputs: bestehender Override in index.css setzt weiße Schrift auf dunkel –
+   im Light Mode auf dunkle Schrift / weißen Hintergrund zurücksetzen. */
+[data-cockpit-theme="light"] input[class*="bg-[#151920]"],
+[data-cockpit-theme="light"] textarea[class*="bg-[#151920]"],
+[data-cockpit-theme="light"] select[class*="bg-[#151920]"],
+[data-cockpit-theme="light"] input[class*="bg-[#1a1f2a]"],
+[data-cockpit-theme="light"] textarea[class*="bg-[#1a1f2a]"],
+[data-cockpit-theme="light"] select[class*="bg-[#1a1f2a]"] {
+  background-color: #ffffff !important;
+  color: var(--cockpit-text) !important;
+  border-color: var(--cockpit-border-strong) !important;
+}
+[data-cockpit-theme="light"] input[class*="bg-[#151920]"]::placeholder,
+[data-cockpit-theme="light"] textarea[class*="bg-[#151920]"]::placeholder,
+[data-cockpit-theme="light"] input[class*="bg-[#1a1f2a]"]::placeholder,
+[data-cockpit-theme="light"] textarea[class*="bg-[#1a1f2a]"]::placeholder {
+  color: var(--cockpit-text-faint) !important;
+}
+
+/* Gradient-Texte / -Buttons mit schwarzem Foreground (Brand-Grün) bleiben gleich,
+   damit grüne Brand-Akzente konsistent sind. */
