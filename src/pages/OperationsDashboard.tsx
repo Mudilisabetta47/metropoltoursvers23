@@ -12,6 +12,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { CockpitThemeMount } from "@/hooks/useCockpitTheme";
+
 
 // Operations Components
 import SystemStatusBar from "@/components/operations/SystemStatusBar";

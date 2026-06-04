@@ -20,6 +20,8 @@ import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow, format, startOfWeek, addDays } from "date-fns";
 import { de } from "date-fns/locale";
+import { CockpitThemeMount } from "@/hooks/useCockpitTheme";
+
 
 type DriverTab = "scan" | "history" | "shifts" | "route" | "radio";
 
