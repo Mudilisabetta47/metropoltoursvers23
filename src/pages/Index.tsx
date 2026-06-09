@@ -19,6 +19,7 @@ const Index = () => {
       <main className="flex-1">
         <HeroSlider />
         <FeaturesSection />
+        <BrandShowcaseSection />
         <PackageToursSection />
         <WeekendTripsSection />
         
