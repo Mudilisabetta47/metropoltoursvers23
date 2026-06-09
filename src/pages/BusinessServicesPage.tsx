@@ -165,11 +165,19 @@ const BusinessServicesPage = () => {
       
       <main className="flex-1 pt-20 lg:pt-24">
         {/* Hero Section — Cinematic */}
-        <section className="relative bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 py-24 lg:py-36 overflow-hidden">
+        <section className="relative bg-zinc-900 py-24 lg:py-36 overflow-hidden">
           <div className="absolute inset-0">
+            <img
+              src={businessHero}
+              alt="Premium Business Bus Service von Metropol Tours"
+              width={1920}
+              height={1080}
+              className="w-full h-full object-cover object-center"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/95 via-zinc-950/80 to-zinc-950/40" />
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-transparent to-zinc-950/30" />
             <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px]" />
             <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.03)_0%,transparent_60%)]" />
           </div>
           
           <div className="container mx-auto px-4 relative z-10">
