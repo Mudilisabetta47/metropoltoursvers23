@@ -11,6 +11,7 @@ import {
   MapPin, Clock, Bus, Calendar, ArrowRight, Wifi, Plug,
   Armchair, Star, TrendingUp, Sparkles,
 } from "lucide-react";
+import weekendHero from "@/assets/weekend-hero.jpg";
 
 interface TourTariffMini {
   id: string;
@@ -91,7 +92,11 @@ const WeekendTripsPage = () => {
       <main className="flex-1 pt-16 lg:pt-20">
         {/* Hero */}
         <section className="relative overflow-hidden py-20 lg:py-28 bg-secondary">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.15),transparent_70%)]" />
+          <div className="absolute inset-0">
+            <img src={weekendHero} alt="Wochenendtrips durch Europa" width={1920} height={1080} className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-r from-secondary/95 via-secondary/80 to-secondary/40" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.2),transparent_70%)]" />
+          </div>
           <div className="container mx-auto px-4 relative z-10">
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="max-w-3xl">
               <Badge className="mb-5 bg-primary/20 text-primary border-0 text-sm px-4 py-1.5">
