@@ -11,6 +11,7 @@ import {
   MapPin, Clock, Bus, Calendar, ArrowRight, Wifi, Plug,
   Armchair, Star, TrendingUp, Sparkles,
 } from "lucide-react";
+import weekendHero from "@/assets/weekend-hero.jpg";
 
 interface TourTariffMini {
   id: string;
