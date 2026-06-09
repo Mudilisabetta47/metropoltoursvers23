@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useServiceTypes } from "@/hooks/useCMS";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
+import businessHero from "@/assets/business-hero.jpg";
 
 const iconMap: Record<string, React.ElementType> = {
   School, Users, MapPin, Trophy, Plane, PartyPopper,
