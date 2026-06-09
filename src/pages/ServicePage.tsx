@@ -9,6 +9,7 @@ import Footer from "@/components/layout/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import serviceHero from "@/assets/service-hero.jpg";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
