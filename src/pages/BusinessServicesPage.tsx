@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useServiceTypes } from "@/hooks/useCMS";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import businessHero from "@/assets/business-hero.jpg";
+import contactIllustration from "@/assets/contact-illustration.jpg.asset.json";
 
 const iconMap: Record<string, React.ElementType> = {
   School, Users, MapPin, Trophy, Plane, PartyPopper,
