@@ -4,6 +4,7 @@ import {
   Clock, CreditCard, Shield, Award, Headphones
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
+import footerIllustration from "@/assets/contact-illustration.jpg.asset.json";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
