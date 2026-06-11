@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import Map, { Marker, NavigationControl } from "@vis.gl/react-mapbox";
 import { ArrowLeft, Bus, Clock, MapPin, Gauge, Loader2, ShieldAlert, Navigation2, AlertTriangle, CheckCircle2, RefreshCw } from "lucide-react";
-import { formatDistanceToNow, format, differenceInMinutes, differenceInHours } from "date-fns";
+import { formatDistanceToNow, format, differenceInMinutes } from "date-fns";
 import { de } from "date-fns/locale";
 import { motion } from "framer-motion";
 import Header from "@/components/layout/Header";
