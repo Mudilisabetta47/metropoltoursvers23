@@ -406,22 +406,33 @@ const BusinessServicesPage = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                 >
-                  <Card className="border-border/50 shadow-xl">
+                  <Card className="border-border/50 shadow-xl overflow-hidden">
                     <CardContent className="p-0">
+                      {/* Illustration banner */}
+                      <div className="relative w-full bg-gradient-to-b from-sky-50 to-background dark:from-sky-950/30">
+                        <img
+                          src={contactIllustration.url}
+                          alt="METROPOL TOURS Reise-Illustration mit Bus und europäischen Städten"
+                          className="w-full h-24 sm:h-32 md:h-40 object-cover object-center"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent pointer-events-none" />
+                      </div>
+
                       {/* Form header */}
-                      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-8 border-b border-border/50">
+                      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-5 sm:p-8 border-b border-border/50">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-primary/15 rounded-xl flex items-center justify-center">
+                          <div className="w-10 h-10 bg-primary/15 rounded-xl flex items-center justify-center shrink-0">
                             <Send className="w-5 h-5 text-primary" />
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <h3 className="font-semibold text-foreground">Anfrage-Formular</h3>
                             <p className="text-sm text-muted-foreground">Füllen Sie die Felder aus — wir kümmern uns um den Rest</p>
                           </div>
                         </div>
                       </div>
 
-                      <form onSubmit={handleSubmit} className="p-8 space-y-8">
+                      <form onSubmit={handleSubmit} className="p-5 sm:p-8 space-y-6 sm:space-y-8">
                         {/* Section 1: Service Selection */}
                         <div>
                           <div className="flex items-center gap-2 mb-4">
