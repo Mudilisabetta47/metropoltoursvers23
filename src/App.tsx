@@ -18,6 +18,7 @@ const ReisenPage = lazy(() => import("./pages/ReisenPage"));
 const BusreisenPage = lazy(() => import("./pages/BusreisenPage"));
 const BusinessServicesPage = lazy(() => import("./pages/BusinessServicesPage"));
 const BookingsPage = lazy(() => import("./pages/BookingsPage"));
+const TrackBookingPage = lazy(() => import("./pages/TrackBookingPage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const ImprintPage = lazy(() => import("./pages/ImprintPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
@@ -128,6 +129,7 @@ const App = () => (
               <Route path="/busreisen" element={<BusreisenPage />} />
               <Route path="/business" element={<BusinessServicesPage />} />
               <Route path="/bookings" element={<BookingsPage />} />
+              <Route path="/track/:bookingId" element={<TrackBookingPage />} />
               <Route path="/wochenendtrips" element={<WeekendTripsPage />} />
               <Route path="/wochenendtrips/:tourId" element={<TourDetailPage />} />
               <Route path="/auth" element={<AuthPage />} />
