@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,7 +33,7 @@ export default function TermsPage() {
             {isLoading ? (
               <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
             ) : content ? (
-              <div className="prose prose-sm max-w-none text-muted-foreground [&_h2]:text-foreground [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-3 [&_h3]:text-foreground [&_h3]:text-lg [&_h3]:font-medium [&_p]:leading-relaxed" dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br />') }} />
+              <div className="prose prose-sm max-w-none text-muted-foreground [&_h2]:text-foreground [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-3 [&_h3]:text-foreground [&_h3]:text-lg [&_h3]:font-medium [&_p]:leading-relaxed" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content.replace(/\n/g, '<br />')) }} />
             ) : (
               <div className="space-y-6">
                 <section>
