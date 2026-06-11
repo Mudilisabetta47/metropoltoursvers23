@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,7 +10,44 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { destination, location, country, category, highlights, duration_days, type } = await req.json();
+    // AuthN + AuthZ: only authenticated admin/office/agent users can use AI credits
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const authClient = createClient(supabaseUrl, anonKey);
+    const { data: claimsData, error: claimsErr } = await authClient.auth.getClaims(
+      authHeader.replace("Bearer ", "")
+    );
+    const userId = claimsData?.claims?.sub;
+    if (claimsErr || !userId) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const adminClient = createClient(supabaseUrl, serviceKey);
+    const { data: roles } = await adminClient.from("user_roles").select("role").eq("user_id", userId);
+    const isAuthorized = roles?.some((r: any) => ["admin", "office", "agent"].includes(r.role));
+    if (!isAuthorized) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const body = await req.json();
+    const destination = String(body.destination || "").slice(0, 200);
+    const location = String(body.location || "").slice(0, 200);
+    const country = String(body.country || "").slice(0, 100);
+    const category = String(body.category || "").slice(0, 100);
+    const highlights = Array.isArray(body.highlights) ? body.highlights.slice(0, 20).map((h: any) => String(h).slice(0, 200)) : [];
+    const duration_days = Number(body.duration_days) || 0;
+    const type = ["short", "meta_description", "long"].includes(body.type) ? body.type : "long";
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
