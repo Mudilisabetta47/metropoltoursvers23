@@ -4,6 +4,7 @@ import {
   Clock, CreditCard, Shield, Award, Headphones
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
+import footerIllustration from "@/assets/contact-illustration.jpg.asset.json";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -63,6 +64,17 @@ const Footer = () => {
 
   return (
     <footer className="bg-secondary text-secondary-foreground" role="contentinfo">
+      {/* Illustration band */}
+      <div className="relative w-full overflow-hidden bg-gradient-to-b from-sky-100 to-secondary dark:from-sky-950/40">
+        <img
+          src={footerIllustration.url}
+          alt="METROPOL TOURS – mit dem Bus durch Europa"
+          className="w-full h-20 sm:h-28 md:h-36 object-cover object-bottom select-none pointer-events-none"
+          loading="lazy"
+        />
+        <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-secondary to-transparent" />
+      </div>
+
       {/* Trust Badges Section */}
       <div className="border-b border-muted-foreground/10">
         <div className="container mx-auto px-4 py-8">
