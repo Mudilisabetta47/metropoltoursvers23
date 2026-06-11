@@ -642,14 +642,22 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
+    // AuthN: Authorization header is REQUIRED
     const authHeader = req.headers.get("Authorization");
-    let userId: string | null = null;
-    if (authHeader) {
-      const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
-        global: { headers: { Authorization: authHeader } },
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
-      const { data: { user } } = await supabaseAuth.auth.getUser();
-      userId = user?.id || null;
+    }
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey);
+    const { data: claimsData, error: claimsErr } = await supabaseAuth.auth.getClaims(
+      authHeader.replace("Bearer ", "")
+    );
+    const userId = claimsData?.claims?.sub || null;
+    if (claimsErr || !userId) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -665,14 +673,14 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    if (userId && booking.user_id && booking.user_id !== userId) {
-      const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-      const isAdmin = roles?.some((r: any) => r.role === "admin");
-      if (!isAdmin) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    // AuthZ: must own booking OR be admin/office/agent
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    const isStaff = roles?.some((r: any) => ["admin", "office", "agent"].includes(r.role));
+    const isOwner = booking.user_id && booking.user_id === userId;
+    if (!isOwner && !isStaff) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const [tourRes, dateRes, tariffRes, pickupRes] = await Promise.all([

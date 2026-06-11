@@ -17,8 +17,19 @@ serve(async (req) => {
   }
 
   try {
+    // Require a shared secret OR the service role key (used by cron)
+    const automationSecret = Deno.env.get("WEBHOOK_SECRET");
+    const serviceRoleKeyEnv = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const provided = req.headers.get("x-automation-secret") ||
+      req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+    if (!provided || (provided !== automationSecret && provided !== serviceRoleKeyEnv)) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const serviceRoleKey = serviceRoleKeyEnv;
     const admin = createClient(supabaseUrl, serviceRoleKey);
 
     const now = new Date();

@@ -14,10 +14,44 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    // AuthN: require valid JWT
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const authClient = createClient(supabaseUrl, anonKey);
+    const { data: claimsData, error: claimsErr } = await authClient.auth.getClaims(
+      authHeader.replace("Bearer ", "")
+    );
+    const userId = claimsData?.claims?.sub;
+    if (claimsErr || !userId) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabase = createClient(supabaseUrl, serviceKey);
 
+    // AuthZ: require agent or admin role
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    const isAuthorized = roles?.some((r: any) => r.role === "admin" || r.role === "agent" || r.role === "office");
+    if (!isAuthorized) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { offerId } = await req.json();
-    if (!offerId) throw new Error("offerId required");
+    if (!offerId || typeof offerId !== "string" ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(offerId)) {
+      return new Response(JSON.stringify({ error: "Invalid offerId" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Fetch offer
     const { data: offer, error: offerErr } = await supabase
