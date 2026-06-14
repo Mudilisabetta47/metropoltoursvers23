@@ -4,11 +4,18 @@
   <url><loc>https://www.metours.de/reisen</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
   <url><loc>https://www.metours.de/busreisen</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
   <url><loc>https://www.metours.de/wochenendtrips</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://www.metours.de/wochenendtrips/prag</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://www.metours.de/wochenendtrips/kopenhagen</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://www.metours.de/wochenendtrips/Amsterdam</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://www.metours.de/wochenendtrips/PARIS</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://www.metours.de/service</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://www.metours.de/business</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://www.metours.de/karriere</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.metours.de/search</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+  <url><loc>https://www.metours.de/checkout</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://www.metours.de/bookings</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
   <url><loc>https://www.metours.de/auth</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://www.metours.de/reset-password</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
   <url><loc>https://www.metours.de/imprint</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
   <url><loc>https://www.metours.de/privacy</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
   <url><loc>https://www.metours.de/terms</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
