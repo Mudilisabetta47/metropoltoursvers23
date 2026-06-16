@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   Briefcase, MapPin, Clock, ChevronRight, Send, Users,
   Heart, Shield, Coffee, Bus, Star, CheckCircle2, Rocket,
-  Upload, FileText, X
+  Upload, FileText, X, ArrowRight, Sparkles, TrendingUp, Globe2
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -19,6 +19,9 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
+import karriereDriver from "@/assets/karriere-driver.jpg";
+import karriereBus from "@/assets/karriere-bus.jpg";
+import karriereTeam from "@/assets/karriere-team.jpg";
 
 interface JobListing {
   id: string;
@@ -174,45 +177,135 @@ const KarrierePage = () => {
     setIsSubmitting(false);
   };
 
+  const scrollToJobs = () => document.getElementById("jobs")?.scrollIntoView({ behavior: "smooth" });
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-1 pt-16 lg:pt-20">
-        {/* Hero */}
-        <section className="relative overflow-hidden py-20 lg:py-28 bg-secondary">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.15),transparent_70%)]" />
-          <div className="container mx-auto px-4 relative z-10 text-center">
-            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-              <Badge className="mb-5 bg-primary/20 text-primary border-0 text-sm px-4 py-1.5">
-                <Rocket className="w-3.5 h-3.5 mr-1.5" />
-                Karriere bei Metropol Tours
-              </Badge>
-              <h1 className="text-4xl lg:text-5xl font-bold text-secondary-foreground mb-5">
-                Werde Teil unseres <span className="gradient-text">Teams</span>
-              </h1>
-              <p className="text-lg text-secondary-foreground/70 max-w-2xl mx-auto">
-                Wir verbinden Menschen mit ihren Traumreisezielen. Gestalte mit uns die Zukunft des komfortablen Reisens in Europa.
-              </p>
-            </motion.div>
+        {/* HERO — Flix-style bold green */}
+        <section className="relative overflow-hidden bg-[#00CC36]">
+          <div className="container mx-auto px-4 lg:px-8 py-16 lg:py-24 relative">
+            <div className="grid lg:grid-cols-12 gap-10 lg:gap-6 items-center">
+              {/* Left: headline + CTA */}
+              <div className="lg:col-span-6 relative z-10">
+                <motion.div
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-black tracking-tight text-[#0a1a0e] leading-[0.95]">
+                    Fahr mit uns<br />
+                    in deine<br />
+                    Zukunft.
+                  </h1>
+                  <p className="mt-6 text-lg lg:text-xl text-[#0a1a0e]/75 max-w-md font-medium">
+                    Werde Teil von Metropol Tours — Europas Premium-Reiseerlebnis
+                    beginnt mit Menschen, die es lieben, unterwegs zu sein.
+                  </p>
+                  <div className="mt-8 flex flex-wrap gap-3">
+                    <button
+                      onClick={scrollToJobs}
+                      className="group inline-flex items-center gap-2 bg-[#0a1a0e] text-white px-7 h-14 rounded-full text-base font-bold hover:bg-black transition-all hover:scale-[1.02] active:scale-100 shadow-lg shadow-black/10"
+                    >
+                      Offene Stellen ansehen
+                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                    <a
+                      href="#bewerbung"
+                      className="inline-flex items-center gap-2 bg-white/90 backdrop-blur text-[#0a1a0e] px-7 h-14 rounded-full text-base font-bold hover:bg-white transition-all"
+                    >
+                      Initiativbewerbung
+                    </a>
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Right: photo cluster with chevron */}
+              <div className="lg:col-span-6 relative">
+                <div className="relative flex items-center justify-center lg:justify-end gap-3 lg:gap-4">
+                  {/* Giant white chevron motif */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3, duration: 0.6 }}
+                    className="hidden md:block absolute left-0 lg:-left-8 top-1/2 -translate-y-1/2 z-20 pointer-events-none"
+                    aria-hidden
+                  >
+                    <svg width="120" height="200" viewBox="0 0 120 200" fill="none" className="drop-shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
+                      <path d="M10 10 L100 100 L10 190" stroke="white" strokeWidth="28" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15, duration: 0.6 }}
+                    className="hidden sm:block w-28 lg:w-40 aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl shadow-black/20 -mr-2"
+                  >
+                    <img src={karriereTeam} alt="Team von Metropol Tours" width={1024} height={1024} className="w-full h-full object-cover" />
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 40 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.25, duration: 0.6 }}
+                    className="w-52 sm:w-64 lg:w-80 aspect-square rounded-3xl overflow-hidden shadow-2xl shadow-black/25 z-10"
+                  >
+                    <img src={karriereDriver} alt="Busfahrerin am Steuer" width={1024} height={1024} className="w-full h-full object-cover" />
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.35, duration: 0.6 }}
+                    className="hidden sm:block w-28 lg:w-40 aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl shadow-black/20 -ml-2"
+                  >
+                    <img src={karriereBus} alt="Metropol Tours Reisebus" width={1024} height={1024} className="w-full h-full object-cover" />
+                  </motion.div>
+                </div>
+
+                {/* Floating info bubble */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.6, duration: 0.5, type: "spring" }}
+                  className="absolute -bottom-8 -left-2 lg:left-4 w-32 h-32 lg:w-36 lg:h-36 rounded-full bg-[#0a1a0e] text-white flex items-center justify-center p-4 text-center shadow-2xl z-30"
+                >
+                  <span className="text-[11px] lg:text-xs font-semibold leading-tight">
+                    Wir stellen<br />in ganz<br />Deutschland<br />ein.
+                  </span>
+                </motion.div>
+              </div>
+            </div>
           </div>
+
+          {/* bottom chevron silhouette */}
+          <div className="absolute -bottom-px left-0 right-0 h-8 bg-background" style={{ clipPath: "polygon(0 100%, 100% 100%, 100% 60%, 0 100%)" }} />
         </section>
 
-        {/* Benefits */}
-        <section className="py-20 lg:py-28 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-14">
-              <Badge className="mb-4 bg-primary/10 text-primary border-0"><Heart className="w-3 h-3 mr-1" />Benefits</Badge>
-              <h2 className="text-3xl lg:text-4xl font-bold text-foreground">Warum Metropol Tours?</h2>
-            </motion.div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {BENEFITS.map((b, i) => (
-                <motion.div key={i} custom={i} variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="group">
-                  <div className="card-elevated p-8 h-full border border-transparent hover:border-primary/30 transition-all">
-                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-                      <b.icon className="w-7 h-7 text-primary" />
-                    </div>
-                    <h3 className="font-bold text-foreground text-lg mb-2">{b.title}</h3>
-                    <p className="text-muted-foreground">{b.desc}</p>
+        {/* STAT STRIP */}
+        <section className="border-b border-border bg-background">
+          <div className="container mx-auto px-4 lg:px-8 py-10">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-10">
+              {[
+                { num: "120+", label: "Kolleg:innen europaweit", icon: Users },
+                { num: "40", label: "Destinationen jede Woche", icon: Globe2 },
+                { num: "98%", label: "Mitarbeiterzufriedenheit", icon: Heart },
+                { num: "30", label: "Urlaubstage pro Jahr", icon: Sparkles },
+              ].map((s, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.05 }}
+                  className="flex items-center gap-4"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <s.icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <div className="text-3xl lg:text-4xl font-black text-foreground tracking-tight leading-none">{s.num}</div>
+                    <div className="text-xs lg:text-sm text-muted-foreground mt-1">{s.label}</div>
                   </div>
                 </motion.div>
               ))}
@@ -220,52 +313,107 @@ const KarrierePage = () => {
           </div>
         </section>
 
-        {/* Job Listings */}
-        <section className="py-20 lg:py-28">
-          <div className="container mx-auto px-4">
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-10">
-              <Badge className="mb-4 bg-primary/10 text-primary border-0"><Briefcase className="w-3 h-3 mr-1" />Stellenangebote</Badge>
-              <h2 className="text-3xl lg:text-4xl font-bold text-foreground">Offene Stellen</h2>
-              <p className="text-muted-foreground mt-2">Finde die passende Position für dich.</p>
+        {/* BENEFITS — bento grid */}
+        <section className="py-20 lg:py-28 bg-background">
+          <div className="container mx-auto px-4 lg:px-8">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-2xl mb-14">
+              <Badge className="mb-4 bg-primary/10 text-primary border-0 hover:bg-primary/15"><Heart className="w-3 h-3 mr-1" />Benefits</Badge>
+              <h2 className="text-4xl lg:text-5xl font-black tracking-tight text-foreground leading-[1.05]">
+                Mehr als nur<br />ein Job.
+              </h2>
+              <p className="text-lg text-muted-foreground mt-4">
+                Wir glauben: Wer Menschen bewegt, verdient ein Umfeld, das ihn weiterbringt.
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
+              {BENEFITS.map((b, i) => (
+                <motion.div
+                  key={i}
+                  custom={i}
+                  variants={fadeUp}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  className={`group relative overflow-hidden rounded-3xl p-7 lg:p-8 border transition-all hover:-translate-y-1 ${
+                    i === 0
+                      ? "bg-[#00CC36] text-[#0a1a0e] border-transparent sm:row-span-2 sm:col-span-1 lg:min-h-[280px]"
+                      : "bg-card border-border hover:border-primary/30 hover:shadow-lg"
+                  }`}
+                >
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110 ${
+                    i === 0 ? "bg-[#0a1a0e] text-white" : "bg-primary/10 text-primary"
+                  }`}>
+                    <b.icon className="w-7 h-7" />
+                  </div>
+                  <h3 className={`font-black text-xl lg:text-2xl mb-2 tracking-tight ${i === 0 ? "" : "text-foreground"}`}>
+                    {b.title}
+                  </h3>
+                  <p className={i === 0 ? "text-[#0a1a0e]/75" : "text-muted-foreground"}>{b.desc}</p>
+                  {i === 0 && (
+                    <ArrowRight className="absolute bottom-7 right-7 w-6 h-6 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* JOBS */}
+        <section id="jobs" className="py-20 lg:py-28 bg-muted/30 relative">
+          <div className="container mx-auto px-4 lg:px-8">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-12">
+              <div>
+                <Badge className="mb-4 bg-primary/10 text-primary border-0 hover:bg-primary/15"><Briefcase className="w-3 h-3 mr-1" />Stellenangebote</Badge>
+                <h2 className="text-4xl lg:text-5xl font-black tracking-tight text-foreground leading-[1.05]">
+                  Offene Stellen
+                </h2>
+                <p className="text-muted-foreground mt-3 text-lg">Finde deinen Platz im Team.</p>
+              </div>
+              {jobs.length > 0 && (
+                <div className="text-sm font-semibold text-muted-foreground">
+                  <span className="text-foreground text-2xl font-black tracking-tight mr-1">{jobs.length}</span>
+                  Position{jobs.length !== 1 ? "en" : ""} verfügbar
+                </div>
+              )}
             </motion.div>
 
             {isLoading ? (
-              <div className="space-y-4">{[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div>
+              <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div>
             ) : jobs.length === 0 ? (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <div className="bg-card rounded-2xl border border-border p-12 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
+                <div className="bg-card rounded-3xl border border-border p-12 lg:p-16 text-center">
                   <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5">
                     <Briefcase className="w-8 h-8 text-primary" />
                   </div>
-                  <h3 className="font-bold text-foreground text-xl mb-2">Aktuell keine offenen Stellen</h3>
+                  <h3 className="font-black text-foreground text-2xl mb-2 tracking-tight">Aktuell keine offenen Stellen</h3>
                   <p className="text-muted-foreground max-w-md mx-auto">Initiativbewerbungen sind jederzeit willkommen. Nutze das Formular unten.</p>
                 </div>
               </motion.div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {jobs.map((job, i) => (
                   <motion.div key={job.id} custom={i} variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
                     <div
-                      className={`bg-card rounded-2xl border-2 cursor-pointer transition-all hover:border-primary/30 ${selectedJob === job.id ? "border-primary" : "border-border"}`}
-                      style={{ boxShadow: "var(--shadow-card)" }}
+                      className={`group bg-card rounded-2xl border cursor-pointer transition-all hover:border-primary hover:shadow-lg ${selectedJob === job.id ? "border-primary shadow-lg" : "border-border"}`}
                       onClick={() => setSelectedJob(selectedJob === job.id ? null : job.id)}
                     >
-                      <div className="p-6">
+                      <div className="p-6 lg:p-7">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
-                            <h3 className="font-bold text-foreground text-lg">{job.title}</h3>
-                            <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
-                              <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{job.location}</span>
-                              <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{job.employment_type}</span>
+                            <h3 className="font-black text-foreground text-xl lg:text-2xl tracking-tight group-hover:text-primary transition-colors">{job.title}</h3>
+                            <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" />{job.location}</span>
+                              <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" />{job.employment_type}</span>
                               <Badge variant="outline" className="rounded-full">{job.department}</Badge>
                             </div>
                           </div>
-                          <div className={`w-8 h-8 rounded-full bg-muted flex items-center justify-center transition-all ${selectedJob === job.id ? "bg-primary/10" : ""}`}>
-                            <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform ${selectedJob === job.id ? "rotate-90 text-primary" : ""}`} />
+                          <div className={`w-11 h-11 rounded-full flex items-center justify-center transition-all shrink-0 ${selectedJob === job.id ? "bg-primary text-white" : "bg-muted text-foreground group-hover:bg-primary group-hover:text-white"}`}>
+                            <ArrowRight className={`w-4 h-4 transition-transform ${selectedJob === job.id ? "rotate-90" : ""}`} />
                           </div>
                         </div>
                         {selectedJob === job.id && (
-                          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="mt-5 pt-5 border-t border-border">
+                          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="mt-6 pt-6 border-t border-border">
                             {job.description && <p className="text-muted-foreground mb-5 leading-relaxed">{job.description}</p>}
                             {job.requirements.length > 0 && (
                               <div className="mb-5">
@@ -280,9 +428,12 @@ const KarrierePage = () => {
                               </div>
                             )}
                             {job.salary_range && <p className="text-primary font-semibold mb-4">Gehalt: {job.salary_range}</p>}
-                            <Button className="gap-2" onClick={(e) => { e.stopPropagation(); setForm(f => ({ ...f, job_listing_id: job.id })); document.getElementById("bewerbung")?.scrollIntoView({ behavior: "smooth" }); }}>
-                              Jetzt bewerben <ChevronRight className="w-4 h-4" />
-                            </Button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setForm(f => ({ ...f, job_listing_id: job.id })); document.getElementById("bewerbung")?.scrollIntoView({ behavior: "smooth" }); }}
+                              className="inline-flex items-center gap-2 bg-[#0a1a0e] text-white px-6 h-12 rounded-full font-bold hover:bg-black transition-all hover:scale-[1.02]"
+                            >
+                              Jetzt bewerben <ArrowRight className="w-4 h-4" />
+                            </button>
                           </motion.div>
                         )}
                       </div>
@@ -293,6 +444,7 @@ const KarrierePage = () => {
             )}
           </div>
         </section>
+
 
         {/* Application Form */}
         <section id="bewerbung" className="py-20 lg:py-28 bg-muted/30">
