@@ -6,7 +6,7 @@ import {
   MapPin, ChevronDown, Calculator, Truck, ClipboardList, Search,
   ChevronRight, Sparkles, Activity, Command, ChevronsLeft,
   ChevronsRight, Menu, X, IdCard, Wallet, Building2, MessageCircleWarning, Tv, Wrench, TrendingUp,
-  Sun, Moon, MonitorSmartphone
+  Sun, Moon, MonitorSmartphone, Briefcase
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -94,6 +94,7 @@ const menuSections: MenuSection[] = [
       { path: "/admin/driver-compliance", label: "Fahrer-Compliance", icon: IdCard, allowedRoles: MANAGEMENT },
       { path: "/admin/payroll", label: "Lohnabrechnung", icon: Wallet, allowedRoles: ADMIN_ONLY },
       { path: "/admin/employees", label: "Mitarbeiter", icon: Users, allowedRoles: ADMIN_ONLY },
+      { path: "/admin/jobs", label: "Meine Stellen", icon: Briefcase, allowedRoles: ADMIN_ONLY },
     ],
   },
   {
