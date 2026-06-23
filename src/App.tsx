@@ -38,6 +38,7 @@ const AdminDepartures = lazy(() => import("./pages/AdminDepartures"));
 const AdminTemplates = lazy(() => import("./pages/AdminTemplates"));
 const AdminLegal = lazy(() => import("./pages/AdminLegal"));
 const AdminTourBookings = lazy(() => import("./pages/AdminTourBookings"));
+const AdminBookings = lazy(() => import("./pages/AdminBookings"));
 const AdminEmployees = lazy(() => import("./pages/AdminEmployees"));
 const AdminSettings = lazy(() => import("./pages/AdminSettings"));
 const AdminRoutes = lazy(() => import("./pages/AdminRoutes"));
@@ -169,7 +170,9 @@ const App = () => (
               <Route path="/admin/weekend-trip-builder" element={<AdminWeekendTripBuilder />} />
               <Route path="/admin/weekend-trip-builder/:tripId" element={<AdminWeekendTripBuilder />} />
               <Route path="/admin/tour-bookings" element={<AdminTourBookings />} />
-              <Route path="/admin/bus-bookings" element={<AdminDashboard />} />
+              <Route path="/admin/bookings" element={<AdminBookings />} />
+              <Route path="/admin/bus-bookings" element={<AdminBookings />} />
+
               <Route path="/admin/employees" element={<AdminEmployees />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
               <Route path="/admin/routes" element={<AdminRoutes />} />
