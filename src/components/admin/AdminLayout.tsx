@@ -66,7 +66,8 @@ const menuSections: MenuSection[] = [
     label: "Fahrten & Betrieb",
     items: [
       { path: "/admin/tour-builder", label: "Tourenplanung", icon: Map, allowedRoles: MANAGEMENT },
-      { path: "/admin/dispo-board", label: "Einsatzplanung", icon: ClipboardList, allowedRoles: OPS_STAFF },
+      { path: "/admin/dispatch", label: "Fahrt-Disposition", icon: ClipboardList, allowedRoles: OPS_STAFF },
+      { path: "/admin/dispo-board", label: "Einsatzplanung (Linien)", icon: ClipboardList, allowedRoles: OPS_STAFF },
       { path: "/admin/driver-compliance", label: "Fahrer-Board", icon: IdCard, allowedRoles: MANAGEMENT },
       { path: "/admin/shifts", label: "Dienstpläne", icon: Users, allowedRoles: MANAGEMENT },
       { path: "/admin/incident-workflow", label: "Vorfall-Workflow", icon: AlertTriangle, allowedRoles: OPS_STAFF },
