@@ -63,6 +63,7 @@ const AdminPayroll = lazy(() => import("./pages/AdminPayroll"));
 const AdminB2BCustomers = lazy(() => import("./pages/AdminB2BCustomers"));
 const AdminComplaints = lazy(() => import("./pages/AdminComplaints"));
 const AdminDispoBoard = lazy(() => import("./pages/AdminDispoBoard"));
+const AdminDispatch = lazy(() => import("./pages/AdminDispatch"));
 const AdminSLAMonitor = lazy(() => import("./pages/AdminSLAMonitor"));
 const AdminIncidentWorkflow = lazy(() => import("./pages/AdminIncidentWorkflow"));
 const PassengerDataPage = lazy(() => import("./pages/PassengerDataPage"));
@@ -193,6 +194,8 @@ const App = () => (
               <Route path="/admin/b2b" element={<AdminB2BCustomers />} />
               <Route path="/admin/complaints" element={<AdminComplaints />} />
               <Route path="/admin/dispo-board" element={<AdminDispoBoard />} />
+              <Route path="/admin/dispatch" element={<AdminDispatch />} />
+              <Route path="/admin/fahrtenplanung" element={<AdminDispatch />} />
               <Route path="/admin/sla-monitor" element={<AdminSLAMonitor />} />
               <Route path="/admin/incident-workflow" element={<AdminIncidentWorkflow />} />
               <Route path="/admin/jobs" element={<AdminJobs />} />
