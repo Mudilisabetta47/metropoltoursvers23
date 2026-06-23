@@ -2477,6 +2477,69 @@ export type Database = {
           },
         ]
       }
+      payment_audit_log: {
+        Row: {
+          actual_amount: number | null
+          booking_id: string | null
+          capture_id: string | null
+          created_at: string
+          currency: string | null
+          error_code: string | null
+          error_message: string | null
+          expected_amount: number | null
+          id: string
+          ip_address: string | null
+          metadata: Json
+          operation: string
+          order_id: string | null
+          paypal_status: string | null
+          provider: string
+          result_status: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          actual_amount?: number | null
+          booking_id?: string | null
+          capture_id?: string | null
+          created_at?: string
+          currency?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          expected_amount?: number | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json
+          operation: string
+          order_id?: string | null
+          paypal_status?: string | null
+          provider?: string
+          result_status: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          actual_amount?: number | null
+          booking_id?: string | null
+          capture_id?: string | null
+          created_at?: string
+          currency?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          expected_amount?: number | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json
+          operation?: string
+          order_id?: string | null
+          paypal_status?: string | null
+          provider?: string
+          result_status?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       payroll_entries: {
         Row: {
           amount: number

@@ -88,6 +88,27 @@ serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 });
     }
 
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+    const ua = req.headers.get("user-agent") || null;
+
+    // Audit logger — never throws, never blocks
+    const audit = async (row: Record<string, unknown>) => {
+      try {
+        await supabaseAdmin.from("payment_audit_log").insert({
+          provider: "paypal",
+          operation: "capture",
+          order_id: orderId,
+          booking_id: expectedBookingId ?? null,
+          user_id: callerId,
+          ip_address: ip,
+          user_agent: ua,
+          ...row,
+        });
+      } catch (e) {
+        console.error("audit log failed", e);
+      }
+    };
+
     const accessToken = await getPayPalAccessToken();
 
     // STEP 1: Fetch the order from PayPal BEFORE capturing, to verify metadata
@@ -95,6 +116,7 @@ serve(async (req) => {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (!lookupRes.ok) {
+      await audit({ result_status: "failure", error_code: "order_lookup_failed", error_message: `PayPal lookup ${lookupRes.status}` });
       return new Response(JSON.stringify({ error: "PayPal Order nicht gefunden." }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 });
     }
@@ -104,18 +126,22 @@ serve(async (req) => {
     const orderCurrency = orderData.purchase_units?.[0]?.amount?.currency_code;
 
     if (!orderBookingId) {
+      await audit({ result_status: "failure", error_code: "missing_reference", paypal_status: orderData.status });
       return new Response(JSON.stringify({ error: "Order ohne Buchungsreferenz." }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 });
     }
     if (expectedBookingId && expectedBookingId !== orderBookingId) {
+      await audit({ booking_id: orderBookingId, result_status: "rejected", error_code: "booking_mismatch", paypal_status: orderData.status });
       return new Response(JSON.stringify({ error: "Order gehört nicht zur erwarteten Buchung." }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 });
     }
     if (orderCurrency !== "EUR") {
+      await audit({ booking_id: orderBookingId, result_status: "rejected", error_code: "bad_currency", currency: orderCurrency, actual_amount: orderAmount });
       return new Response(JSON.stringify({ error: "Ungültige Währung." }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 });
     }
     if (!["CREATED", "APPROVED", "SAVED"].includes(orderData.status)) {
+      await audit({ booking_id: orderBookingId, result_status: "rejected", error_code: "bad_order_status", paypal_status: orderData.status });
       return new Response(JSON.stringify({ error: `Order Status ungültig: ${orderData.status}` }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 });
     }
@@ -128,26 +154,28 @@ serve(async (req) => {
       .single();
 
     if (!existing) {
+      await audit({ booking_id: orderBookingId, result_status: "failure", error_code: "booking_not_found" });
       return new Response(JSON.stringify({ error: "Buchung nicht gefunden." }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 });
     }
     if (existing.user_id && !isStaff && existing.user_id !== callerId) {
+      await audit({ booking_id: orderBookingId, result_status: "rejected", error_code: "forbidden" });
       return new Response(JSON.stringify({ error: "Nicht berechtigt für diese Buchung." }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 });
     }
     if (existing.status !== "pending" || existing.paid_at) {
+      await audit({ booking_id: orderBookingId, result_status: "rejected", error_code: "not_payable", metadata: { status: existing.status, paid_at: existing.paid_at } });
       return new Response(JSON.stringify({ error: "Buchung ist nicht mehr bezahlbar." }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 });
     }
-    // The order must have been created by our own create-paypal-order function (which stamps payment_reference)
     if (existing.payment_reference !== `paypal:${orderId}`) {
+      await audit({ booking_id: orderBookingId, result_status: "rejected", error_code: "order_not_initiated_for_booking" });
       return new Response(JSON.stringify({ error: "Order wurde nicht für diese Buchung initiiert." }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 });
     }
-    // Verify amount matches expected total (price - discount), tolerate 1ct rounding
     const expectedAmount = Number(existing.total_price) - Number(existing.discount_amount ?? 0);
     if (Math.abs(orderAmount - expectedAmount) > 0.01) {
-      console.error("Amount mismatch", { orderAmount, expectedAmount, bookingId: orderBookingId });
+      await audit({ booking_id: orderBookingId, result_status: "rejected", error_code: "amount_mismatch_pre_capture", expected_amount: expectedAmount, actual_amount: orderAmount, currency: orderCurrency });
       return new Response(JSON.stringify({ error: "Zahlungsbetrag stimmt nicht mit Buchung überein." }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 });
     }
@@ -159,9 +187,18 @@ serve(async (req) => {
     });
     const captureData = await captureRes.json();
     if (captureData.status !== "COMPLETED") {
+      await audit({
+        booking_id: orderBookingId,
+        result_status: "failure",
+        error_code: "capture_not_completed",
+        error_message: (captureData?.details?.[0]?.description || captureData?.message || "").toString().slice(0, 500),
+        paypal_status: captureData.status,
+        expected_amount: expectedAmount,
+        currency: "EUR",
+      });
       return new Response(
-        JSON.stringify({ success: false, status: captureData.status, details: captureData }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: false, status: captureData.status, error: "Zahlung konnte nicht abgeschlossen werden." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 402 }
       );
     }
 
@@ -173,7 +210,16 @@ serve(async (req) => {
     const capturedCurrency = capture?.amount?.currency_code;
 
     if (capturedCurrency !== "EUR" || Math.abs(capturedAmount - expectedAmount) > 0.01) {
-      console.error("Captured amount mismatch", { capturedAmount, expectedAmount });
+      await audit({
+        booking_id: bookingId,
+        capture_id: captureId,
+        result_status: "fraud_suspected",
+        error_code: "captured_amount_mismatch",
+        expected_amount: expectedAmount,
+        actual_amount: capturedAmount,
+        currency: capturedCurrency,
+        paypal_status: captureData.status,
+      });
       return new Response(JSON.stringify({ error: "Erfasster Betrag weicht ab. Bitte Support kontaktieren." }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 });
     }
@@ -192,6 +238,19 @@ serve(async (req) => {
       .is("paid_at", null)
       .select()
       .single();
+
+    await audit({
+      booking_id: bookingId,
+      capture_id: captureId,
+      result_status: updatedBooking ? "success" : "duplicate",
+      paypal_status: captureData.status,
+      expected_amount: expectedAmount,
+      actual_amount: capturedAmount,
+      currency: capturedCurrency,
+      metadata: { booking_number: bookingNumber, by_staff: isStaff },
+    });
+
+
 
 
 
