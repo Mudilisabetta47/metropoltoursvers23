@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Loader2, Pencil, Save, X } from "lucide-react";
+import DOMPurify from "dompurify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,7 +78,7 @@ const AdminTemplates = () => {
                 ) : (
                   <div>
                     <div className="text-sm text-zinc-400 mb-1">Betreff: <span className="text-white">{t.subject}</span></div>
-                    <div className="bg-zinc-800 rounded p-3 text-xs text-zinc-300 max-h-32 overflow-y-auto" dangerouslySetInnerHTML={{ __html: t.body_html }} />
+                    <div className="bg-zinc-800 rounded p-3 text-xs text-zinc-300 max-h-32 overflow-y-auto" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(t.body_html || "") }} />
                   </div>
                 )}
               </CardContent>

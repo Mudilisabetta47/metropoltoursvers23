@@ -46,6 +46,24 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
+    // Authentication / authorization
+    const authHeader = req.headers.get("Authorization");
+    let callerId: string | null = null;
+    let isStaff = false;
+    if (authHeader?.startsWith("Bearer ")) {
+      const userClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const { data: { user } } = await userClient.auth.getUser();
+      if (user) {
+        callerId = user.id;
+        const { data: roles } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", user.id);
+        isStaff = (roles ?? []).some((r: any) => ["admin", "office", "agent"].includes(r.role));
+      }
+    }
+
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from("tour_bookings")
       .select("*, package_tours(destination, country)")
@@ -53,6 +71,23 @@ serve(async (req) => {
       .single();
 
     if (bookingError || !booking) throw new Error("Booking not found");
+
+    // Only allow payment on bookings that are still pending and unpaid
+    if (booking.status !== "pending" || booking.paid_at) {
+      return new Response(
+        JSON.stringify({ error: "Diese Buchung kann nicht mehr bezahlt werden." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+      );
+    }
+
+    // If booking belongs to a user, require matching auth (staff bypass)
+    if (booking.user_id && !isStaff && booking.user_id !== callerId) {
+      return new Response(
+        JSON.stringify({ error: "Nicht berechtigt für diese Buchung." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+      );
+    }
+
 
     let totalAmount = booking.total_price;
     let couponId: string | null = null;
