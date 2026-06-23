@@ -53,6 +53,29 @@ serve(async (req) => {
     const { orderId } = await req.json();
     if (!orderId) throw new Error("orderId is required");
 
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    // Authentication / authorization
+    const authHeader = req.headers.get("Authorization");
+    let callerId: string | null = null;
+    let isStaff = false;
+    if (authHeader?.startsWith("Bearer ")) {
+      const userClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const { data: { user } } = await userClient.auth.getUser();
+      if (user) {
+        callerId = user.id;
+        const { data: roles } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", user.id);
+        isStaff = (roles ?? []).some((r: any) => ["admin", "office", "agent"].includes(r.role));
+      }
+    }
+
     const accessToken = await getPayPalAccessToken();
 
     // Capture the order
@@ -79,10 +102,28 @@ serve(async (req) => {
 
     if (!bookingId) throw new Error("No booking reference in PayPal order");
 
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    // Authorization: verify caller has rights on this booking
+    const { data: existing } = await supabaseAdmin
+      .from("tour_bookings")
+      .select("user_id, status, paid_at")
+      .eq("id", bookingId)
+      .single();
+
+    if (!existing) throw new Error("Booking not found");
+
+    if (existing.user_id && !isStaff && existing.user_id !== callerId) {
+      return new Response(
+        JSON.stringify({ error: "Nicht berechtigt für diese Buchung." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+      );
+    }
+
+    if (existing.status !== "pending" || existing.paid_at) {
+      return new Response(
+        JSON.stringify({ error: "Buchung ist nicht mehr bezahlbar." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+      );
+    }
 
     // Update booking to confirmed + paid
     const { data: updatedBooking } = await supabaseAdmin
@@ -96,6 +137,7 @@ serve(async (req) => {
       .eq("id", bookingId)
       .select()
       .single();
+
 
     // Send confirmation email (same as Stripe flow)
     try {
