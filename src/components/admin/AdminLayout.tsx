@@ -6,7 +6,8 @@ import {
   MapPin, ChevronDown, Calculator, Truck, ClipboardList, Search,
   ChevronRight, Sparkles, Activity, Command, ChevronsLeft,
   ChevronsRight, Menu, X, IdCard, Wallet, Building2, MessageCircleWarning, Tv, Wrench, TrendingUp,
-  Sun, Moon, MonitorSmartphone, Briefcase
+  Sun, Moon, MonitorSmartphone, Briefcase, FileSignature, Receipt, Fuel, Scale,
+  Gauge, CalendarClock, AlertTriangle, ClipboardCheck, BookOpen, Tag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,7 +48,9 @@ const menuSections: MenuSection[] = [
     label: "Cockpit",
     items: [
       { path: "/admin/dashboard", label: "Übersicht", icon: LayoutDashboard, allowedRoles: BOOKING_STAFF },
-      { path: "/admin/wallboard", label: "Wallboard (TV)", icon: Tv, allowedRoles: MANAGEMENT },
+      { path: "/admin/wallboard", label: "Wallboard", icon: Tv, allowedRoles: MANAGEMENT },
+      { path: "/admin/ops", label: "Live-Betrieb", icon: Activity, allowedRoles: OPS_STAFF },
+      { path: "/admin/departures", label: "Kalender", icon: CalendarClock, allowedRoles: ALL_STAFF },
     ],
   },
   {
@@ -56,49 +59,22 @@ const menuSections: MenuSection[] = [
       { path: "/admin/tour-bookings", label: "Reise-Buchungen", icon: FileText, allowedRoles: BOOKING_STAFF },
       { path: "/admin/bus-bookings", label: "Bus-Buchungen", icon: Bus, allowedRoles: BOOKING_STAFF },
       { path: "/admin/inquiries", label: "Anfragen", icon: Mail, allowedRoles: BOOKING_STAFF },
+      { path: "/admin/cost-estimate", label: "Angebote", icon: FileSignature, allowedRoles: MANAGEMENT },
     ],
   },
   {
-    label: "Disposition",
+    label: "Fahrten & Betrieb",
     items: [
-      { path: "/admin/ops", label: "Leitstand", icon: Activity, allowedRoles: OPS_STAFF },
-      { path: "/admin/dispo-board", label: "Dispo-Board", icon: ClipboardList, allowedRoles: OPS_STAFF },
-      { path: "/admin/incident-workflow", label: "Vorfall-Workflow", icon: Shield, allowedRoles: OPS_STAFF },
-      { path: "/admin/sla-monitor", label: "SLA & Pünktlichkeit", icon: Activity, allowedRoles: MANAGEMENT },
-      { path: "/admin/departures", label: "Fahrten", icon: Calendar, allowedRoles: ALL_STAFF },
-      { path: "/admin/shifts", label: "Dienstpläne", icon: ClipboardList, allowedRoles: MANAGEMENT },
-      { path: "/admin/tour-builder", label: "Reisen", icon: Map, allowedRoles: MANAGEMENT },
+      { path: "/admin/tour-builder", label: "Tourenplanung", icon: Map, allowedRoles: MANAGEMENT },
+      { path: "/admin/dispo-board", label: "Einsatzplanung", icon: ClipboardList, allowedRoles: OPS_STAFF },
+      { path: "/admin/driver-compliance", label: "Fahrer-Board", icon: IdCard, allowedRoles: MANAGEMENT },
+      { path: "/admin/shifts", label: "Dienstpläne", icon: Users, allowedRoles: MANAGEMENT },
+      { path: "/admin/incident-workflow", label: "Vorfall-Workflow", icon: AlertTriangle, allowedRoles: OPS_STAFF },
+      { path: "/admin/sla-monitor", label: "Pünktlichkeit & SLA", icon: Gauge, allowedRoles: MANAGEMENT },
     ],
   },
   {
-    label: "Stammdaten",
-    items: [
-      { path: "/admin/routes", label: "Routen", icon: Route, allowedRoles: MANAGEMENT },
-      { path: "/admin/stops", label: "Haltestellen", icon: MapPin, allowedRoles: MANAGEMENT },
-      { path: "/admin/buses", label: "Fahrzeuge", icon: Truck, allowedRoles: MANAGEMENT },
-    ],
-  },
-  {
-    label: "Flotten-Management",
-    items: [
-      { path: "/admin/fleet-compliance", label: "Compliance & TÜV", icon: Shield, allowedRoles: MANAGEMENT },
-      { path: "/admin/fleet-maintenance", label: "Wartungs-Manager", icon: Wrench, allowedRoles: MANAGEMENT },
-      { path: "/admin/fuel-log", label: "Tankungen", icon: Activity, allowedRoles: MANAGEMENT },
-      { path: "/admin/toll-vignettes", label: "Maut & Vignetten", icon: Calculator, allowedRoles: MANAGEMENT },
-      { path: "/admin/workshops", label: "Werkstätten", icon: Truck, allowedRoles: MANAGEMENT },
-    ],
-  },
-  {
-    label: "Personal",
-    items: [
-      { path: "/admin/driver-compliance", label: "Fahrer-Compliance", icon: IdCard, allowedRoles: MANAGEMENT },
-      { path: "/admin/payroll", label: "Lohnabrechnung", icon: Wallet, allowedRoles: ADMIN_ONLY },
-      { path: "/admin/employees", label: "Mitarbeiter", icon: Users, allowedRoles: ADMIN_ONLY },
-      { path: "/admin/jobs", label: "Meine Stellen", icon: Briefcase, allowedRoles: ADMIN_ONLY },
-    ],
-  },
-  {
-    label: "CRM",
+    label: "Kunden & Verträge",
     items: [
       { path: "/admin/customers", label: "Privatkunden", icon: UserCheck, allowedRoles: BOOKING_STAFF },
       { path: "/admin/b2b", label: "B2B-Kunden", icon: Building2, allowedRoles: MANAGEMENT },
@@ -106,28 +82,57 @@ const menuSections: MenuSection[] = [
     ],
   },
   {
+    label: "Reisen & Angebote",
+    items: [
+      { path: "/admin/tour-builder", label: "Reisen", icon: Map, allowedRoles: MANAGEMENT },
+      { path: "/admin/weekend-trip-builder", label: "Wochenend-Reisen", icon: Sparkles, allowedRoles: MANAGEMENT },
+      { path: "/admin/coupons", label: "Gutscheine & Aktionen", icon: Tag, allowedRoles: MANAGEMENT },
+      { path: "/admin/dynamic-pricing", label: "Preise & Kontingente", icon: TrendingUp, allowedRoles: MANAGEMENT },
+    ],
+  },
+  {
+    label: "Stammdaten",
+    items: [
+      { path: "/admin/routes", label: "Routen", icon: Route, allowedRoles: MANAGEMENT },
+      { path: "/admin/stops", label: "Haltestellen", icon: MapPin, allowedRoles: MANAGEMENT },
+      { path: "/admin/buses", label: "Fahrzeuge", icon: Bus, allowedRoles: MANAGEMENT },
+    ],
+  },
+  {
+    label: "Flotten-Management",
+    items: [
+      { path: "/admin/fleet-maintenance", label: "Wartung & TÜV", icon: Wrench, allowedRoles: MANAGEMENT },
+      { path: "/admin/fleet-compliance", label: "Compliance", icon: ClipboardCheck, allowedRoles: MANAGEMENT },
+      { path: "/admin/fuel-log", label: "Tankungen", icon: Fuel, allowedRoles: MANAGEMENT },
+      { path: "/admin/toll-vignettes", label: "Maut & Vignetten", icon: Receipt, allowedRoles: MANAGEMENT },
+      { path: "/admin/workshops", label: "Werkstätten", icon: Truck, allowedRoles: MANAGEMENT },
+    ],
+  },
+  {
     label: "Finanzen",
     items: [
       { path: "/admin/finances", label: "Buchhaltung", icon: DollarSign, allowedRoles: MANAGEMENT },
       { path: "/admin/cost-estimate", label: "Kalkulation", icon: Calculator, allowedRoles: MANAGEMENT },
-      { path: "/admin/coupons", label: "Gutscheine", icon: Sparkles, allowedRoles: MANAGEMENT },
-      { path: "/admin/dynamic-pricing", label: "Dynamic Pricing", icon: TrendingUp, allowedRoles: MANAGEMENT },
+      { path: "/admin/payroll", label: "Lohnabrechnung", icon: Wallet, allowedRoles: ADMIN_ONLY },
+      { path: "/admin/payment-audit", label: "Zahlungs-Audit", icon: Shield, allowedRoles: ADMIN_ONLY },
     ],
   },
   {
     label: "Kommunikation",
     items: [
       { path: "/admin/mailbox", label: "Postfach", icon: Inbox, allowedRoles: MANAGEMENT },
-      { path: "/admin/templates", label: "E-Mail Vorlagen", icon: Mail, allowedRoles: MANAGEMENT },
+      { path: "/admin/templates", label: "E-Mail-Vorlagen", icon: Mail, allowedRoles: MANAGEMENT },
+      { path: "/admin/cms", label: "Inhalte (CMS)", icon: BookOpen, allowedRoles: MANAGEMENT },
+      { path: "/admin/jobs", label: "Stellenangebote", icon: Briefcase, allowedRoles: ADMIN_ONLY },
     ],
   },
   {
     label: "System",
     items: [
-      { path: "/admin/cms", label: "Inhalte", icon: ClipboardList, allowedRoles: MANAGEMENT },
-      { path: "/admin/audit", label: "Audit-Log", icon: Shield, allowedRoles: ADMIN_ONLY },
-      { path: "/admin/legal", label: "Rechtliches", icon: Shield, allowedRoles: ADMIN_ONLY },
+      { path: "/admin/employees", label: "Benutzer & Rollen", icon: Users, allowedRoles: ADMIN_ONLY },
       { path: "/admin/settings", label: "Einstellungen", icon: Settings, allowedRoles: ADMIN_ONLY },
+      { path: "/admin/audit", label: "Audit-Log", icon: Shield, allowedRoles: ADMIN_ONLY },
+      { path: "/admin/legal", label: "Rechtliches", icon: Scale, allowedRoles: ADMIN_ONLY },
     ],
   },
 ];
