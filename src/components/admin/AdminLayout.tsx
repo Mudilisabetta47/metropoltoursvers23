@@ -200,23 +200,8 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
 
   const SidebarContent = () => (
     <>
-      {/* Logo */}
-      <div className={cn("border-b cockpit-border flex items-center gap-3 px-5 py-5", collapsed && "px-3 justify-center")}>
-        <div className="relative shrink-0">
-          <div className="size-9 bg-gradient-to-br from-[#00CC36] to-[#00a82c] rounded-lg flex items-center justify-center brand-glow-sm">
-            <Bus className="w-4.5 h-4.5 text-black" strokeWidth={2.5} />
-          </div>
-          <div className="absolute -top-0.5 -right-0.5 size-2 bg-[#00CC36] rounded-full ring-2 ring-[#0b0e14] animate-pulse" />
-        </div>
-        {!collapsed && (
-          <div className="min-w-0">
-            <h1 className="text-[13px] font-bold text-white tracking-tight leading-tight">METROPOL TOURS</h1>
-            <p className="text-[10px] cockpit-group-label !tracking-widest">Cockpit · {roleLabel}</p>
-          </div>
-        )}
-      </div>
-
       {/* Nav */}
+      <nav className="flex-1 px-3 py-4 overflow-y-auto scrollbar-thin">
       <nav className="flex-1 px-3 py-4 overflow-y-auto scrollbar-thin">
         {menuSections.map((section) => {
           const visibleItems = section.items.filter(item => canAccess(item.allowedRoles));
