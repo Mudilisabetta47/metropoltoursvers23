@@ -198,11 +198,55 @@ const AdminInquiryDetail = () => {
     }
   };
 
-  const handleConvertToBooking = () => {
+  const handleConvertToBooking = async () => {
     if (!inquiry) return;
-    // Navigate to tour bookings with pre-filled data
-    navigate(`/admin/tour-bookings?convert=${inquiry.id}&email=${inquiry.email}&name=${inquiry.first_name}+${inquiry.last_name}&destination=${inquiry.destination}&participants=${inquiry.participants}`);
-    toast({ title: "Weiterleitung zur Buchungsverwaltung" });
+    setIsUpdating(true);
+    try {
+      // Parse departure date (text field, formats: dd.MM.yyyy or yyyy-MM-dd)
+      let depAt: string | null = null;
+      const raw = (inquiry.departure_date || "").trim();
+      const dm = raw.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+      if (dm) depAt = new Date(`${dm[3]}-${dm[2]}-${dm[1]}T08:00:00`).toISOString();
+      else if (/^\d{4}-\d{2}-\d{2}/.test(raw)) depAt = new Date(`${raw.substring(0,10)}T08:00:00`).toISOString();
+      else depAt = new Date(Date.now() + 14 * 86400000).toISOString();
+
+      const { data: created, error } = await supabase
+        .from('admin_bookings')
+        .insert({
+          booking_type: 'reise',
+          customer_name: `${inquiry.first_name} ${inquiry.last_name}`.trim(),
+          customer_email: inquiry.email,
+          customer_phone: inquiry.phone,
+          pickup_location: 'Hannover ZOB',
+          destination_location: inquiry.destination,
+          departure_at: depAt,
+          passenger_count: inquiry.participants,
+          price_gross: inquiry.total_price,
+          price_net: Math.round((inquiry.total_price / 1.19) * 100) / 100,
+          booking_status: 'bestaetigt',
+          payment_status: 'offen',
+          internal_notes: `Aus Anfrage ${inquiry.inquiry_number} übernommen`,
+          created_by: user?.id || null,
+        } as never)
+        .select('id, booking_number')
+        .single();
+      if (error) throw error;
+
+      await supabase.from('package_tour_inquiries').update({ status: 'converted' } as never).eq('id', inquiry.id);
+      await supabase.from('tour_customer_notes').insert({
+        customer_email: inquiry.email,
+        note: `[Konversion] Anfrage ${inquiry.inquiry_number} in Buchung ${(created as any).booking_number} umgewandelt`,
+        created_by: user?.id || null,
+      });
+
+      toast({ title: "Buchung erstellt", description: (created as any).booking_number });
+      navigate(`/admin/bus-bookings?focus=${(created as any).id}`);
+    } catch (e: any) {
+      console.error(e);
+      toast({ title: "Konversion fehlgeschlagen", description: e?.message, variant: "destructive" });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleCreateOffer = () => {
