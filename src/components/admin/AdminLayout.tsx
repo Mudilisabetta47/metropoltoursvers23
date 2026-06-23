@@ -343,72 +343,163 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
       {/* Main */}
       <main className="flex-1 min-w-0 flex flex-col relative z-10">
         {/* Top Bar */}
-        <header className="h-16 border-b cockpit-border bg-[#0b0e14]/70 backdrop-blur-xl sticky top-0 z-30 flex items-center gap-4 px-4 lg:px-6">
-          {/* Mobile menu */}
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="lg:hidden size-9 rounded-lg hover:bg-white/5 flex items-center justify-center text-zinc-400"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+        <header className="border-b cockpit-border bg-[#0b0e14] sticky top-0 z-30">
+          {/* Row 1: Brand context bar — Mandant / Geschäftsjahr / Arbeitsbereich + global search */}
+          <div className="h-12 flex items-center gap-0 px-0 border-b border-white/[0.04]">
+            {/* Mobile menu */}
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="lg:hidden size-12 hover:bg-white/5 flex items-center justify-center text-zinc-400"
+              aria-label="Menü öffnen"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
 
-          {/* Breadcrumb */}
-          <div className="hidden md:flex items-center gap-2 text-xs">
-            <span className="text-zinc-500">Cockpit</span>
-            {currentSection && (
-              <>
-                <ChevronRight className="w-3 h-3 text-zinc-700" />
-                <span className="text-zinc-500">{currentSection.label}</span>
-              </>
-            )}
-            {currentItem && (
-              <>
-                <ChevronRight className="w-3 h-3 text-zinc-700" />
-                <span className="text-zinc-200 font-medium">{currentItem.label}</span>
-              </>
-            )}
+            {/* Brand pill */}
+            <div className="flex items-center gap-2 pl-4 pr-5 h-full border-r border-white/[0.06]">
+              <div className="w-7 h-7 rounded-md bg-[#00CC36] flex items-center justify-center shadow-[0_0_18px_-4px_rgba(0,204,54,0.7)]">
+                <Bus className="w-4 h-4 text-black" strokeWidth={2.5} />
+              </div>
+              <div className="leading-none">
+                <div className="text-[13px] font-bold text-white tracking-tight">
+                  METROPOL<span className="text-[#00CC36]">•</span>TOURS
+                </div>
+                <div className="text-[9px] uppercase tracking-[0.18em] text-zinc-500 mt-0.5">Cockpit</div>
+              </div>
+            </div>
+
+            {/* Context selectors — visually like dropdowns */}
+            <div className="hidden md:flex items-stretch h-full">
+              {[
+                { label: "Mandant", value: "METROPOL TOURS DE" },
+                { label: "Geschäftsjahr", value: "2026" },
+                { label: "Arbeitsbereich", value: "Reisebetrieb" },
+              ].map((ctx) => (
+                <button
+                  key={ctx.label}
+                  type="button"
+                  className="group h-full px-4 flex items-center gap-2 border-r border-white/[0.04] hover:bg-white/[0.03] transition-colors"
+                >
+                  <div className="text-left leading-tight">
+                    <div className="text-[9px] uppercase tracking-wider text-zinc-500">{ctx.label}</div>
+                    <div className="text-[12px] text-zinc-100 font-medium flex items-center gap-1">
+                      {ctx.value}
+                    </div>
+                  </div>
+                  <ChevronDown className="w-3 h-3 text-zinc-500 group-hover:text-zinc-300 transition-colors" />
+                </button>
+              ))}
+            </div>
+
+            {/* Global search */}
+            <div className="flex-1 flex items-center px-3 h-full border-r border-white/[0.04]">
+              <button
+                onClick={() => setPaletteOpen(true)}
+                className="flex items-center gap-2 w-full max-w-[640px] mx-auto h-8 px-3 rounded-md bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.05] hover:border-white/[0.1] text-left transition-colors"
+              >
+                <Search className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                <span className="text-[12px] text-zinc-500 flex-1 truncate">
+                  Buchung, Kunde, Fahrzeug, Rechnung… <span className="text-zinc-600">(Strg+K)</span>
+                </span>
+                <kbd className="hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-black/40 border border-white/10 text-[10px] font-cockpit-mono text-zinc-400">
+                  <Command className="w-2.5 h-2.5" />K
+                </kbd>
+              </button>
+            </div>
+
+            {/* Right utilities */}
+            <div className="flex items-stretch h-full">
+              <button
+                onClick={() => {
+                  const next = themeMode === "auto"
+                    ? (themeResolved === "dark" ? "light" : "dark")
+                    : themeMode === "dark" ? "light" : "auto";
+                  setThemeMode(next);
+                }}
+                title={
+                  themeMode === "auto" ? `Auto (System: ${themeResolved === "dark" ? "Dunkel" : "Hell"})`
+                  : themeMode === "dark" ? "Dunkel-Modus" : "Hell-Modus"
+                }
+                className="w-11 flex items-center justify-center text-zinc-500 hover:text-[#00CC36] hover:bg-white/[0.04] transition-colors border-l border-white/[0.04]"
+                aria-label="Theme wechseln"
+              >
+                {themeMode === "auto" ? <MonitorSmartphone className="w-4 h-4" />
+                  : themeMode === "dark" ? <Moon className="w-4 h-4" />
+                  : <Sun className="w-4 h-4" />}
+              </button>
+
+              <div className="border-l border-white/[0.04] flex items-center px-1">
+                <NotificationBell />
+              </div>
+
+              <button
+                onClick={() => navigate("/admin/help")}
+                title="Hilfe"
+                className="w-11 flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04] transition-colors border-l border-white/[0.04]"
+                aria-label="Hilfe"
+              >
+                <span className="w-5 h-5 rounded-full border border-zinc-600 text-[10px] font-bold flex items-center justify-center">?</span>
+              </button>
+
+              <button
+                onClick={() => navigate("/admin/settings")}
+                title="Einstellungen"
+                className="w-11 flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04] transition-colors border-l border-white/[0.04]"
+                aria-label="Einstellungen"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+
+              {/* User chip */}
+              <button
+                onClick={() => navigate("/admin/profile")}
+                className="flex items-center gap-2 h-full pl-3 pr-4 border-l border-white/[0.04] hover:bg-white/[0.04] transition-colors"
+              >
+                <div className="w-7 h-7 rounded-md bg-gradient-to-br from-[#00CC36] to-emerald-700 text-black text-[11px] font-bold flex items-center justify-center">
+                  {userInitials}
+                </div>
+                <div className="hidden xl:block text-left leading-tight">
+                  <div className="text-[11px] text-zinc-200 font-medium truncate max-w-[140px]">
+                    {user?.email?.split("@")[0] || "Nutzer"}
+                  </div>
+                  <div className="text-[9px] uppercase tracking-wider text-[#00CC36]">
+                    {roles?.[0] || "Staff"}
+                  </div>
+                </div>
+                <ChevronDown className="w-3 h-3 text-zinc-500" />
+              </button>
+            </div>
           </div>
 
-          {/* Search (command palette style) */}
-          <div className="ml-auto flex items-center gap-2">
-            <button
-              onClick={() => setPaletteOpen(true)}
-              className="hidden md:flex items-center gap-2 cockpit-glass rounded-lg px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-300 hover:border-zinc-600 transition-colors w-64 group"
-            >
-              <Search className="w-3.5 h-3.5" />
-              <span className="flex-1 text-left">Suchen oder Befehl…</span>
-              <kbd className="hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white/5 border cockpit-border text-[10px] font-cockpit-mono text-zinc-400">
-                <Command className="w-2.5 h-2.5" />K
-              </kbd>
-            </button>
+          {/* Row 2: Breadcrumb + live status */}
+          <div className="h-9 flex items-center gap-3 px-4 lg:px-6 text-[11px]">
+            <div className="flex items-center gap-1.5 text-zinc-500">
+              <LayoutDashboard className="w-3 h-3" />
+              <span>Cockpit</span>
+              {currentSection && (
+                <>
+                  <ChevronRight className="w-3 h-3 text-zinc-700" />
+                  <span>{currentSection.label}</span>
+                </>
+              )}
+              {currentItem && (
+                <>
+                  <ChevronRight className="w-3 h-3 text-zinc-700" />
+                  <span className="text-zinc-200 font-medium">{currentItem.label}</span>
+                </>
+              )}
+            </div>
 
-            {/* Theme Toggle (Auto / Light / Dark) */}
-            <button
-              onClick={() => {
-                const next = themeMode === "auto"
-                  ? (themeResolved === "dark" ? "light" : "dark")
-                  : themeMode === "dark" ? "light" : "auto";
-                setThemeMode(next);
-              }}
-              title={
-                themeMode === "auto" ? `Auto (System: ${themeResolved === "dark" ? "Dunkel" : "Hell"})`
-                : themeMode === "dark" ? "Dunkel-Modus" : "Hell-Modus"
-              }
-              className="size-9 rounded-lg flex items-center justify-center text-zinc-400 hover:text-[#00CC36] hover:bg-white/[0.04] transition-colors"
-              aria-label="Theme wechseln"
-            >
-              {themeMode === "auto" ? <MonitorSmartphone className="w-4 h-4" />
-                : themeMode === "dark" ? <Moon className="w-4 h-4" />
-                : <Sun className="w-4 h-4" />}
-            </button>
-
-            {/* Notifications */}
-            <NotificationBell />
-
-            {/* Time */}
-            <div className="hidden xl:flex items-center gap-2 text-[10px] font-cockpit-mono text-zinc-500 px-3 border-l cockpit-border">
-              <span>SYSTEM:</span>
-              <span className="text-[#00CC36]">OPERATIONAL</span>
+            <div className="ml-auto hidden md:flex items-center gap-4 font-cockpit-mono text-[10px] text-zinc-500">
+              <span className="flex items-center gap-1.5">
+                <span className="relative flex w-1.5 h-1.5">
+                  <span className="absolute inline-flex w-full h-full rounded-full bg-[#00CC36] opacity-60 animate-ping" />
+                  <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-[#00CC36]" />
+                </span>
+                SYSTEM ONLINE
+              </span>
+              <span className="hidden lg:inline">DISPO: <span className="text-zinc-300">{new Date().toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" })}</span></span>
+              <span className="hidden lg:inline">UTC+1</span>
             </div>
           </div>
         </header>
