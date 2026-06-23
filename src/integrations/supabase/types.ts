@@ -14,6 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_bookings: {
+        Row: {
+          archived_at: string | null
+          assigned_bus: string | null
+          assigned_driver: string | null
+          b2b_customer_id: string | null
+          booking_number: string
+          booking_status: string
+          booking_type: string
+          created_at: string
+          created_by: string | null
+          customer_email: string | null
+          customer_name: string
+          customer_notes: string | null
+          customer_phone: string | null
+          departure_at: string
+          destination_location: string
+          id: string
+          internal_notes: string | null
+          passenger_count: number
+          payment_status: string
+          pickup_location: string
+          price_gross: number
+          price_net: number
+          return_at: string | null
+          updated_at: string
+          vehicle_class: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          assigned_bus?: string | null
+          assigned_driver?: string | null
+          b2b_customer_id?: string | null
+          booking_number?: string
+          booking_status?: string
+          booking_type?: string
+          created_at?: string
+          created_by?: string | null
+          customer_email?: string | null
+          customer_name: string
+          customer_notes?: string | null
+          customer_phone?: string | null
+          departure_at: string
+          destination_location: string
+          id?: string
+          internal_notes?: string | null
+          passenger_count?: number
+          payment_status?: string
+          pickup_location: string
+          price_gross?: number
+          price_net?: number
+          return_at?: string | null
+          updated_at?: string
+          vehicle_class?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          assigned_bus?: string | null
+          assigned_driver?: string | null
+          b2b_customer_id?: string | null
+          booking_number?: string
+          booking_status?: string
+          booking_type?: string
+          created_at?: string
+          created_by?: string | null
+          customer_email?: string | null
+          customer_name?: string
+          customer_notes?: string | null
+          customer_phone?: string | null
+          departure_at?: string
+          destination_location?: string
+          id?: string
+          internal_notes?: string | null
+          passenger_count?: number
+          payment_status?: string
+          pickup_location?: string
+          price_gross?: number
+          price_net?: number
+          return_at?: string | null
+          updated_at?: string
+          vehicle_class?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_bookings_b2b_customer_id_fkey"
+            columns: ["b2b_customer_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_mail_templates: {
         Row: {
           body: string
@@ -5485,6 +5577,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      generate_admin_booking_number: { Args: never; Returns: string }
       generate_complaint_number: { Args: never; Returns: string }
       generate_inquiry_number: { Args: never; Returns: string }
       generate_ticket_number: { Args: never; Returns: string }
