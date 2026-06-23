@@ -38,15 +38,23 @@ serve(async (req) => {
   }
 
   try {
-    const { bookingId, couponCode } = await req.json();
-    if (!bookingId) throw new Error("bookingId is required");
+    const body = await req.json().catch(() => ({}));
+    const { bookingId, couponCode } = body ?? {};
+    if (!bookingId || typeof bookingId !== "string" || !/^[0-9a-f-]{36}$/i.test(bookingId)) {
+      return new Response(JSON.stringify({ error: "Invalid bookingId" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 });
+    }
+    if (couponCode !== undefined && couponCode !== null && (typeof couponCode !== "string" || couponCode.length > 64)) {
+      return new Response(JSON.stringify({ error: "Invalid couponCode" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 });
+    }
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Authentication / authorization
+    // Authentication / authorization — REQUIRED
     const authHeader = req.headers.get("Authorization");
     let callerId: string | null = null;
     let isStaff = false;
@@ -63,6 +71,10 @@ serve(async (req) => {
         isStaff = (roles ?? []).some((r: any) => ["admin", "office", "agent"].includes(r.role));
       }
     }
+    if (!callerId) {
+      return new Response(JSON.stringify({ error: "Authentifizierung erforderlich." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 });
+    }
 
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from("tour_bookings")
@@ -70,13 +82,16 @@ serve(async (req) => {
       .eq("id", bookingId)
       .single();
 
-    if (bookingError || !booking) throw new Error("Booking not found");
+    if (bookingError || !booking) {
+      return new Response(JSON.stringify({ error: "Buchung nicht gefunden." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 });
+    }
 
     // Only allow payment on bookings that are still pending and unpaid
     if (booking.status !== "pending" || booking.paid_at) {
       return new Response(
         JSON.stringify({ error: "Diese Buchung kann nicht mehr bezahlt werden." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 }
       );
     }
 
@@ -87,6 +102,14 @@ serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
       );
     }
+    // Guest bookings (no user_id) can only be paid by staff in this hardened flow
+    if (!booking.user_id && !isStaff) {
+      return new Response(
+        JSON.stringify({ error: "Gast-Buchungen können nicht online bezahlt werden." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+      );
+    }
+
 
 
     let totalAmount = booking.total_price;
