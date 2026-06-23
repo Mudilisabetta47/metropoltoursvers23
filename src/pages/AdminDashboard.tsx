@@ -158,7 +158,7 @@ const AdminDashboard = () => {
     { label: "Buchungen heute",   value: num(counts.bookingsToday), delta: +12, icon: Receipt,  accent: "from-emerald-500/20 to-emerald-500/0", onClick: () => navigate("/admin/bookings") },
     { label: "Umsatz Monat",      value: eur(counts.revenueMonth),  delta: +8,  icon: TrendingUp, accent: "from-sky-500/20 to-sky-500/0",         onClick: () => navigate("/admin/finances") },
     { label: "Offene Anfragen",   value: num(counts.openInquiries), sub: "5 priorisiert", icon: Mail, accent: "from-amber-500/20 to-amber-500/0", onClick: () => navigate("/admin/inquiries") },
-    { label: "Aktive Fahrten",    value: num(counts.activeTrips),   sub: "live",          icon: Activity, accent: "from-emerald-500/20 to-emerald-500/0", onClick: () => navigate("/admin/dispo") },
+    { label: "Aktive Fahrten",    value: num(counts.activeTrips),   sub: "live",          icon: Activity, accent: "from-emerald-500/20 to-emerald-500/0", onClick: () => navigate("/admin/dispatch") },
     { label: "Einsatzbereite Busse", value: `${counts.readyBuses}/${counts.totalBuses}`, sub: "3 in Werkstatt", icon: Bus, accent: "from-sky-500/20 to-sky-500/0", onClick: () => navigate("/admin/buses") },
     { label: "Offene Zahlungen",  value: eur(counts.openPaymentsAmount), sub: `${counts.openPayments} Rechnungen`, icon: Euro, accent: "from-amber-500/20 to-amber-500/0", onClick: () => navigate("/admin/finances") },
     { label: "Reklamationen",     value: num(counts.complaints),    sub: "1 eskaliert",   icon: AlertTriangle, accent: "from-red-500/20 to-red-500/0", onClick: () => navigate("/admin/complaints") },
