@@ -212,9 +212,25 @@ serve(async (req) => {
       }),
     });
 
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+    const ua = req.headers.get("user-agent") || null;
+
     if (!orderRes.ok) {
       const errText = await orderRes.text();
-      throw new Error(`PayPal order creation failed [${orderRes.status}]: ${errText}`);
+      await supabaseAdmin.from("payment_audit_log").insert({
+        booking_id: bookingId,
+        user_id: callerId,
+        operation: "create_order",
+        expected_amount: totalAmount,
+        currency: "EUR",
+        result_status: "failure",
+        error_code: String(orderRes.status),
+        error_message: errText.slice(0, 1000),
+        ip_address: ip,
+        user_agent: ua,
+      });
+      return new Response(JSON.stringify({ error: "PayPal Order konnte nicht erstellt werden." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 502 });
     }
 
     const order = await orderRes.json();
@@ -224,6 +240,20 @@ serve(async (req) => {
       .from("tour_bookings")
       .update({ payment_reference: `paypal:${order.id}` })
       .eq("id", bookingId);
+
+    await supabaseAdmin.from("payment_audit_log").insert({
+      booking_id: bookingId,
+      user_id: callerId,
+      operation: "create_order",
+      order_id: order.id,
+      expected_amount: totalAmount,
+      currency: "EUR",
+      paypal_status: order.status,
+      result_status: "success",
+      ip_address: ip,
+      user_agent: ua,
+      metadata: { coupon: couponId, by_staff: isStaff },
+    });
 
     // Find the approve link
     const approveLink = order.links?.find((l: any) => l.rel === "payer-action" || l.rel === "approve")?.href;
@@ -240,3 +270,4 @@ serve(async (req) => {
     );
   }
 });
+
