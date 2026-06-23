@@ -52,6 +52,7 @@ const AdminWeekendTripBuilder = lazy(() => import("./pages/AdminWeekendTripBuild
 const AdminMailbox = lazy(() => import("./pages/AdminMailbox"));
 const AdminCoupons = lazy(() => import("./pages/AdminCoupons"));
 const AdminAuditLog = lazy(() => import("./pages/AdminAuditLog"));
+const AdminPaymentAudit = lazy(() => import("./pages/AdminPaymentAudit"));
 const AdminFleetCompliance = lazy(() => import("./pages/AdminFleetCompliance"));
 const AdminTollVignettes = lazy(() => import("./pages/AdminTollVignettes"));
 const AdminFuelLog = lazy(() => import("./pages/AdminFuelLog"));
