@@ -211,6 +211,11 @@ export default function SeatMap({
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 10); // 10 minute hold
 
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser) {
+      toast.error('Bitte melden Sie sich an, um Sitzplätze zu reservieren.');
+      return;
+    }
     const { error } = await supabase
       .from('seat_holds')
       .insert({
@@ -219,6 +224,7 @@ export default function SeatMap({
         origin_stop_id: originStopId,
         destination_stop_id: destinationStopId,
         session_id: sessionId,
+        user_id: currentUser.id,
         expires_at: expiresAt.toISOString()
       });
 
