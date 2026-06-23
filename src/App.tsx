@@ -63,6 +63,7 @@ const AdminPayroll = lazy(() => import("./pages/AdminPayroll"));
 const AdminB2BCustomers = lazy(() => import("./pages/AdminB2BCustomers"));
 const AdminComplaints = lazy(() => import("./pages/AdminComplaints"));
 const AdminDispoBoard = lazy(() => import("./pages/AdminDispoBoard"));
+const AdminDispatch = lazy(() => import("./pages/AdminDispatch"));
 const AdminSLAMonitor = lazy(() => import("./pages/AdminSLAMonitor"));
 const AdminIncidentWorkflow = lazy(() => import("./pages/AdminIncidentWorkflow"));
 const PassengerDataPage = lazy(() => import("./pages/PassengerDataPage"));
