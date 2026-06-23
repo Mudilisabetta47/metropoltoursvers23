@@ -50,15 +50,23 @@ serve(async (req) => {
   }
 
   try {
-    const { orderId } = await req.json();
-    if (!orderId) throw new Error("orderId is required");
+    const body = await req.json().catch(() => ({}));
+    const { orderId, bookingId: expectedBookingId } = body ?? {};
+    if (!orderId || typeof orderId !== "string" || !/^[A-Z0-9-]{6,64}$/i.test(orderId)) {
+      return new Response(JSON.stringify({ error: "Invalid orderId" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 });
+    }
+    if (expectedBookingId !== undefined && (typeof expectedBookingId !== "string" || !/^[0-9a-f-]{36}$/i.test(expectedBookingId))) {
+      return new Response(JSON.stringify({ error: "Invalid bookingId" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 });
+    }
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Authentication / authorization
+    // Authentication / authorization — REQUIRED
     const authHeader = req.headers.get("Authorization");
     let callerId: string | null = null;
     let isStaff = false;
@@ -75,20 +83,81 @@ serve(async (req) => {
         isStaff = (roles ?? []).some((r: any) => ["admin", "office", "agent"].includes(r.role));
       }
     }
+    if (!callerId) {
+      return new Response(JSON.stringify({ error: "Authentifizierung erforderlich." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 });
+    }
 
     const accessToken = await getPayPalAccessToken();
 
-    // Capture the order
+    // STEP 1: Fetch the order from PayPal BEFORE capturing, to verify metadata
+    const lookupRes = await fetch(`${PAYPAL_API}/v2/checkout/orders/${orderId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!lookupRes.ok) {
+      return new Response(JSON.stringify({ error: "PayPal Order nicht gefunden." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 });
+    }
+    const orderData = await lookupRes.json();
+    const orderBookingId = orderData.purchase_units?.[0]?.reference_id;
+    const orderAmount = parseFloat(orderData.purchase_units?.[0]?.amount?.value ?? "0");
+    const orderCurrency = orderData.purchase_units?.[0]?.amount?.currency_code;
+
+    if (!orderBookingId) {
+      return new Response(JSON.stringify({ error: "Order ohne Buchungsreferenz." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 });
+    }
+    if (expectedBookingId && expectedBookingId !== orderBookingId) {
+      return new Response(JSON.stringify({ error: "Order gehört nicht zur erwarteten Buchung." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 });
+    }
+    if (orderCurrency !== "EUR") {
+      return new Response(JSON.stringify({ error: "Ungültige Währung." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 });
+    }
+    if (!["CREATED", "APPROVED", "SAVED"].includes(orderData.status)) {
+      return new Response(JSON.stringify({ error: `Order Status ungültig: ${orderData.status}` }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 });
+    }
+
+    // STEP 2: Verify booking exists, belongs to caller, is in payable state, and amount matches
+    const { data: existing } = await supabaseAdmin
+      .from("tour_bookings")
+      .select("user_id, status, paid_at, total_price, discount_amount, payment_reference")
+      .eq("id", orderBookingId)
+      .single();
+
+    if (!existing) {
+      return new Response(JSON.stringify({ error: "Buchung nicht gefunden." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 });
+    }
+    if (existing.user_id && !isStaff && existing.user_id !== callerId) {
+      return new Response(JSON.stringify({ error: "Nicht berechtigt für diese Buchung." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 });
+    }
+    if (existing.status !== "pending" || existing.paid_at) {
+      return new Response(JSON.stringify({ error: "Buchung ist nicht mehr bezahlbar." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 });
+    }
+    // The order must have been created by our own create-paypal-order function (which stamps payment_reference)
+    if (existing.payment_reference !== `paypal:${orderId}`) {
+      return new Response(JSON.stringify({ error: "Order wurde nicht für diese Buchung initiiert." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 });
+    }
+    // Verify amount matches expected total (price - discount), tolerate 1ct rounding
+    const expectedAmount = Number(existing.total_price) - Number(existing.discount_amount ?? 0);
+    if (Math.abs(orderAmount - expectedAmount) > 0.01) {
+      console.error("Amount mismatch", { orderAmount, expectedAmount, bookingId: orderBookingId });
+      return new Response(JSON.stringify({ error: "Zahlungsbetrag stimmt nicht mit Buchung überein." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 });
+    }
+
+    // STEP 3: Capture
     const captureRes = await fetch(`${PAYPAL_API}/v2/checkout/orders/${orderId}/capture`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
     });
-
     const captureData = await captureRes.json();
-
     if (captureData.status !== "COMPLETED") {
       return new Response(
         JSON.stringify({ success: false, status: captureData.status, details: captureData }),
@@ -96,36 +165,20 @@ serve(async (req) => {
       );
     }
 
-    const bookingId = captureData.purchase_units?.[0]?.reference_id;
+    const bookingId = orderBookingId;
     const bookingNumber = captureData.purchase_units?.[0]?.custom_id;
-    const captureId = captureData.purchase_units?.[0]?.payments?.captures?.[0]?.id;
+    const capture = captureData.purchase_units?.[0]?.payments?.captures?.[0];
+    const captureId = capture?.id;
+    const capturedAmount = parseFloat(capture?.amount?.value ?? "0");
+    const capturedCurrency = capture?.amount?.currency_code;
 
-    if (!bookingId) throw new Error("No booking reference in PayPal order");
-
-    // Authorization: verify caller has rights on this booking
-    const { data: existing } = await supabaseAdmin
-      .from("tour_bookings")
-      .select("user_id, status, paid_at")
-      .eq("id", bookingId)
-      .single();
-
-    if (!existing) throw new Error("Booking not found");
-
-    if (existing.user_id && !isStaff && existing.user_id !== callerId) {
-      return new Response(
-        JSON.stringify({ error: "Nicht berechtigt für diese Buchung." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
-      );
+    if (capturedCurrency !== "EUR" || Math.abs(capturedAmount - expectedAmount) > 0.01) {
+      console.error("Captured amount mismatch", { capturedAmount, expectedAmount });
+      return new Response(JSON.stringify({ error: "Erfasster Betrag weicht ab. Bitte Support kontaktieren." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 });
     }
 
-    if (existing.status !== "pending" || existing.paid_at) {
-      return new Response(
-        JSON.stringify({ error: "Buchung ist nicht mehr bezahlbar." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
-      );
-    }
-
-    // Update booking to confirmed + paid
+    // Idempotent update: only flip pending → confirmed once
     const { data: updatedBooking } = await supabaseAdmin
       .from("tour_bookings")
       .update({
@@ -135,8 +188,12 @@ serve(async (req) => {
         paid_at: new Date().toISOString(),
       })
       .eq("id", bookingId)
+      .eq("status", "pending")
+      .is("paid_at", null)
       .select()
       .single();
+
+
 
 
     // Send confirmation email (same as Stripe flow)
