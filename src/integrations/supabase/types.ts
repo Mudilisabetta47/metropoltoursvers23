@@ -259,51 +259,137 @@ export type Database = {
           },
         ]
       }
+      b2b_contract_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          contract_id: string
+          created_at: string
+          field_name: string | null
+          id: string
+          new_value: string | null
+          notes: string | null
+          old_value: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          contract_id: string
+          created_at?: string
+          field_name?: string | null
+          id?: string
+          new_value?: string | null
+          notes?: string | null
+          old_value?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          contract_id?: string
+          created_at?: string
+          field_name?: string | null
+          id?: string
+          new_value?: string | null
+          notes?: string | null
+          old_value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b2b_contract_audit_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       b2b_contracts: {
         Row: {
           b2b_customer_id: string
+          billing_mode: string | null
           conditions: Json | null
+          contact_person: string | null
           contract_number: string
+          contract_type: string | null
           created_at: string
+          destination_locations: Json | null
+          discount_percent: number | null
           document_url: string | null
           id: string
+          invoice_address: string | null
+          last_activity_at: string | null
           notes: string | null
+          payment_status: string | null
+          payment_terms_days: number | null
+          pickup_locations: Json | null
+          planned_trips: number | null
+          revenue_ytd: number | null
+          services_scope: string | null
           signed_at: string | null
           status: string
           title: string
           updated_at: string
           valid_from: string
           valid_until: string | null
+          vehicle_class: string | null
         }
         Insert: {
           b2b_customer_id: string
+          billing_mode?: string | null
           conditions?: Json | null
+          contact_person?: string | null
           contract_number: string
+          contract_type?: string | null
           created_at?: string
+          destination_locations?: Json | null
+          discount_percent?: number | null
           document_url?: string | null
           id?: string
+          invoice_address?: string | null
+          last_activity_at?: string | null
           notes?: string | null
+          payment_status?: string | null
+          payment_terms_days?: number | null
+          pickup_locations?: Json | null
+          planned_trips?: number | null
+          revenue_ytd?: number | null
+          services_scope?: string | null
           signed_at?: string | null
           status?: string
           title: string
           updated_at?: string
           valid_from: string
           valid_until?: string | null
+          vehicle_class?: string | null
         }
         Update: {
           b2b_customer_id?: string
+          billing_mode?: string | null
           conditions?: Json | null
+          contact_person?: string | null
           contract_number?: string
+          contract_type?: string | null
           created_at?: string
+          destination_locations?: Json | null
+          discount_percent?: number | null
           document_url?: string | null
           id?: string
+          invoice_address?: string | null
+          last_activity_at?: string | null
           notes?: string | null
+          payment_status?: string | null
+          payment_terms_days?: number | null
+          pickup_locations?: Json | null
+          planned_trips?: number | null
+          revenue_ytd?: number | null
+          services_scope?: string | null
           signed_at?: string | null
           status?: string
           title?: string
           updated_at?: string
           valid_from?: string
           valid_until?: string | null
+          vehicle_class?: string | null
         }
         Relationships: []
       }
