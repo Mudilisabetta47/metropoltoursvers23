@@ -17,6 +17,10 @@ import type { AppRole } from "@/types/database";
 import { CommandPalette } from "@/components/admin/core/CommandPalette";
 import { NotificationBell } from "@/components/admin/core/NotificationBell";
 import { useCockpitTheme } from "@/hooks/useCockpitTheme";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
+  DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -351,26 +355,44 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
               </div>
             </div>
 
-            {/* Context selectors — visually like dropdowns */}
+            {/* Context selectors — real dropdowns */}
             <div className="hidden md:flex items-stretch h-full">
               {[
-                { label: "Mandant", value: "METROPOL TOURS DE" },
-                { label: "Geschäftsjahr", value: "2026" },
-                { label: "Arbeitsbereich", value: "Reisebetrieb" },
+                { label: "Mandant", value: "METROPOL TOURS DE", options: ["METROPOL TOURS DE", "METROPOL TOURS AT", "METROPOL TOURS CH"] },
+                { label: "Geschäftsjahr", value: "2026", options: ["2026", "2025", "2024"] },
+                { label: "Arbeitsbereich", value: "Reisebetrieb", options: ["Reisebetrieb", "Charter & Gruppen", "Werkstatt & Flotte", "Finanzen"] },
               ].map((ctx) => (
-                <button
-                  key={ctx.label}
-                  type="button"
-                  className="group h-full px-4 flex items-center gap-2 border-r border-white/[0.04] hover:bg-white/[0.03] transition-colors"
-                >
-                  <div className="text-left leading-tight">
-                    <div className="text-[9px] uppercase tracking-wider text-zinc-500">{ctx.label}</div>
-                    <div className="text-[12px] text-zinc-100 font-medium flex items-center gap-1">
-                      {ctx.value}
-                    </div>
-                  </div>
-                  <ChevronDown className="w-3 h-3 text-zinc-500 group-hover:text-zinc-300 transition-colors" />
-                </button>
+                <DropdownMenu key={ctx.label}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="group h-full px-4 flex items-center gap-2 border-r border-white/[0.04] hover:bg-white/[0.03] transition-colors outline-none focus-visible:bg-white/[0.05]"
+                    >
+                      <div className="text-left leading-tight">
+                        <div className="text-[9px] uppercase tracking-wider text-zinc-500">{ctx.label}</div>
+                        <div className="text-[12px] text-zinc-100 font-medium flex items-center gap-1">
+                          {ctx.value}
+                        </div>
+                      </div>
+                      <ChevronDown className="w-3 h-3 text-zinc-500 group-hover:text-zinc-300 transition-colors" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="bg-[#0f1218] border-white/10 text-zinc-100 min-w-[200px]">
+                    <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-zinc-500">{ctx.label} wechseln</DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-white/10" />
+                    {ctx.options.map((opt) => (
+                      <DropdownMenuItem
+                        key={opt}
+                        className={cn(
+                          "text-[12px] cursor-pointer focus:bg-white/[0.06] focus:text-white",
+                          opt === ctx.value && "text-[#00CC36] font-medium"
+                        )}
+                      >
+                        {opt}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               ))}
             </div>
 
