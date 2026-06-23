@@ -38,6 +38,7 @@ const AdminDepartures = lazy(() => import("./pages/AdminDepartures"));
 const AdminTemplates = lazy(() => import("./pages/AdminTemplates"));
 const AdminLegal = lazy(() => import("./pages/AdminLegal"));
 const AdminTourBookings = lazy(() => import("./pages/AdminTourBookings"));
+const AdminBookings = lazy(() => import("./pages/AdminBookings"));
 const AdminEmployees = lazy(() => import("./pages/AdminEmployees"));
 const AdminSettings = lazy(() => import("./pages/AdminSettings"));
 const AdminRoutes = lazy(() => import("./pages/AdminRoutes"));
