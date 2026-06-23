@@ -138,7 +138,7 @@ const AdminDashboard = () => {
           supabase.from("buses").select("id, status"),
         ]);
         const revRows = await supabase.from("bookings").select("price_paid")
-          .gte("created_at", monthStart.toISOString()).in("status", ["confirmed", "paid"]);
+          .gte("created_at", monthStart.toISOString()).in("status", ["confirmed", "completed"]);
         const rev = (revRows.data ?? []).reduce((s, r: any) => s + Number(r.price_paid || 0), 0);
 
         setCounts((c) => ({
