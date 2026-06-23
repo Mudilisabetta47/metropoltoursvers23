@@ -175,7 +175,7 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <AdminLayout>
+    <AdminLayout title="Cockpit">
       {/* TOPBAR */}
       <div className="sticky top-0 z-30 -mt-6 -mx-6 mb-6 border-b border-white/5 bg-[#0b0e13]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0b0e13]/80">
         <div className="flex flex-wrap items-center gap-3 px-6 py-3">
