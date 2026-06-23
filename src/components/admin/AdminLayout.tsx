@@ -200,8 +200,6 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
 
   const SidebarContent = () => (
     <>
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-4 overflow-y-auto scrollbar-thin">
       <nav className="flex-1 px-3 py-4 overflow-y-auto scrollbar-thin">
         {menuSections.map((section) => {
           const visibleItems = section.items.filter(item => canAccess(item.allowedRoles));
