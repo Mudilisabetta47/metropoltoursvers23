@@ -170,7 +170,9 @@ const App = () => (
               <Route path="/admin/weekend-trip-builder" element={<AdminWeekendTripBuilder />} />
               <Route path="/admin/weekend-trip-builder/:tripId" element={<AdminWeekendTripBuilder />} />
               <Route path="/admin/tour-bookings" element={<AdminTourBookings />} />
-              <Route path="/admin/bus-bookings" element={<AdminDashboard />} />
+              <Route path="/admin/bookings" element={<AdminBookings />} />
+              <Route path="/admin/bus-bookings" element={<AdminBookings />} />
+
               <Route path="/admin/employees" element={<AdminEmployees />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
               <Route path="/admin/routes" element={<AdminRoutes />} />
