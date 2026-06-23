@@ -31,11 +31,13 @@ export type Database = {
           customer_phone: string | null
           departure_at: string
           destination_location: string
+          dispatch_status: string
           id: string
           internal_notes: string | null
           passenger_count: number
           payment_status: string
           pickup_location: string
+          pretrip_checklist: Json
           price_gross: number
           price_net: number
           return_at: string | null
@@ -58,11 +60,13 @@ export type Database = {
           customer_phone?: string | null
           departure_at: string
           destination_location: string
+          dispatch_status?: string
           id?: string
           internal_notes?: string | null
           passenger_count?: number
           payment_status?: string
           pickup_location: string
+          pretrip_checklist?: Json
           price_gross?: number
           price_net?: number
           return_at?: string | null
@@ -85,11 +89,13 @@ export type Database = {
           customer_phone?: string | null
           departure_at?: string
           destination_location?: string
+          dispatch_status?: string
           id?: string
           internal_notes?: string | null
           passenger_count?: number
           payment_status?: string
           pickup_location?: string
+          pretrip_checklist?: Json
           price_gross?: number
           price_net?: number
           return_at?: string | null
