@@ -105,7 +105,7 @@ const PublicGate = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   
   // Always allow auth, admin, reset-password, legal pages
-  const bypassPaths = ['/auth', '/admin', '/reset-password', '/imprint', '/privacy', '/terms', '/passagierdaten'];
+  const bypassPaths = ['/auth', '/admin', '/reset-password', '/imprint', '/privacy', '/terms', '/passagierdaten', '/verfolge'];
   const isBypassed = bypassPaths.some(p => location.pathname.startsWith(p));
   
   if (isBypassed) return <>{children}</>;
