@@ -71,7 +71,7 @@ const menuSections: MenuSection[] = [
     items: [
       { path: "/admin/tour-builder", label: "Tourenplanung", icon: Map, allowedRoles: MANAGEMENT },
       { path: "/admin/dispatch", label: "Fahrt-Disposition", icon: ClipboardList, allowedRoles: OPS_STAFF },
-      { path: "/admin/lines", label: "Linien & Fahrpläne", icon: RouteIcon, allowedRoles: MANAGEMENT },
+      { path: "/admin/lines", label: "Linien & Fahrpläne", icon: Route, allowedRoles: MANAGEMENT },
       { path: "/admin/line-trips", label: "Tages-Fahrten (Linie)", icon: Clock, allowedRoles: OPS_STAFF },
       { path: "/admin/dispo-board", label: "Einsatzplanung (Linien)", icon: ClipboardList, allowedRoles: OPS_STAFF },
       { path: "/admin/driver-compliance", label: "Fahrer-Board", icon: IdCard, allowedRoles: MANAGEMENT },
