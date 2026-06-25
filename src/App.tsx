@@ -77,6 +77,9 @@ const AdminDynamicPricing = lazy(() => import("./pages/AdminDynamicPricing"));
 const AdminJobs = lazy(() => import("./pages/AdminJobs"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdminStub = lazy(() => import("./pages/AdminStub"));
+const AdminLines = lazy(() => import("./pages/AdminLines"));
+const AdminLineTrips = lazy(() => import("./pages/AdminLineTrips"));
+const TrackTripPage = lazy(() => import("./pages/TrackTripPage"));
 
 const queryClient = new QueryClient();
 
