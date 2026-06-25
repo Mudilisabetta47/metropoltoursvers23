@@ -7,7 +7,7 @@ import {
   ChevronRight, Sparkles, Activity, Command, ChevronsLeft,
   ChevronsRight, Menu, X, IdCard, Wallet, Building2, MessageCircleWarning, Tv, Wrench, TrendingUp,
   Sun, Moon, MonitorSmartphone, Briefcase, FileSignature, Receipt, Fuel, Scale,
-  Gauge, CalendarClock, AlertTriangle, ClipboardCheck, BookOpen, Tag,
+  Gauge, CalendarClock, AlertTriangle, ClipboardCheck, BookOpen, Tag, Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
