@@ -7,7 +7,7 @@ import {
   ChevronRight, Sparkles, Activity, Command, ChevronsLeft,
   ChevronsRight, Menu, X, IdCard, Wallet, Building2, MessageCircleWarning, Tv, Wrench, TrendingUp,
   Sun, Moon, MonitorSmartphone, Briefcase, FileSignature, Receipt, Fuel, Scale,
-  Gauge, CalendarClock, AlertTriangle, ClipboardCheck, BookOpen, Tag,
+  Gauge, CalendarClock, AlertTriangle, ClipboardCheck, BookOpen, Tag, Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -71,6 +71,8 @@ const menuSections: MenuSection[] = [
     items: [
       { path: "/admin/tour-builder", label: "Tourenplanung", icon: Map, allowedRoles: MANAGEMENT },
       { path: "/admin/dispatch", label: "Fahrt-Disposition", icon: ClipboardList, allowedRoles: OPS_STAFF },
+      { path: "/admin/lines", label: "Linien & Fahrpläne", icon: Route, allowedRoles: MANAGEMENT },
+      { path: "/admin/line-trips", label: "Tages-Fahrten (Linie)", icon: Clock, allowedRoles: OPS_STAFF },
       { path: "/admin/dispo-board", label: "Einsatzplanung (Linien)", icon: ClipboardList, allowedRoles: OPS_STAFF },
       { path: "/admin/driver-compliance", label: "Fahrer-Board", icon: IdCard, allowedRoles: MANAGEMENT },
       { path: "/admin/shifts", label: "Dienstpläne", icon: Users, allowedRoles: MANAGEMENT },

@@ -77,6 +77,9 @@ const AdminDynamicPricing = lazy(() => import("./pages/AdminDynamicPricing"));
 const AdminJobs = lazy(() => import("./pages/AdminJobs"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdminStub = lazy(() => import("./pages/AdminStub"));
+const AdminLines = lazy(() => import("./pages/AdminLines"));
+const AdminLineTrips = lazy(() => import("./pages/AdminLineTrips"));
+const TrackTripPage = lazy(() => import("./pages/TrackTripPage"));
 
 const queryClient = new QueryClient();
 
@@ -102,7 +105,7 @@ const PublicGate = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   
   // Always allow auth, admin, reset-password, legal pages
-  const bypassPaths = ['/auth', '/admin', '/reset-password', '/imprint', '/privacy', '/terms', '/passagierdaten'];
+  const bypassPaths = ['/auth', '/admin', '/reset-password', '/imprint', '/privacy', '/terms', '/passagierdaten', '/verfolge'];
   const isBypassed = bypassPaths.some(p => location.pathname.startsWith(p));
   
   if (isBypassed) return <>{children}</>;
@@ -204,6 +207,9 @@ const App = () => (
               <Route path="/admin/profile" element={<AdminStub title="Mein Profil" subtitle="Persönliche Daten, Rolle und Berechtigungen" description="Dein Profilbereich mit Account-Einstellungen und Sicherheitsoptionen ist in Vorbereitung." />} />
               <Route path="/admin/drivers" element={<AdminStub title="Fahrer-Stammdaten" subtitle="Personalakte, Lizenzen und Einsatzplanung" description="Die Fahrer-Verwaltung mit Lizenz-Tracking und Schichtplänen ist bereits in Arbeit." />} />
               <Route path="/passagierdaten" element={<PassengerDataPage />} />
+              <Route path="/admin/lines" element={<AdminLines />} />
+              <Route path="/admin/line-trips" element={<AdminLineTrips />} />
+              <Route path="/verfolge/:tripNumber" element={<TrackTripPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             </PublicGate>

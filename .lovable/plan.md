@@ -1,52 +1,57 @@
+# Linienverkehr & Fahrpläne mit Live-Tracking
 
+Komplettsystem für Linienbusse: Admin verwaltet Linien, Haltestellen und Fahrpläne. Kunden verfolgen Fahrten live auf einer Karte im FlixBus-Stil.
 
-## Problem
+## 1. Datenbank (neue Tabellen)
 
-The Settings page (`/admin/settings`) does not persist any data. The `handleSave` function (line 184) only shows a toast notification — it never writes to the database. All values are hardcoded defaults in `useState` and reset on every page reload.
+- **bus_lines** — Linien-Stammdaten: Code (z.B. "X810"), Name, Farbe, Typ (Linie/Fernbus), aktiv
+- **line_stops** — Haltestellen pro Linie mit Reihenfolge, Ankunfts-/Abfahrtszeit-Offset (Minuten ab Start), GPS (lat/lng), Bahnsteig
+- **line_schedules** — Fahrplan-Einträge: Linie, Wochentage (Mo–So Bitmask), Gültig-von/bis, Abfahrtszeit, zugewiesener Bus & Fahrer
+- **line_trips** — konkrete Einzelfahrten (Instanz eines Schedules an einem Datum) mit Status (geplant, unterwegs, angekommen, ausgefallen), Trip-Nummer
+- **line_trip_stops** — Ist-Zeiten pro Stop & Fahrt (Soll/Ist, Verspätung in Min)
 
-## Plan
+Nutzt bestehende `bus_positions_live` für GPS-Tracking.
 
-### 1. Create `app_settings` table (DB migration)
+## 2. Admin-Cockpit (3 neue Seiten in Sektion "Fahrten & Betrieb")
 
-A single key-value table to store all settings sections:
+- **`/admin/lines`** — Linien-Übersicht
+  - Tabelle aller Linien mit Status-Pille, Anzahl Stops, nächste Abfahrt
+  - "Neue Linie"-Drawer
+- **`/admin/lines/:id`** — Linien-Editor
+  - Tab 1: Stammdaten (Code, Name, Farbe)
+  - Tab 2: Haltestellen (sortierbar mit Drag-Handle, GPS-Picker, Offset-Min)
+  - Tab 3: Fahrpläne (Wochentag-Picker, Abfahrtszeiten, Bus/Fahrer-Zuweisung)
+  - Tab 4: Live-Vorschau auf Mapbox-Karte
+- **`/admin/line-trips`** — Tagesübersicht aller konkreten Fahrten
+  - Filter Datum/Linie, Status-Pillen, "Fahrt starten/abschließen", Verspätung manuell setzen
 
-```sql
-CREATE TABLE public.app_settings (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  section_key text NOT NULL UNIQUE,
-  settings jsonb NOT NULL DEFAULT '{}',
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  updated_by uuid REFERENCES auth.users(id)
-);
+## 3. Public Tracking-Seite (FlixBus-Style)
 
-ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
+- **`/verfolge/:tripNumber`** (öffentlich, kein Login)
+- Layout exakt wie Referenz-Screenshot:
+  - **Links**: Breadcrumbs · Trip-Nummer · "Amsterdam → Brussels" · Datum-Card · Einstiegsort-Card · Status-Card (geplante vs. echte Ankunft, durchgestrichene alte Zeit bei Verspätung) · FlixBus-Stil "Bus X810"-Block · "Reiseroute ansehen"-Button (grün #00CC36) · Status-Legende mit Wifi-Icons
+  - **Rechts**: Vollhöhe Mapbox-Karte (Hell-Style), grüne gestrichelte Polyline der Route, animierte Marker an Start/Ende mit Pin-Flag, Live-Bus-Marker bei aktiver Fahrt
+- Auto-Refresh alle 30s über `bus_positions_live`-Realtime-Channel
+- Share-Button (Teilen) kopiert Public-Link
 
--- Only admins can read/write
-CREATE POLICY "Admins manage settings" ON public.app_settings
-  FOR ALL TO authenticated
-  USING (has_role(auth.uid(), 'admin'))
-  WITH CHECK (has_role(auth.uid(), 'admin'));
-```
+## 4. Verknüpfungen
 
-Each section (general, booking, finance, etc.) gets one row with `section_key` = "general", "booking", etc. and `settings` = the JSON object.
+- Sidebar-Eintrag "Linien & Fahrpläne" + "Tages-Fahrten" in Sektion 3
+- Dashboard-KPI: Aktive Linien-Fahrten heute
+- Fahrer-App nutzt `line_trips` für Schicht-Anzeige
 
-### 2. Update `AdminSettings.tsx`
+## Technische Hinweise
 
-- **Load on mount**: Fetch all rows from `app_settings`, parse each section's JSON into the corresponding state (falling back to current hardcoded defaults if no DB row exists yet).
-- **Fix `handleSave`**: Upsert the section's state as JSON into `app_settings` using `upsert` with `onConflict: 'section_key'`. Show success/error toast based on result.
-- Sections affected: general, booking, routes, tours, finance, crm, staff, notifications, templates, operations, vehicles (11 sections total).
+- RLS: Admin/Office Lese-/Schreibzugriff auf Lines/Schedules; öffentlicher `SELECT` nur auf `line_trips` + `line_trip_stops` + `line_stops` für Tracking-Seite (nur nicht-PII Felder)
+- Cron-Job (täglich 03:00): generiert `line_trips` für die nächsten 14 Tage aus aktiven Schedules
+- Mapbox-Token bereits vorhanden via `useMapboxToken`
+- Realtime: Subscription auf `bus_positions_live` für Live-Marker
+- Demo-Seed: 3 Linien (Hannover–Berlin, Hannover–Amsterdam, Hannover–Prag) mit je 4–6 Stops und Wochenend-Fahrplänen
 
-### 3. Technical details
+## Reihenfolge
 
-```text
-Flow:
-  Page load → SELECT * FROM app_settings
-            → merge DB values over defaults for each section
-  
-  Save click → UPSERT into app_settings
-               WHERE section_key = '<section>'
-               SET settings = <state JSON>, updated_by = auth.uid()
-```
-
-No other files need changes. The existing UI inputs and state management stay the same — only the load and save logic gets connected to the database.
-
+1. Migration (Tabellen + RLS + Seed)
+2. Admin-Seiten (Lines-Liste, Editor, Trip-Tagesübersicht)
+3. Public Tracking-Seite + Route
+4. Sidebar + Routing
+5. Cron-Funktion für Trip-Generierung
