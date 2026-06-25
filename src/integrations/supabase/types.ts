@@ -709,6 +709,42 @@ export type Database = {
           },
         ]
       }
+      bus_lines: {
+        Row: {
+          code: string
+          color: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          line_type: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          color?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          line_type?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          color?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          line_type?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bus_maintenance: {
         Row: {
           bus_id: string
@@ -2403,6 +2439,255 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      line_schedules: {
+        Row: {
+          base_price: number | null
+          bus_id: string | null
+          created_at: string
+          departure_time: string
+          driver_id: string | null
+          id: string
+          is_active: boolean
+          line_id: string
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+          weekdays: number
+        }
+        Insert: {
+          base_price?: number | null
+          bus_id?: string | null
+          created_at?: string
+          departure_time: string
+          driver_id?: string | null
+          id?: string
+          is_active?: boolean
+          line_id: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+          weekdays?: number
+        }
+        Update: {
+          base_price?: number | null
+          bus_id?: string | null
+          created_at?: string
+          departure_time?: string
+          driver_id?: string | null
+          id?: string
+          is_active?: boolean
+          line_id?: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+          weekdays?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "line_schedules_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "line_schedules_line_id_fkey"
+            columns: ["line_id"]
+            isOneToOne: false
+            referencedRelation: "bus_lines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      line_stops: {
+        Row: {
+          arrival_offset_min: number
+          city: string | null
+          country: string | null
+          created_at: string
+          departure_offset_min: number
+          id: string
+          lat: number
+          line_id: string
+          lng: number
+          name: string
+          platform: string | null
+          stop_order: number
+          updated_at: string
+        }
+        Insert: {
+          arrival_offset_min?: number
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          departure_offset_min?: number
+          id?: string
+          lat: number
+          line_id: string
+          lng: number
+          name: string
+          platform?: string | null
+          stop_order: number
+          updated_at?: string
+        }
+        Update: {
+          arrival_offset_min?: number
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          departure_offset_min?: number
+          id?: string
+          lat?: number
+          line_id?: string
+          lng?: number
+          name?: string
+          platform?: string | null
+          stop_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "line_stops_line_id_fkey"
+            columns: ["line_id"]
+            isOneToOne: false
+            referencedRelation: "bus_lines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      line_trip_stops: {
+        Row: {
+          actual_arrival: string | null
+          actual_departure: string | null
+          created_at: string
+          delay_minutes: number
+          id: string
+          planned_arrival: string | null
+          planned_departure: string | null
+          status: string
+          stop_id: string
+          trip_id: string
+          updated_at: string
+        }
+        Insert: {
+          actual_arrival?: string | null
+          actual_departure?: string | null
+          created_at?: string
+          delay_minutes?: number
+          id?: string
+          planned_arrival?: string | null
+          planned_departure?: string | null
+          status?: string
+          stop_id: string
+          trip_id: string
+          updated_at?: string
+        }
+        Update: {
+          actual_arrival?: string | null
+          actual_departure?: string | null
+          created_at?: string
+          delay_minutes?: number
+          id?: string
+          planned_arrival?: string | null
+          planned_departure?: string | null
+          status?: string
+          stop_id?: string
+          trip_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "line_trip_stops_stop_id_fkey"
+            columns: ["stop_id"]
+            isOneToOne: false
+            referencedRelation: "line_stops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "line_trip_stops_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "line_trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      line_trips: {
+        Row: {
+          actual_arrival: string | null
+          actual_departure: string | null
+          bus_id: string | null
+          created_at: string
+          delay_minutes: number
+          driver_id: string | null
+          id: string
+          line_id: string
+          planned_arrival: string
+          planned_departure: string
+          schedule_id: string | null
+          service_date: string
+          status: string
+          trip_number: string
+          updated_at: string
+        }
+        Insert: {
+          actual_arrival?: string | null
+          actual_departure?: string | null
+          bus_id?: string | null
+          created_at?: string
+          delay_minutes?: number
+          driver_id?: string | null
+          id?: string
+          line_id: string
+          planned_arrival: string
+          planned_departure: string
+          schedule_id?: string | null
+          service_date: string
+          status?: string
+          trip_number: string
+          updated_at?: string
+        }
+        Update: {
+          actual_arrival?: string | null
+          actual_departure?: string | null
+          bus_id?: string | null
+          created_at?: string
+          delay_minutes?: number
+          driver_id?: string | null
+          id?: string
+          line_id?: string
+          planned_arrival?: string
+          planned_departure?: string
+          schedule_id?: string | null
+          service_date?: string
+          status?: string
+          trip_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "line_trips_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "line_trips_line_id_fkey"
+            columns: ["line_id"]
+            isOneToOne: false
+            referencedRelation: "bus_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "line_trips_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "line_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       operations_metrics: {
         Row: {
@@ -5586,6 +5871,7 @@ export type Database = {
       generate_admin_booking_number: { Args: never; Returns: string }
       generate_complaint_number: { Args: never; Returns: string }
       generate_inquiry_number: { Args: never; Returns: string }
+      generate_line_trip_number: { Args: never; Returns: string }
       generate_ticket_number: { Args: never; Returns: string }
       get_audit_logs: {
         Args: {
