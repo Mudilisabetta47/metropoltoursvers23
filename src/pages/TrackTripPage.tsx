@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import Logo from "@/components/brand/Logo";
+import { Logo } from "@/components/brand/Logo";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 export default function TrackTripPage() {
