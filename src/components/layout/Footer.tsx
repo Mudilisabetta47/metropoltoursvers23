@@ -26,6 +26,7 @@ const Footer = () => {
     ],
     service: [
       { name: "Hilfe & FAQ", path: "/service" },
+      { name: "Fahrt verfolgen", path: "/verfolge" },
       { name: "Gepäckregeln", path: "/service#luggage" },
       { name: "Stornierung & Umbuchung", path: "/service#cancellation" },
       { name: "Meine Buchungen", path: "/bookings" },
