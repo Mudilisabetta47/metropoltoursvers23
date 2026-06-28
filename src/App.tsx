@@ -80,6 +80,7 @@ const AdminStub = lazy(() => import("./pages/AdminStub"));
 const AdminLines = lazy(() => import("./pages/AdminLines"));
 const AdminLineTrips = lazy(() => import("./pages/AdminLineTrips"));
 const TrackTripPage = lazy(() => import("./pages/TrackTripPage"));
+const TrackTripLandingPage = lazy(() => import("./pages/TrackTripLandingPage"));
 
 const queryClient = new QueryClient();
 
@@ -209,6 +210,7 @@ const App = () => (
               <Route path="/passagierdaten" element={<PassengerDataPage />} />
               <Route path="/admin/lines" element={<AdminLines />} />
               <Route path="/admin/line-trips" element={<AdminLineTrips />} />
+              <Route path="/verfolge" element={<TrackTripLandingPage />} />
               <Route path="/verfolge/:tripNumber" element={<TrackTripPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
