@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, Navigate } from "react-router-dom";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import Map, { Marker, Source, Layer, NavigationControl } from "@vis.gl/react-mapbox";
