@@ -80,6 +80,7 @@ const AdminStub = lazy(() => import("./pages/AdminStub"));
 const AdminLines = lazy(() => import("./pages/AdminLines"));
 const AdminLineTrips = lazy(() => import("./pages/AdminLineTrips"));
 const TrackTripPage = lazy(() => import("./pages/TrackTripPage"));
+const TrackTripLandingPage = lazy(() => import("./pages/TrackTripLandingPage"));
 
 const queryClient = new QueryClient();
 
