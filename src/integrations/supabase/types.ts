@@ -2513,6 +2513,7 @@ export type Database = {
           lng: number
           name: string
           platform: string | null
+          postal_code: string | null
           stop_order: number
           updated_at: string
         }
@@ -2528,6 +2529,7 @@ export type Database = {
           lng: number
           name: string
           platform?: string | null
+          postal_code?: string | null
           stop_order: number
           updated_at?: string
         }
@@ -2543,6 +2545,7 @@ export type Database = {
           lng?: number
           name?: string
           platform?: string | null
+          postal_code?: string | null
           stop_order?: number
           updated_at?: string
         }
@@ -6028,6 +6031,10 @@ export type Database = {
           percent_off: number
           valid: boolean
         }[]
+      }
+      verify_line_trip_access: {
+        Args: { p_postal_code: string; p_trip_number: string }
+        Returns: string
       }
     }
     Enums: {
