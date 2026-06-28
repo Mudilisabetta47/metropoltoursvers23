@@ -15,6 +15,16 @@ import "mapbox-gl/dist/mapbox-gl.css";
 
 export default function TrackTripPage() {
   const { tripNumber } = useParams<{ tripNumber: string }>();
+  const isVerified = (() => {
+    try {
+      return !!tripNumber && sessionStorage.getItem(`verfolge:verified:${tripNumber}`) === "1";
+    } catch {
+      return false;
+    }
+  })();
+  if (!isVerified) {
+    return <Navigate to="/verfolge" replace />;
+  }
   const { token } = useMapboxToken();
   const { toast } = useToast();
   const [trip, setTrip] = useState<any>(null);
