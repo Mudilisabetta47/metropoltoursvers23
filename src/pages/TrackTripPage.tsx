@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link, Navigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import Map, { Marker, Source, Layer, NavigationControl } from "@vis.gl/react-mapbox";
@@ -15,16 +15,6 @@ import "mapbox-gl/dist/mapbox-gl.css";
 
 export default function TrackTripPage() {
   const { tripNumber } = useParams<{ tripNumber: string }>();
-  const isVerified = (() => {
-    try {
-      return !!tripNumber && sessionStorage.getItem(`verfolge:verified:${tripNumber}`) === "1";
-    } catch {
-      return false;
-    }
-  })();
-  if (!isVerified) {
-    return <Navigate to="/verfolge" replace />;
-  }
   const { token } = useMapboxToken();
   const { toast } = useToast();
   const [trip, setTrip] = useState<any>(null);
