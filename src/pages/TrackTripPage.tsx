@@ -126,10 +126,25 @@ export default function TrackTripPage() {
     ? <div className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full text-amber-900 text-sm font-medium"><Flag className="w-4 h-4" />Um {actualArr} angekommen</div>
     : <div className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full text-emerald-900 text-sm font-medium"><Flag className="w-4 h-4" />Pünktlich um {plannedArr}</div>;
 
+  const delayMin = registry?.current_delay_min ?? trip.delay_minutes ?? 0;
+  const delayReason = registry?.delay_reason;
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Top accent bar */}
-      <div className="h-2 bg-emerald-500" />
+      <div className={delayMin > 0 ? "h-2 bg-red-500" : "h-2 bg-emerald-500"} />
+
+      {delayMin > 0 && (
+        <div className="bg-red-600 text-white px-6 py-3 flex items-center gap-3">
+          <Flag className="w-5 h-5 flex-shrink-0" />
+          <div className="flex-1">
+            <div className="font-bold">Verspätung +{delayMin} Minuten</div>
+            {delayReason && <div className="text-sm text-red-100">Grund: {delayReason}</div>}
+          </div>
+          {registry?.trip_uid && <span className="font-mono text-xs bg-red-700 px-2 py-1 rounded">{registry.trip_uid}</span>}
+        </div>
+      )}
+
 
       <div className="flex-1 flex flex-col lg:flex-row">
         {/* Left content */}
