@@ -22,12 +22,24 @@ export default function TrackTripPage() {
   const [stops, setStops] = useState<any[]>([]);
   const [tripStops, setTripStops] = useState<any[]>([]);
   const [livePos, setLivePos] = useState<any>(null);
+  const [registry, setRegistry] = useState<any>(null);
   const [legendOpen, setLegendOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     if (!tripNumber) return;
+    // Resolve via trip_registry first (supports both Trip-UID and legacy trip_number for line trips)
+    let reg: any = null;
+    if (/^MT-/i.test(tripNumber)) {
+      const { data } = await supabase.from("trip_registry").select("*").eq("trip_uid", tripNumber.toUpperCase()).maybeSingle();
+      reg = data;
+    }
     const { data: t } = await supabase.from("line_trips").select("*").eq("trip_number", tripNumber).maybeSingle();
+    if (!reg && t) {
+      const { data } = await supabase.from("trip_registry").select("*").eq("source_type", "line_trip").eq("source_id", t.id).maybeSingle();
+      reg = data;
+    }
+    setRegistry(reg);
     if (!t) { setLoading(false); return; }
     setTrip(t);
     const [l, s, ts, lp] = await Promise.all([
@@ -45,7 +57,7 @@ export default function TrackTripPage() {
 
   useEffect(() => { load(); }, [tripNumber]);
 
-  // Realtime live position
+  // Realtime live position + delay updates from trip_registry
   useEffect(() => {
     if (!trip?.id) return;
     const channel = supabase.channel(`trip-${trip.id}`)
@@ -56,6 +68,16 @@ export default function TrackTripPage() {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [trip?.id]);
+
+  useEffect(() => {
+    if (!registry?.trip_uid) return;
+    const ch = supabase.channel(`reg-${registry.trip_uid}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "trip_registry", filter: `trip_uid=eq.${registry.trip_uid}` },
+        (payload) => setRegistry(payload.new))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [registry?.trip_uid]);
+
 
   const share = async () => {
     const url = window.location.href;
