@@ -69,6 +69,7 @@ const menuSections: MenuSection[] = [
   {
     label: "Fahrten & Betrieb",
     items: [
+      { path: "/admin/trips", label: "Alle Fahrten & Verspätungen", icon: AlertTriangle, allowedRoles: OPS_STAFF },
       { path: "/admin/tour-builder", label: "Tourenplanung", icon: Map, allowedRoles: MANAGEMENT },
       { path: "/admin/dispatch", label: "Fahrt-Disposition", icon: ClipboardList, allowedRoles: OPS_STAFF },
       { path: "/admin/lines", label: "Linien & Fahrpläne", icon: Route, allowedRoles: MANAGEMENT },
