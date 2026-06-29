@@ -7,7 +7,7 @@ import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { MapPin, Search, AlertCircle, Loader2, ShieldCheck } from "lucide-react";
+import { MapPin, Search, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
@@ -18,20 +18,12 @@ const formSchema = z.object({
     .regex(/^[0-9]{6,15}$/, {
       message: "Ungültige Fahrtnummer. Erwartet werden 6–15 Ziffern (z.B. 2434219419).",
     }),
-  postalCode: z
-    .string()
-    .trim()
-    .min(1, { message: "Bitte gib die Postleitzahl deines Abfahrtsorts ein." })
-    .regex(/^[0-9]{5}$/, {
-      message: "Ungültige Postleitzahl. Eine deutsche PLZ besteht aus genau 5 Ziffern.",
-    }),
 });
 
-type FieldErrors = Partial<Record<"tripNumber" | "postalCode" | "form", string>>;
+type FieldErrors = Partial<Record<"tripNumber" | "form", string>>;
 
 const TrackTripLandingPage = () => {
   const [tripNumber, setTripNumber] = useState("");
-  const [postalCode, setPostalCode] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -42,11 +34,11 @@ const TrackTripLandingPage = () => {
     e.preventDefault();
     setErrors({});
 
-    const parsed = formSchema.safeParse({ tripNumber, postalCode });
+    const parsed = formSchema.safeParse({ tripNumber });
     if (!parsed.success) {
       const fieldErrors: FieldErrors = {};
       for (const issue of parsed.error.issues) {
-        const key = issue.path[0] as "tripNumber" | "postalCode";
+        const key = issue.path[0] as "tripNumber";
         if (!fieldErrors[key]) fieldErrors[key] = issue.message;
       }
       setErrors(fieldErrors);
@@ -55,10 +47,11 @@ const TrackTripLandingPage = () => {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc("verify_line_trip_access", {
-        p_trip_number: parsed.data.tripNumber,
-        p_postal_code: parsed.data.postalCode,
-      });
+      const { data, error } = await supabase
+        .from("line_trips")
+        .select("id")
+        .eq("trip_number", parsed.data.tripNumber)
+        .maybeSingle();
 
       if (error) {
         setErrors({ form: "Überprüfung fehlgeschlagen. Bitte versuche es gleich erneut." });
@@ -67,18 +60,12 @@ const TrackTripLandingPage = () => {
 
       if (!data) {
         setErrors({
-          form: "Fahrtnummer und Postleitzahl passen nicht zusammen. Bitte prüfe deine Buchungsbestätigung.",
+          form: "Diese Fahrtnummer wurde nicht gefunden. Bitte prüfe deine Buchungsbestätigung.",
         });
         return;
       }
 
-      // Mark this trip as verified for the detail page
-      try {
-        sessionStorage.setItem(`verfolge:verified:${data}`, "1");
-      } catch {
-        // Ignore storage errors (e.g. private mode)
-      }
-      navigate(`/verfolge/${encodeURIComponent(data)}`);
+      navigate(`/verfolge/${encodeURIComponent(parsed.data.tripNumber)}`);
     } catch {
       setErrors({ form: "Verbindung fehlgeschlagen. Bitte prüfe deine Internetverbindung." });
     } finally {
@@ -97,9 +84,7 @@ const TrackTripLandingPage = () => {
             </div>
             <h1 className="text-3xl md:text-4xl font-bold mb-3">Fahrt verfolgen</h1>
             <p className="text-muted-foreground">
-              Zum Schutz deiner Privatsphäre brauchen wir die Fahrtnummer{" "}
-              <span className="font-medium text-foreground">und</span> die Postleitzahl deines
-              Abfahrtsorts.
+              Gib deine Fahrtnummer ein, um den Live-Standort deines Busses zu sehen.
             </p>
           </div>
 
@@ -138,40 +123,6 @@ const TrackTripLandingPage = () => {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <label htmlFor="postal-code" className="text-sm font-medium">
-                  PLZ Abfahrtsort
-                </label>
-                <Input
-                  id="postal-code"
-                  value={postalCode}
-                  onChange={(e) => {
-                    setPostalCode(onlyDigits(e.target.value, 5));
-                    if (errors.postalCode || errors.form) setErrors({});
-                  }}
-                  placeholder="z.B. 30159"
-                  inputMode="numeric"
-                  autoComplete="postal-code"
-                  maxLength={5}
-                  aria-invalid={!!errors.postalCode}
-                  aria-describedby={errors.postalCode ? "plz-error" : "plz-hint"}
-                  className={cn(
-                    "h-12 text-base tracking-wider max-w-[180px]",
-                    errors.postalCode && "border-destructive focus-visible:ring-destructive",
-                  )}
-                  disabled={loading}
-                />
-                {errors.postalCode ? (
-                  <p id="plz-error" className="text-xs text-destructive flex items-center gap-1">
-                    <AlertCircle className="w-3.5 h-3.5" /> {errors.postalCode}
-                  </p>
-                ) : (
-                  <p id="plz-hint" className="text-xs text-muted-foreground">
-                    Genau 5 Ziffern. PLZ der Stadt, in der deine Fahrt startet.
-                  </p>
-                )}
-              </div>
-
               {errors.form && (
                 <div
                   role="alert"
@@ -186,7 +137,7 @@ const TrackTripLandingPage = () => {
                 type="submit"
                 size="lg"
                 className="gap-2 h-12"
-                disabled={loading || tripNumber.length === 0 || postalCode.length === 0}
+                disabled={loading || tripNumber.length === 0}
               >
                 {loading ? (
                   <>
@@ -200,14 +151,6 @@ const TrackTripLandingPage = () => {
                   </>
                 )}
               </Button>
-
-              <div className="flex items-center gap-2 text-xs text-muted-foreground border-t pt-4">
-                <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
-                <span>
-                  Diese zwei Angaben stellen sicher, dass nur Fahrgäste den Live-Standort sehen
-                  können.
-                </span>
-              </div>
             </form>
           </Card>
         </div>
