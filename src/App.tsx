@@ -81,6 +81,7 @@ const AdminLines = lazy(() => import("./pages/AdminLines"));
 const AdminLineTrips = lazy(() => import("./pages/AdminLineTrips"));
 const TrackTripPage = lazy(() => import("./pages/TrackTripPage"));
 const TrackTripLandingPage = lazy(() => import("./pages/TrackTripLandingPage"));
+const AdminTrips = lazy(() => import("./pages/AdminTrips"));
 
 const queryClient = new QueryClient();
 
@@ -208,8 +209,9 @@ const App = () => (
               <Route path="/admin/profile" element={<AdminStub title="Mein Profil" subtitle="Persönliche Daten, Rolle und Berechtigungen" description="Dein Profilbereich mit Account-Einstellungen und Sicherheitsoptionen ist in Vorbereitung." />} />
               <Route path="/admin/drivers" element={<AdminStub title="Fahrer-Stammdaten" subtitle="Personalakte, Lizenzen und Einsatzplanung" description="Die Fahrer-Verwaltung mit Lizenz-Tracking und Schichtplänen ist bereits in Arbeit." />} />
               <Route path="/passagierdaten" element={<PassengerDataPage />} />
-              <Route path="/admin/lines" element={<AdminLines />} />
-              <Route path="/admin/line-trips" element={<AdminLineTrips />} />
+             <Route path="/admin/lines" element={<AdminLines />} />
+             <Route path="/admin/line-trips" element={<AdminLineTrips />} />
+             <Route path="/admin/trips" element={<AdminTrips />} />
               <Route path="/verfolge" element={<TrackTripLandingPage />} />
               <Route path="/verfolge/:tripNumber" element={<TrackTripPage />} />
               <Route path="*" element={<NotFound />} />
