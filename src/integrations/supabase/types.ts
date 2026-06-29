@@ -4995,6 +4995,39 @@ export type Database = {
           },
         ]
       }
+      trip_delay_events: {
+        Row: {
+          created_at: string
+          delay_min: number
+          id: string
+          notified_count: number | null
+          notify_requested: boolean | null
+          reason: string | null
+          reported_by: string | null
+          trip_uid: string
+        }
+        Insert: {
+          created_at?: string
+          delay_min: number
+          id?: string
+          notified_count?: number | null
+          notify_requested?: boolean | null
+          reason?: string | null
+          reported_by?: string | null
+          trip_uid: string
+        }
+        Update: {
+          created_at?: string
+          delay_min?: number
+          id?: string
+          notified_count?: number | null
+          notify_requested?: boolean | null
+          reason?: string | null
+          reported_by?: string | null
+          trip_uid?: string
+        }
+        Relationships: []
+      }
       trip_otp_log: {
         Row: {
           actual_arrival: string | null
@@ -5028,6 +5061,57 @@ export type Database = {
           scheduled_arrival?: string | null
           scheduled_departure?: string
           trip_id?: string
+        }
+        Relationships: []
+      }
+      trip_registry: {
+        Row: {
+          created_at: string
+          current_delay_min: number
+          delay_reason: string | null
+          delay_updated_at: string | null
+          delay_updated_by: string | null
+          departure_at: string | null
+          destination: string | null
+          id: string
+          origin: string | null
+          source_id: string
+          source_type: string
+          status: string
+          trip_uid: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_delay_min?: number
+          delay_reason?: string | null
+          delay_updated_at?: string | null
+          delay_updated_by?: string | null
+          departure_at?: string | null
+          destination?: string | null
+          id?: string
+          origin?: string | null
+          source_id: string
+          source_type: string
+          status?: string
+          trip_uid: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_delay_min?: number
+          delay_reason?: string | null
+          delay_updated_at?: string | null
+          delay_updated_by?: string | null
+          departure_at?: string | null
+          destination?: string | null
+          id?: string
+          origin?: string | null
+          source_id?: string
+          source_type?: string
+          status?: string
+          trip_uid?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -5876,6 +5960,7 @@ export type Database = {
       generate_inquiry_number: { Args: never; Returns: string }
       generate_line_trip_number: { Args: never; Returns: string }
       generate_ticket_number: { Args: never; Returns: string }
+      generate_trip_uid: { Args: never; Returns: string }
       get_audit_logs: {
         Args: {
           p_action?: string
@@ -5982,6 +6067,15 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      report_trip_delay: {
+        Args: {
+          p_delay_min: number
+          p_notify?: boolean
+          p_reason: string
+          p_trip_uid: string
+        }
+        Returns: string
       }
       reserve_tour_seats: {
         Args: { p_seats: number; p_tour_date_id: string }
