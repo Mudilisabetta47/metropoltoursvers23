@@ -23,8 +23,8 @@ export default {
     extend: {
       fontFamily: {
         sans: ["DM Sans", "system-ui", "sans-serif"],
-        serif: ['"Playfair Display"', "ui-serif", "Georgia", "serif"],
-        display: ['"Playfair Display"', "ui-serif", "Georgia", "serif"],
+        serif: ["DM Sans", "system-ui", "sans-serif"],
+        display: ["DM Sans", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
