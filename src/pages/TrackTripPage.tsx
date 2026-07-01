@@ -27,18 +27,31 @@ export default function TrackTripPage() {
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
-    if (!tripNumber) return;
-    // Resolve via trip_registry first (supports both Trip-UID and legacy trip_number for line trips)
+    if (!tripNumber) { setLoading(false); return; }
+    const key = tripNumber.trim();
     let reg: any = null;
-    if (/^MT-/i.test(tripNumber)) {
-      const { data } = await supabase.from("trip_registry").select("*").eq("trip_uid", tripNumber.toUpperCase()).maybeSingle();
+    let t: any = null;
+
+    // 1. If it looks like a Trip-UID (MT-YYYY-XXXXXX) → resolve via registry
+    if (/^MT-/i.test(key)) {
+      const { data } = await supabase.from("trip_registry").select("*").eq("trip_uid", key.toUpperCase()).maybeSingle();
       reg = data;
+      if (reg?.source_type === "line_trip") {
+        const { data: lt } = await supabase.from("line_trips").select("*").eq("id", reg.source_id).maybeSingle();
+        t = lt;
+      }
     }
-    const { data: t } = await supabase.from("line_trips").select("*").eq("trip_number", tripNumber).maybeSingle();
-    if (!reg && t) {
-      const { data } = await supabase.from("trip_registry").select("*").eq("source_type", "line_trip").eq("source_id", t.id).maybeSingle();
-      reg = data;
+
+    // 2. Fallback: legacy line-trip number lookup
+    if (!t) {
+      const { data: lt } = await supabase.from("line_trips").select("*").eq("trip_number", key).maybeSingle();
+      t = lt;
+      if (!reg && lt) {
+        const { data } = await supabase.from("trip_registry").select("*").eq("source_type", "line_trip").eq("source_id", lt.id).maybeSingle();
+        reg = data;
+      }
     }
+
     setRegistry(reg);
     if (!t) { setLoading(false); return; }
     setTrip(t);
