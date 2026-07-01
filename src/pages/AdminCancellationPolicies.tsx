@@ -38,8 +38,8 @@ export default function AdminCancellationPolicies() {
     if (!editing) return;
     const payload = { ...editing, tiers: editing.tiers as any };
     const { error } = editing.id
-      ? await supabase.from("cancellation_policies").update(payload).eq("id", editing.id)
-      : await supabase.from("cancellation_policies").insert(payload);
+      ? await supabase.from("cancellation_policies").update(payload as any).eq("id", editing.id)
+      : await supabase.from("cancellation_policies").insert(payload as any);
     if (error) return toast.error(error.message);
     toast.success("Gespeichert");
     setEditing(null);
