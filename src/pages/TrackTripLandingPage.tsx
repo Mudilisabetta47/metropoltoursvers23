@@ -107,11 +107,11 @@ const TrackTripLandingPage = () => {
                   id="trip-number"
                   value={tripNumber}
                   onChange={(e) => {
-                    setTripNumber(onlyDigits(e.target.value, 15));
+                    setTripNumber(sanitize(e.target.value));
                     if (errors.tripNumber || errors.form) setErrors({});
                   }}
-                  placeholder="z.B. 2434219419"
-                  inputMode="numeric"
+                  placeholder="z.B. MT-2026-ABC123"
+                  inputMode="text"
                   autoComplete="off"
                   aria-invalid={!!errors.tripNumber}
                   aria-describedby={errors.tripNumber ? "trip-error" : "trip-hint"}
