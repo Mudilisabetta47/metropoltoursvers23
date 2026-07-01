@@ -389,11 +389,11 @@ const HeroSlider = () => {
               ))}
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={prevSlide} className="w-8 h-8 lg:w-10 lg:h-10 rounded-full border-2 border-white/30 flex items-center justify-center text-white hover:bg-white/10 hover:border-white/50 transition-all backdrop-blur-sm">
-                <ChevronLeft className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+              <button onClick={prevSlide} aria-label="Vorheriger Slide" className="w-8 h-8 lg:w-10 lg:h-10 rounded-full border-2 border-white/30 flex items-center justify-center text-white hover:bg-white/10 hover:border-white/50 transition-all backdrop-blur-sm">
+                <ChevronLeft className="w-3.5 h-3.5 lg:w-4 lg:h-4" aria-hidden="true" />
               </button>
-              <button onClick={nextSlide} className="w-8 h-8 lg:w-10 lg:h-10 rounded-full border-2 border-white/30 flex items-center justify-center text-white hover:bg-white/10 hover:border-white/50 transition-all backdrop-blur-sm">
-                <ChevronRight className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+              <button onClick={nextSlide} aria-label="Nächster Slide" className="w-8 h-8 lg:w-10 lg:h-10 rounded-full border-2 border-white/30 flex items-center justify-center text-white hover:bg-white/10 hover:border-white/50 transition-all backdrop-blur-sm">
+                <ChevronRight className="w-3.5 h-3.5 lg:w-4 lg:h-4" aria-hidden="true" />
               </button>
             </div>
           </div>
