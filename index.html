@@ -52,12 +52,27 @@
     <meta name="ICBM" content="53.551086, 9.993682" />
 
     <!-- Favicon & PWA -->
+    <link rel="manifest" href="/manifest.webmanifest">
     <link rel="apple-touch-icon" href="/pwa-192x192.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="METROPOL TOURS">
     <meta name="mobile-web-app-capable" content="yes">
+    <style>
+      /* Google reCAPTCHA v3 Badge im Admin/Cockpit ausblenden.
+         Rechtlicher Hinweis muss im Impressum/Datenschutz stehen. */
+      html[data-hide-recaptcha="true"] .grecaptcha-badge { visibility: hidden !important; }
+    </style>
+    <script>
+      (function () {
+        var p = window.location.pathname || '';
+        if (p.startsWith('/admin') || p.startsWith('/driver') || p.startsWith('/operations') || p.startsWith('/wallboard')) {
+          document.documentElement.setAttribute('data-hide-recaptcha', 'true');
+        }
+      })();
+    </script>
+
     <meta name="msapplication-TileColor" content="#00CC36">
 
     <!-- Structured Data / JSON-LD -->
