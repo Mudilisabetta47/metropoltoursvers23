@@ -127,7 +127,7 @@ const TrackTripLandingPage = () => {
                   </p>
                 ) : (
                   <p id="trip-hint" className="text-xs text-muted-foreground">
-                    6–15 Ziffern. Steht auf deinem Ticket oder in der Buchungsbestätigung.
+                    Format MT-JJJJ-XXXXXX oder 6–15 Ziffern. Steht auf deinem Ticket oder in der Buchungsbestätigung.
                   </p>
                 )}
               </div>
