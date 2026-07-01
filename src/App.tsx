@@ -121,6 +121,20 @@ const PublicGate = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Backend-Subdomain: backend.metours.de → automatisch ins Admin-Cockpit
+const BACKEND_HOSTS = ['backend.metours.de', 'backend.lovable.app'];
+const BackendHostRedirect = () => {
+  const location = useLocation();
+  if (typeof window === 'undefined') return null;
+  const host = window.location.hostname;
+  const isBackendHost = BACKEND_HOSTS.includes(host) || host.startsWith('backend.');
+  if (isBackendHost && location.pathname === '/') {
+    return <Navigate to="/admin" replace />;
+  }
+  return null;
+};
+
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
