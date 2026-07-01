@@ -194,7 +194,7 @@ const AdminBookings = () => {
   };
 
   const updateStatus = async (id: string, field: "booking_status" | "payment_status", value: string) => {
-    const { error } = await supabase.from("admin_bookings").update({ [field]: value }).eq("id", id);
+    const { error } = await supabase.from("admin_bookings").update({ [field]: value } as any).eq("id", id);
     if (error) { toast.error("Update fehlgeschlagen"); return; }
     toast.success("Aktualisiert");
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
