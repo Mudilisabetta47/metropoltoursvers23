@@ -128,10 +128,12 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <BackendHostRedirect />
           <Suspense fallback={<PageLoader />}>
             <PublicGate>
             <Routes>
               <Route path="/" element={<Index />} />
+
               <Route path="/search" element={<SearchPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/service" element={<ServicePage />} />
