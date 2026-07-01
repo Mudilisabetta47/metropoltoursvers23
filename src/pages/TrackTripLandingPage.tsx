@@ -15,8 +15,8 @@ const formSchema = z.object({
     .string()
     .trim()
     .min(1, { message: "Bitte gib deine Fahrtnummer ein." })
-    .regex(/^[0-9]{6,15}$/, {
-      message: "Ungültige Fahrtnummer. Erwartet werden 6–15 Ziffern (z.B. 2434219419).",
+    .regex(/^(MT-\d{4}-[A-Z0-9]{6,}|[0-9]{6,15})$/i, {
+      message: "Ungültige Fahrtnummer. Erwartet z.B. MT-2026-ABC123 oder 6–15 Ziffern.",
     }),
 });
 
@@ -28,7 +28,8 @@ const TrackTripLandingPage = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const onlyDigits = (v: string, max: number) => v.replace(/\D/g, "").slice(0, max);
+  const sanitize = (v: string) =>
+    v.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 20);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,27 +46,35 @@ const TrackTripLandingPage = () => {
       return;
     }
 
+    const value = parsed.data.tripNumber.toUpperCase();
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("line_trips")
-        .select("id")
-        .eq("trip_number", parsed.data.tripNumber)
-        .maybeSingle();
+      let found = false;
 
-      if (error) {
-        setErrors({ form: "Überprüfung fehlgeschlagen. Bitte versuche es gleich erneut." });
-        return;
+      if (/^MT-/i.test(value)) {
+        const { data } = await supabase
+          .from("trip_registry")
+          .select("trip_uid")
+          .eq("trip_uid", value)
+          .maybeSingle();
+        found = !!data;
+      } else {
+        const { data } = await supabase
+          .from("line_trips")
+          .select("id")
+          .eq("trip_number", value)
+          .maybeSingle();
+        found = !!data;
       }
 
-      if (!data) {
+      if (!found) {
         setErrors({
           form: "Diese Fahrtnummer wurde nicht gefunden. Bitte prüfe deine Buchungsbestätigung.",
         });
         return;
       }
 
-      navigate(`/verfolge/${encodeURIComponent(parsed.data.tripNumber)}`);
+      navigate(`/verfolge/${encodeURIComponent(value)}`);
     } catch {
       setErrors({ form: "Verbindung fehlgeschlagen. Bitte prüfe deine Internetverbindung." });
     } finally {
