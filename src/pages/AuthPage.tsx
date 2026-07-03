@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, User, Eye, EyeOff, Shield, CheckCircle } from 'lucide-react';
 import { LogoLight } from '@/components/brand/Logo';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,9 @@ type AuthMode = 'login' | 'register';
 
 export default function AuthPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextParam = searchParams.get('next');
+  const safeNext = nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : null;
   const { user, roles, isDriver, signIn, signUp, isLoading } = useAuth();
   const { protect } = useRecaptcha();
   
@@ -39,6 +42,10 @@ export default function AuthPage() {
 
   useEffect(() => {
     if (user && !isLoading && roles.length > 0) {
+      if (safeNext) {
+        window.location.href = safeNext;
+        return;
+      }
       // Drivers go directly to the driver portal
       if (isDriver) {
         navigate('/admin/driver');
@@ -46,7 +53,7 @@ export default function AuthPage() {
         navigate('/');
       }
     }
-  }, [user, isLoading, roles, isDriver, navigate]);
+  }, [user, isLoading, roles, isDriver, navigate, safeNext]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};

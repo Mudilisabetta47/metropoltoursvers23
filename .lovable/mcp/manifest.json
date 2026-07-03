@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://wberoibxqpffhnyvjnci.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "metropol-tours-mcp",
+      "version": "0.1.0",
+      "title": "METROPOL TOURS MCP"
+    },
+    "tools": [
+      {
+        "name": "list_package_tours",
+        "title": "List package tours",
+        "description": "List active METROPOL TOURS package tours (Pauschalreisen) with title, destination, price and slug.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "description": "Maximum number of tours to return (default 20)."
+            },
+            "search": {
+              "type": "string",
+              "description": "Case-insensitive substring to filter tour titles."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "lookup_my_booking",
+        "title": "Look up my booking",
+        "description": "Look up a booking for the signed-in user by ticket number (TKT-YYYY-######). Returns booking status, passenger name and trip info.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "ticket_number": {
+              "type": "string",
+              "minLength": 3,
+              "description": "Ticket number, e.g. TKT-2026-000123."
+            }
+          },
+          "required": [
+            "ticket_number"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
