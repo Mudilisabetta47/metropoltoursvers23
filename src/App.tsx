@@ -231,6 +231,7 @@ const App = () => (
              <Route path="/admin/trips" element={<AdminTrips />} />
               <Route path="/verfolge" element={<TrackTripLandingPage />} />
               <Route path="/verfolge/:tripNumber" element={<TrackTripPage />} />
+              <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             </PublicGate>
