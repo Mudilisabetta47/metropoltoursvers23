@@ -82,6 +82,7 @@ const AdminLineTrips = lazy(() => import("./pages/AdminLineTrips"));
 const TrackTripPage = lazy(() => import("./pages/TrackTripPage"));
 const TrackTripLandingPage = lazy(() => import("./pages/TrackTripLandingPage"));
 const AdminTrips = lazy(() => import("./pages/AdminTrips"));
+const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 
 const queryClient = new QueryClient();
 
