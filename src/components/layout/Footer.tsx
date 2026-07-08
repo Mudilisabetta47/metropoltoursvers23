@@ -98,7 +98,7 @@ const Footer = () => {
           {/* Brand Column */}
           <div className="lg:col-span-2">
             <Link to="/" className="inline-block mb-4 group" aria-label="METROPOL TOURS Startseite">
-              <Logo size="md" />
+              <LogoLight size="md" />
             </Link>
             <p className="text-muted-foreground text-sm mb-6 max-w-sm">
               Ihr zuverlässiger Partner für komfortable Busreisen in ganz Europa. 

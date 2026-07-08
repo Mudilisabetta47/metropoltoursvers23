@@ -94,7 +94,7 @@ export function LogoLight({ size = 'md', className }: LogoProps) {
         <span className={cn('font-bold tracking-wide text-white', textSizes[size])}>
           METROPOL
         </span>
-        <span className={cn('font-medium text-white/80 uppercase', subtextSizes[size])}>
+        <span className={cn('font-medium text-primary uppercase', subtextSizes[size])}>
           Tours
         </span>
       </div>
