@@ -690,10 +690,17 @@ const CheckoutPage = () => {
                     </div>
                   )}
 
+                  {agbAvailable === false && (
+                    <div className="mt-6 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+                      Buchung derzeit nicht möglich – die AGB werden gerade finalisiert. Bitte melden Sie sich unter{' '}
+                      <a href="mailto:info@metours.de" className="underline">info@metours.de</a>.
+                    </div>
+                  )}
                   <div className="mt-8 flex items-start gap-3">
                     <Checkbox
                       id="terms"
                       checked={agreeTerms}
+                      disabled={agbAvailable === false}
                       onCheckedChange={(checked) => setAgreeTerms(checked as boolean)}
                     />
                     <Label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer">
