@@ -304,6 +304,10 @@ const CheckoutPage = () => {
     } else if (currentStep === "extras") {
       setCurrentStep("payment");
     } else if (currentStep === "payment") {
+      if (agbAvailable === false) {
+        toast.error("Buchung derzeit nicht möglich: Es sind noch keine AGB veröffentlicht. Bitte kontaktieren Sie uns unter info@metours.de.");
+        return;
+      }
       if (!agreeTerms) {
         toast.error("Bitte akzeptieren Sie die AGB.");
         return;
