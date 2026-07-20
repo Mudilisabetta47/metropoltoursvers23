@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { Logo, LogoLight } from "@/components/brand/Logo";
 import footerIllustration from "@/assets/contact-illustration.jpg.asset.json";
+import { openCookieSettings } from "@/components/CookieBanner";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -44,7 +45,6 @@ const Footer = () => {
   const trustBadges = [
     { icon: Shield, text: "Sichere Zahlung" },
     { icon: Award, text: "SSL-gesicherter Checkout" },
-    { icon: Headphones, text: "24/7 Kundenservice" },
     { icon: CreditCard, text: "Flexible Zahlungsarten" },
   ];
 
@@ -109,20 +109,20 @@ const Footer = () => {
             {/* Contact Info */}
             <div className="flex flex-col gap-3 text-sm text-muted-foreground mb-6">
               <a 
-                href="mailto:info@metropol-tours.de" 
+                href="mailto:info@metours.de" 
                 className="flex items-center gap-2 hover:text-primary transition-colors"
                 aria-label="E-Mail an METROPOL TOURS"
               >
                 <Mail className="w-4 h-4" />
-                info@metropol-tours.de
+                info@metours.de
               </a>
               <a 
-                href="tel:+49511123456789" 
+                href="tel:+4951180781106" 
                 className="flex items-center gap-2 hover:text-primary transition-colors"
                 aria-label="Telefon METROPOL TOURS"
               >
                 <Phone className="w-4 h-4" />
-                +49 511 123 456 789
+                +49 511 80781106
               </a>
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
@@ -205,12 +205,22 @@ const Footer = () => {
             <ul className="space-y-3">
               {footerLinks.rechtliches.map((link) => (
                 <li key={link.name}>
-                  <Link
-                    to={link.path}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    {link.name}
-                  </Link>
+                  {link.name === "Cookie-Einstellungen" ? (
+                    <button
+                      type="button"
+                      onClick={openCookieSettings}
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors text-left"
+                    >
+                      {link.name}
+                    </button>
+                  ) : (
+                    <Link
+                      to={link.path}
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      {link.name}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
@@ -270,7 +280,7 @@ const Footer = () => {
               to="/admin" 
               className="text-muted-foreground/50 hover:text-muted-foreground transition-colors"
             >
-              Agentur Login
+              Mitarbeiter-Login
             </Link>
           </div>
           </div>

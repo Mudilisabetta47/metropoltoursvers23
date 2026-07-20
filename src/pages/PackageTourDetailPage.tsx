@@ -542,11 +542,11 @@ const PackageTourDetailPage = () => {
                           +49 40 123 456 789
                         </a>
                         <a 
-                          href="mailto:reisen@metropol-tours.de"
+                          href="mailto:reisen@metours.de"
                           className="flex items-center gap-2 text-sm hover:text-primary transition-colors"
                         >
                           <Mail className="w-4 h-4" />
-                          reisen@metropol-tours.de
+                          reisen@metours.de
                         </a>
                       </div>
                     </CardContent>

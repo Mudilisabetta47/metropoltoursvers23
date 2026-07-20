@@ -136,7 +136,7 @@ const FeaturesSection = () => {
             { value: "50.000+", label: "Zufriedene Kunden", icon: Users },
             { value: "200+", label: "Reiseziele", icon: MapPin },
             { value: "99%", label: "Pünktlichkeit", icon: Zap },
-            { value: "24/7", label: "Support", icon: Shield },
+            { value: "8-18 Uhr", label: "Support", icon: Shield },
           ].map((stat, i) => (
             <motion.div
               key={stat.label}

@@ -91,7 +91,7 @@ const TourSEOTab = ({ tour, onChange, validationErrors, onPublish }: TourSEOTabP
             </div>
             {tour?.slug && (
               <p className="text-xs text-zinc-500 mt-2">
-                Vorschau: metropol-tours.de/reisen/{tour.slug}
+                Vorschau: metours.de/reisen/{tour.slug}
               </p>
             )}
           </div>
@@ -177,7 +177,7 @@ const TourSEOTab = ({ tour, onChange, validationErrors, onPublish }: TourSEOTabP
                 {tour?.meta_title || `${tour?.destination || 'Reiseziel'} | METROPOL TOURS`}
               </div>
               <div className="text-green-700 text-sm">
-                metropol-tours.de/reisen/{tour?.slug || 'reiseziel'}
+                metours.de/reisen/{tour?.slug || 'reiseziel'}
               </div>
               <div className="text-gray-600 text-sm mt-1">
                 {tour?.meta_description || tour?.short_description || 'Keine Beschreibung verfügbar...'}

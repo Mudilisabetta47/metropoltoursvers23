@@ -102,6 +102,18 @@ const CheckoutPage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [bookingIds, setBookingIds] = useState<string[]>([]);
   const [bookingNumbers, setBookingNumbers] = useState<string[]>([]);
+  const [agbAvailable, setAgbAvailable] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // AGB-Sperre: Buchung nur zulassen, wenn ein aktuelles AGB-Dokument existiert.
+    supabase
+      .from('tour_legal_documents')
+      .select('id')
+      .eq('document_type', 'agb')
+      .eq('is_current', true)
+      .maybeSingle()
+      .then(({ data }) => setAgbAvailable(!!data));
+  }, []);
 
   useEffect(() => {
     if (tripId && fromStopId && toStopId) {
@@ -292,6 +304,10 @@ const CheckoutPage = () => {
     } else if (currentStep === "extras") {
       setCurrentStep("payment");
     } else if (currentStep === "payment") {
+      if (agbAvailable === false) {
+        toast.error("Buchung derzeit nicht möglich: Es sind noch keine AGB veröffentlicht. Bitte kontaktieren Sie uns unter info@metours.de.");
+        return;
+      }
       if (!agreeTerms) {
         toast.error("Bitte akzeptieren Sie die AGB.");
         return;
@@ -674,10 +690,17 @@ const CheckoutPage = () => {
                     </div>
                   )}
 
+                  {agbAvailable === false && (
+                    <div className="mt-6 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+                      Buchung derzeit nicht möglich – die AGB werden gerade finalisiert. Bitte melden Sie sich unter{' '}
+                      <a href="mailto:info@metours.de" className="underline">info@metours.de</a>.
+                    </div>
+                  )}
                   <div className="mt-8 flex items-start gap-3">
                     <Checkbox
                       id="terms"
                       checked={agreeTerms}
+                      disabled={agbAvailable === false}
                       onCheckedChange={(checked) => setAgreeTerms(checked as boolean)}
                     />
                     <Label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer">

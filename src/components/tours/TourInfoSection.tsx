@@ -18,7 +18,7 @@ const busAmenities = [
 const trustPoints = [
   { icon: Award, title: "Geprüfter Reiseveranstalter", desc: "Eingetragen im deutschen Handelsregister, mit Reisesicherungsschein nach §651r BGB." },
   { icon: ShieldCheck, title: "100 % Insolvenzschutz", desc: "Ihr Reisepreis ist über die Deutsche Reisesicherung (DRS) abgesichert." },
-  { icon: Headphones, title: "Persönliche Betreuung", desc: "Deutschsprachige Reisebegleitung & 24/7 Notfall-Hotline während der Reise." },
+  { icon: Headphones, title: "Persönliche Betreuung", desc: "Deutschsprachige Reisebegleitung & Notfall-Hotline während der Reise." },
   { icon: FileCheck, title: "Transparente Bedingungen", desc: "Klare Tarife, faire Stornoregeln, keine versteckten Gebühren." },
 ];
 

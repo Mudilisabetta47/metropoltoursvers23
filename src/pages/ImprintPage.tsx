@@ -39,18 +39,18 @@ export default function ImprintPage() {
                 <section>
                   <h2 className="text-xl font-semibold text-foreground mb-3">Angaben gemäß § 5 TMG</h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    METROPOL TOURS GmbH<br />Musterstraße 123<br />30159 Hannover<br />Deutschland
+                    METROPOL TOURS GmbH<br />[Straße folgt]<br />30159 Hannover<br />Deutschland
                   </p>
                 </section>
                 <section>
                   <h2 className="text-xl font-semibold text-foreground mb-3">Kontakt</h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    Telefon: +49 511 123 456 789<br />E-Mail: info@metropol-tours.de<br />Website: www.metropol-tours.de
+                    Telefon: +49 511 80781106<br />E-Mail: info@metours.de<br />Website: www.metours.de
                   </p>
                 </section>
                 <section>
                   <h2 className="text-xl font-semibold text-foreground mb-3">Vertretungsberechtigte Geschäftsführer</h2>
-                  <p className="text-muted-foreground leading-relaxed">Max Mustermann<br />Maria Musterfrau</p>
+                  <p className="text-muted-foreground leading-relaxed">[Geschäftsführung wird ergänzt]</p>
                 </section>
                 <section>
                   <h2 className="text-xl font-semibold text-foreground mb-3">Registereintrag</h2>
@@ -66,7 +66,7 @@ export default function ImprintPage() {
                 </section>
                 <section>
                   <h2 className="text-xl font-semibold text-foreground mb-3">Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h2>
-                  <p className="text-muted-foreground leading-relaxed">Max Mustermann<br />METROPOL TOURS GmbH<br />Musterstraße 123<br />30159 Hannover</p>
+                  <p className="text-muted-foreground leading-relaxed">[Geschäftsführung wird ergänzt]<br />METROPOL TOURS GmbH<br />[Straße folgt]<br />30159 Hannover</p>
                 </section>
                 <section>
                   <h2 className="text-xl font-semibold text-foreground mb-3">Streitschlichtung</h2>

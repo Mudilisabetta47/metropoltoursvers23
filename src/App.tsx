@@ -8,6 +8,8 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import ComingSoonPage from "./pages/ComingSoonPage";
 import CookieBanner from "./components/CookieBanner";
 import TravelAdvisorChat from "./components/chat/TravelAdvisorChat";
+import AnalyticsLoader from "./components/AnalyticsLoader";
+import NoIndexRoutes from "./components/NoIndexRoutes";
 
 // Lazy-loaded pages for code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -144,6 +146,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <BackendHostRedirect />
+          <NoIndexRoutes />
+          <AnalyticsLoader />
           <Suspense fallback={<PageLoader />}>
             <PublicGate>
             <Routes>
