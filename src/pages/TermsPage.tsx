@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -33,35 +33,21 @@ export default function TermsPage() {
             {isLoading ? (
               <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
             ) : content ? (
-              <div className="prose prose-sm max-w-none text-muted-foreground [&_h2]:text-foreground [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-3 [&_h3]:text-foreground [&_h3]:text-lg [&_h3]:font-medium [&_p]:leading-relaxed" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content.replace(/\n/g, '<br />')) }} />
+              <div
+                className="prose prose-sm max-w-none text-muted-foreground [&_h2]:text-foreground [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-3 [&_h3]:text-foreground [&_h3]:text-lg [&_h3]:font-medium [&_p]:leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content.replace(/\n/g, '<br />')) }}
+              />
             ) : (
-              <div className="space-y-6">
-                <section>
-                  <h2 className="text-xl font-semibold text-foreground mb-3">§ 1 Geltungsbereich</h2>
-                  <p className="text-muted-foreground leading-relaxed">Diese Allgemeinen Geschäftsbedingungen gelten für alle Beförderungsverträge zwischen der METROPOL TOURS GmbH (nachfolgend "Unternehmer") und dem Fahrgast (nachfolgend "Kunde").</p>
-                </section>
-                <section>
-                  <h2 className="text-xl font-semibold text-foreground mb-3">§ 2 Vertragsschluss</h2>
-                  <p className="text-muted-foreground leading-relaxed">
-                    (1) Der Beförderungsvertrag kommt durch Buchung und Bezahlung der Fahrkarte zustande.<br /><br />
-                    (2) Die Buchung kann online, telefonisch oder bei unseren Partnern erfolgen.<br /><br />
-                    (3) Nach erfolgreicher Buchung erhält der Kunde eine Buchungsbestätigung per E-Mail.
+              <div className="flex items-start gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-foreground">
+                <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold mb-1">AGB werden derzeit finalisiert.</p>
+                  <p className="text-muted-foreground">
+                    Unsere Allgemeinen Geschäftsbedingungen sind noch nicht veröffentlicht. Buchungen sind
+                    aktuell nur nach vorheriger Rücksprache möglich. Bitte kontaktieren Sie uns unter{' '}
+                    <a href="mailto:info@metours.de" className="text-primary hover:underline">info@metours.de</a>.
                   </p>
-                </section>
-                <section>
-                  <h2 className="text-xl font-semibold text-foreground mb-3">§ 3 Preise und Zahlung</h2>
-                  <p className="text-muted-foreground leading-relaxed">
-                    (1) Alle Preise verstehen sich inklusive der gesetzlichen Mehrwertsteuer.<br /><br />
-                    (2) Die Zahlung erfolgt bei der Buchung. Akzeptierte Zahlungsmittel sind Kreditkarte, PayPal und Überweisung.
-                  </p>
-                </section>
-                <section>
-                  <h2 className="text-xl font-semibold text-foreground mb-3">§ 4 Stornierung und Umbuchung</h2>
-                  <p className="text-muted-foreground leading-relaxed">
-                    (1) Stornierungen sind gemäß der jeweiligen Tarifbedingungen möglich.<br /><br />
-                    (2) Umbuchungen sind bis 12 Stunden vor Abfahrt gegen eine Gebühr möglich.
-                  </p>
-                </section>
+                </div>
               </div>
             )}
           </div>

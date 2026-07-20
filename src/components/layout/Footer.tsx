@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { Logo, LogoLight } from "@/components/brand/Logo";
 import footerIllustration from "@/assets/contact-illustration.jpg.asset.json";
+import { openCookieSettings } from "@/components/CookieBanner";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -204,12 +205,22 @@ const Footer = () => {
             <ul className="space-y-3">
               {footerLinks.rechtliches.map((link) => (
                 <li key={link.name}>
-                  <Link
-                    to={link.path}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    {link.name}
-                  </Link>
+                  {link.name === "Cookie-Einstellungen" ? (
+                    <button
+                      type="button"
+                      onClick={openCookieSettings}
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors text-left"
+                    >
+                      {link.name}
+                    </button>
+                  ) : (
+                    <Link
+                      to={link.path}
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      {link.name}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
