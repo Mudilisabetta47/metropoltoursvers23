@@ -102,6 +102,18 @@ const CheckoutPage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [bookingIds, setBookingIds] = useState<string[]>([]);
   const [bookingNumbers, setBookingNumbers] = useState<string[]>([]);
+  const [agbAvailable, setAgbAvailable] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // AGB-Sperre: Buchung nur zulassen, wenn ein aktuelles AGB-Dokument existiert.
+    supabase
+      .from('tour_legal_documents')
+      .select('id')
+      .eq('document_type', 'agb')
+      .eq('is_current', true)
+      .maybeSingle()
+      .then(({ data }) => setAgbAvailable(!!data));
+  }, []);
 
   useEffect(() => {
     if (tripId && fromStopId && toStopId) {
