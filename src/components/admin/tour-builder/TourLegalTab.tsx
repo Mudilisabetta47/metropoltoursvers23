@@ -105,7 +105,7 @@ const TourLegalTab = ({ tourId, sections, onCreate, onUpdate, onDelete }: TourLe
         { 
           section_key: 'terms', 
           title: 'Allgemeine Reisebedingungen', 
-          content: `Es gelten die Allgemeinen Reisebedingungen (ARB) der METROPOL TOURS GmbH.\n\nDie vollständigen Bedingungen finden Sie unter [metropol-tours.de/agb](/terms).\n\nVeranstalter: METROPOL TOURS GmbH, Hamburg`
+          content: `Es gelten die Allgemeinen Reisebedingungen (ARB) der METROPOL TOURS GmbH.\n\nDie vollständigen Bedingungen finden Sie unter [metours.de/agb](/terms).\n\nVeranstalter: METROPOL TOURS GmbH, Hamburg`
         },
       ];
 

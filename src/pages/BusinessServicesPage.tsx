@@ -677,8 +677,8 @@ const BusinessServicesPage = () => {
                     <div>
                       <h4 className="font-semibold text-foreground mb-1">Per E-Mail</h4>
                       <p className="text-muted-foreground text-sm mb-2">Antwort innerhalb von 24 Stunden</p>
-                      <a href="mailto:business@metropol-tours.de" className="text-primary font-medium hover:underline">
-                        business@metropol-tours.de
+                      <a href="mailto:business@metours.de" className="text-primary font-medium hover:underline">
+                        business@metours.de
                       </a>
                     </div>
                   </div>

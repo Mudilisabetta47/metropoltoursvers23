@@ -109,20 +109,20 @@ const Footer = () => {
             {/* Contact Info */}
             <div className="flex flex-col gap-3 text-sm text-muted-foreground mb-6">
               <a 
-                href="mailto:info@metropol-tours.de" 
+                href="mailto:info@metours.de" 
                 className="flex items-center gap-2 hover:text-primary transition-colors"
                 aria-label="E-Mail an METROPOL TOURS"
               >
                 <Mail className="w-4 h-4" />
-                info@metropol-tours.de
+                info@metours.de
               </a>
               <a 
-                href="tel:+49511123456789" 
+                href="tel:+4951180781106" 
                 className="flex items-center gap-2 hover:text-primary transition-colors"
                 aria-label="Telefon METROPOL TOURS"
               >
                 <Phone className="w-4 h-4" />
-                +49 511 123 456 789
+                +49 511 80781106
               </a>
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
