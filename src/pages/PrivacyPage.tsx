@@ -42,7 +42,7 @@ export default function PrivacyPage() {
                 </section>
                 <section>
                   <h2 className="text-xl font-semibold text-foreground mb-3">2. Verantwortlicher</h2>
-                  <p className="text-muted-foreground leading-relaxed">METROPOL TOURS GmbH<br />Musterstraße 123<br />20095 Hamburg<br />E-Mail: datenschutz@metours.de</p>
+                  <p className="text-muted-foreground leading-relaxed">METROPOL TOURS GmbH<br />[Straße folgt]<br />30159 Hannover<br />E-Mail: datenschutz@metours.de</p>
                 </section>
                 <section>
                   <h2 className="text-xl font-semibold text-foreground mb-3">3. Datenerfassung auf dieser Website</h2>

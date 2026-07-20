@@ -64,7 +64,6 @@ const serviceFeaturesMap: Record<string, string[]> = {
     "Frühbucher-Rabatte",
     "Gepäckservice inklusive",
     "Flugtracking bei Verspätungen",
-    "24/7 Buchung möglich"
   ],
   eventfahrten: [
     "Shuttle-Service zu Venues",
@@ -334,7 +333,7 @@ const BusinessServicesPage = () => {
               {[
                 { value: "50+", label: "Moderne Busse", icon: Bus },
                 { value: "100k+", label: "Zufriedene Kunden", icon: Users },
-                { value: "24/7", label: "Erreichbarkeit", icon: Clock },
+                { value: "8-18 Uhr", label: "Erreichbarkeit", icon: Clock },
                 { value: "4.9★", label: "Kundenbewertung", icon: Star },
               ].map((stat, i) => (
                 <motion.div

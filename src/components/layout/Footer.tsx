@@ -44,7 +44,6 @@ const Footer = () => {
   const trustBadges = [
     { icon: Shield, text: "Sichere Zahlung" },
     { icon: Award, text: "SSL-gesicherter Checkout" },
-    { icon: Headphones, text: "24/7 Kundenservice" },
     { icon: CreditCard, text: "Flexible Zahlungsarten" },
   ];
 
@@ -270,7 +269,7 @@ const Footer = () => {
               to="/admin" 
               className="text-muted-foreground/50 hover:text-muted-foreground transition-colors"
             >
-              Agentur Login
+              Mitarbeiter-Login
             </Link>
           </div>
           </div>

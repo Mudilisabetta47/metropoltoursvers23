@@ -211,7 +211,7 @@ const TestimonialsSection = () => {
             { value: "4.8", label: "Google Bewertung" },
             { value: "2M+", label: "Zufriedene Kunden" },
             { value: "99%", label: "Pünktlichkeit" },
-            { value: "24/7", label: "Kundensupport" },
+            { value: "8-18 Uhr", label: "Kundensupport" },
           ].map((stat) => (
             <motion.div 
               key={stat.label} 
