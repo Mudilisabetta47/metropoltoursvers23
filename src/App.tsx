@@ -85,6 +85,8 @@ const TrackTripPage = lazy(() => import("./pages/TrackTripPage"));
 const TrackTripLandingPage = lazy(() => import("./pages/TrackTripLandingPage"));
 const AdminTrips = lazy(() => import("./pages/AdminTrips"));
 const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
+const AdminCopilot = lazy(() => import("./pages/AdminCopilot"));
+const AdminCopilotAudit = lazy(() => import("./pages/AdminCopilotAudit"));
 
 const queryClient = new QueryClient();
 
@@ -174,6 +176,8 @@ const App = () => (
               <Route path="/reisen/checkout" element={<TourCheckoutPage />} />
               <Route path="/tour-checkout" element={<TourCheckoutPage />} />
               <Route path="/admin" element={<AdminRedirect />} />
+              <Route path="/admin/copilot" element={<AdminCopilot />} />
+              <Route path="/admin/copilot-audit" element={<AdminCopilotAudit />} />
               <Route path="/admin/ops" element={<OperationsDashboard />} />
               <Route path="/admin/driver" element={<DriverDashboard />} />
               <Route path="/admin/inquiries" element={<AdminInquiriesPage />} />

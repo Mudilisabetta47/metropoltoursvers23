@@ -1,111 +1,116 @@
-# Plan: Einheitliches Fahrtmanagement, Verspätungen & Benachrichtigungen
+# METOURS Copilot – Aktiver KI-Assistent im Backend
 
-## Ziele
-1. **Einheitliche Fahrt-IDs** für Linienfahrten **und** Pauschalreise-Termine
-2. **Strukturiertes Backend** statt verstreuter Tabellen — eine zentrale Sicht „Alle Fahrten"
-3. **Verspätungen im Ops-Cockpit** melden (für beide Fahrtarten)
-4. **Live-Verfolgung** zeigt Verspätung sofort an (Realtime)
-5. **Automatische E-Mail** an betroffene Fahrgäste bei Verspätung
-6. **Echte Daten** statt Demo (Seeds aus realen Linien/Tourdaten)
+Ein interner Chat-Assistent im Admin-Cockpit, der über Tool-Calling echte Aktionen im System ausführt – abgesichert durch die bestehende Rollen- und RLS-Struktur und vollständig im Audit-Log protokolliert.
 
----
+## Ziel
 
-## 1. Backend-Struktur (Migration)
+Mitarbeitende schreiben natürliche Sätze („Verschiebe die Tour auf Freitag", „Zeige alle offenen Rechnungen"), die KI plant die passenden Schritte, ruft interne Tools auf und antwortet mit Bestätigung oder Fehler.
 
-**Neue Tabelle `trip_registry`** — einheitliches Fahrt-Verzeichnis:
-- `trip_uid` (TEXT, unique, Format: `MT-YYYY-XXXXXX`) — die eine ID für alles
-- `source_type` (`line_trip` | `package_tour_date`)
-- `source_id` (FK auf line_trips.id oder tour_dates.id)
-- `departure_at`, `origin`, `destination`, `status`
-- `current_delay_min` (INT, default 0)
-- `delay_reason`, `delay_updated_at`, `delay_updated_by`
+## Architektur
 
-**Neue Tabelle `trip_delay_events`** — Audit + Versand-Status:
-- `trip_uid`, `delay_min`, `reason`, `reported_by`, `notified_count`, `created_at`
+```text
+┌──────────────────────────────────────────────┐
+│ Admin-Cockpit → /admin/copilot (Chat-UI)     │
+│   • useChat (AI SDK UI) + Streaming           │
+│   • Message parts (text, tool-call, result)   │
+└───────────────┬──────────────────────────────┘
+                │ Authorization: Bearer <user JWT>
+                ▼
+┌──────────────────────────────────────────────┐
+│ Edge Function: copilot-chat                   │
+│   1. JWT verifizieren → user_id + Rollen      │
+│   2. streamText (AI SDK, Lovable Gateway)     │
+│      • System-Prompt (Rolle, Sprache DE)      │
+│      • Tools nach Rolle gefiltert             │
+│   3. Für jeden Tool-Call:                     │
+│      • Permission-Check (has_role)            │
+│      • Server-seitige Ausführung (RLS-Client) │
+│      • copilot_audit_log Eintrag              │
+│   4. UI-Stream zurückgeben                    │
+└───────────────┬──────────────────────────────┘
+                ▼
+┌──────────────────────────────────────────────┐
+│ Supabase                                      │
+│   • bestehende Tabellen mit RLS               │
+│   • copilot_audit_log (neu)                   │
+│   • copilot_conversations, copilot_messages   │
+└──────────────────────────────────────────────┘
+```
 
-**Trigger:** beim Insert in `line_trips` oder `tour_dates` → automatisch Eintrag in `trip_registry` mit generierter `trip_uid`.
+Der Copilot ruft **niemals** direkt SQL auf. Alle Aktionen laufen über typisierte Tools mit Zod-Validierung → RLS wird als zweite Schutzschicht behalten.
 
-**RPC `report_trip_delay(trip_uid, delay_min, reason)`** (SECURITY DEFINER, staff-only):
-- Aktualisiert `trip_registry` + `line_trips.delay_minutes` bzw. `tour_dates`
-- Schreibt Event in `trip_delay_events`
-- Triggert Edge Function `notify-trip-delay`
+## Tools (Erste Auslieferung)
 
----
+Jedes Tool hat: Name, Zod-Schema, benötigte Rolle(n), `readOnly`/`destructive`-Flag, optional `needsApproval`.
 
-## 2. Ops-Seite: `/admin/trips` (Alle Fahrten + Verspätung)
+**Lesen (alle Staff-Rollen)**
+- `search_bookings` – Filter nach Status, Datum, Kunde
+- `search_customers`
+- `list_trips` / `list_tours` – kommende Fahrten
+- `list_invoices` – offene/bezahlte Rechnungen
+- `list_drivers`, `list_vehicles`
+- `get_statistics` – KPIs (Auslastung, Umsatz)
 
-Eine zentrale Tabelle mit Filtern (heute/morgen/Woche, Linie/Pauschal, Status):
-- Spalten: Trip-UID · Typ · Route · Abfahrt · Status · **aktuelle Verspätung** · Aktion
-- Action-Button **„Verspätung melden"** → Drawer mit:
-  - Verspätung in Minuten (Slider/Input)
-  - Grund (Stau, Panne, Wetter, Sonstiges + Freitext)
-  - Checkbox „Fahrgäste benachrichtigen"
-- Sub-Tab **„Verspätungs-Historie"** = Liste aller `trip_delay_events`
+**Schreiben (admin/office)**
+- `create_booking`, `update_booking_status`, `reschedule_tour`
+- `assign_driver_to_trip`, `assign_vehicle_to_trip`
+- `create_invoice_from_booking`, `mark_invoice_paid`
+- `create_customer`, `add_customer_note`
+- `create_shift`, `update_shift`
 
-Ersetzt die parallele Logik in `AdminLineTrips` und `AdminDispatch` durch eine Sicht. Bestehende Seiten bleiben, linken aber auf `/admin/trips`.
+**Sensibel (admin only, needsApproval=true)**
+- `delete_booking`, `refund_payment`, `create_driver_account`
 
----
+Rollen: `admin` = alles, `office` = Buchungen/Rechnungen/Dispo, `agent` = read + create_booking, `driver` = nur eigene Read-Tools.
 
-## 3. Live-Verfolgung (`/verfolge/:tripNumber`)
+## Datenbank (Migration)
 
-- Liest `trip_registry.current_delay_min` zusätzlich zu `line_trips`
-- Realtime-Subscribe auf `trip_registry` UND `trip_delay_events`
-- Großes rotes Banner „**Verspätung +25 min** — Grund: Stau A2" wenn `delay > 0`
-- Funktioniert auch für Pauschalreise-Trip-UIDs
+Neue Tabellen (mit GRANT + RLS nach Projekt-Standard):
+- `copilot_conversations` (id, user_id, title, created_at)
+- `copilot_messages` (id, conversation_id, role, parts jsonb, created_at)
+- `copilot_audit_log` (id, user_id, conversation_id, tool_name, input jsonb, output jsonb, status, error, duration_ms, created_at)
 
----
+RLS: Nutzer sehen nur eigene Conversations/Messages; Audit-Log nur für `admin` lesbar, Einträge nur via `service_role` (Edge Function).
 
-## 4. E-Mail-Versand bei Verspätung
+## Edge Function `copilot-chat`
 
-**Edge Function `notify-trip-delay`**:
-- Input: `trip_uid`
-- Findet alle Fahrgäste:
-  - Linienfahrt: `bookings` JOIN `trips` WHERE `trip_id` matched
-  - Pauschalreise: `tour_bookings` WHERE `tour_date_id` matched
-- Schickt jedem eine personalisierte Mail über bestehendes `send-transactional-email`
-- Template `trip-delay-notification.tsx` mit: Trip-UID, Route, ursprüngliche/neue Abfahrt, Grund, Verfolgungs-Link
-- Schreibt Anzahl zurück in `trip_delay_events.notified_count`
+- `verify_jwt = true`
+- Nutzt `createLovableAiGatewayProvider` (bestehender Shared-Helper)
+- Modell: `google/gemini-3.6-flash` (schnell, tool-fähig, günstig)
+- `streamText` mit `stopWhen: stepCountIs(50)`
+- Tool-`execute` erstellt bei jedem Aufruf einen `copilot_audit_log`-Eintrag (start → complete/error) und nutzt einen Supabase-Client, der das User-JWT weiterreicht (RLS als zweite Schutzschicht)
+- System-Prompt: Deutsch, Kontext (aktueller User, Rolle, heutiges Datum), Verhalten (fragt nach bei Mehrdeutigkeit, bestätigt Aktionen kurz)
+- Fehlerbehandlung: strukturierte Fehler pro Tool + 402/429 vom Gateway sauber an UI
 
----
+## UI
 
-## 5. Echte Daten (Seed)
+- Neue Seite `src/pages/AdminCopilot.tsx` (Route `/admin/copilot`)
+- Sidebar-Eintrag „Copilot" (Sparkles-Icon) unter „Cockpit"
+- Chat mit `useChat`, rendert `message.parts` inkl. Tool-Aufrufe (Name, Input-Zusammenfassung, Ergebnis-Badge ✓/✗)
+- Conversation-Historie (linke Spalte), neue Chats, Löschen
+- Freeze-Confirm-Dialog für `needsApproval`-Tools
+- Chips mit Beispielprompts („Zeige alle offenen Rechnungen", „Fahrer für morgen 08:00 zuweisen")
 
-- Linien aus DB (bestehend) — bleiben
-- Pauschalreise-Termine aus `tour_dates` — bekommen Trip-UID per Backfill
-- Backfill-Migration: für alle bestehenden `line_trips` und zukünftigen `tour_dates` jeweils `trip_registry`-Eintrag erzeugen
-- Demo-Verspätung **nicht** seeden — User pflegt live
+## Sicherheit
 
----
+- Nur `hasAnyStaffRole` darf die Seite/Edge Function nutzen (Route-Guard + Server-Check)
+- Server prüft **pro Tool** die Rolle – der Prompt allein reicht nie
+- Alle Inputs Zod-validiert, alle Outputs kompakt
+- Tokens/Secrets nie an das Modell
+- Audit-Log: unveränderlich (`GRANT INSERT` nur service_role, kein UPDATE/DELETE)
+- Neue Admin-Seite `/admin/copilot-audit` zum Durchsuchen der KI-Aktionen
 
-## Technische Details
+## Erweiterbarkeit
 
-**Trip-UID-Format:** `MT-2026-A7K3X9` (Prefix Metropol Tours · Jahr · 6-stellig Base32) — generiert via DB-Funktion `generate_trip_uid()`.
+Neue Tools werden als eigene Datei in `supabase/functions/copilot-chat/tools/` abgelegt und in der Tool-Registry mit Rolle registriert – kein Prompt-Umbau nötig. Modell/Prompt/Rollen-Mapping sind konfigurierbar.
 
-**Realtime aktivieren:** `ALTER PUBLICATION supabase_realtime ADD TABLE trip_registry, trip_delay_events;`
+## Umsetzung in Etappen
 
-**RLS:**
-- `trip_registry` SELECT public (nur Basis-Felder via View ohne Pax-Daten)
-- `trip_delay_events` SELECT staff, INSERT nur via RPC
-- `report_trip_delay` nur admin/office/agent/driver
+1. **DB-Migration** – 3 Tabellen + RLS + GRANTs
+2. **Edge Function** `copilot-chat` mit Tool-Registry, Read-Only-Tools zuerst
+3. **UI** `/admin/copilot` + Sidebar-Eintrag
+4. **Write-Tools** (Buchungen, Rechnungen, Dispo) freischalten
+5. **Audit-Log-Viewer** `/admin/copilot-audit`
+6. **Approval-Flow** für destruktive Tools
 
-**Files:**
-- Migration: trip_registry + trip_delay_events + Trigger + RPC + Backfill
-- `src/pages/AdminTrips.tsx` (neu)
-- `src/pages/TrackTripPage.tsx` (Delay-Banner + Realtime)
-- `supabase/functions/notify-trip-delay/index.ts` (neu)
-- `supabase/functions/_shared/transactional-email-templates/trip-delay-notification.tsx` (neu)
-- `supabase/functions/_shared/transactional-email-templates/registry.ts` (Eintrag)
-- Sidebar: „Alle Fahrten" als neuer Eintrag in „Fahrten & Betrieb"
-
-**Liste der Trip-UIDs:** Nach Migration zeige ich dir im Chat die ersten 50 generierten UIDs als CSV/Tabelle.
-
----
-
-## Reihenfolge der Umsetzung
-1. Migration (Tabellen + RPC + Trigger + Backfill)
-2. E-Mail-Template + Edge Function
-3. AdminTrips-Seite + Sidebar
-4. Live-Verfolgung Delay-Banner
-5. Liste der UIDs liefern
-
-Soll ich starten?
+Soll ich so starten? Wenn ja, lege ich direkt mit Etappe 1+2 (DB + Edge Function + Basis-UI mit Read-Tools) los; Write-Tools folgen danach, damit du sie einzeln freigeben kannst.
