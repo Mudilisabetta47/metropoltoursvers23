@@ -311,7 +311,7 @@ Deno.serve(async (req) => {
               userClient.from("tour_invoices").select("id", { count: "exact", head: true })
                 .neq("status", "paid"),
               userClient.from("trip_registry").select("id", { count: "exact", head: true })
-                .lte("scheduled_departure", new Date(Date.now() + 7 * 86400_000).toISOString()),
+                .lte("departure_at", new Date(Date.now() + 7 * 86400_000).toISOString()),
             ]);
             return { bookingsToday, openInvoices, upcomingTrips: upcoming };
           },
@@ -361,7 +361,7 @@ Deno.serve(async (req) => {
             }
             if (!targetId) throw new Error("Kunde nicht gefunden");
             const { data, error } = await userClient.from("customer_notes")
-              .insert({ user_id: targetId, note: i.note, created_by: userId })
+              .insert({ customer_user_id: targetId, body: i.note, author_id: userId })
               .select().single();
             if (error) throw new Error(error.message);
             return { note: data };
@@ -371,11 +371,12 @@ Deno.serve(async (req) => {
 
       create_shift: tool({
         description:
-          "Erstelle einen Dienstplan-Eintrag (Schicht) für einen Mitarbeiter. Zeiten in ISO 8601.",
+          "Erstelle einen Dienstplan-Eintrag (Schicht) für einen Mitarbeiter. shift_date=YYYY-MM-DD, shift_start/shift_end=HH:MM.",
         inputSchema: z.object({
           employee_user_id: z.string().uuid(),
-          starts_at: z.string(),
-          ends_at: z.string(),
+          shift_date: z.string(),
+          shift_start: z.string(),
+          shift_end: z.string(),
           role: z.string().optional(),
           notes: z.string().max(500).optional(),
         }),
@@ -386,8 +387,9 @@ Deno.serve(async (req) => {
             const { data, error } = await userClient.from("employee_shifts")
               .insert({
                 user_id: i.employee_user_id,
-                starts_at: i.starts_at,
-                ends_at: i.ends_at,
+                shift_date: i.shift_date,
+                shift_start: i.shift_start,
+                shift_end: i.shift_end,
                 role: i.role ?? null,
                 notes: i.notes ?? null,
               }).select().single();
@@ -399,10 +401,10 @@ Deno.serve(async (req) => {
 
       report_delay: tool({
         description:
-          "Melde Verspätung für eine Fahrt (trip_registry). trip_id oder trip_number angeben, delay_minutes und optional Grund.",
+          "Melde Verspätung für eine Fahrt (trip_registry). trip_id (UUID) oder trip_uid (z.B. MT-2026-XXXXXX) angeben.",
         inputSchema: z.object({
           trip_id: z.string().uuid().optional(),
-          trip_number: z.string().optional(),
+          trip_uid: z.string().optional(),
           delay_minutes: z.number().int().min(1).max(600),
           reason: z.string().max(500).optional(),
         }),
@@ -410,10 +412,15 @@ Deno.serve(async (req) => {
           name: "report_delay",
           allowed: OFFICE,
           run: async (i) => {
-            if (!i.trip_id && !i.trip_number) throw new Error("trip_id oder trip_number erforderlich");
+            if (!i.trip_id && !i.trip_uid) throw new Error("trip_id oder trip_uid erforderlich");
             let q = userClient.from("trip_registry")
-              .update({ delay_minutes: i.delay_minutes, delay_reason: i.reason ?? null });
-            q = i.trip_id ? q.eq("id", i.trip_id) : q.eq("trip_number", i.trip_number!);
+              .update({
+                current_delay_min: i.delay_minutes,
+                delay_reason: i.reason ?? null,
+                delay_updated_at: new Date().toISOString(),
+                delay_updated_by: userId,
+              });
+            q = i.trip_id ? q.eq("id", i.trip_id) : q.eq("trip_uid", i.trip_uid!);
             const { data, error } = await q.select().single();
             if (error) throw new Error(error.message);
             return { trip: data };
