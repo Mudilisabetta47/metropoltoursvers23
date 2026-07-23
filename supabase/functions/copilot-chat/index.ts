@@ -206,10 +206,10 @@ Deno.serve(async (req) => {
           allowed: AGENT_OFFICE,
           run: async (i) => {
             let q = userClient.from("tour_bookings").select(
-              "id, booking_number, status, customer_email, customer_first_name, customer_last_name, total_price, created_at",
+              "id, booking_number, status, contact_email, contact_first_name, contact_last_name, total_price, created_at",
             ).order("created_at", { ascending: false }).limit(i.limit ?? 25);
             if (i.status) q = q.eq("status", i.status);
-            if (i.email) q = q.ilike("customer_email", `%${i.email}%`);
+            if (i.email) q = q.ilike("contact_email", `%${i.email}%`);
             if (i.from) q = q.gte("created_at", i.from);
             if (i.to) q = q.lte("created_at", i.to);
             const { data, error } = await q;
@@ -221,9 +221,9 @@ Deno.serve(async (req) => {
 
       list_upcoming_trips: tool({
         description:
-          "Liste bevorstehender Linien-/Bus-Fahrten mit Nummer, Ziel, Datum, Fahrer und Fahrzeug.",
+          "Liste bevorstehender Fahrten mit Trip-UID, Ziel, Abfahrt, Status und aktueller Verspätung.",
         inputSchema: z.object({
-          days: z.number().int().min(1).max(60).optional().describe("Zeitfenster in Tagen (Default 7)"),
+          days: z.number().int().min(1).max(60).optional(),
         }),
         execute: guarded({
           name: "list_upcoming_trips",
@@ -232,7 +232,10 @@ Deno.serve(async (req) => {
             const days = i.days ?? 7;
             const to = new Date(Date.now() + days * 86400_000).toISOString();
             const { data, error } = await userClient.from("trip_registry")
-              .select("*").lte("scheduled_departure", to).order("scheduled_departure").limit(50);
+              .select("id, trip_uid, origin, destination, departure_at, status, current_delay_min")
+              .gte("departure_at", new Date().toISOString())
+              .lte("departure_at", to)
+              .order("departure_at").limit(50);
             if (error) throw new Error(error.message);
             return { count: data?.length ?? 0, trips: data };
           },
