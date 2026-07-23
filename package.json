@@ -11,7 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@ai-sdk/react": "^4.0.38",
+    "@ai-sdk/react": "2.0.11",
     "@capacitor/android": "^8.3.1",
     "@capacitor/core": "^8.3.1",
     "@capacitor/ios": "^8.3.1",
@@ -51,7 +51,7 @@
     "@types/mapbox-gl": "^3.4.1",
     "@types/three": "^0.183.1",
     "@vis.gl/react-mapbox": "^8.1.0",
-    "ai": "^7.0.35",
+    "ai": "5.0.11",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
