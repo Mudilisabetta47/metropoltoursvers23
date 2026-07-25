@@ -308,13 +308,17 @@ const ServicePage = () => {
                 <h3 className="text-xl font-bold text-foreground mb-2">Ihre Frage nicht gefunden?</h3>
                 <p className="text-muted-foreground mb-6">Unser Support-Team hilft Ihnen gerne weiter.</p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Button variant="outline" className="gap-2">
-                    <Mail className="w-4 h-4" />
-                    E-Mail schreiben
+                  <Button asChild variant="outline" className="gap-2">
+                    <a href="mailto:kundenservice@metours.de">
+                      <Mail className="w-4 h-4" />
+                      E-Mail schreiben
+                    </a>
                   </Button>
-                  <Button className="gap-2">
-                    <Phone className="w-4 h-4" />
-                    Anrufen
+                  <Button asChild className="gap-2">
+                    <a href="tel:+4951180781106">
+                      <Phone className="w-4 h-4" />
+                      Anrufen
+                    </a>
                   </Button>
                 </div>
               </div>

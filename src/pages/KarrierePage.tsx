@@ -156,15 +156,26 @@ const KarrierePage = () => {
 
     if (!error) {
       const jobTitle = jobs.find(j => j.id === form.job_listing_id)?.title || "Initiativbewerbung";
+      const summary = `Neue Bewerbung eingegangen.\n\nName: ${form.first_name} ${form.last_name}\nE-Mail: ${form.email}\nTelefon: ${form.phone || "—"}\nAdresse: ${form.address || "—"}, ${form.postal_code || ""} ${form.city || ""}\nFrühester Start: ${form.earliest_start_date || "—"}\nBerufserfahrung: ${form.experience_years || "—"}\nGehaltsvorstellung: ${form.desired_salary || "—"}\nGefunden über: ${form.how_found_us || "—"}\nLebenslauf: ${resume_filename || "Nicht hochgeladen"}\n\nNachricht:\n${form.message || "Keine Nachricht"}`;
       await (supabase as any).from("admin_mailbox").insert({
         folder: "inbox",
         subject: `Neue Bewerbung: ${form.first_name} ${form.last_name} – ${jobTitle}`,
-        body: `Neue Bewerbung eingegangen.\n\nName: ${form.first_name} ${form.last_name}\nE-Mail: ${form.email}\nTelefon: ${form.phone || "—"}\nAdresse: ${form.address || "—"}, ${form.postal_code || ""} ${form.city || ""}\nFrühester Start: ${form.earliest_start_date || "—"}\nBerufserfahrung: ${form.experience_years || "—"}\nGehaltsvorstellung: ${form.desired_salary || "—"}\nGefunden über: ${form.how_found_us || "—"}\nLebenslauf: ${resume_filename || "Nicht hochgeladen"}\n\nNachricht:\n${form.message || "Keine Nachricht"}`,
+        body: summary,
         sender_email: form.email,
         sender_name: `${form.first_name} ${form.last_name}`,
         source_type: "application",
         tags: ["bewerbung"],
       });
+      supabase.functions.invoke('notify-inbox', {
+        body: {
+          type: 'application',
+          subject: `Bewerbung: ${form.first_name} ${form.last_name} – ${jobTitle}`,
+          body: summary,
+          from_email: form.email,
+          from_name: `${form.first_name} ${form.last_name}`,
+          extra_cc: ['bewerbung@metours.de'],
+        },
+      }).catch((e) => console.warn('notify-inbox failed', e));
     }
 
     if (error) {

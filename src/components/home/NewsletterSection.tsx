@@ -32,6 +32,14 @@ const NewsletterSection = () => {
         folder: 'inbox',
         tags: ['newsletter'],
       });
+      supabase.functions.invoke('notify-inbox', {
+        body: {
+          type: 'newsletter',
+          subject: `Newsletter-Anmeldung: ${email}`,
+          body: `Neue Newsletter-Anmeldung:\n\nE-Mail: ${email}`,
+          from_email: email,
+        },
+      }).catch((e) => console.warn('notify-inbox failed', e));
       setIsSubmitted(true);
       toast.success("Erfolgreich angemeldet! 🎉");
     } catch {
