@@ -172,7 +172,28 @@ const PackageTourDetailPage = () => {
       if (insertError) throw insertError;
 
       setInquiryNumber(generatedNumber as string);
-      
+
+      supabase.functions.invoke('notify-inbox', {
+        body: {
+          type: 'tour_inquiry',
+          subject: `Reiseanfrage ${generatedNumber} – ${dbTour.destination}`,
+          body: [
+            `Anfragenummer: ${generatedNumber}`,
+            `Reise: ${dbTour.destination}`,
+            `Abfahrt: ${formatDate(dbTour.departure_date)}`,
+            `Name: ${formData.firstName} ${formData.lastName}`,
+            `E-Mail: ${formData.email}`,
+            formData.phone && `Telefon: ${formData.phone}`,
+            `Teilnehmer: ${formData.participants}`,
+            `Gesamtpreis (ca.): ${dbTour.price_from * formData.participants} €`,
+            formData.message && `\nNachricht:\n${formData.message}`,
+          ].filter(Boolean).join('\n'),
+          from_email: formData.email,
+          from_name: `${formData.firstName} ${formData.lastName}`,
+          extra_cc: ['buchung@metours.de'],
+        },
+      }).catch((e) => console.warn('notify-inbox failed', e));
+
       toast({
         title: "Anfrage erfolgreich gesendet!",
         description: `Ihre Anfragenummer: ${generatedNumber}. Wir melden uns innerhalb von 24 Stunden.`,
