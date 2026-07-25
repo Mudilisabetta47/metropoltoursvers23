@@ -55,3 +55,5 @@ project_id = "wberoibxqpffhnyvjnci"
     verify_jwt = true
   [functions.copilot-chat]
     verify_jwt = true
+  [functions.notify-inbox]
+    verify_jwt = false
