@@ -142,6 +142,29 @@ const BusinessServicesPage = () => {
 
       if (error) throw error;
 
+      // Forward to configured inbox (best-effort)
+      supabase.functions.invoke('notify-inbox', {
+        body: {
+          type: 'group_inquiry',
+          subject: `Gruppenanfrage: ${selectedService?.name || formData.service}`,
+          body: [
+            `Service: ${selectedService?.name || formData.service}`,
+            `Name: ${formData.firstName} ${formData.lastName}`,
+            formData.company && `Firma: ${formData.company}`,
+            `E-Mail: ${formData.email}`,
+            formData.phone && `Telefon: ${formData.phone}`,
+            `Teilnehmer: ${formData.participants || 'k.A.'}`,
+            formData.date && `Hinfahrt: ${formData.date}`,
+            formData.returnDate && `Rückfahrt: ${formData.returnDate}`,
+            formData.pickup && `Abfahrtsort: ${formData.pickup}`,
+            formData.destination && `Zielort: ${formData.destination}`,
+            formData.message && `\nNachricht:\n${formData.message}`,
+          ].filter(Boolean).join('\n'),
+          from_email: formData.email,
+          from_name: `${formData.firstName} ${formData.lastName}`,
+        },
+      }).catch((e) => console.warn('notify-inbox failed', e));
+
       setSubmitted(true);
       toast({
         title: "Anfrage erfolgreich gesendet!",
