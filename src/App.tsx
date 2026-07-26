@@ -87,6 +87,7 @@ const AdminTrips = lazy(() => import("./pages/AdminTrips"));
 const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 const AdminCopilot = lazy(() => import("./pages/AdminCopilot"));
 const AdminCopilotAudit = lazy(() => import("./pages/AdminCopilotAudit"));
+const FISPage = lazy(() => import("./pages/FISPage"));
 
 const queryClient = new QueryClient();
 
@@ -112,7 +113,7 @@ const PublicGate = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   
   // Always allow auth, admin, reset-password, legal pages
-  const bypassPaths = ['/auth', '/admin', '/reset-password', '/imprint', '/privacy', '/terms', '/passagierdaten', '/verfolge', '/.lovable/oauth/consent'];
+  const bypassPaths = ['/auth', '/admin', '/fahrer', '/reset-password', '/imprint', '/privacy', '/terms', '/passagierdaten', '/verfolge', '/.lovable/oauth/consent'];
   const isBypassed = bypassPaths.some(p => location.pathname.startsWith(p));
   
   if (isBypassed) return <>{children}</>;
@@ -239,6 +240,7 @@ const App = () => (
              <Route path="/admin/trips" element={<AdminTrips />} />
               <Route path="/verfolge" element={<TrackTripLandingPage />} />
               <Route path="/verfolge/:tripNumber" element={<TrackTripPage />} />
+              <Route path="/fahrer" element={<FISPage />} />
               <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
