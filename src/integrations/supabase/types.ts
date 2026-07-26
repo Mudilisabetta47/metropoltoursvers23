@@ -1572,6 +1572,89 @@ export type Database = {
         }
         Relationships: []
       }
+      driver_checklists: {
+        Row: {
+          all_ok: boolean
+          bus_id: string | null
+          created_at: string
+          driver_user_id: string
+          id: string
+          items: Json
+          notes: string | null
+          shift_date: string
+          signature_data: string | null
+          updated_at: string
+        }
+        Insert: {
+          all_ok?: boolean
+          bus_id?: string | null
+          created_at?: string
+          driver_user_id: string
+          id?: string
+          items?: Json
+          notes?: string | null
+          shift_date?: string
+          signature_data?: string | null
+          updated_at?: string
+        }
+        Update: {
+          all_ok?: boolean
+          bus_id?: string | null
+          created_at?: string
+          driver_user_id?: string
+          id?: string
+          items?: Json
+          notes?: string | null
+          shift_date?: string
+          signature_data?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_checklists_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      driver_duty_log: {
+        Row: {
+          break_seconds: number
+          created_at: string
+          driver_user_id: string
+          driving_seconds: number
+          id: string
+          km_end: number | null
+          km_start: number | null
+          log_date: string
+          updated_at: string
+        }
+        Insert: {
+          break_seconds?: number
+          created_at?: string
+          driver_user_id: string
+          driving_seconds?: number
+          id?: string
+          km_end?: number | null
+          km_start?: number | null
+          log_date?: string
+          updated_at?: string
+        }
+        Update: {
+          break_seconds?: number
+          created_at?: string
+          driver_user_id?: string
+          driving_seconds?: number
+          id?: string
+          km_end?: number | null
+          km_start?: number | null
+          log_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       driver_licenses: {
         Row: {
           adr_certificate: boolean | null
@@ -1704,6 +1787,33 @@ export type Database = {
           sent_by?: string
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      driver_status: {
+        Row: {
+          latitude: number | null
+          longitude: number | null
+          note: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          latitude?: number | null
+          longitude?: number | null
+          note?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          latitude?: number | null
+          longitude?: number | null
+          note?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
