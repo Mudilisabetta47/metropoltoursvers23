@@ -106,7 +106,7 @@ export const useSystemStatus = () => {
 
     // Realtime subscription
     const channel = supabase
-      .channel('system_status_changes')
+      .channel(`system_status_changes_${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'system_status' },
         () => { fetchStatus(); }
@@ -170,7 +170,7 @@ export const useVehiclePositions = () => {
     fetchPositions();
 
     const channel = supabase
-      .channel('vehicle_positions_changes')
+      .channel(`vehicle_positions_changes_${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'vehicle_positions' },
         () => { fetchPositions(); }
@@ -206,7 +206,7 @@ export const useIncidents = () => {
 
     // Realtime subscription
     const channel = supabase
-      .channel('incidents_changes')
+      .channel(`incidents_changes_${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'incidents' },
         () => { fetchIncidents(); }
@@ -264,7 +264,7 @@ export const useEmployeeShifts = () => {
     fetchShifts();
 
     const channel = supabase
-      .channel('employee_shifts_changes')
+      .channel(`employee_shifts_changes_${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'employee_shifts' },
         () => { fetchShifts(); }
@@ -310,7 +310,7 @@ export const useScannerEvents = (limit = 50) => {
     fetchEvents();
 
     const channel = supabase
-      .channel('scanner_events_changes')
+      .channel(`scanner_events_changes_${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'scanner_events' },
         () => { fetchEvents(); }
@@ -495,7 +495,7 @@ export const useAuditLogs = (limit = 50) => {
     fetchLogs();
 
     const channel = supabase
-      .channel('audit_log_changes')
+      .channel(`audit_log_changes_${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'audit_log' },
         () => { fetchLogs(); }
@@ -539,7 +539,7 @@ export const useCommandLogs = (limit = 50) => {
     fetchLogs();
 
     const channel = supabase
-      .channel('command_logs_changes')
+      .channel(`command_logs_changes_${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'command_logs' },
         () => { fetchLogs(); }
