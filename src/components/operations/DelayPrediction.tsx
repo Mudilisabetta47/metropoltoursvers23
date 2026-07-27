@@ -75,7 +75,7 @@ const DelayPrediction = () => {
                   : "bg-[#0c1018] border-[#1e2836]"
               )}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-medium text-white">Bus #{p.bus_id.slice(0, 6)}</span>
+                  <span className="text-[11px] font-medium text-white">Bus #{(p.bus_id || p.id || "").toString().slice(0, 6)}</span>
                   <div className="flex items-center gap-1.5">
                     {trendIcon}
                     <span className={cn(
