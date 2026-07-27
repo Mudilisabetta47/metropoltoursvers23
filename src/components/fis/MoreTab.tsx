@@ -78,6 +78,20 @@ const MoreTab = ({ userId }: { userId: string }) => {
 
       {/* Actions */}
       <section className="rounded-2xl bg-[#131720] border border-white/5 divide-y divide-white/5">
+        <MenuItem icon={RefreshCw} label="App aktualisieren (Cache leeren)" onClick={async () => {
+          try {
+            if ("caches" in window) {
+              const keys = await caches.keys();
+              await Promise.all(keys.map((k) => caches.delete(k)));
+            }
+            if ("serviceWorker" in navigator) {
+              const regs = await navigator.serviceWorker.getRegistrations();
+              await Promise.all(regs.map((r) => r.unregister()));
+            }
+          } catch {}
+          // hard reload bypassing cache
+          window.location.href = `/fahrer?v=${Date.now()}`;
+        }} />
         <MenuItem icon={Bell} label="Benachrichtigungen" onClick={() => {}} />
         <MenuItem icon={Shield} label="Datenschutz & Sicherheit" onClick={() => navigate("/privacy")} />
         <MenuItem icon={Settings} label="Einstellungen" onClick={() => {}} />
@@ -86,7 +100,7 @@ const MoreTab = ({ userId }: { userId: string }) => {
       </section>
 
       <p className="text-center text-[10px] text-zinc-600 pt-2">
-        METROPOL TOURS · FIS v1.0 · Hannover
+        METROPOL TOURS · FIS Build {new Date().toISOString().slice(0,10)} · Hannover
       </p>
     </div>
   );
