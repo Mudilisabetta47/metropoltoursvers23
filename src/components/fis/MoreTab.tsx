@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, LogOut, Settings, Bell, Shield, Download, ExternalLink } from "lucide-react";
+import { FileText, LogOut, Settings, Bell, Shield, Download, ExternalLink, RefreshCw } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 
