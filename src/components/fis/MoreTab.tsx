@@ -90,7 +90,7 @@ const MoreTab = ({ userId }: { userId: string }) => {
             }
           } catch {}
           // hard reload bypassing cache
-          window.location.href = `/fahrer?v=${Date.now()}`;
+          window.location.href = `/admin/driver?v=${Date.now()}`;
         }} />
         <MenuItem icon={Bell} label="Benachrichtigungen" onClick={() => {}} />
         <MenuItem icon={Shield} label="Datenschutz & Sicherheit" onClick={() => navigate("/privacy")} />

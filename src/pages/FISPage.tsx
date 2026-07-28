@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import FISLayout from "@/components/fis/FISLayout";
@@ -12,6 +12,7 @@ import MoreTab from "@/components/fis/MoreTab";
 export type FISTab = "dashboard" | "trips" | "vehicle" | "chat" | "more";
 
 const FISPage = () => {
+  const location = useLocation();
   const { user, isDriver, isAdmin, isOffice, isLoading } = useAuth();
   const [tab, setTab] = useState<FISTab>("dashboard");
   const [status, setStatus] = useState<string>("off_duty");
@@ -53,7 +54,7 @@ const FISPage = () => {
     );
   }
 
-  if (!user) return <Navigate to="/auth?redirect=/fahrer" replace />;
+  if (!user) return <Navigate to={`/auth?redirect=${encodeURIComponent(location.pathname)}`} replace />;
   if (!isDriver && !isAdmin && !isOffice) return <Navigate to="/" replace />;
 
   return (
