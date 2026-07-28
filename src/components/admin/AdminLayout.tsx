@@ -76,6 +76,7 @@ const menuSections: MenuSection[] = [
       { path: "/admin/lines", label: "Linien & Fahrpläne", icon: Route, allowedRoles: MANAGEMENT },
       { path: "/admin/line-trips", label: "Tages-Fahrten (Linie)", icon: Clock, allowedRoles: OPS_STAFF },
       { path: "/admin/dispo-board", label: "Einsatzplanung (Linien)", icon: ClipboardList, allowedRoles: OPS_STAFF },
+      { path: "/admin/driver", label: "Fahrer-App (FIS)", icon: MonitorSmartphone, allowedRoles: OPS_STAFF },
       { path: "/admin/driver-compliance", label: "Fahrer-Board", icon: IdCard, allowedRoles: MANAGEMENT },
       { path: "/admin/shifts", label: "Dienstpläne", icon: Users, allowedRoles: MANAGEMENT },
       { path: "/admin/incident-workflow", label: "Vorfall-Workflow", icon: AlertTriangle, allowedRoles: OPS_STAFF },

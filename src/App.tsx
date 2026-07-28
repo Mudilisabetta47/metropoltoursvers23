@@ -69,7 +69,6 @@ const AdminDispatch = lazy(() => import("./pages/AdminDispatch"));
 const AdminSLAMonitor = lazy(() => import("./pages/AdminSLAMonitor"));
 const AdminIncidentWorkflow = lazy(() => import("./pages/AdminIncidentWorkflow"));
 const PassengerDataPage = lazy(() => import("./pages/PassengerDataPage"));
-const DriverDashboard = lazy(() => import("./pages/DriverDashboard"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const AdminWallboard = lazy(() => import("./pages/AdminWallboard"));
 const WallboardLive = lazy(() => import("./pages/WallboardLive"));
@@ -180,7 +179,7 @@ const App = () => (
               <Route path="/admin/copilot" element={<AdminCopilot />} />
               <Route path="/admin/copilot-audit" element={<AdminCopilotAudit />} />
               <Route path="/admin/ops" element={<OperationsDashboard />} />
-              <Route path="/admin/driver" element={<DriverDashboard />} />
+              <Route path="/admin/driver" element={<FISPage />} />
               <Route path="/admin/inquiries" element={<AdminInquiriesPage />} />
               <Route path="/admin/inquiries/:inquiryId" element={<AdminInquiryDetail />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
@@ -240,7 +239,7 @@ const App = () => (
              <Route path="/admin/trips" element={<AdminTrips />} />
               <Route path="/verfolge" element={<TrackTripLandingPage />} />
               <Route path="/verfolge/:tripNumber" element={<TrackTripPage />} />
-              <Route path="/fahrer" element={<FISPage />} />
+              <Route path="/fahrer" element={<Navigate to="/admin/driver" replace />} />
               <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

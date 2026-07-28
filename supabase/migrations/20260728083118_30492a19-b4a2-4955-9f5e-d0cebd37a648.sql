@@ -1,0 +1,1 @@
+ALTER VIEW public.seat_hold_availability SET (security_invoker = true);

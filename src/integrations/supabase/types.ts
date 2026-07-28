@@ -6133,6 +6133,51 @@ export type Database = {
         }
         Relationships: []
       }
+      seat_hold_availability: {
+        Row: {
+          destination_stop_id: string | null
+          destination_stop_name: string | null
+          destination_stop_order: number | null
+          expires_at: string | null
+          id: string | null
+          is_own_hold: boolean | null
+          origin_stop_id: string | null
+          origin_stop_name: string | null
+          origin_stop_order: number | null
+          seat_id: string | null
+          trip_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seat_holds_destination_stop_id_fkey"
+            columns: ["destination_stop_id"]
+            isOneToOne: false
+            referencedRelation: "stops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seat_holds_origin_stop_id_fkey"
+            columns: ["origin_stop_id"]
+            isOneToOne: false
+            referencedRelation: "stops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seat_holds_seat_id_fkey"
+            columns: ["seat_id"]
+            isOneToOne: false
+            referencedRelation: "seats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seat_holds_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       calculate_refund: {
