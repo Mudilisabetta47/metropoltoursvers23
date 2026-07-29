@@ -1,0 +1,10 @@
+REVOKE SELECT ON public.seat_holds FROM public;
+REVOKE SELECT ON public.seat_holds FROM anon;
+REVOKE SELECT ON public.seat_holds FROM authenticated;
+REVOKE SELECT (id, trip_id, seat_id, origin_stop_id, destination_stop_id, expires_at) ON public.seat_holds FROM public;
+REVOKE SELECT (id, trip_id, seat_id, origin_stop_id, destination_stop_id, expires_at) ON public.seat_holds FROM anon;
+REVOKE SELECT (id, trip_id, seat_id, origin_stop_id, destination_stop_id, expires_at) ON public.seat_holds FROM authenticated;
+GRANT SELECT ON public.seat_hold_availability TO anon;
+GRANT SELECT ON public.seat_hold_availability TO authenticated;
+GRANT SELECT ON public.seat_hold_availability TO service_role;
+GRANT ALL ON public.seat_holds TO service_role;

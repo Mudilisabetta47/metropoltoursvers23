@@ -1,0 +1,2 @@
+REVOKE SELECT (id, trip_id, seat_id, origin_stop_id, destination_stop_id, expires_at) ON public.seat_holds FROM anon;
+REVOKE SELECT (id, trip_id, seat_id, origin_stop_id, destination_stop_id, expires_at) ON public.seat_holds FROM authenticated;
