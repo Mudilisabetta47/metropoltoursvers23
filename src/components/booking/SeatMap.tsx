@@ -105,12 +105,8 @@ export default function SeatMap({
       // Fetch active seat holds that overlap with our segment.
       // Do not load session_id/user_id here; these are ownership secrets and must never be public.
       const { data: holds, error: holdsError } = await supabase
-        .from('seat_holds')
-        .select(`
-          seat_id,
-          origin_stop:origin_stop_id(stop_order, name),
-          destination_stop:destination_stop_id(stop_order, name)
-        `)
+        .from('seat_hold_availability')
+        .select('seat_id, origin_stop_order, origin_stop_name, destination_stop_order, destination_stop_name')
         .eq('trip_id', tripId)
         .gt('expires_at', new Date().toISOString());
 
@@ -150,8 +146,8 @@ export default function SeatMap({
         // Check for overlapping holds
         const overlappingHold = holds?.find((hold: any) => {
           if (hold.seat_id !== seat.id) return false;
-          const holdOrigin = hold.origin_stop?.stop_order || 0;
-          const holdDest = hold.destination_stop?.stop_order || 0;
+          const holdOrigin = hold.origin_stop_order || 0;
+          const holdDest = hold.destination_stop_order || 0;
           return !(holdDest <= originStopOrder || holdOrigin >= destinationStopOrder);
         });
 
@@ -159,8 +155,8 @@ export default function SeatMap({
           status = 'reserved';
           isSelectable = false;
           bookingInfoMap[seat.id] = {
-            originName: (overlappingHold as any).origin_stop?.name || 'Unbekannt',
-            destinationName: (overlappingHold as any).destination_stop?.name || 'Unbekannt'
+            originName: (overlappingHold as any).origin_stop_name || 'Unbekannt',
+            destinationName: (overlappingHold as any).destination_stop_name || 'Unbekannt'
           };
         }
 
