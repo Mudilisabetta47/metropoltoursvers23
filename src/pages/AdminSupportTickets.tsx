@@ -172,7 +172,67 @@ export default function AdminSupportTickets() {
           </SelectContent>
         </Select>
         <Button variant="outline" size="icon" onClick={load}><RefreshCw className="w-4 h-4" /></Button>
+        <Button
+          className="bg-[#00CC36] hover:bg-[#00CC36]/90 text-white ml-auto"
+          onClick={() => { setDraft({ ...emptyDraft }); setCreateOpen(true); }}
+        >
+          <Plus className="w-4 h-4 mr-1.5" /> Neues Ticket
+        </Button>
       </div>
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader><DialogTitle>Neues Support-Ticket</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Betreff *</Label>
+              <Input className="bg-white text-black" value={draft.subject}
+                onChange={(e) => setDraft({ ...draft, subject: e.target.value })}
+                placeholder="Kurzbeschreibung des Anliegens" />
+            </div>
+            <div>
+              <Label>Beschreibung</Label>
+              <Textarea className="bg-white text-black" rows={4} value={draft.description}
+                onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Kategorie</Label>
+                <Select value={draft.category} onValueChange={(v) => setDraft({ ...draft, category: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Priorität</Label>
+                <Select value={draft.priority} onValueChange={(v) => setDraft({ ...draft, priority: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{PRIORITIES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Kundenname</Label>
+                <Input className="bg-white text-black" value={draft.customer_name}
+                  onChange={(e) => setDraft({ ...draft, customer_name: e.target.value })} />
+              </div>
+              <div>
+                <Label>E-Mail</Label>
+                <Input type="email" className="bg-white text-black" value={draft.customer_email}
+                  onChange={(e) => setDraft({ ...draft, customer_email: e.target.value })} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Abbrechen</Button>
+            <Button className="bg-[#00CC36] hover:bg-[#00CC36]/90 text-white" disabled={creating} onClick={createTicket}>
+              {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Ticket anlegen"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <Card className="p-0 overflow-hidden">
         {loading && <div className="p-8 text-center"><Loader2 className="w-4 h-4 animate-spin mx-auto text-zinc-400" /></div>}
