@@ -22,6 +22,32 @@ interface Payload {
   extra_cc?: string[];
 }
 
+// --- Rate limiting (per IP): max 5 Anfragen / 5 Minuten ---
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000;
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const rec = rateLimitStore.get(ip);
+  if (!rec || now > rec.resetAt) {
+    rateLimitStore.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  if (rec.count >= RATE_LIMIT_MAX) return false;
+  rec.count += 1;
+  return true;
+}
+
+const EMAIL_RE = /^[^\s@<>",;]+@[^\s@<>",;]+\.[a-zA-Z]{2,}$/;
+// CC nur an eigene Domains – verhindert Missbrauch als offener Mail-Relay
+const CC_ALLOWED_DOMAINS = ['metours.de', 'app.metours.de'];
+const isAllowedCc = (e: string) =>
+  EMAIL_RE.test(e) && CC_ALLOWED_DOMAINS.some((d) => e.toLowerCase().endsWith(`@${d}`));
+// Header-Injection in Subject/Reply-To verhindern
+const sanitizeLine = (s: string, max: number) =>
+  String(s ?? '').replace(/[\r\n]+/g, ' ').trim().slice(0, max);
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
@@ -29,12 +55,33 @@ Deno.serve(async (req) => {
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
     if (!RESEND_API_KEY) throw new Error('RESEND_API_KEY missing');
 
+    const clientIp =
+      req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+      req.headers.get('cf-connecting-ip') ||
+      'unknown';
+    if (!checkRateLimit(clientIp)) {
+      return new Response(JSON.stringify({ error: 'rate_limited' }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '300' },
+      });
+    }
+
     const payload = (await req.json()) as Payload;
     if (!payload?.subject || !payload?.body) {
       return new Response(JSON.stringify({ error: 'subject and body required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    // Serverseitige Eingabevalidierung (Längen + Formate)
+    payload.type = sanitizeLine(payload.type || 'contact', 40);
+    payload.subject = sanitizeLine(payload.subject, 200);
+    payload.from_name = payload.from_name ? sanitizeLine(payload.from_name, 120) : undefined;
+    payload.body = String(payload.body).slice(0, 10000);
+    if (payload.from_email && !EMAIL_RE.test(payload.from_email)) payload.from_email = undefined;
+    if (payload.reply_to && !EMAIL_RE.test(payload.reply_to)) payload.reply_to = undefined;
+    payload.extra_cc = (payload.extra_cc ?? []).filter(isAllowedCc).slice(0, 5);
+
 
     // Load recipient from app_settings.general.email (fallback constant)
     const supabase = createClient(
