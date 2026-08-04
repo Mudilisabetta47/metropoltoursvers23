@@ -97,19 +97,140 @@ ${offers}
 - Wenn Plätze knapp sind (< 10), erzeuge sanfte Dringlichkeit`;
 }
 
+function admin() {
+  return createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
+}
+
+function clientIp(req: Request): string {
+  const fwd = req.headers.get("x-forwarded-for");
+  if (fwd) return fwd.split(",")[0].trim();
+  return req.headers.get("cf-connecting-ip") ?? req.headers.get("x-real-ip") ?? "unknown";
+}
+
+const SUSPICIOUS_PATTERNS = [
+  /ignore (all )?(previous|prior) instructions/i,
+  /system prompt/i,
+  /<script[\s>]/i,
+  /union\s+select/i,
+  /drop\s+table/i,
+  /\bapi[_-]?key\b/i,
+  /service[_ -]?role/i,
+];
+
+async function logSecurityEvent(
+  db: ReturnType<typeof createClient>,
+  payload: {
+    session_id: string | null;
+    ip_address: string;
+    user_agent: string | null;
+    event_type: string;
+    severity: "info" | "warning" | "critical";
+    details?: Record<string, unknown>;
+  },
+) {
+  const { error } = await db.from("advisor_security_events").insert({
+    ...payload,
+    details: payload.details ?? {},
+  });
+  if (error) console.error("security log failed:", error.message);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { messages } = await req.json();
+    const body = await req.json();
+    const { messages } = body;
+    const sessionId: string | null = typeof body.sessionId === "string" ? body.sessionId.slice(0, 120) : null;
+    const pageUrl: string | null = typeof body.pageUrl === "string" ? body.pageUrl.slice(0, 500) : null;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return new Response(
         JSON.stringify({ error: "Messages array is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    const ip = clientIp(req);
+    const userAgent = req.headers.get("user-agent");
+    const db = admin();
+    const lastUser = [...messages].reverse().find((m: any) => m.role === "user");
+    const lastUserText: string = typeof lastUser?.content === "string" ? lastUser.content : "";
+
+    // ---- Rate limiting / abuse detection (per session + IP) ----
+    if (sessionId) {
+      const since = new Date(Date.now() - 60_000).toISOString();
+      const { count } = await db
+        .from("advisor_chat_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("session_id", sessionId)
+        .eq("role", "user")
+        .gte("created_at", since);
+
+      if ((count ?? 0) >= 15) {
+        await db.from("advisor_chat_sessions")
+          .update({ is_flagged: true, flag_reason: "Rate-Limit überschritten (>15 Nachrichten/Minute)" })
+          .eq("session_id", sessionId);
+        await logSecurityEvent(db, {
+          session_id: sessionId,
+          ip_address: ip,
+          user_agent: userAgent,
+          event_type: "rate_limit_exceeded",
+          severity: "warning",
+          details: { messages_last_minute: count },
+        });
+        return new Response(
+          JSON.stringify({ error: "Zu viele Anfragen. Bitte kurz warten." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    const matched = SUSPICIOUS_PATTERNS.filter((p) => p.test(lastUserText)).map((p) => p.source);
+    if (matched.length > 0) {
+      await logSecurityEvent(db, {
+        session_id: sessionId,
+        ip_address: ip,
+        user_agent: userAgent,
+        event_type: "suspicious_input",
+        severity: "critical",
+        details: { patterns: matched, excerpt: lastUserText.slice(0, 300) },
+      });
+      if (sessionId) {
+        await db.from("advisor_chat_sessions")
+          .update({ is_flagged: true, flag_reason: "Verdächtige Eingabe erkannt" })
+          .eq("session_id", sessionId);
+      }
+    }
+
+    // ---- Session + user message logging ----
+    if (sessionId) {
+      const { error: sessErr } = await db.from("advisor_chat_sessions").upsert(
+        {
+          session_id: sessionId,
+          ip_address: ip,
+          user_agent: userAgent,
+          page_url: pageUrl,
+          last_activity_at: new Date().toISOString(),
+          message_count: messages.length,
+        },
+        { onConflict: "session_id" },
+      );
+      if (sessErr) console.error("session upsert failed:", sessErr.message);
+
+      if (lastUserText) {
+        const { error: msgErr } = await db.from("advisor_chat_messages").insert({
+          session_id: sessionId,
+          role: "user",
+          content: lastUserText.slice(0, 8000),
+        });
+        if (msgErr) console.error("message insert failed:", msgErr.message);
+      }
     }
 
     const trimmedMessages = messages.slice(-20);
@@ -168,7 +289,51 @@ serve(async (req) => {
       );
     }
 
-    return new Response(response.body, {
+    if (!response.body || !sessionId) {
+      return new Response(response.body, {
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      });
+    }
+
+    // Tee the stream so we can persist the assistant answer for analysis
+    const [clientStream, logStream] = response.body.tee();
+    (async () => {
+      let assistant = "";
+      let buffer = "";
+      const reader = logStream.getReader();
+      const decoder = new TextDecoder();
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          let idx: number;
+          while ((idx = buffer.indexOf("\n")) !== -1) {
+            const line = buffer.slice(0, idx).trim();
+            buffer = buffer.slice(idx + 1);
+            if (!line.startsWith("data: ")) continue;
+            const json = line.slice(6).trim();
+            if (json === "[DONE]") continue;
+            try {
+              const parsed = JSON.parse(json);
+              const delta = parsed.choices?.[0]?.delta?.content;
+              if (delta) assistant += delta;
+            } catch { /* partial chunk */ }
+          }
+        }
+        if (assistant) {
+          await db.from("advisor_chat_messages").insert({
+            session_id: sessionId,
+            role: "assistant",
+            content: assistant.slice(0, 8000),
+          });
+        }
+      } catch (e) {
+        console.error("stream logging failed:", e);
+      }
+    })();
+
+    return new Response(clientStream, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (e) {
@@ -179,3 +344,4 @@ serve(async (req) => {
     );
   }
 });
+
