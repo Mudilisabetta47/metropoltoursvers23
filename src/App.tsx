@@ -159,7 +159,8 @@ const App = () => (
               <Route path="/search" element={<SearchPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/service" element={<ServicePage />} />
-              <Route path="/reisen" element={<ReisenPage />} />
+              {/* Pauschalreisen vorübergehend deaktiviert – Weiterleitung auf Gruppenanfrage */}
+              <Route path="/reisen" element={<Navigate to="/business" replace />} />
               <Route path="/busreisen" element={<BusreisenPage />} />
               <Route path="/business" element={<BusinessServicesPage />} />
               <Route path="/bookings" element={<BookingsPage />} />
