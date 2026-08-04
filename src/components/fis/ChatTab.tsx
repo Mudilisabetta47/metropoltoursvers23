@@ -15,7 +15,7 @@ const ChatTab = ({ userId }: { userId: string }) => {
     const { data } = await supabase
       .from("driver_messages")
       .select("*")
-      .or(`recipient_id.eq.${userId},is_broadcast.eq.true`)
+      .or(`recipient_id.eq.${userId},sender_id.eq.${userId},is_broadcast.eq.true`)
       .order("created_at", { ascending: true })
       .limit(50);
     setMessages(data || []);
@@ -30,7 +30,7 @@ const ChatTab = ({ userId }: { userId: string }) => {
         { event: "INSERT", schema: "public", table: "driver_messages" },
         (p: any) => {
           const m = p.new;
-          if (m.recipient_id === userId || m.is_broadcast) {
+          if (m.recipient_id === userId || m.sender_id === userId || m.is_broadcast) {
             setMessages((prev) => [...prev, m]);
           }
         }

@@ -106,9 +106,10 @@ export default function SeatMap({
       // Do not load session_id/user_id here; these are ownership secrets and must never be public.
       const { data: holds, error: holdsError } = await supabase
         .from('seat_hold_availability')
-        .select('seat_id, origin_stop_order, origin_stop_name, destination_stop_order, destination_stop_name')
+        .select('seat_id, is_own_hold, origin_stop_order, origin_stop_name, destination_stop_order, destination_stop_name')
         .eq('trip_id', tripId)
         .gt('expires_at', new Date().toISOString());
+
 
       if (holdsError) throw holdsError;
 
@@ -143,13 +144,16 @@ export default function SeatMap({
           };
         }
 
-        // Check for overlapping holds
+        // Check for overlapping holds (eigene Reservierungen blockieren nicht,
+        // z. B. nach einem Reload der Checkout-Seite)
         const overlappingHold = holds?.find((hold: any) => {
           if (hold.seat_id !== seat.id) return false;
+          if (hold.is_own_hold) return false;
           const holdOrigin = hold.origin_stop_order || 0;
           const holdDest = hold.destination_stop_order || 0;
           return !(holdDest <= originStopOrder || holdOrigin >= destinationStopOrder);
         });
+
 
         if (overlappingHold && status !== 'booked' && status !== 'selected') {
           status = 'reserved';
@@ -211,7 +215,16 @@ export default function SeatMap({
       toast.error('Bitte melden Sie sich an, um Sitzplätze zu reservieren.');
       return;
     }
+    // Alte eigene Reservierung für diesen Platz entfernen (z. B. nach Reload)
+    await supabase
+      .from('seat_holds')
+      .delete()
+      .eq('trip_id', tripId)
+      .eq('seat_id', seat.id)
+      .eq('user_id', currentUser.id);
+
     const { error } = await supabase
+
       .from('seat_holds')
       .insert({
         trip_id: tripId,

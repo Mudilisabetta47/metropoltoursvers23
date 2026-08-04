@@ -113,7 +113,13 @@ export default function AuthPage() {
         }
         
         toast.success('Erfolgreich angemeldet!');
+        if (safeNext) {
+          // z. B. OAuth-Consent: direkt zurück zum Freigabe-Dialog
+          window.location.href = safeNext;
+          return;
+        }
         navigate('/');
+
       } else {
         const { error } = await signUp(
           formData.email,

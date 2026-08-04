@@ -110,7 +110,7 @@ const TripsTab = ({ userId }: { userId: string }) => {
                 <div className="flex items-center gap-3">
                   <div className="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex flex-col items-center justify-center leading-tight text-emerald-300">
                     <span className="text-[10px] uppercase">Ab</span>
-                    <span className="text-sm font-bold">{t.shift_start.slice(0, 5)}</span>
+                    <span className="text-sm font-bold">{format(new Date(t.shift_start), "HH:mm")}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-white truncate">
@@ -160,9 +160,10 @@ const TripDetailSheet = ({ trip, onClose }: { trip: Trip; onClose: () => void })
 
         <div className="flex-1 overflow-auto p-5 space-y-4">
           <Row icon={Clock} label="Abfahrt">
-            {trip.shift_start} · {format(new Date(trip.shift_date), "dd. MMM yyyy", { locale: de })}
+            {format(new Date(trip.shift_start), "HH:mm")} Uhr · {format(new Date(trip.shift_date), "dd. MMM yyyy", { locale: de })}
           </Row>
-          <Row icon={Clock} label="Ende">{trip.shift_end || "—"}</Row>
+          <Row icon={Clock} label="Ende">{trip.shift_end ? `${format(new Date(trip.shift_end), "HH:mm")} Uhr` : "—"}</Row>
+
           {trip.dispatch_location && <Row icon={MapPin} label="Startort">{trip.dispatch_location}</Row>}
           {trip.route?.name && <Row icon={MapPin} label="Route">{trip.route.name}</Row>}
           {trip.bus && (
