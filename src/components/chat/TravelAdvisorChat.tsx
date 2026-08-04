@@ -5,6 +5,7 @@ import { X, Send, Loader2, Sparkles, MapPin, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import { getSessionId } from "@/hooks/useSessionId";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -81,7 +82,11 @@ const TravelAdvisorChat = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: allMessages }),
+        body: JSON.stringify({
+          messages: allMessages,
+          sessionId: getSessionId(),
+          pageUrl: typeof window !== "undefined" ? window.location.pathname : null,
+        }),
         signal: controller.signal,
       });
 

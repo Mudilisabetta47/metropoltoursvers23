@@ -253,6 +253,141 @@ export type Database = {
         }
         Relationships: []
       }
+      advisor_chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          session_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          session_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          session_id?: string
+        }
+        Relationships: []
+      }
+      advisor_chat_sessions: {
+        Row: {
+          created_at: string
+          flag_reason: string | null
+          id: string
+          ip_address: string | null
+          is_flagged: boolean
+          last_activity_at: string
+          message_count: number
+          page_url: string | null
+          session_id: string
+          started_at: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          flag_reason?: string | null
+          id?: string
+          ip_address?: string | null
+          is_flagged?: boolean
+          last_activity_at?: string
+          message_count?: number
+          page_url?: string | null
+          session_id: string
+          started_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          flag_reason?: string | null
+          id?: string
+          ip_address?: string | null
+          is_flagged?: boolean
+          last_activity_at?: string
+          message_count?: number
+          page_url?: string | null
+          session_id?: string
+          started_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      advisor_monthly_reports: {
+        Row: {
+          generated_at: string
+          id: string
+          period_end: string
+          period_start: string
+          report_markdown: string | null
+          stats: Json
+          total_messages: number
+          total_sessions: number
+        }
+        Insert: {
+          generated_at?: string
+          id?: string
+          period_end: string
+          period_start: string
+          report_markdown?: string | null
+          stats?: Json
+          total_messages?: number
+          total_sessions?: number
+        }
+        Update: {
+          generated_at?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          report_markdown?: string | null
+          stats?: Json
+          total_messages?: number
+          total_sessions?: number
+        }
+        Relationships: []
+      }
+      advisor_security_events: {
+        Row: {
+          created_at: string
+          details: Json
+          event_type: string
+          id: string
+          ip_address: string | null
+          session_id: string | null
+          severity: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          session_id?: string | null
+          severity?: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          session_id?: string | null
+          severity?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           id: string
@@ -3966,6 +4101,78 @@ export type Database = {
           },
         ]
       }
+      support_tickets: {
+        Row: {
+          assigned_to: string | null
+          category: string
+          chat_started_at: string | null
+          chat_transcript: Json
+          created_at: string
+          created_by: string | null
+          customer_email: string | null
+          customer_name: string | null
+          description: string | null
+          id: string
+          internal_note: string | null
+          ip_address: string | null
+          priority: string
+          resolved_at: string | null
+          session_id: string | null
+          source: string
+          status: string
+          subject: string
+          ticket_number: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string
+          chat_started_at?: string | null
+          chat_transcript?: Json
+          created_at?: string
+          created_by?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          description?: string | null
+          id?: string
+          internal_note?: string | null
+          ip_address?: string | null
+          priority?: string
+          resolved_at?: string | null
+          session_id?: string | null
+          source?: string
+          status?: string
+          subject: string
+          ticket_number: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string
+          chat_started_at?: string | null
+          chat_transcript?: Json
+          created_at?: string
+          created_by?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          description?: string | null
+          id?: string
+          internal_note?: string | null
+          ip_address?: string | null
+          priority?: string
+          resolved_at?: string | null
+          session_id?: string | null
+          source?: string
+          status?: string
+          subject?: string
+          ticket_number?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -6221,6 +6428,7 @@ export type Database = {
       generate_complaint_number: { Args: never; Returns: string }
       generate_inquiry_number: { Args: never; Returns: string }
       generate_line_trip_number: { Args: never; Returns: string }
+      generate_support_ticket_number: { Args: never; Returns: string }
       generate_ticket_number: { Args: never; Returns: string }
       generate_trip_uid: { Args: never; Returns: string }
       get_audit_logs: {

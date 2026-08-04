@@ -53,6 +53,8 @@ const menuSections: MenuSection[] = [
     items: [
       { path: "/admin/dashboard", label: "Übersicht", icon: LayoutDashboard, allowedRoles: BOOKING_STAFF },
       { path: "/admin/copilot", label: "Copilot (KI)", icon: Sparkles, allowedRoles: ALL_STAFF },
+      { path: "/admin/ai-insights", label: "KI-Chat-Analyse", icon: Sparkles, allowedRoles: ALL_STAFF },
+      { path: "/admin/support-tickets", label: "Support-Tickets", icon: Sparkles, allowedRoles: ALL_STAFF },
       { path: "/admin/wallboard", label: "Wallboard", icon: Tv, allowedRoles: MANAGEMENT },
       { path: "/admin/ops", label: "Live-Betrieb", icon: Activity, allowedRoles: OPS_STAFF },
       { path: "/admin/departures", label: "Kalender", icon: CalendarClock, allowedRoles: ALL_STAFF },
