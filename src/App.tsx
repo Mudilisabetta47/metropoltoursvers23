@@ -171,6 +171,7 @@ const App = () => (
               <Route path="/imprint" element={<ImprintPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />
+              <Route path="/widerruf" element={<WiderrufPage />} />
               <Route path="/karriere" element={<KarrierePage />} />
               <Route path="/pauschalreisen/:tourId" element={<TourDetailPage />} />
               <Route path="/reisen/:tourId" element={<TourDetailPage />} />
