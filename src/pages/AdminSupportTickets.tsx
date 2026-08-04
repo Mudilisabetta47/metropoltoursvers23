@@ -18,7 +18,10 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { LifeBuoy, RefreshCw, Loader2 } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import { LifeBuoy, RefreshCw, Loader2, Plus } from "lucide-react";
 
 interface Ticket {
   id: string;
@@ -43,6 +46,17 @@ interface Ticket {
 const STATUS = ["offen", "in_bearbeitung", "wartet_auf_kunde", "geloest", "geschlossen"];
 const PRIORITIES = ["niedrig", "normal", "hoch", "kritisch"];
 
+const CATEGORIES = ["allgemein", "buchung", "zahlung", "reklamation", "technik", "sonstiges"];
+
+const emptyDraft = {
+  subject: "",
+  description: "",
+  category: "allgemein",
+  priority: "normal",
+  customer_name: "",
+  customer_email: "",
+};
+
 const statusColor = (s: string) =>
   s === "offen"
     ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
@@ -61,6 +75,9 @@ export default function AdminSupportTickets() {
   const [active, setActive] = useState<Ticket | null>(null);
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [draft, setDraft] = useState({ ...emptyDraft });
+  const [creating, setCreating] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -74,6 +91,43 @@ export default function AdminSupportTickets() {
   };
 
   useEffect(() => { if (hasAnyStaffRole) load(); }, [hasAnyStaffRole]);
+
+  const createTicket = async () => {
+    if (!draft.subject.trim()) {
+      toast({ title: "Betreff fehlt", description: "Bitte einen Betreff angeben.", variant: "destructive" });
+      return;
+    }
+    setCreating(true);
+    const year = new Date().getFullYear();
+    const rnd = Math.random().toString(36).slice(2, 7).toUpperCase();
+    const { data: userData } = await supabase.auth.getUser();
+    const { data, error } = await supabase
+      .from("support_tickets")
+      .insert({
+        ticket_number: `SUP-${year}-${rnd}`,
+        subject: draft.subject.trim(),
+        description: draft.description.trim() || null,
+        category: draft.category,
+        priority: draft.priority,
+        status: "offen",
+        source: "manuell",
+        customer_name: draft.customer_name.trim() || null,
+        customer_email: draft.customer_email.trim() || null,
+        created_by: userData?.user?.id ?? null,
+      } as any)
+      .select()
+      .maybeSingle();
+    setCreating(false);
+    if (error) {
+      toast({ title: "Anlegen fehlgeschlagen", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Ticket erstellt", description: (data as any)?.ticket_number });
+    setTickets((prev) => [data as Ticket, ...prev]);
+    setDraft({ ...emptyDraft });
+    setCreateOpen(false);
+  };
+
 
   const update = async (t: Ticket, patch: Partial<Ticket>) => {
     setSaving(true);
@@ -118,7 +172,67 @@ export default function AdminSupportTickets() {
           </SelectContent>
         </Select>
         <Button variant="outline" size="icon" onClick={load}><RefreshCw className="w-4 h-4" /></Button>
+        <Button
+          className="bg-[#00CC36] hover:bg-[#00CC36]/90 text-white ml-auto"
+          onClick={() => { setDraft({ ...emptyDraft }); setCreateOpen(true); }}
+        >
+          <Plus className="w-4 h-4 mr-1.5" /> Neues Ticket
+        </Button>
       </div>
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader><DialogTitle>Neues Support-Ticket</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Betreff *</Label>
+              <Input className="bg-white text-black" value={draft.subject}
+                onChange={(e) => setDraft({ ...draft, subject: e.target.value })}
+                placeholder="Kurzbeschreibung des Anliegens" />
+            </div>
+            <div>
+              <Label>Beschreibung</Label>
+              <Textarea className="bg-white text-black" rows={4} value={draft.description}
+                onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Kategorie</Label>
+                <Select value={draft.category} onValueChange={(v) => setDraft({ ...draft, category: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Priorität</Label>
+                <Select value={draft.priority} onValueChange={(v) => setDraft({ ...draft, priority: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{PRIORITIES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Kundenname</Label>
+                <Input className="bg-white text-black" value={draft.customer_name}
+                  onChange={(e) => setDraft({ ...draft, customer_name: e.target.value })} />
+              </div>
+              <div>
+                <Label>E-Mail</Label>
+                <Input type="email" className="bg-white text-black" value={draft.customer_email}
+                  onChange={(e) => setDraft({ ...draft, customer_email: e.target.value })} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Abbrechen</Button>
+            <Button className="bg-[#00CC36] hover:bg-[#00CC36]/90 text-white" disabled={creating} onClick={createTicket}>
+              {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Ticket anlegen"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <Card className="p-0 overflow-hidden">
         {loading && <div className="p-8 text-center"><Loader2 className="w-4 h-4 animate-spin mx-auto text-zinc-400" /></div>}
