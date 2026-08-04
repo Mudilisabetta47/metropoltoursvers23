@@ -25,6 +25,7 @@ const AuthPage = lazy(() => import("./pages/AuthPage"));
 const ImprintPage = lazy(() => import("./pages/ImprintPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
+const WiderrufPage = lazy(() => import("./pages/WiderrufPage"));
 const TourDetailPage = lazy(() => import("./components/tours/TourDetailPage"));
 const TourCheckoutPage = lazy(() => import("./pages/TourCheckoutPage"));
 const AdminInquiriesPage = lazy(() => import("./pages/AdminInquiriesPage"));
@@ -105,14 +106,14 @@ const AdminRedirect = () => {
 };
 
 // Coming Soon gate: public visitors see countdown, staff sees full site
-const COMING_SOON_ENABLED = true; // Toggle to false to disable
+const COMING_SOON_ENABLED = false; // Toggle to false to disable
 
 const PublicGate = ({ children }: { children: React.ReactNode }) => {
   const { user, hasAnyStaffRole, isLoading } = useAuth();
   const location = useLocation();
   
   // Always allow auth, admin, reset-password, legal pages
-  const bypassPaths = ['/auth', '/admin', '/fahrer', '/reset-password', '/imprint', '/privacy', '/terms', '/passagierdaten', '/verfolge', '/.lovable/oauth/consent'];
+  const bypassPaths = ['/auth', '/admin', '/fahrer', '/reset-password', '/imprint', '/privacy', '/terms', '/widerruf', '/passagierdaten', '/verfolge', '/.lovable/oauth/consent'];
   const isBypassed = bypassPaths.some(p => location.pathname.startsWith(p));
   
   if (isBypassed) return <>{children}</>;
@@ -170,6 +171,7 @@ const App = () => (
               <Route path="/imprint" element={<ImprintPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />
+              <Route path="/widerruf" element={<WiderrufPage />} />
               <Route path="/karriere" element={<KarrierePage />} />
               <Route path="/pauschalreisen/:tourId" element={<TourDetailPage />} />
               <Route path="/reisen/:tourId" element={<TourDetailPage />} />
