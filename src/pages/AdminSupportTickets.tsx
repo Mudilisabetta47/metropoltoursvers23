@@ -75,6 +75,9 @@ export default function AdminSupportTickets() {
   const [active, setActive] = useState<Ticket | null>(null);
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [draft, setDraft] = useState({ ...emptyDraft });
+  const [creating, setCreating] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -88,6 +91,43 @@ export default function AdminSupportTickets() {
   };
 
   useEffect(() => { if (hasAnyStaffRole) load(); }, [hasAnyStaffRole]);
+
+  const createTicket = async () => {
+    if (!draft.subject.trim()) {
+      toast({ title: "Betreff fehlt", description: "Bitte einen Betreff angeben.", variant: "destructive" });
+      return;
+    }
+    setCreating(true);
+    const year = new Date().getFullYear();
+    const rnd = Math.random().toString(36).slice(2, 7).toUpperCase();
+    const { data: userData } = await supabase.auth.getUser();
+    const { data, error } = await supabase
+      .from("support_tickets")
+      .insert({
+        ticket_number: `SUP-${year}-${rnd}`,
+        subject: draft.subject.trim(),
+        description: draft.description.trim() || null,
+        category: draft.category,
+        priority: draft.priority,
+        status: "offen",
+        source: "manuell",
+        customer_name: draft.customer_name.trim() || null,
+        customer_email: draft.customer_email.trim() || null,
+        created_by: userData?.user?.id ?? null,
+      } as any)
+      .select()
+      .maybeSingle();
+    setCreating(false);
+    if (error) {
+      toast({ title: "Anlegen fehlgeschlagen", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Ticket erstellt", description: (data as any)?.ticket_number });
+    setTickets((prev) => [data as Ticket, ...prev]);
+    setDraft({ ...emptyDraft });
+    setCreateOpen(false);
+  };
+
 
   const update = async (t: Ticket, patch: Partial<Ticket>) => {
     setSaving(true);
