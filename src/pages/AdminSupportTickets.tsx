@@ -46,8 +46,18 @@ interface Ticket {
 const STATUS = ["offen", "in_bearbeitung", "wartet_auf_kunde", "geloest", "geschlossen"];
 const PRIORITIES = ["niedrig", "normal", "hoch", "kritisch"];
 
+const CATEGORIES = ["allgemein", "buchung", "zahlung", "reklamation", "technik", "sonstiges"];
+
+const emptyDraft = {
+  subject: "",
+  description: "",
+  category: "allgemein",
+  priority: "normal",
+  customer_name: "",
+  customer_email: "",
+};
+
 const statusColor = (s: string) =>
-  s === "offen"
     ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
     : s === "in_bearbeitung"
     ? "bg-blue-500/15 text-blue-400 border-blue-500/30"
