@@ -91,6 +91,8 @@ const AdminTrips = lazy(() => import("./pages/AdminTrips"));
 const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 const AdminCopilot = lazy(() => import("./pages/AdminCopilot"));
 const AdminCopilotAudit = lazy(() => import("./pages/AdminCopilotAudit"));
+const AdminAIInsights = lazy(() => import("./pages/AdminAIInsights"));
+const AdminSupportTickets = lazy(() => import("./pages/AdminSupportTickets"));
 const FISPage = lazy(() => import("./pages/FISPage"));
 
 const queryClient = new QueryClient();
