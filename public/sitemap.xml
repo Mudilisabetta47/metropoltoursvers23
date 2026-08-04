@@ -9,7 +9,7 @@
   <url><loc>https://www.metours.de/wochenendtrips/amsterdam</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://www.metours.de/wochenendtrips/paris</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://www.metours.de/service</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.metours.de/business</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  
   <url><loc>https://www.metours.de/karriere</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.metours.de/search</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
   <url><loc>https://www.metours.de/imprint</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
