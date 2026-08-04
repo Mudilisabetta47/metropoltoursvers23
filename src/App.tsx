@@ -152,6 +152,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <BackendHostRedirect />
           <NoIndexRoutes />
           <AnalyticsLoader />
