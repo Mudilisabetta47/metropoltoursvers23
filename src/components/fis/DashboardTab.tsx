@@ -135,7 +135,7 @@ const DashboardTab = ({ userId, status, onStatusChange }: Props) => {
           {shift ? (
             <>
               <div className="text-3xl font-bold text-white mb-1">
-                {shift.shift_start} – {shift.shift_end || "—"}
+                {format(new Date(shift.shift_start), "HH:mm")} – {shift.shift_end ? format(new Date(shift.shift_end), "HH:mm") : "—"} Uhr
               </div>
               <div className="text-sm text-zinc-400 flex items-center gap-2">
                 <MapPin className="w-4 h-4" />

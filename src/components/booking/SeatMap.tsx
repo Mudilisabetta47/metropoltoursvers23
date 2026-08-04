@@ -106,9 +106,10 @@ export default function SeatMap({
       // Do not load session_id/user_id here; these are ownership secrets and must never be public.
       const { data: holds, error: holdsError } = await supabase
         .from('seat_hold_availability')
-        .select('seat_id, origin_stop_order, origin_stop_name, destination_stop_order, destination_stop_name')
+        .select('seat_id, is_own_hold, origin_stop_order, origin_stop_name, destination_stop_order, destination_stop_name')
         .eq('trip_id', tripId)
         .gt('expires_at', new Date().toISOString());
+
 
       if (holdsError) throw holdsError;
 
