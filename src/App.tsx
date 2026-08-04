@@ -159,8 +159,10 @@ const App = () => (
               <Route path="/search" element={<SearchPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/service" element={<ServicePage />} />
-              {/* Pauschalreisen vorübergehend deaktiviert – Weiterleitung auf Gruppenanfrage */}
-              <Route path="/reisen" element={<Navigate to="/business" replace />} />
+              {/* Pauschalreisen: Buchung noch nicht offen – Info-/Teaser-Seite */}
+              <Route path="/reisen" element={<PauschalreisenSoonPage />} />
+              <Route path="/pauschalreisen" element={<Navigate to="/reisen" replace />} />
+
               <Route path="/busreisen" element={<BusreisenPage />} />
               <Route path="/business" element={<BusinessServicesPage />} />
               <Route path="/bookings" element={<BookingsPage />} />
