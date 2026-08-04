@@ -190,6 +190,8 @@ const App = () => (
               <Route path="/admin" element={<AdminRedirect />} />
               <Route path="/admin/copilot" element={<AdminCopilot />} />
               <Route path="/admin/copilot-audit" element={<AdminCopilotAudit />} />
+              <Route path="/admin/ai-insights" element={<AdminAIInsights />} />
+              <Route path="/admin/support-tickets" element={<AdminSupportTickets />} />
               <Route path="/admin/ops" element={<OperationsDashboard />} />
               <Route path="/admin/driver" element={<FISPage />} />
               <Route path="/admin/inquiries" element={<AdminInquiriesPage />} />
