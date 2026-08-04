@@ -144,13 +144,16 @@ export default function SeatMap({
           };
         }
 
-        // Check for overlapping holds
+        // Check for overlapping holds (eigene Reservierungen blockieren nicht,
+        // z. B. nach einem Reload der Checkout-Seite)
         const overlappingHold = holds?.find((hold: any) => {
           if (hold.seat_id !== seat.id) return false;
+          if (hold.is_own_hold) return false;
           const holdOrigin = hold.origin_stop_order || 0;
           const holdDest = hold.destination_stop_order || 0;
           return !(holdDest <= originStopOrder || holdOrigin >= destinationStopOrder);
         });
+
 
         if (overlappingHold && status !== 'booked' && status !== 'selected') {
           status = 'reserved';
