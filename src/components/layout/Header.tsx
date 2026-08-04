@@ -27,10 +27,9 @@ const Header = () => {
 
   const navLinks = [
     { name: "Startseite", path: "/" },
-    { name: "Pauschalreisen", path: "/reisen" },
     { name: "Wochenendtrips", path: "/wochenendtrips" },
-    { name: "Hilfe & Kontakt", path: "/service" },
     { name: "Gruppenanfrage", path: "/business" },
+    { name: "Hilfe & Kontakt", path: "/service" },
     { name: "Meine Reisen", path: "/bookings" },
   ];
 

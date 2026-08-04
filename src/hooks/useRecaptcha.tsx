@@ -13,6 +13,19 @@ declare global {
 let cachedSiteKey: string | null = null;
 let scriptLoadPromise: Promise<void> | null = null;
 
+/**
+ * reCAPTCHA ist im internen Bereich (Admin-Cockpit, Fahrer-App, Wallboard, Betrieb)
+ * komplett deaktiviert – dort arbeiten ausschließlich authentifizierte Mitarbeiter.
+ */
+const INTERNAL_PATH_PREFIXES = ["/admin", "/fahrer", "/wallboard", "/operations", "/verfolge"];
+
+const isInternalArea = (): boolean => {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  if (host.startsWith("backend.") || host.startsWith("app.")) return true;
+  return INTERNAL_PATH_PREFIXES.some((p) => window.location.pathname.startsWith(p));
+};
+
 const fetchSiteKey = async (): Promise<string> => {
   if (cachedSiteKey) return cachedSiteKey;
   const { data, error } = await supabase.functions.invoke("get-recaptcha-key");
@@ -53,6 +66,7 @@ export const useRecaptcha = () => {
   const siteKeyRef = useRef<string>("");
 
   useEffect(() => {
+    if (isInternalArea()) { setReady(false); return; }
     let cancelled = false;
     (async () => {
       try {
@@ -71,6 +85,7 @@ export const useRecaptcha = () => {
   }, []);
 
   const executeRecaptcha = useCallback(async (action: string): Promise<string | null> => {
+    if (isInternalArea()) return null;
     try {
       const key = siteKeyRef.current || (await fetchSiteKey());
       if (!key || !window.grecaptcha) return null;

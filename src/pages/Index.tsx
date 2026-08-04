@@ -3,7 +3,7 @@ import Footer from "@/components/layout/Footer";
 import HeroSlider from "@/components/home/HeroSlider";
 import FeaturesSection from "@/components/home/FeaturesSection";
 import BrandShowcaseSection from "@/components/home/BrandShowcaseSection";
-import PackageToursSection from "@/components/home/PackageToursSection";
+
 import WeekendTripsSection from "@/components/home/WeekendTripsSection";
 
 import TestimonialsSection from "@/components/home/TestimonialsSection";
@@ -20,7 +20,7 @@ const Index = () => {
         <HeroSlider />
         <FeaturesSection />
         <BrandShowcaseSection />
-        <PackageToursSection />
+        {/* Pauschalreisen vorübergehend deaktiviert – Fokus auf Gruppenanfragen */}
         <WeekendTripsSection />
         
         <NearestStopFinder />

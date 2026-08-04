@@ -16,7 +16,7 @@ const Index = lazy(() => import("./pages/Index"));
 const SearchPage = lazy(() => import("./pages/SearchPage"));
 const CheckoutPage = lazy(() => import("./pages/CheckoutPage"));
 const ServicePage = lazy(() => import("./pages/ServicePage"));
-const ReisenPage = lazy(() => import("./pages/ReisenPage"));
+
 const BusreisenPage = lazy(() => import("./pages/BusreisenPage"));
 const BusinessServicesPage = lazy(() => import("./pages/BusinessServicesPage"));
 const BookingsPage = lazy(() => import("./pages/BookingsPage"));
@@ -159,7 +159,8 @@ const App = () => (
               <Route path="/search" element={<SearchPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/service" element={<ServicePage />} />
-              <Route path="/reisen" element={<ReisenPage />} />
+              {/* Pauschalreisen vorübergehend deaktiviert – Weiterleitung auf Gruppenanfrage */}
+              <Route path="/reisen" element={<Navigate to="/business" replace />} />
               <Route path="/busreisen" element={<BusreisenPage />} />
               <Route path="/business" element={<BusinessServicesPage />} />
               <Route path="/bookings" element={<BookingsPage />} />
@@ -173,8 +174,8 @@ const App = () => (
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/widerruf" element={<WiderrufPage />} />
               <Route path="/karriere" element={<KarrierePage />} />
-              <Route path="/pauschalreisen/:tourId" element={<TourDetailPage />} />
-              <Route path="/reisen/:tourId" element={<TourDetailPage />} />
+              <Route path="/pauschalreisen/:tourId" element={<Navigate to="/business" replace />} />
+              <Route path="/reisen/:tourId" element={<Navigate to="/business" replace />} />
               <Route path="/reisen/checkout" element={<TourCheckoutPage />} />
               <Route path="/tour-checkout" element={<TourCheckoutPage />} />
               <Route path="/admin" element={<AdminRedirect />} />
