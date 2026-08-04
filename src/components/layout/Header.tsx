@@ -147,6 +147,12 @@ const Header = () => {
                   )}
                 >
                   {link.name}
+                  {link.badge && (
+                    <span className="ml-1.5 rounded-full bg-primary/15 px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-primary">
+                      {link.badge}
+                    </span>
+                  )}
+
                   <span className={cn("absolute bottom-0.5 left-1/2 -translate-x-1/2 h-0.5 bg-primary rounded-full transition-all duration-300", isActive(link.path) ? "w-8" : "w-0 group-hover:w-6")} />
                 </Link>
               ))}
