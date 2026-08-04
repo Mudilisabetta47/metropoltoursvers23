@@ -28,10 +28,12 @@ const Header = () => {
   const navLinks = [
     { name: "Startseite", path: "/" },
     { name: "Wochenendtrips", path: "/wochenendtrips" },
+    { name: "Pauschalreisen", path: "/reisen", badge: "Bald" },
     { name: "Gruppenanfrage", path: "/business" },
     { name: "Hilfe & Kontakt", path: "/service" },
     { name: "Meine Reisen", path: "/bookings" },
   ];
+
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -78,10 +80,18 @@ const Header = () => {
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
               )}
             >
-              {link.name}
+              <span className="flex items-center gap-2">
+                {link.name}
+                {link.badge && (
+                  <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                    {link.badge}
+                  </span>
+                )}
+              </span>
               <ChevronRight className={cn("w-4 h-4 transition-transform", isActive(link.path) && "text-primary")} />
             </Link>
           ))}
+
 
           <div className="flex flex-col gap-2 pt-4 border-t border-border mt-3">
             {user ? (
@@ -101,7 +111,7 @@ const Header = () => {
             )}
             <Button
               className="w-full justify-center gap-2 bg-primary hover:bg-primary/90"
-              onClick={() => { navigate('/reisen'); setIsMenuOpen(false); }}
+              onClick={() => { navigate('/wochenendtrips'); setIsMenuOpen(false); }}
             >
               Jetzt buchen
               <ChevronRight className="w-4 h-4" />
@@ -137,6 +147,12 @@ const Header = () => {
                   )}
                 >
                   {link.name}
+                  {link.badge && (
+                    <span className="ml-1.5 rounded-full bg-primary/15 px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-primary">
+                      {link.badge}
+                    </span>
+                  )}
+
                   <span className={cn("absolute bottom-0.5 left-1/2 -translate-x-1/2 h-0.5 bg-primary rounded-full transition-all duration-300", isActive(link.path) ? "w-8" : "w-0 group-hover:w-6")} />
                 </Link>
               ))}
@@ -162,7 +178,7 @@ const Header = () => {
                   Anmelden
                 </Button>
               ))}
-              <Button size="sm" onClick={() => navigate('/reisen')} className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 group">
+              <Button size="sm" onClick={() => navigate('/wochenendtrips')} className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 group">
                 Jetzt buchen
                 <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </Button>
