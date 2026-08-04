@@ -215,7 +215,16 @@ export default function SeatMap({
       toast.error('Bitte melden Sie sich an, um Sitzplätze zu reservieren.');
       return;
     }
+    // Alte eigene Reservierung für diesen Platz entfernen (z. B. nach Reload)
+    await supabase
+      .from('seat_holds')
+      .delete()
+      .eq('trip_id', tripId)
+      .eq('seat_id', seat.id)
+      .eq('user_id', currentUser.id);
+
     const { error } = await supabase
+
       .from('seat_holds')
       .insert({
         trip_id: tripId,
