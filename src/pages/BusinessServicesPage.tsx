@@ -22,6 +22,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useServiceTypes } from "@/hooks/useCMS";
+import ConsentCheckbox from "@/components/common/ConsentCheckbox";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import businessHero from "@/assets/metropol-bus-business.png.asset.json";
 import contactIllustration from "@/assets/contact-illustration.jpg.asset.json";
@@ -103,9 +104,18 @@ const BusinessServicesPage = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [consent, setConsent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!consent) {
+      toast({
+        title: "Zustimmung erforderlich",
+        description: "Bitte akzeptieren Sie AGB und Datenschutzerklärung.",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -644,12 +654,20 @@ const BusinessServicesPage = () => {
                         </div>
 
                         {/* Submit */}
-                        <div className="flex flex-col sm:flex-row items-center gap-4 pt-4 border-t border-border/50">
+                        <div className="pt-4 border-t border-border/50">
+                          <ConsentCheckbox
+                            id="business-consent"
+                            checked={consent}
+                            onChange={setConsent}
+                            purpose="Anfrage"
+                          />
+                        </div>
+                        <div className="flex flex-col sm:flex-row items-center gap-4">
                           <Button 
                             type="submit" 
                             size="lg" 
                             className="w-full sm:w-auto px-10 h-12 text-base shadow-lg shadow-primary/20"
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || !consent}
                           >
                             {isSubmitting ? (
                               <>

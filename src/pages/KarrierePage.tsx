@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import ConsentCheckbox from "@/components/common/ConsentCheckbox";
 import { motion } from "framer-motion";
 import {
   Briefcase, MapPin, Clock, ChevronRight, Send, Users,
@@ -61,6 +62,7 @@ const KarrierePage = () => {
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [consent, setConsent] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
@@ -106,6 +108,10 @@ const KarrierePage = () => {
     e.preventDefault();
     if (!form.first_name || !form.last_name || !form.email) {
       toast({ title: "Bitte füllen Sie alle Pflichtfelder aus.", variant: "destructive" });
+      return;
+    }
+    if (!consent) {
+      toast({ title: "Bitte akzeptieren Sie AGB und Datenschutzerklärung.", variant: "destructive" });
       return;
     }
     setIsSubmitting(true);
@@ -617,7 +623,14 @@ const KarrierePage = () => {
                     <Textarea className="mt-1.5 min-h-[120px]" value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} placeholder="Erzähle uns etwas über dich..." />
                   </div>
 
-                  <Button type="submit" className="w-full h-12 text-base font-semibold" disabled={isSubmitting}>
+                  <ConsentCheckbox
+                    id="career-consent"
+                    checked={consent}
+                    onChange={setConsent}
+                    purpose="Bewerbung"
+                  />
+
+                  <Button type="submit" className="w-full h-12 text-base font-semibold" disabled={isSubmitting || !consent}>
                     <Send className="w-4 h-4 mr-2" />
                     {isSubmitting ? "Wird gesendet..." : "Bewerbung absenden"}
                   </Button>
