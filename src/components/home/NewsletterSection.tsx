@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, Send, Check, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 const NewsletterSection = () => {
   const [email, setEmail] = useState("");
+  const [consent, setConsent] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { protect } = useRecaptcha();
@@ -15,6 +18,10 @@ const NewsletterSection = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
+    if (!consent) {
+      toast.error("Bitte AGB & Datenschutz akzeptieren, um den Newsletter zu erhalten.");
+      return;
+    }
     setIsLoading(true);
     try {
       const human = await protect('newsletter_signup');
@@ -23,20 +30,23 @@ const NewsletterSection = () => {
         setIsLoading(false);
         return;
       }
+      const consentAt = new Date().toISOString();
+      const consentText =
+        `Einwilligung Newsletter, AGB & Datenschutz erteilt am ${new Date(consentAt).toLocaleString("de-DE")}`;
       const { supabase } = await import("@/integrations/supabase/client");
       await (supabase as any).from('admin_mailbox').insert({
         subject: `Newsletter-Anmeldung: ${email}`,
-        body: `Neue Newsletter-Anmeldung:\n\nE-Mail: ${email}`,
+        body: `Neue Newsletter-Anmeldung:\n\nE-Mail: ${email}\n${consentText}`,
         sender_email: email,
         source_type: 'newsletter',
         folder: 'inbox',
-        tags: ['newsletter'],
+        tags: ['newsletter', 'consent'],
       });
       supabase.functions.invoke('notify-inbox', {
         body: {
           type: 'newsletter',
           subject: `Newsletter-Anmeldung: ${email}`,
-          body: `Neue Newsletter-Anmeldung:\n\nE-Mail: ${email}`,
+          body: `Neue Newsletter-Anmeldung:\n\nE-Mail: ${email}\n${consentText}`,
           from_email: email,
         },
       }).catch((e) => console.warn('notify-inbox failed', e));
@@ -48,6 +58,7 @@ const NewsletterSection = () => {
       setIsLoading(false);
     }
   };
+
 
   return (
     <section className="relative py-20 lg:py-24 overflow-hidden">
@@ -93,30 +104,53 @@ const NewsletterSection = () => {
                 Vielen Dank! Sie erhalten bald unsere besten Angebote.
               </motion.div>
             ) : (
-              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-                <div className="relative flex-1">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    type="email"
-                    placeholder="Ihre E-Mail-Adresse"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="pl-11 h-12 rounded-xl border-border/50 focus:border-primary"
-                    aria-label="E-Mail-Adresse für Newsletter"
-                  />
+              <form onSubmit={handleSubmit} className="max-w-md mx-auto space-y-4">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      placeholder="Ihre E-Mail-Adresse"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="pl-11 h-12 rounded-xl border-border/50 focus:border-primary"
+                      aria-label="E-Mail-Adresse für Newsletter"
+                    />
+                  </div>
+                  <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                    <Button type="submit" disabled={isLoading || !consent} className="shrink-0 h-12 rounded-xl px-6">
+                      {isLoading ? "Wird gesendet..." : (
+                        <>
+                          Anmelden
+                          <Send className="w-4 h-4 ml-2" />
+                        </>
+                      )}
+                    </Button>
+                  </motion.div>
                 </div>
-                <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                  <Button type="submit" disabled={isLoading} className="shrink-0 h-12 rounded-xl px-6">
-                    {isLoading ? "Wird gesendet..." : (
-                      <>
-                        Anmelden
-                        <Send className="w-4 h-4 ml-2" />
-                      </>
-                    )}
-                  </Button>
-                </motion.div>
+
+                <label className="flex items-start gap-3 text-left cursor-pointer">
+                  <Checkbox
+                    id="newsletter-consent"
+                    checked={consent}
+                    onCheckedChange={(v) => setConsent(v === true)}
+                    className="mt-0.5"
+                    aria-label="AGB und Datenschutzerklärung akzeptieren"
+                    required
+                  />
+                  <span className="text-xs text-muted-foreground leading-relaxed">
+                    Ich möchte den Newsletter mit Angeboten erhalten und akzeptiere die{" "}
+                    <Link to="/terms" className="underline text-foreground hover:text-primary">AGB</Link>{" "}
+                    sowie die{" "}
+                    <Link to="/privacy" className="underline text-foreground hover:text-primary">
+                      Datenschutzerklärung
+                    </Link>
+                    . Die Einwilligung kann jederzeit widerrufen werden.
+                  </span>
+                </label>
               </form>
+
             )}
 
             <p className="text-xs text-muted-foreground mt-6">
