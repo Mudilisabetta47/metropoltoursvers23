@@ -66,6 +66,7 @@ export const useRecaptcha = () => {
   const siteKeyRef = useRef<string>("");
 
   useEffect(() => {
+    if (isInternalArea()) { setReady(false); return; }
     let cancelled = false;
     (async () => {
       try {
@@ -84,6 +85,7 @@ export const useRecaptcha = () => {
   }, []);
 
   const executeRecaptcha = useCallback(async (action: string): Promise<string | null> => {
+    if (isInternalArea()) return null;
     try {
       const key = siteKeyRef.current || (await fetchSiteKey());
       if (!key || !window.grecaptcha) return null;
