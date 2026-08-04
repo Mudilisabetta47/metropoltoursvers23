@@ -59,6 +59,7 @@ const AdminMailbox = lazy(() => import("./pages/AdminMailbox"));
 const AdminCoupons = lazy(() => import("./pages/AdminCoupons"));
 const AdminAuditLog = lazy(() => import("./pages/AdminAuditLog"));
 const AdminPaymentAudit = lazy(() => import("./pages/AdminPaymentAudit"));
+const AdminDriverDetail = lazy(() => import("./pages/AdminDriverDetail"));
 const AdminFleetCompliance = lazy(() => import("./pages/AdminFleetCompliance"));
 const AdminTollVignettes = lazy(() => import("./pages/AdminTollVignettes"));
 const AdminFuelLog = lazy(() => import("./pages/AdminFuelLog"));
@@ -240,6 +241,7 @@ const App = () => (
               <Route path="/admin/help" element={<AdminStub title="Hilfe & Support" subtitle="Dokumentation, Tutorials und Kontakt" description="Das Hilfe-Center mit Dokumentation, Video-Tutorials und direktem Support-Kontakt wird gerade aufgebaut." />} />
               <Route path="/admin/profile" element={<AdminStub title="Mein Profil" subtitle="Persönliche Daten, Rolle und Berechtigungen" description="Dein Profilbereich mit Account-Einstellungen und Sicherheitsoptionen ist in Vorbereitung." />} />
               <Route path="/admin/drivers" element={<AdminStub title="Fahrer-Stammdaten" subtitle="Personalakte, Lizenzen und Einsatzplanung" description="Die Fahrer-Verwaltung mit Lizenz-Tracking und Schichtplänen ist bereits in Arbeit." />} />
+              <Route path="/admin/drivers/:driverId" element={<AdminDriverDetail />} />
               <Route path="/passagierdaten" element={<PassengerDataPage />} />
              <Route path="/admin/lines" element={<AdminLines />} />
              <Route path="/admin/line-trips" element={<AdminLineTrips />} />

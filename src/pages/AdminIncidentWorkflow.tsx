@@ -1,3 +1,4 @@
+import IncidentDriverLink from "@/components/operations/IncidentDriverLink";
 import { useEffect, useMemo, useState } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { DataTable, DataTableColumn } from "@/components/admin/core/DataTable";
@@ -191,7 +192,11 @@ export default function AdminIncidentWorkflow() {
 
   const incCols: DataTableColumn<any>[] = [
     { key: "title", header: "Vorfall", accessor: r => (
-      <div><div className="font-medium text-white">{r.title}</div><div className="text-xs text-zinc-500">{INCIDENT_TYPES.find(t => t.value === r.type)?.label || r.type}</div></div>
+      <div>
+        <div className="font-medium text-white">{r.title}</div>
+        <div className="text-xs text-zinc-500">{INCIDENT_TYPES.find(t => t.value === r.type)?.label || r.type}</div>
+        {r.source_type === "driver" && r.source_id && <IncidentDriverLink driverId={r.source_id} />}
+      </div>
     ), sortValue: r => r.title },
     { key: "sev", header: "Schwere", accessor: r => <span className={`text-xs px-2 py-0.5 rounded-full ${SEVERITY_COLORS[r.severity]}`}>{r.severity}</span>, sortValue: r => r.severity },
     { key: "status", header: "Status", accessor: r => <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_COLORS[r.status]}`}>{r.status}</span>, sortValue: r => r.status },
@@ -316,6 +321,9 @@ export default function AdminIncidentWorkflow() {
                 </SheetTitle>
               </SheetHeader>
               <div className="mt-4 space-y-4">
+                {detail.source_type === "driver" && detail.source_id && (
+                  <IncidentDriverLink driverId={detail.source_id} />
+                )}
                 {detail.description && (
                   <div className="rounded-lg bg-zinc-900 p-4 border border-zinc-800 text-sm text-zinc-300 whitespace-pre-wrap">{detail.description}</div>
                 )}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import IncidentDriverLink from "@/components/operations/IncidentDriverLink";
 import { useIncidents, Incident } from "@/hooks/useOperations";
 import { 
   AlertTriangle, AlertCircle, Info, Clock,
@@ -183,6 +184,11 @@ const IncidentPanel = () => {
                     {incident.description && (
                       <p className="text-xs text-zinc-400 mt-1 line-clamp-2">{incident.description}</p>
                     )}
+
+                    {incident.source_type === 'driver' && incident.source_id && (
+                      <IncidentDriverLink driverId={incident.source_id} />
+                    )}
+
                     
                     <div className="flex items-center justify-between mt-2">
                       <div className={cn("flex items-center gap-1 text-xs", statusConfig.color)}>
