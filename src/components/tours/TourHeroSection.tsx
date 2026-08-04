@@ -382,7 +382,7 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
             href="tel:+4951112345670"
             className="text-sm font-bold text-primary hover:underline shrink-0"
           >
-            +49 511 123 456-70
+            +49 511 80781106
           </a>
         </div>
       </div>

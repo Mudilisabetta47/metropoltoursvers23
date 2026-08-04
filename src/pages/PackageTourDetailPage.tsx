@@ -560,7 +560,7 @@ const PackageTourDetailPage = () => {
                           className="flex items-center gap-2 text-sm hover:text-primary transition-colors"
                         >
                           <Phone className="w-4 h-4" />
-                          +49 40 123 456 789
+                          +49 511 80781106
                         </a>
                         <a 
                           href="mailto:reisen@metours.de"
