@@ -18,6 +18,8 @@ const CheckoutPage = lazy(() => import("./pages/CheckoutPage"));
 const ServicePage = lazy(() => import("./pages/ServicePage"));
 
 const BusreisenPage = lazy(() => import("./pages/BusreisenPage"));
+const PauschalreisenSoonPage = lazy(() => import("./pages/PauschalreisenSoonPage"));
+
 const BusinessServicesPage = lazy(() => import("./pages/BusinessServicesPage"));
 const BookingsPage = lazy(() => import("./pages/BookingsPage"));
 const TrackBookingPage = lazy(() => import("./pages/TrackBookingPage"));
