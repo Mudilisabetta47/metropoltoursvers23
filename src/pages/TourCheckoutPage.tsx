@@ -279,7 +279,8 @@ const TourCheckoutPage = () => {
 
   const handleNextStep = async () => {
     if (currentStep === "summary") {
-      if (!selectedDate || !selectedTariff || !selectedPickupStop) { toast.error("Bitte wählen Sie Termin, Tarif und Zustieg aus"); return; }
+      if (!selectedDate || !selectedTariff) { toast.error("Bitte wählen Sie Termin und Tarif aus"); return; }
+      if (pickupStops.length > 0 && !selectedPickupStop) { toast.error("Bitte wählen Sie einen Zustiegspunkt aus"); return; }
       if (participants > availableSeats) { toast.error(`Nur noch ${availableSeats} Plätze verfügbar`); return; }
       setCurrentStep("passengers"); window.scrollTo({ top: 0, behavior: "smooth" });
     } else if (currentStep === "passengers") {
