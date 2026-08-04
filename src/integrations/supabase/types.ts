@@ -4113,6 +4113,7 @@ export type Database = {
           customer_name: string | null
           description: string | null
           id: string
+          internal_note: string | null
           ip_address: string | null
           priority: string
           resolved_at: string | null
@@ -4135,6 +4136,7 @@ export type Database = {
           customer_name?: string | null
           description?: string | null
           id?: string
+          internal_note?: string | null
           ip_address?: string | null
           priority?: string
           resolved_at?: string | null
@@ -4157,6 +4159,7 @@ export type Database = {
           customer_name?: string | null
           description?: string | null
           id?: string
+          internal_note?: string | null
           ip_address?: string | null
           priority?: string
           resolved_at?: string | null
