@@ -25,6 +25,7 @@ const AuthPage = lazy(() => import("./pages/AuthPage"));
 const ImprintPage = lazy(() => import("./pages/ImprintPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
+const WiderrufPage = lazy(() => import("./pages/WiderrufPage"));
 const TourDetailPage = lazy(() => import("./components/tours/TourDetailPage"));
 const TourCheckoutPage = lazy(() => import("./pages/TourCheckoutPage"));
 const AdminInquiriesPage = lazy(() => import("./pages/AdminInquiriesPage"));
