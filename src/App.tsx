@@ -10,6 +10,7 @@ import CookieBanner from "./components/CookieBanner";
 import TravelAdvisorChat from "./components/chat/TravelAdvisorChat";
 import AnalyticsLoader from "./components/AnalyticsLoader";
 import NoIndexRoutes from "./components/NoIndexRoutes";
+import { ScrollToTop } from "./components/ScrollToTop";
 
 // Lazy-loaded pages for code splitting
 const Index = lazy(() => import("./pages/Index"));
