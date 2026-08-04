@@ -235,7 +235,7 @@ const BusinessServicesPage = () => {
                   className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/10 text-white font-semibold px-7 py-3.5 rounded-xl hover:bg-white/15 transition-all"
                 >
                   <Phone className="w-5 h-5" />
-                  +49 40 123 456 789
+                  +49 511 80781106
                 </a>
               </div>
             </motion.div>
@@ -685,7 +685,7 @@ const BusinessServicesPage = () => {
                       <h4 className="font-semibold text-foreground mb-1">Telefonisch</h4>
                       <p className="text-muted-foreground text-sm mb-2">Mo-Fr 8-20 Uhr, Sa-So 9-18 Uhr</p>
                       <a href="tel:+4940123456789" className="text-primary font-medium hover:underline">
-                        +49 40 123 456 789
+                        +49 511 80781106
                       </a>
                     </div>
                   </div>
