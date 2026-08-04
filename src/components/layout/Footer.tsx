@@ -12,11 +12,11 @@ const Footer = () => {
   
   const footerLinks = {
     reisen: [
-      { name: "Pauschalreisen", path: "/service" },
+      { name: "Wochenendtrips", path: "/wochenendtrips" },
       { name: "Linienfahrten", path: "/search" },
       { name: "Gruppenreisen", path: "/business" },
       { name: "Tagesausflüge", path: "/business" },
-      { name: "Städtereisen", path: "/service" },
+      { name: "Städtereisen", path: "/business" },
     ],
     services: [
       { name: "Schulfahrten", path: "/business" },
