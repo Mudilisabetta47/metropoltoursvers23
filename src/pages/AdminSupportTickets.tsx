@@ -18,7 +18,10 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { LifeBuoy, RefreshCw, Loader2 } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import { LifeBuoy, RefreshCw, Loader2, Plus } from "lucide-react";
 
 interface Ticket {
   id: string;
