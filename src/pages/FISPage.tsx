@@ -5,11 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 import FISLayout from "@/components/fis/FISLayout";
 import DashboardTab from "@/components/fis/DashboardTab";
 import TripsTab from "@/components/fis/TripsTab";
+import ScanTab from "@/components/fis/ScanTab";
 import VehicleTab from "@/components/fis/VehicleTab";
 import ChatTab from "@/components/fis/ChatTab";
 import MoreTab from "@/components/fis/MoreTab";
 
-export type FISTab = "dashboard" | "trips" | "vehicle" | "chat" | "more";
+export type FISTab = "dashboard" | "trips" | "scan" | "vehicle" | "chat" | "more";
 
 const FISPage = () => {
   const location = useLocation();
@@ -69,6 +70,7 @@ const FISPage = () => {
         <DashboardTab userId={user.id} status={status} onStatusChange={updateStatus} />
       )}
       {tab === "trips" && <TripsTab userId={user.id} />}
+      {tab === "scan" && <ScanTab userId={user.id} />}
       {tab === "vehicle" && <VehicleTab userId={user.id} />}
       {tab === "chat" && <ChatTab userId={user.id} />}
       {tab === "more" && <MoreTab userId={user.id} />}

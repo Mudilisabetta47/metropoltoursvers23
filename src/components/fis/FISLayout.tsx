@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useState } from "react";
-import { LayoutDashboard, MapPin, Bus, MessageSquare, Menu, AlertOctagon, Wifi, WifiOff } from "lucide-react";
+import { LayoutDashboard, MapPin, Bus, MessageSquare, Menu, AlertOctagon, Wifi, WifiOff, ScanLine } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FISTab } from "@/pages/FISPage";
 import StatusPill from "./StatusPill";
@@ -17,6 +17,7 @@ interface Props {
 const tabs: { id: FISTab; label: string; icon: any }[] = [
   { id: "dashboard", label: "Cockpit", icon: LayoutDashboard },
   { id: "trips", label: "Fahrten", icon: MapPin },
+  { id: "scan", label: "Scanner", icon: ScanLine },
   { id: "vehicle", label: "Fahrzeug", icon: Bus },
   { id: "chat", label: "Chat", icon: MessageSquare },
   { id: "more", label: "Mehr", icon: Menu },
@@ -89,7 +90,7 @@ const FISLayout = ({ children, tab, onTabChange, status, onStatusChange, userId 
 
       {/* Bottom Tabs (mobile / tablet) */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#0f1218]/95 backdrop-blur border-t border-white/5 md:hidden">
-        <div className="grid grid-cols-5">
+        <div className="grid grid-cols-6">
           {tabs.map((t) => {
             const Icon = t.icon;
             const active = tab === t.id;
