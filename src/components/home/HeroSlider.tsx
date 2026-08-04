@@ -30,12 +30,12 @@ interface Slide {
 const slides: Slide[] = [
   {
     image: sliderPauschalreisen,
-    badge: "All-Inclusive Reisen",
-    title: "Traumhafte",
-    highlight: "Pauschalreisen",
-    subtitle: "Kroatien, Frankreich, Italien & Spanien – mit Hotel, Transfer und Rundum-Sorglos-Paket ab Hannover.",
-    cta: "Pauschalreisen entdecken",
-    link: "/reisen",
+    badge: "Gruppenreisen auf Anfrage",
+    title: "Ihre individuelle",
+    highlight: "Busreise",
+    subtitle: "Vereine, Firmen, Schulen & Freundeskreise – wir planen Ihre Reise ab Hannover maßgeschneidert. Angebot innerhalb von 24 Stunden.",
+    cta: "Jetzt Angebot anfordern",
+    link: "/business",
     icon: Bus,
   },
   {
@@ -43,9 +43,9 @@ const slides: Slide[] = [
     badge: "Sonne & Meer",
     title: "Unvergesslicher",
     highlight: "Strandurlaub",
-    subtitle: "Die schönsten Strände der Adria und des Mittelmeers – kristallklares Wasser und purer Genuss.",
-    cta: "Strandreisen ansehen",
-    link: "/reisen",
+    subtitle: "Die schönsten Strände der Adria und des Mittelmeers – als Gruppenreise nach Ihren Wünschen geplant.",
+    cta: "Gruppenanfrage starten",
+    link: "/business",
     icon: Palmtree,
   },
   {
