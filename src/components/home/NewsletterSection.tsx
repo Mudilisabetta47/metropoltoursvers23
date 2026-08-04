@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, Send, Check, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 const NewsletterSection = () => {
   const [email, setEmail] = useState("");
+  const [consent, setConsent] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { protect } = useRecaptcha();
@@ -15,6 +18,10 @@ const NewsletterSection = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
+    if (!consent) {
+      toast.error("Bitte AGB & Datenschutz akzeptieren, um den Newsletter zu erhalten.");
+      return;
+    }
     setIsLoading(true);
     try {
       const human = await protect('newsletter_signup');
@@ -23,20 +30,23 @@ const NewsletterSection = () => {
         setIsLoading(false);
         return;
       }
+      const consentAt = new Date().toISOString();
+      const consentText =
+        `Einwilligung Newsletter, AGB & Datenschutz erteilt am ${new Date(consentAt).toLocaleString("de-DE")}`;
       const { supabase } = await import("@/integrations/supabase/client");
       await (supabase as any).from('admin_mailbox').insert({
         subject: `Newsletter-Anmeldung: ${email}`,
-        body: `Neue Newsletter-Anmeldung:\n\nE-Mail: ${email}`,
+        body: `Neue Newsletter-Anmeldung:\n\nE-Mail: ${email}\n${consentText}`,
         sender_email: email,
         source_type: 'newsletter',
         folder: 'inbox',
-        tags: ['newsletter'],
+        tags: ['newsletter', 'consent'],
       });
       supabase.functions.invoke('notify-inbox', {
         body: {
           type: 'newsletter',
           subject: `Newsletter-Anmeldung: ${email}`,
-          body: `Neue Newsletter-Anmeldung:\n\nE-Mail: ${email}`,
+          body: `Neue Newsletter-Anmeldung:\n\nE-Mail: ${email}\n${consentText}`,
           from_email: email,
         },
       }).catch((e) => console.warn('notify-inbox failed', e));
@@ -48,6 +58,7 @@ const NewsletterSection = () => {
       setIsLoading(false);
     }
   };
+
 
   return (
     <section className="relative py-20 lg:py-24 overflow-hidden">
