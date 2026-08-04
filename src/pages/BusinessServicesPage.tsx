@@ -23,7 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useServiceTypes } from "@/hooks/useCMS";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
-import businessHero from "@/assets/business-hero.jpg";
+import businessHero from "@/assets/metropol-bus-business.png.asset.json";
 import contactIllustration from "@/assets/contact-illustration.jpg.asset.json";
 
 const iconMap: Record<string, React.ElementType> = {
@@ -191,7 +191,7 @@ const BusinessServicesPage = () => {
         <section className="relative bg-zinc-900 py-24 lg:py-36 overflow-hidden">
           <div className="absolute inset-0">
             <img
-              src={businessHero}
+              src={businessHero.url}
               alt="Premium Business Bus Service von Metropol Tours"
               width={1920}
               height={1080}
