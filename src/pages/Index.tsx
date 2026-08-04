@@ -20,7 +20,7 @@ const Index = () => {
         <HeroSlider />
         <FeaturesSection />
         <BrandShowcaseSection />
-        <PackageToursSection />
+        {/* Pauschalreisen vorübergehend deaktiviert – Fokus auf Gruppenanfragen */}
         <WeekendTripsSection />
         
         <NearestStopFinder />
