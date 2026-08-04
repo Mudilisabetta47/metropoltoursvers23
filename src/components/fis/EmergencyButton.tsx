@@ -8,7 +8,7 @@ const EmergencyButton = ({ userId }: { userId: string }) => {
   const [sending, setSending] = useState(false);
   const [note, setNote] = useState("");
 
-  const trigger = async (severity: "critical" | "high", label: string) => {
+  const trigger = async (severity: "critical" | "warning", label: string) => {
     setSending(true);
     try {
       let lat: number | null = null;
@@ -21,17 +21,22 @@ const EmergencyButton = ({ userId }: { userId: string }) => {
         lng = pos.coords.longitude;
       } catch {}
 
+      const locationLine =
+        lat != null && lng != null
+          ? `\nPosition: ${lat.toFixed(5)}, ${lng.toFixed(5)} (https://www.google.com/maps?q=${lat},${lng})`
+          : "\nPosition: nicht verfügbar";
+
       const { error } = await (supabase as any).from("incidents").insert({
+        type: severity === "critical" ? "driver_emergency" : "vehicle_breakdown",
         title: `🚨 ${label} – Fahrer`,
-        description: note || `Notfall vom Fahrer gemeldet (${label})`,
+        description: `${note || `Notfall vom Fahrer gemeldet (${label})`}${locationLine}`,
         severity,
         status: "open",
-        reported_by: userId,
-        category: severity === "critical" ? "safety" : "operations",
-        location_lat: lat,
-        location_lng: lng,
+        source_type: "driver",
+        source_id: userId,
       });
       if (error) throw error;
+
 
       toast.success("Notruf an Disposition gesendet", {
         description: "Die Zentrale wurde alarmiert und meldet sich umgehend.",
@@ -92,7 +97,7 @@ const EmergencyButton = ({ userId }: { userId: string }) => {
                   <span className="text-[10px] opacity-80">sofort alarmieren</span>
                 </button>
                 <button
-                  onClick={() => trigger("high", "Technische Störung")}
+                  onClick={() => trigger("warning", "Technische Störung")}
                   disabled={sending}
                   className="flex flex-col items-center gap-1 py-4 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-white font-bold shadow-lg shadow-amber-600/30 transition active:scale-95"
                 >
