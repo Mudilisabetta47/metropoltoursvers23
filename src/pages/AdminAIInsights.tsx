@@ -132,6 +132,7 @@ export default function AdminAIInsights() {
     if (!active) return;
     setSaving(true);
     const { data, error } = await supabase.from("support_tickets").insert({
+      ticket_number: "",
       subject: ticket.subject || `Chat-Anfrage ${active.session_id.slice(0, 16)}`,
       description: ticket.description,
       category: ticket.category,
