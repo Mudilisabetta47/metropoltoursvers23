@@ -321,6 +321,9 @@ export default function AdminIncidentWorkflow() {
                 </SheetTitle>
               </SheetHeader>
               <div className="mt-4 space-y-4">
+                {detail.source_type === "driver" && detail.source_id && (
+                  <IncidentDriverLink driverId={detail.source_id} />
+                )}
                 {detail.description && (
                   <div className="rounded-lg bg-zinc-900 p-4 border border-zinc-800 text-sm text-zinc-300 whitespace-pre-wrap">{detail.description}</div>
                 )}
