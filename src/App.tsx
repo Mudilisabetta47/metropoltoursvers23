@@ -174,8 +174,8 @@ const App = () => (
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/widerruf" element={<WiderrufPage />} />
               <Route path="/karriere" element={<KarrierePage />} />
-              <Route path="/pauschalreisen/:tourId" element={<TourDetailPage />} />
-              <Route path="/reisen/:tourId" element={<TourDetailPage />} />
+              <Route path="/pauschalreisen/:tourId" element={<Navigate to="/business" replace />} />
+              <Route path="/reisen/:tourId" element={<Navigate to="/business" replace />} />
               <Route path="/reisen/checkout" element={<TourCheckoutPage />} />
               <Route path="/tour-checkout" element={<TourCheckoutPage />} />
               <Route path="/admin" element={<AdminRedirect />} />
