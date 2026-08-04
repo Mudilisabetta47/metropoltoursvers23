@@ -21,13 +21,39 @@ serve(async (req) => {
     if (!resendKey) throw new Error("RESEND_API_KEY not configured");
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
+    // AuthZ: nur interne Aufrufe (Service-Role) oder eingeloggte Mitarbeitende
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const bearer = authHeader.replace(/^Bearer\s+/i, "").trim();
+    let authorized = bearer.length > 0 && bearer === serviceRoleKey;
+    if (!authorized && bearer) {
+      const { data: { user } } = await adminClient.auth.getUser(bearer);
+      if (user) {
+        const { data: roles } = await adminClient
+          .from("user_roles").select("role").eq("user_id", user.id);
+        authorized = !!roles?.some((r: any) => ["admin", "office", "agent"].includes(r.role));
+      }
+    }
+    if (!authorized) {
+      return new Response(JSON.stringify({ error: "unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { booking_id, email_type, force } = await req.json() as {
       booking_id: string;
       email_type: EmailType;
       force?: boolean;
     };
 
-    if (!booking_id || !email_type) throw new Error("booking_id and email_type required");
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const ALLOWED_TYPES: EmailType[] = ["booking_confirmation", "payment_reminder", "pre_departure", "post_trip_review", "data_completion"];
+    if (!booking_id || !UUID_RE.test(booking_id) || !ALLOWED_TYPES.includes(email_type)) {
+      return new Response(JSON.stringify({ error: "invalid booking_id or email_type" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
 
     // Check if already sent (unless forced)
     if (!force) {
