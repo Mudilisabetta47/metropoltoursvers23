@@ -1,9 +1,15 @@
-import { Helmet } from "react-helmet-async";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { CalendarClock, Sparkles, Users, MapPin, ArrowRight, BellRing } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+
+const TITLE = "Pauschalreisen – demnächst verfügbar | METROPOL TOURS";
+const DESCRIPTION =
+  "Unsere Pauschalreisen mit Bus, Hotel und Transfer starten in Kürze. Bis dahin planen wir Ihre Gruppenreise individuell – jetzt unverbindlich anfragen.";
+const CANONICAL = "https://www.metours.de/reisen";
+
 
 const highlights = [
   {
