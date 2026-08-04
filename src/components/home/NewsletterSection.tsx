@@ -141,9 +141,9 @@ const NewsletterSection = () => {
                   />
                   <span className="text-xs text-muted-foreground leading-relaxed">
                     Ich möchte den Newsletter mit Angeboten erhalten und akzeptiere die{" "}
-                    <Link to="/agb" className="underline text-foreground hover:text-primary">AGB</Link>{" "}
+                    <Link to="/terms" className="underline text-foreground hover:text-primary">AGB</Link>{" "}
                     sowie die{" "}
-                    <Link to="/datenschutz" className="underline text-foreground hover:text-primary">
+                    <Link to="/privacy" className="underline text-foreground hover:text-primary">
                       Datenschutzerklärung
                     </Link>
                     . Die Einwilligung kann jederzeit widerrufen werden.
