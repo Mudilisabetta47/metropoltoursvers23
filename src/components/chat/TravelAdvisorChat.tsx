@@ -5,6 +5,7 @@ import { X, Send, Loader2, Sparkles, MapPin, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import { getSessionId } from "@/hooks/useSessionId";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
