@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import ConsentCheckbox from "@/components/common/ConsentCheckbox";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   MapPin, Calendar, Users, Star, Check, 
@@ -86,6 +87,7 @@ const PackageTourDetailPage = () => {
     message: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [consent, setConsent] = useState(false);
   const [inquiryNumber, setInquiryNumber] = useState<string | null>(null);
 
   const getImageSrc = (tour: PackageTour) => {
@@ -137,6 +139,14 @@ const PackageTourDetailPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!consent) {
+      toast({
+        title: "Zustimmung erforderlich",
+        description: "Bitte akzeptieren Sie AGB und Datenschutzerklärung.",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsSubmitting(true);
     
     try {
@@ -521,11 +531,18 @@ const PackageTourDetailPage = () => {
                             <span className="text-xl text-primary">{totalPrice}€</span>
                           </div>
                           
+                          <ConsentCheckbox
+                            id="tour-inquiry-consent"
+                            checked={consent}
+                            onChange={setConsent}
+                            purpose="Anfrage"
+                          />
+
                           <Button 
                             type="submit" 
                             className="w-full" 
                             size="lg"
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || !consent}
                           >
                             {isSubmitting ? (
                               <>
