@@ -80,10 +80,18 @@ const Header = () => {
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
               )}
             >
-              {link.name}
+              <span className="flex items-center gap-2">
+                {link.name}
+                {link.badge && (
+                  <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                    {link.badge}
+                  </span>
+                )}
+              </span>
               <ChevronRight className={cn("w-4 h-4 transition-transform", isActive(link.path) && "text-primary")} />
             </Link>
           ))}
+
 
           <div className="flex flex-col gap-2 pt-4 border-t border-border mt-3">
             {user ? (
