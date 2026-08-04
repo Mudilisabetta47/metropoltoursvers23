@@ -111,7 +111,7 @@ const Header = () => {
             )}
             <Button
               className="w-full justify-center gap-2 bg-primary hover:bg-primary/90"
-              onClick={() => { navigate('/reisen'); setIsMenuOpen(false); }}
+              onClick={() => { navigate('/wochenendtrips'); setIsMenuOpen(false); }}
             >
               Jetzt buchen
               <ChevronRight className="w-4 h-4" />
@@ -178,7 +178,7 @@ const Header = () => {
                   Anmelden
                 </Button>
               ))}
-              <Button size="sm" onClick={() => navigate('/reisen')} className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 group">
+              <Button size="sm" onClick={() => navigate('/wochenendtrips')} className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 group">
                 Jetzt buchen
                 <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </Button>
