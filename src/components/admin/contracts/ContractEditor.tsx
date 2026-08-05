@@ -14,7 +14,10 @@ import {
   ArrowLeft, Save, Printer, FileDown, FileText, History, Loader2, AlertCircle,
 } from "lucide-react";
 import { SignaturePad } from "./SignaturePad";
-import { CONTRACT_STATUS, EMPTY_COMPANY, type CompanyData, type ContractRecord, type ContractTemplate } from "@/lib/contracts/types";
+import {
+  CONTRACT_STATUS, CONTRACT_TYPES, CONTRACT_LANGUAGES, EMPTY_COMPANY,
+  type CompanyData, type ContractRecord, type ContractTemplate,
+} from "@/lib/contracts/types";
 import { buildPlaceholderValues, renderTemplate, PLACEHOLDERS, formatDateDE } from "@/lib/contracts/placeholders";
 import { contractToHtml, printContract, exportContractDocx } from "@/lib/contracts/export";
 
@@ -60,6 +63,7 @@ export function ContractEditor({ contract, templates, onBack, onSaved }: Props) 
   }, [template, form, company]);
 
   const employeeName = `${form.first_name} ${form.last_name}`.trim() || "Unbenannt";
+  const isDriver = form.contract_type === "fahrer";
 
   const errors = useMemo(() => {
     const e: string[] = [];
@@ -71,12 +75,13 @@ export function ContractEditor({ contract, templates, onBack, onSaved }: Props) 
     if (!form.start_date) e.push("Arbeitsbeginn");
     if (form.is_temporary && !form.end_date) e.push("Vertragsende");
     if (form.weekly_hours == null) e.push("Wochenarbeitszeit");
-    if (form.salary == null) e.push("Gehalt");
+    if (form.salary == null && form.hourly_wage == null) e.push("Monatsgehalt oder Stundenlohn");
     if (!company.name.trim()) e.push("Firmenname");
+    if (isDriver && !form.license_classes?.trim()) e.push("Führerscheinklassen");
     if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.push("gültige E-Mail");
     if (form.iban && form.iban.replace(/\s/g, "").length < 15) e.push("gültige IBAN");
     return e;
-  }, [form, company]);
+  }, [form, company, isDriver]);
 
   const exportPayload = {
     body: rendered,
@@ -99,18 +104,30 @@ export function ContractEditor({ contract, templates, onBack, onSaved }: Props) 
       const payload = {
         template_id: form.template_id,
         status: nextStatus ?? form.status,
+        contract_type: form.contract_type,
+        language: form.language,
+        personnel_number: form.personnel_number,
         employee_user_id: form.employee_user_id,
         first_name: form.first_name,
         last_name: form.last_name,
         birth_date: form.birth_date,
+        birth_place: form.birth_place,
         address: form.address,
         email: form.email,
         phone: form.phone,
         tax_id: form.tax_id,
         social_security_number: form.social_security_number,
+        health_insurance: form.health_insurance,
         nationality: form.nationality,
         iban: form.iban,
         bic: form.bic,
+        emergency_contact: form.emergency_contact,
+        license_classes: form.license_classes,
+        driver_qualification_95: form.driver_qualification_95,
+        driver_card: form.driver_card,
+        license_expiry: form.license_expiry,
+        code95_expiry: form.code95_expiry,
+        driver_card_expiry: form.driver_card_expiry,
         position: form.position,
         department: form.department,
         start_date: form.start_date,
@@ -120,6 +137,10 @@ export function ContractEditor({ contract, templates, onBack, onSaved }: Props) 
         weekly_hours: form.weekly_hours,
         work_location: form.work_location,
         salary: form.salary,
+        hourly_wage: form.hourly_wage,
+        supplements: form.supplements,
+        work_time_model: form.work_time_model,
+        special_payments: form.special_payments,
         bonus: form.bonus,
         vacation_days: form.vacation_days,
         notice_period: form.notice_period,
@@ -182,6 +203,15 @@ export function ContractEditor({ contract, templates, onBack, onSaved }: Props) 
     }
   };
 
+  /** Wählt automatisch die passende Vorlage zur Vertragsart. */
+  const onTypeChange = (v: string) => {
+    setForm((f) => {
+      const match = templates.find((t) => t.contract_type === v && t.language === (f.language || "de"))
+        ?? templates.find((t) => t.contract_type === v);
+      return { ...f, contract_type: v, template_id: match?.id ?? f.template_id };
+    });
+  };
+
   const status = CONTRACT_STATUS[form.status] ?? CONTRACT_STATUS.draft;
 
   return (
@@ -195,7 +225,10 @@ export function ContractEditor({ contract, templates, onBack, onSaved }: Props) 
             <h2 className="text-lg font-semibold text-white">{employeeName}</h2>
             <Badge variant="outline" className={status.className}>{status.label}</Badge>
           </div>
-          <p className="text-xs text-zinc-500">{form.contract_number} · Version {form.version}</p>
+          <p className="text-xs text-zinc-500">
+            {form.contract_number} · Version {form.version}
+            {form.personnel_number ? ` · Personalnr. ${form.personnel_number}` : ""}
+          </p>
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
           <Button variant="secondary" size="sm" onClick={doPrint}><Printer className="w-4 h-4 mr-1.5" />Drucken / PDF</Button>
@@ -226,28 +259,49 @@ export function ContractEditor({ contract, templates, onBack, onSaved }: Props) 
         {/* Formular */}
         <div className="cockpit-glass rounded-xl p-4">
           <Tabs defaultValue="employee">
-            <TabsList className="grid grid-cols-4 w-full">
+            <TabsList className="grid grid-cols-5 w-full">
               <TabsTrigger value="employee">Mitarbeiter</TabsTrigger>
               <TabsTrigger value="contract">Vertrag</TabsTrigger>
+              <TabsTrigger value="driver">Fahrer</TabsTrigger>
               <TabsTrigger value="company">Unternehmen</TabsTrigger>
               <TabsTrigger value="sign">Unterschrift</TabsTrigger>
             </TabsList>
 
             <TabsContent value="employee" className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label="Personalnummer"><Input readOnly className={`${inputCls} font-mono`} value={form.personnel_number ?? "—"} /></Field>
+              <Field label="Staatsangehörigkeit"><Input className={inputCls} value={form.nationality ?? ""} onChange={(e) => set("nationality", e.target.value)} /></Field>
               <Field label="Vorname *"><Input className={inputCls} value={form.first_name} onChange={(e) => set("first_name", e.target.value)} /></Field>
               <Field label="Nachname *"><Input className={inputCls} value={form.last_name} onChange={(e) => set("last_name", e.target.value)} /></Field>
               <Field label="Geburtsdatum *"><Input type="date" className={inputCls} value={form.birth_date ?? ""} onChange={(e) => set("birth_date", e.target.value || null)} /></Field>
-              <Field label="Staatsangehörigkeit"><Input className={inputCls} value={form.nationality ?? ""} onChange={(e) => set("nationality", e.target.value)} /></Field>
+              <Field label="Geburtsort"><Input className={inputCls} value={form.birth_place ?? ""} onChange={(e) => set("birth_place", e.target.value)} /></Field>
               <Field label="Anschrift *" full><Textarea rows={2} className={inputCls} value={form.address ?? ""} onChange={(e) => set("address", e.target.value)} placeholder="Straße Hausnr., PLZ Ort" /></Field>
               <Field label="E-Mail"><Input type="email" className={inputCls} value={form.email ?? ""} onChange={(e) => set("email", e.target.value)} /></Field>
               <Field label="Telefon"><Input className={inputCls} value={form.phone ?? ""} onChange={(e) => set("phone", e.target.value)} /></Field>
               <Field label="Steuer-ID"><Input className={inputCls} value={form.tax_id ?? ""} onChange={(e) => set("tax_id", e.target.value)} /></Field>
               <Field label="Sozialversicherungsnummer"><Input className={inputCls} value={form.social_security_number ?? ""} onChange={(e) => set("social_security_number", e.target.value)} /></Field>
+              <Field label="Krankenkasse"><Input className={inputCls} value={form.health_insurance ?? ""} onChange={(e) => set("health_insurance", e.target.value)} /></Field>
+              <Field label="Notfallkontakt"><Input className={inputCls} value={form.emergency_contact ?? ""} onChange={(e) => set("emergency_contact", e.target.value)} placeholder="Name, Telefon" /></Field>
               <Field label="IBAN"><Input className={inputCls} value={form.iban ?? ""} onChange={(e) => set("iban", e.target.value)} /></Field>
               <Field label="BIC"><Input className={inputCls} value={form.bic ?? ""} onChange={(e) => set("bic", e.target.value)} /></Field>
             </TabsContent>
 
             <TabsContent value="contract" className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label="Vertragsart">
+                <Select value={form.contract_type} onValueChange={onTypeChange}>
+                  <SelectTrigger className="bg-white text-zinc-900 border-zinc-300"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CONTRACT_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Vertragssprache">
+                <Select value={form.language} onValueChange={(v) => set("language", v)}>
+                  <SelectTrigger className="bg-white text-zinc-900 border-zinc-300"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CONTRACT_LANGUAGES.map((l) => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </Field>
               <Field label="Vorlage" full>
                 <Select value={form.template_id ?? ""} onValueChange={(v) => set("template_id", v)}>
                   <SelectTrigger className="bg-white text-zinc-900 border-zinc-300"><SelectValue placeholder="Vorlage wählen" /></SelectTrigger>
@@ -269,12 +323,38 @@ export function ContractEditor({ contract, templates, onBack, onSaved }: Props) 
               )}
               <Field label="Wochenarbeitszeit (Std.) *"><Input type="number" step="0.5" className={inputCls} value={form.weekly_hours ?? ""} onChange={(e) => set("weekly_hours", e.target.value === "" ? null : Number(e.target.value))} /></Field>
               <Field label="Arbeitsort"><Input className={inputCls} value={form.work_location ?? ""} onChange={(e) => set("work_location", e.target.value)} /></Field>
-              <Field label="Monatsgehalt (brutto, €) *"><Input type="number" step="0.01" className={inputCls} value={form.salary ?? ""} onChange={(e) => set("salary", e.target.value === "" ? null : Number(e.target.value))} /></Field>
+              <Field label="Arbeitszeitmodell"><Input className={inputCls} value={form.work_time_model ?? ""} onChange={(e) => set("work_time_model", e.target.value)} placeholder="Schichtdienst / Gleitzeit / feste Zeiten" /></Field>
+              <Field label="Monatsgehalt (brutto, €)"><Input type="number" step="0.01" className={inputCls} value={form.salary ?? ""} onChange={(e) => set("salary", e.target.value === "" ? null : Number(e.target.value))} /></Field>
+              <Field label="Stundenlohn (brutto, €)"><Input type="number" step="0.01" className={inputCls} value={form.hourly_wage ?? ""} onChange={(e) => set("hourly_wage", e.target.value === "" ? null : Number(e.target.value))} /></Field>
+              <Field label="Zuschläge"><Input className={inputCls} value={form.supplements ?? ""} onChange={(e) => set("supplements", e.target.value)} placeholder="Nacht 25 %, Sonntag 50 %" /></Field>
+              <Field label="Sonderzahlungen"><Input className={inputCls} value={form.special_payments ?? ""} onChange={(e) => set("special_payments", e.target.value)} placeholder="Urlaubs-/Weihnachtsgeld" /></Field>
+              <Field label="Bonus"><Input className={inputCls} value={form.bonus ?? ""} onChange={(e) => set("bonus", e.target.value)} /></Field>
               <Field label="Urlaubstage"><Input type="number" className={inputCls} value={form.vacation_days ?? ""} onChange={(e) => set("vacation_days", e.target.value === "" ? null : Number(e.target.value))} /></Field>
               <Field label="Kündigungsfrist"><Input className={inputCls} value={form.notice_period ?? ""} onChange={(e) => set("notice_period", e.target.value)} placeholder="4 Wochen zum Monatsende" /></Field>
-              <Field label="Bonus / Sonderzahlungen"><Input className={inputCls} value={form.bonus ?? ""} onChange={(e) => set("bonus", e.target.value)} /></Field>
               <Field label="Arbeitszeiten" full><Textarea rows={2} className={inputCls} value={form.working_hours ?? ""} onChange={(e) => set("working_hours", e.target.value)} placeholder="Mo–Fr 08:00–17:00 Uhr" /></Field>
               <Field label="Sonstige Vereinbarungen" full><Textarea rows={4} className={inputCls} value={form.other_agreements ?? ""} onChange={(e) => set("other_agreements", e.target.value)} /></Field>
+            </TabsContent>
+
+            <TabsContent value="driver" className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {!isDriver && (
+                <p className="sm:col-span-2 text-xs text-zinc-500">
+                  Diese Angaben sind für Fahrer-Verträge vorgesehen. Sie können sie trotzdem erfassen.
+                </p>
+              )}
+              <Field label={`Führerscheinklassen${isDriver ? " *" : ""}`}>
+                <Input className={inputCls} value={form.license_classes ?? ""} onChange={(e) => set("license_classes", e.target.value)} placeholder="D, DE" />
+              </Field>
+              <Field label="Führerschein gültig bis"><Input type="date" className={inputCls} value={form.license_expiry ?? ""} onChange={(e) => set("license_expiry", e.target.value || null)} /></Field>
+              <div className="flex items-center justify-between rounded-lg border border-zinc-700 px-3 py-2">
+                <span className="text-sm text-zinc-200">Fahrerqualifikation (Schlüsselzahl 95)</span>
+                <Switch checked={form.driver_qualification_95} onCheckedChange={(v) => set("driver_qualification_95", v)} />
+              </div>
+              <Field label="Modul 95 gültig bis"><Input type="date" className={inputCls} value={form.code95_expiry ?? ""} onChange={(e) => set("code95_expiry", e.target.value || null)} /></Field>
+              <div className="flex items-center justify-between rounded-lg border border-zinc-700 px-3 py-2">
+                <span className="text-sm text-zinc-200">Fahrerkarte vorhanden</span>
+                <Switch checked={form.driver_card} onCheckedChange={(v) => set("driver_card", v)} />
+              </div>
+              <Field label="Fahrerkarte gültig bis"><Input type="date" className={inputCls} value={form.driver_card_expiry ?? ""} onChange={(e) => set("driver_card_expiry", e.target.value || null)} /></Field>
             </TabsContent>
 
             <TabsContent value="company" className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -283,6 +363,7 @@ export function ContractEditor({ contract, templates, onBack, onSaved }: Props) 
               <Field label="Anschrift" full><Textarea rows={2} className={inputCls} value={company.address} onChange={(e) => setCompany({ ...company, address: e.target.value })} /></Field>
               <Field label="Handelsregister"><Input className={inputCls} value={company.commercial_register} onChange={(e) => setCompany({ ...company, commercial_register: e.target.value })} placeholder="HRB 12345, AG Hannover" /></Field>
               <Field label="Steuernummer"><Input className={inputCls} value={company.tax_number} onChange={(e) => setCompany({ ...company, tax_number: e.target.value })} /></Field>
+              <Field label="USt-IdNr."><Input className={inputCls} value={company.vat_id} onChange={(e) => setCompany({ ...company, vat_id: e.target.value })} placeholder="DE123456789" /></Field>
               <Field label="Ort (für Unterschriftszeile)"><Input className={inputCls} value={company.city} onChange={(e) => setCompany({ ...company, city: e.target.value })} /></Field>
               <Field label="Logo-URL"><Input className={inputCls} value={company.logo_url} onChange={(e) => setCompany({ ...company, logo_url: e.target.value })} placeholder="https://…" /></Field>
               <Field label="Firmen-Unterschrift (Bild-URL)"><Input className={inputCls} value={company.signature_url} onChange={(e) => setCompany({ ...company, signature_url: e.target.value })} placeholder="https://…" /></Field>

@@ -114,7 +114,7 @@ ${html.join("\n")}
   ${sig(payload.signatureEmployer || company.signature_url, `${company.name} – ${company.managing_director || "Arbeitgeber"}`)}
   ${sig(payload.signatureEmployee, `${employeeName} – Arbeitnehmer`)}
 </div>
-<footer class="doc">${escapeHtml(company.name)} · ${escapeHtml(company.address || "")} · ${escapeHtml(company.commercial_register || "")} · Steuernummer ${escapeHtml(company.tax_number || "—")}</footer>
+<footer class="doc">${escapeHtml(company.name)} · ${escapeHtml(company.address || "")} · ${escapeHtml(company.commercial_register || "")} · Steuernummer ${escapeHtml(company.tax_number || "—")}${company.vat_id ? ` · USt-IdNr. ${escapeHtml(company.vat_id)}` : ""}</footer>
 </body></html>`;
 }
 
