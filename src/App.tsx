@@ -81,6 +81,7 @@ const AdminCustomerDetail = lazy(() => import("./pages/AdminCustomerDetail"));
 const AdminFleetMaintenance = lazy(() => import("./pages/AdminFleetMaintenance"));
 const AdminDynamicPricing = lazy(() => import("./pages/AdminDynamicPricing"));
 const AdminJobs = lazy(() => import("./pages/AdminJobs"));
+const AdminContracts = lazy(() => import("./pages/AdminContracts"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdminStub = lazy(() => import("./pages/AdminStub"));
 const AdminLines = lazy(() => import("./pages/AdminLines"));
@@ -244,6 +245,7 @@ const App = () => (
               <Route path="/admin/sla-monitor" element={<AdminSLAMonitor />} />
               <Route path="/admin/incident-workflow" element={<AdminIncidentWorkflow />} />
               <Route path="/admin/jobs" element={<AdminJobs />} />
+              <Route path="/admin/contracts" element={<AdminContracts />} />
               <Route path="/admin/help" element={<AdminStub title="Hilfe & Support" subtitle="Dokumentation, Tutorials und Kontakt" description="Das Hilfe-Center mit Dokumentation, Video-Tutorials und direktem Support-Kontakt wird gerade aufgebaut." />} />
               <Route path="/admin/profile" element={<AdminStub title="Mein Profil" subtitle="Persönliche Daten, Rolle und Berechtigungen" description="Dein Profilbereich mit Account-Einstellungen und Sicherheitsoptionen ist in Vorbereitung." />} />
               <Route path="/admin/drivers" element={<AdminStub title="Fahrer-Stammdaten" subtitle="Personalakte, Lizenzen und Einsatzplanung" description="Die Fahrer-Verwaltung mit Lizenz-Tracking und Schichtplänen ist bereits in Arbeit." />} />
