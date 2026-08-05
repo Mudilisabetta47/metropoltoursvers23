@@ -125,7 +125,7 @@ export function ContractEditor({ contract, templates, onBack, onSaved }: Props) 
         notice_period: form.notice_period,
         working_hours: form.working_hours,
         other_agreements: form.other_agreements,
-        company: company as unknown as Record<string, unknown>,
+        company: company as unknown as never,
         signature_employee: form.signature_employee,
         signature_employer: form.signature_employer,
         signed_employee_at: form.signed_employee_at,
@@ -145,7 +145,7 @@ export function ContractEditor({ contract, templates, onBack, onSaved }: Props) 
       await supabase.from("contract_versions").insert({
         contract_id: form.id,
         version: payload.version,
-        snapshot: payload as unknown as Record<string, unknown>,
+        snapshot: payload as unknown as never,
         note: nextStatus ? `Status: ${CONTRACT_STATUS[nextStatus]?.label ?? nextStatus}` : "Bearbeitet",
         created_by: uid,
       });
@@ -156,7 +156,7 @@ export function ContractEditor({ contract, templates, onBack, onSaved }: Props) 
       setVersions((v) => [{ id: crypto.randomUUID(), version: payload.version, created_at: new Date().toISOString(), note: "Bearbeitet" }, ...v]);
       // Firmendaten als Vorgabe merken
       await supabase.from("app_settings").upsert(
-        { section_key: "contract_company", settings: company as unknown as Record<string, unknown> },
+        { section_key: "contract_company", settings: company as unknown as never },
         { onConflict: "section_key" },
       );
       toast.success("Vertrag gespeichert");
