@@ -1322,6 +1322,80 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_templates: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          is_default: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      contract_versions: {
+        Row: {
+          contract_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          note: string | null
+          snapshot: Json
+          version: number
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          snapshot: Json
+          version: number
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          snapshot?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_versions_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "employment_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cookie_consents: {
         Row: {
           analytics: boolean
@@ -2257,6 +2331,143 @@ export type Database = {
             columns: ["depot_id"]
             isOneToOne: false
             referencedRelation: "depots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employment_contracts: {
+        Row: {
+          address: string | null
+          bic: string | null
+          birth_date: string | null
+          bonus: string | null
+          company: Json
+          contract_number: string
+          created_at: string
+          created_by: string | null
+          department: string | null
+          email: string | null
+          employee_user_id: string | null
+          end_date: string | null
+          first_name: string
+          iban: string | null
+          id: string
+          is_temporary: boolean
+          last_name: string
+          nationality: string | null
+          notice_period: string | null
+          other_agreements: string | null
+          phone: string | null
+          position: string | null
+          probation_months: number | null
+          rendered_body: string | null
+          salary: number | null
+          signature_employee: string | null
+          signature_employer: string | null
+          signed_employee_at: string | null
+          signed_employer_at: string | null
+          social_security_number: string | null
+          start_date: string | null
+          status: string
+          tax_id: string | null
+          template_id: string | null
+          updated_at: string
+          vacation_days: number | null
+          version: number
+          weekly_hours: number | null
+          work_location: string | null
+          working_hours: string | null
+        }
+        Insert: {
+          address?: string | null
+          bic?: string | null
+          birth_date?: string | null
+          bonus?: string | null
+          company?: Json
+          contract_number: string
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          email?: string | null
+          employee_user_id?: string | null
+          end_date?: string | null
+          first_name?: string
+          iban?: string | null
+          id?: string
+          is_temporary?: boolean
+          last_name?: string
+          nationality?: string | null
+          notice_period?: string | null
+          other_agreements?: string | null
+          phone?: string | null
+          position?: string | null
+          probation_months?: number | null
+          rendered_body?: string | null
+          salary?: number | null
+          signature_employee?: string | null
+          signature_employer?: string | null
+          signed_employee_at?: string | null
+          signed_employer_at?: string | null
+          social_security_number?: string | null
+          start_date?: string | null
+          status?: string
+          tax_id?: string | null
+          template_id?: string | null
+          updated_at?: string
+          vacation_days?: number | null
+          version?: number
+          weekly_hours?: number | null
+          work_location?: string | null
+          working_hours?: string | null
+        }
+        Update: {
+          address?: string | null
+          bic?: string | null
+          birth_date?: string | null
+          bonus?: string | null
+          company?: Json
+          contract_number?: string
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          email?: string | null
+          employee_user_id?: string | null
+          end_date?: string | null
+          first_name?: string
+          iban?: string | null
+          id?: string
+          is_temporary?: boolean
+          last_name?: string
+          nationality?: string | null
+          notice_period?: string | null
+          other_agreements?: string | null
+          phone?: string | null
+          position?: string | null
+          probation_months?: number | null
+          rendered_body?: string | null
+          salary?: number | null
+          signature_employee?: string | null
+          signature_employer?: string | null
+          signed_employee_at?: string | null
+          signed_employer_at?: string | null
+          social_security_number?: string | null
+          start_date?: string | null
+          status?: string
+          tax_id?: string | null
+          template_id?: string | null
+          updated_at?: string
+          vacation_days?: number | null
+          version?: number
+          weekly_hours?: number | null
+          work_location?: string | null
+          working_hours?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employment_contracts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "contract_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -6426,6 +6637,7 @@ export type Database = {
       }
       generate_admin_booking_number: { Args: never; Returns: string }
       generate_complaint_number: { Args: never; Returns: string }
+      generate_contract_number: { Args: never; Returns: string }
       generate_inquiry_number: { Args: never; Returns: string }
       generate_line_trip_number: { Args: never; Returns: string }
       generate_support_ticket_number: { Args: never; Returns: string }
