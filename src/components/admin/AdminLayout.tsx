@@ -142,6 +142,7 @@ const menuSections: MenuSection[] = [
     label: "System",
     items: [
       { path: "/admin/employees", label: "Benutzer & Rollen", icon: Users, allowedRoles: ADMIN_ONLY },
+      { path: "/admin/contracts", label: "Arbeitsvertrag-Generator", icon: FileSignature, allowedRoles: MANAGEMENT },
       { path: "/admin/settings", label: "Einstellungen", icon: Settings, allowedRoles: ADMIN_ONLY },
       { path: "/admin/audit", label: "Audit-Log", icon: Shield, allowedRoles: ADMIN_ONLY },
       { path: "/admin/legal", label: "Rechtliches", icon: Scale, allowedRoles: ADMIN_ONLY },
