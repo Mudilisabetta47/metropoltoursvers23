@@ -1325,34 +1325,40 @@ export type Database = {
       contract_templates: {
         Row: {
           body: string
+          contract_type: string
           created_at: string
           created_by: string | null
           description: string | null
           id: string
           is_active: boolean
           is_default: boolean
+          language: string
           name: string
           updated_at: string
         }
         Insert: {
           body?: string
+          contract_type?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
           id?: string
           is_active?: boolean
           is_default?: boolean
+          language?: string
           name: string
           updated_at?: string
         }
         Update: {
           body?: string
+          contract_type?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
           id?: string
           is_active?: boolean
           is_default?: boolean
+          language?: string
           name?: string
           updated_at?: string
         }
@@ -2340,23 +2346,36 @@ export type Database = {
           address: string | null
           bic: string | null
           birth_date: string | null
+          birth_place: string | null
           bonus: string | null
+          code95_expiry: string | null
           company: Json
           contract_number: string
+          contract_type: string
           created_at: string
           created_by: string | null
           department: string | null
+          driver_card: boolean
+          driver_card_expiry: string | null
+          driver_qualification_95: boolean
           email: string | null
+          emergency_contact: string | null
           employee_user_id: string | null
           end_date: string | null
           first_name: string
+          health_insurance: string | null
+          hourly_wage: number | null
           iban: string | null
           id: string
           is_temporary: boolean
+          language: string
           last_name: string
+          license_classes: string | null
+          license_expiry: string | null
           nationality: string | null
           notice_period: string | null
           other_agreements: string | null
+          personnel_number: string | null
           phone: string | null
           position: string | null
           probation_months: number | null
@@ -2367,8 +2386,10 @@ export type Database = {
           signed_employee_at: string | null
           signed_employer_at: string | null
           social_security_number: string | null
+          special_payments: string | null
           start_date: string | null
           status: string
+          supplements: string | null
           tax_id: string | null
           template_id: string | null
           updated_at: string
@@ -2376,29 +2397,43 @@ export type Database = {
           version: number
           weekly_hours: number | null
           work_location: string | null
+          work_time_model: string | null
           working_hours: string | null
         }
         Insert: {
           address?: string | null
           bic?: string | null
           birth_date?: string | null
+          birth_place?: string | null
           bonus?: string | null
+          code95_expiry?: string | null
           company?: Json
           contract_number: string
+          contract_type?: string
           created_at?: string
           created_by?: string | null
           department?: string | null
+          driver_card?: boolean
+          driver_card_expiry?: string | null
+          driver_qualification_95?: boolean
           email?: string | null
+          emergency_contact?: string | null
           employee_user_id?: string | null
           end_date?: string | null
           first_name?: string
+          health_insurance?: string | null
+          hourly_wage?: number | null
           iban?: string | null
           id?: string
           is_temporary?: boolean
+          language?: string
           last_name?: string
+          license_classes?: string | null
+          license_expiry?: string | null
           nationality?: string | null
           notice_period?: string | null
           other_agreements?: string | null
+          personnel_number?: string | null
           phone?: string | null
           position?: string | null
           probation_months?: number | null
@@ -2409,8 +2444,10 @@ export type Database = {
           signed_employee_at?: string | null
           signed_employer_at?: string | null
           social_security_number?: string | null
+          special_payments?: string | null
           start_date?: string | null
           status?: string
+          supplements?: string | null
           tax_id?: string | null
           template_id?: string | null
           updated_at?: string
@@ -2418,29 +2455,43 @@ export type Database = {
           version?: number
           weekly_hours?: number | null
           work_location?: string | null
+          work_time_model?: string | null
           working_hours?: string | null
         }
         Update: {
           address?: string | null
           bic?: string | null
           birth_date?: string | null
+          birth_place?: string | null
           bonus?: string | null
+          code95_expiry?: string | null
           company?: Json
           contract_number?: string
+          contract_type?: string
           created_at?: string
           created_by?: string | null
           department?: string | null
+          driver_card?: boolean
+          driver_card_expiry?: string | null
+          driver_qualification_95?: boolean
           email?: string | null
+          emergency_contact?: string | null
           employee_user_id?: string | null
           end_date?: string | null
           first_name?: string
+          health_insurance?: string | null
+          hourly_wage?: number | null
           iban?: string | null
           id?: string
           is_temporary?: boolean
+          language?: string
           last_name?: string
+          license_classes?: string | null
+          license_expiry?: string | null
           nationality?: string | null
           notice_period?: string | null
           other_agreements?: string | null
+          personnel_number?: string | null
           phone?: string | null
           position?: string | null
           probation_months?: number | null
@@ -2451,8 +2502,10 @@ export type Database = {
           signed_employee_at?: string | null
           signed_employer_at?: string | null
           social_security_number?: string | null
+          special_payments?: string | null
           start_date?: string | null
           status?: string
+          supplements?: string | null
           tax_id?: string | null
           template_id?: string | null
           updated_at?: string
@@ -2460,6 +2513,7 @@ export type Database = {
           version?: number
           weekly_hours?: number | null
           work_location?: string | null
+          work_time_model?: string | null
           working_hours?: string | null
         }
         Relationships: [
@@ -6640,6 +6694,7 @@ export type Database = {
       generate_contract_number: { Args: never; Returns: string }
       generate_inquiry_number: { Args: never; Returns: string }
       generate_line_trip_number: { Args: never; Returns: string }
+      generate_personnel_number: { Args: never; Returns: string }
       generate_support_ticket_number: { Args: never; Returns: string }
       generate_ticket_number: { Args: never; Returns: string }
       generate_trip_uid: { Args: never; Returns: string }
