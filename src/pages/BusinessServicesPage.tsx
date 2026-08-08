@@ -701,7 +701,7 @@ const BusinessServicesPage = () => {
                     </div>
                     <div>
                       <h4 className="font-semibold text-foreground mb-1">Telefonisch</h4>
-                      <p className="text-muted-foreground text-sm mb-2">Mo-Fr 8-20 Uhr, Sa-So 9-18 Uhr</p>
+                      <p className="text-muted-foreground text-sm mb-2">Mo–Fr 8–20 Uhr, Sa–So geschlossen</p>
                       <a href="tel:+4940123456789" className="text-primary font-medium hover:underline">
                         +49 511 80781106
                       </a>
