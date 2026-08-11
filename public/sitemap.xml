@@ -61,27 +61,17 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://www.metours.de/wochenendtrips/amsterdam</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://www.metours.de/wochenendtrips/kopenhagen</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.metours.de/wochenendtrips/Amsterdam</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://www.metours.de/wochenendtrips/PARIS</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://www.metours.de/reisen/novalja</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://www.metours.de/reisen/lloret-de-mar-sonne-strand-sorglos-reisen</loc>
+    <loc>https://www.metours.de/wochenendtrips/paris</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>

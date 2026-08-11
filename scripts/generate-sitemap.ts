@@ -55,18 +55,8 @@ async function loadDynamicEntries(): Promise<SitemapEntry[]> {
     if (t.slug) entries.push({ path: `/wochenendtrips/${t.slug}`, changefreq: "weekly", priority: "0.7" });
   }
 
-  // Veröffentlichte Pauschalreisen ohne noindex
-  const { data: tours, error: toursError } = await supabase
-    .from("package_tours")
-    .select("slug, id, publish_status, is_active, seo_noindex")
-    .eq("is_active", true)
-    .eq("publish_status", "published");
-  if (toursError) console.warn("sitemap: package_tours:", toursError.message);
-  for (const t of tours || []) {
-    if (t.seo_noindex) continue;
-    const slug = t.slug || t.id;
-    if (slug) entries.push({ path: `/reisen/${slug}`, changefreq: "weekly", priority: "0.7" });
-  }
+  // Hinweis: Pauschalreisen-Detailseiten (/reisen/:slug) leiten aktuell auf
+  // /business weiter und werden deshalb bewusst nicht aufgenommen.
 
   return entries;
 }
