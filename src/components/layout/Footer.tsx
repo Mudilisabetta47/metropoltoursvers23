@@ -12,6 +12,7 @@ const Footer = () => {
   
   const footerLinks = {
     reisen: [
+      { name: "Busreisen", path: "/busreisen" },
       { name: "Wochenendtrips", path: "/wochenendtrips" },
       { name: "Pauschalreisen (bald)", path: "/reisen" },
 
