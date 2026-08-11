@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { CalendarClock, Sparkles, Users, MapPin, ArrowRight, BellRing } from "lucide-react";
 import { Button } from "@/components/ui/button";
