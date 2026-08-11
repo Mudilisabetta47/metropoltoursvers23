@@ -12,3 +12,19 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /driver
+Disallow: /fahrer
+Disallow: /operations
+Disallow: /wallboard
+Disallow: /checkout
+Disallow: /tour-checkout
+Disallow: /bookings
+Disallow: /passagierdaten
+Disallow: /verfolge
+Disallow: /track/
+Disallow: /reset-password
+Disallow: /auth
+Disallow: /search
+
+Sitemap: https://www.metours.de/sitemap.xml
