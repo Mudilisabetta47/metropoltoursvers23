@@ -32,30 +32,6 @@ const highlights = [
 ];
 
 const PauschalreisenSoonPage = () => {
-  useEffect(() => {
-    const prevTitle = document.title;
-    document.title = TITLE;
-
-    let desc = document.head.querySelector<HTMLMetaElement>('meta[name="description"]');
-    if (!desc) {
-      desc = document.createElement("meta");
-      desc.setAttribute("name", "description");
-      document.head.appendChild(desc);
-    }
-    desc.setAttribute("content", DESCRIPTION);
-
-    let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
-    if (!canonical) {
-      canonical = document.createElement("link");
-      canonical.setAttribute("rel", "canonical");
-      document.head.appendChild(canonical);
-    }
-    canonical.setAttribute("href", CANONICAL);
-
-    return () => {
-      document.title = prevTitle;
-    };
-  }, []);
 
   return (
     <div className="min-h-screen bg-background">

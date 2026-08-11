@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/accordion";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/seo/SEO";
-import { breadcrumbJsonLd } from "@/lib/seo";
+import { breadcrumbJsonLd, faqJsonLd } from "@/lib/seo";
 
 const CANONICAL = "https://www.metours.de/busreisen";
 const TITLE = "Busreisen ab Hannover, Bremen & Hamburg | Metropol Tours";
@@ -66,72 +66,6 @@ const BusreisenPage = () => {
   const [tours, setTours] = useState<Tour[]>([]);
 
   // SEO head
-  useEffect(() => {
-    const prevTitle = document.title;
-    document.title = TITLE;
-
-    const setMeta = (selector: string, attr: string, name: string, content: string) => {
-      let el = document.head.querySelector<HTMLMetaElement>(selector);
-      if (!el) {
-        el = document.createElement("meta");
-        el.setAttribute(attr, name);
-        document.head.appendChild(el);
-      }
-      el.setAttribute("content", content);
-      return el;
-    };
-
-    setMeta('meta[name="description"]', "name", "description", DESCRIPTION);
-    setMeta('meta[property="og:title"]', "property", "og:title", TITLE);
-    setMeta('meta[property="og:description"]', "property", "og:description", DESCRIPTION);
-    setMeta('meta[property="og:url"]', "property", "og:url", CANONICAL);
-    setMeta('meta[property="og:type"]', "property", "og:type", "website");
-
-    let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
-    if (!canonical) {
-      canonical = document.createElement("link");
-      canonical.setAttribute("rel", "canonical");
-      document.head.appendChild(canonical);
-    }
-    canonical.setAttribute("href", CANONICAL);
-
-    const ld = document.createElement("script");
-    ld.type = "application/ld+json";
-    ld.id = "ld-busreisen";
-    ld.text = JSON.stringify([
-      {
-        "@context": "https://schema.org",
-        "@type": "TravelAgency",
-        name: "Metropol Tours",
-        url: CANONICAL,
-        areaServed: "Europa",
-        priceRange: "€€",
-      },
-      {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        mainEntity: FAQS.map((f) => ({
-          "@type": "Question",
-          name: f.q,
-          acceptedAnswer: { "@type": "Answer", text: f.a },
-        })),
-      },
-      {
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Start", item: "https://www.metours.de/" },
-          { "@type": "ListItem", position: 2, name: "Busreisen", item: CANONICAL },
-        ],
-      },
-    ]);
-    document.head.appendChild(ld);
-
-    return () => {
-      document.title = prevTitle;
-      document.getElementById("ld-busreisen")?.remove();
-    };
-  }, []);
 
   // Data
   useEffect(() => {
@@ -193,7 +127,10 @@ const BusreisenPage = () => {
         title="Busreisen ab Bremen, Hamburg & Hannover – Termine & Preise"
         description="Komfortable Busreisen mit Metropol Tours: aktuelle Verbindungen und Termine ab Bremen, Hamburg, Hannover und Berlin. Moderne Reisebusse mit WLAN und Klimaanlage."
         path="/busreisen"
-        jsonLd={breadcrumbJsonLd([{ name: "Startseite", path: "/" }, { name: "Busreisen", path: "/busreisen" }])}
+        jsonLd={[
+          breadcrumbJsonLd([{ name: "Startseite", path: "/" }, { name: "Busreisen", path: "/busreisen" }]),
+          faqJsonLd(FAQS),
+        ]}
       />
       <Header />
 
