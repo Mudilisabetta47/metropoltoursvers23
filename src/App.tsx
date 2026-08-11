@@ -176,7 +176,7 @@ const App = () => (
               <Route path="/bookings" element={<BookingsPage />} />
               <Route path="/track/:bookingId" element={<TrackBookingPage />} />
               <Route path="/wochenendtrips" element={<WeekendTripsPage />} />
-              <Route path="/wochenendtrips/:tourId" element={<TourDetailPage />} />
+              <Route path="/wochenendtrips/:destination" element={<WeekendTripDetailPage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/imprint" element={<ImprintPage />} />

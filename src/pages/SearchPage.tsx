@@ -9,6 +9,7 @@ import Footer from "@/components/layout/Footer";
 import SearchForm from "@/components/booking/SearchForm";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import SEO from "@/components/seo/SEO";
 
 interface Trip {
   id: string;
@@ -167,6 +168,12 @@ const SearchPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-muted/30">
+      <SEO
+        title="Busverbindungen suchen"
+        description="Suchen Sie Ihre Busverbindung mit Metropol Tours: Strecke, Datum und freie Plätze auf einen Blick."
+        path="/search"
+        noindex
+      />
       <Header />
       
       <main className="flex-1 pt-20 lg:pt-24">

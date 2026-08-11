@@ -1,9 +1,10 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { CalendarClock, Sparkles, Users, MapPin, ArrowRight, BellRing } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import SEO from "@/components/seo/SEO";
+import { breadcrumbJsonLd } from "@/lib/seo";
 
 const TITLE = "Pauschalreisen – demnächst verfügbar | METROPOL TOURS";
 const DESCRIPTION =
@@ -30,33 +31,15 @@ const highlights = [
 ];
 
 const PauschalreisenSoonPage = () => {
-  useEffect(() => {
-    const prevTitle = document.title;
-    document.title = TITLE;
-
-    let desc = document.head.querySelector<HTMLMetaElement>('meta[name="description"]');
-    if (!desc) {
-      desc = document.createElement("meta");
-      desc.setAttribute("name", "description");
-      document.head.appendChild(desc);
-    }
-    desc.setAttribute("content", DESCRIPTION);
-
-    let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
-    if (!canonical) {
-      canonical = document.createElement("link");
-      canonical.setAttribute("rel", "canonical");
-      document.head.appendChild(canonical);
-    }
-    canonical.setAttribute("href", CANONICAL);
-
-    return () => {
-      document.title = prevTitle;
-    };
-  }, []);
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Pauschalreisen mit dem Bus – bald buchbar"
+        description="Unsere Pauschalreisen mit Bus, Hotel und Transfer sind bald online buchbar. Bis dahin beraten wir Sie persönlich zu Gruppen- und Busreisen."
+        path="/reisen"
+        jsonLd={breadcrumbJsonLd([{ name: "Startseite", path: "/" }, { name: "Pauschalreisen", path: "/reisen" }])}
+      />
 
 
       <Header />

@@ -152,6 +152,12 @@ export interface ExtendedPackageTour {
   slug?: string | null;
   meta_title?: string | null;
   meta_description?: string | null;
+  focus_keyword?: string | null;
+  canonical_url?: string | null;
+  seo_noindex?: boolean | null;
+  og_title?: string | null;
+  og_description?: string | null;
+  og_image_url?: string | null;
   category?: string | null;
   tags?: string[];
   insurance_info?: string | null;
@@ -261,6 +267,12 @@ export function useTourBuilder(tourId?: string) {
     slug: null,
     meta_title: null,
     meta_description: null,
+    focus_keyword: null,
+    canonical_url: null,
+    seo_noindex: false,
+    og_title: null,
+    og_description: null,
+    og_image_url: null,
     category: 'Strandurlaub',
     tags: [],
     insurance_info: null,
@@ -420,6 +432,12 @@ export function useTourBuilder(tourId?: string) {
         slug: tourData.slug ?? null,
         meta_title: tourData.meta_title ?? null,
         meta_description: tourData.meta_description ?? null,
+        focus_keyword: tourData.focus_keyword ?? null,
+        canonical_url: tourData.canonical_url ?? null,
+        seo_noindex: tourData.seo_noindex ?? false,
+        og_title: tourData.og_title ?? null,
+        og_description: tourData.og_description ?? null,
+        og_image_url: tourData.og_image_url ?? null,
         insurance_info: tourData.insurance_info ?? null,
         documents_required: tourData.documents_required ?? null,
         included_services: tourData.included_services ?? [],

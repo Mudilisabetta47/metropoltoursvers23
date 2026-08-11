@@ -3424,6 +3424,7 @@ export type Database = {
       }
       package_tours: {
         Row: {
+          canonical_url: string | null
           category: string | null
           country: string
           created_at: string
@@ -3434,6 +3435,7 @@ export type Database = {
           discount_percent: number | null
           documents_required: string | null
           duration_days: number
+          focus_keyword: string | null
           gallery_images: string[] | null
           hero_image_url: string | null
           highlights: string[] | null
@@ -3449,16 +3451,21 @@ export type Database = {
           meta_description: string | null
           meta_title: string | null
           min_participants: number | null
+          og_description: string | null
+          og_image_url: string | null
+          og_title: string | null
           price_from: number
           publish_status: string | null
           published_at: string | null
           return_date: string | null
+          seo_noindex: boolean
           short_description: string | null
           slug: string | null
           tags: string[] | null
           updated_at: string
         }
         Insert: {
+          canonical_url?: string | null
           category?: string | null
           country?: string
           created_at?: string
@@ -3469,6 +3476,7 @@ export type Database = {
           discount_percent?: number | null
           documents_required?: string | null
           duration_days?: number
+          focus_keyword?: string | null
           gallery_images?: string[] | null
           hero_image_url?: string | null
           highlights?: string[] | null
@@ -3484,16 +3492,21 @@ export type Database = {
           meta_description?: string | null
           meta_title?: string | null
           min_participants?: number | null
+          og_description?: string | null
+          og_image_url?: string | null
+          og_title?: string | null
           price_from: number
           publish_status?: string | null
           published_at?: string | null
           return_date?: string | null
+          seo_noindex?: boolean
           short_description?: string | null
           slug?: string | null
           tags?: string[] | null
           updated_at?: string
         }
         Update: {
+          canonical_url?: string | null
           category?: string | null
           country?: string
           created_at?: string
@@ -3504,6 +3517,7 @@ export type Database = {
           discount_percent?: number | null
           documents_required?: string | null
           duration_days?: number
+          focus_keyword?: string | null
           gallery_images?: string[] | null
           hero_image_url?: string | null
           highlights?: string[] | null
@@ -3519,10 +3533,14 @@ export type Database = {
           meta_description?: string | null
           meta_title?: string | null
           min_participants?: number | null
+          og_description?: string | null
+          og_image_url?: string | null
+          og_title?: string | null
           price_from?: number
           publish_status?: string | null
           published_at?: string | null
           return_date?: string | null
+          seo_noindex?: boolean
           short_description?: string | null
           slug?: string | null
           tags?: string[] | null

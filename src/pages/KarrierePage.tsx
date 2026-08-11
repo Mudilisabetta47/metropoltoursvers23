@@ -23,6 +23,8 @@ import { useRecaptcha } from "@/hooks/useRecaptcha";
 import karriereDriver from "@/assets/karriere-driver.jpg";
 import karriereBus from "@/assets/karriere-bus.jpg";
 import karriereTeam from "@/assets/karriere-team.jpg";
+import SEO from "@/components/seo/SEO";
+import { breadcrumbJsonLd } from "@/lib/seo";
 
 interface JobListing {
   id: string;
@@ -198,6 +200,12 @@ const KarrierePage = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO
+        title="Karriere & Jobs – Busfahrer und Bürojobs"
+        description="Offene Stellen bei Metropol Tours: Busfahrerinnen und Busfahrer, Disposition und Verwaltung. Jetzt Stellenangebote ansehen und direkt online bewerben."
+        path="/karriere"
+        jsonLd={breadcrumbJsonLd([{ name: "Startseite", path: "/" }, { name: "Karriere", path: "/karriere" }])}
+      />
       <Header />
       <main className="flex-1 pt-16 lg:pt-20">
         {/* HERO — Flix-style bold green */}

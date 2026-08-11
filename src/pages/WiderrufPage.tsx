@@ -4,6 +4,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import LegalMarkdown from '@/components/legal/LegalMarkdown';
 import { supabase } from '@/integrations/supabase/client';
+import SEO from "@/components/seo/SEO";
 
 export default function WiderrufPage() {
   const [content, setContent] = useState<string | null>(null);
@@ -25,6 +26,11 @@ export default function WiderrufPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO
+        title="Widerrufsbelehrung"
+        description="Widerrufsbelehrung von Metropol Tours: Fristen, Ablauf und Muster-Widerrufsformular für Buchungen über die Website."
+        path="/widerruf"
+      />
       <Header />
       <main className="flex-1 pt-20 lg:pt-24">
         <div className="container mx-auto px-4 py-12 max-w-3xl">

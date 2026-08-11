@@ -12,6 +12,8 @@ import {
   Armchair, Star, TrendingUp, Sparkles,
 } from "lucide-react";
 import weekendHero from "@/assets/weekend-hero.jpg";
+import SEO from "@/components/seo/SEO";
+import { breadcrumbJsonLd } from "@/lib/seo";
 
 interface TourTariffMini {
   id: string;
@@ -88,6 +90,12 @@ const WeekendTripsPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO
+        title="Wochenendreisen mit dem Bus – Kurztrips nach Europa"
+        description="Kurztrips übers Wochenende mit dem Reisebus: Städtereisen inklusive Fahrt und Hotel. Termine, Preise und freie Plätze bei Metropol Tours ansehen."
+        path="/wochenendtrips"
+        jsonLd={breadcrumbJsonLd([{ name: "Startseite", path: "/" }, { name: "Wochenendtrips", path: "/wochenendtrips" }])}
+      />
       <Header />
       <main className="flex-1 pt-16 lg:pt-20">
         {/* Hero */}

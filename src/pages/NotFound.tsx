@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SEO from "@/components/seo/SEO";
 
 type LightState = "red" | "yellow" | "green";
 
@@ -54,6 +55,12 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center relative overflow-hidden px-4">
+      <SEO
+        title="Seite nicht gefunden (404)"
+        description="Diese Seite existiert leider nicht. Zurück zur Startseite von Metropol Tours oder direkt zu Busreisen und Gruppenanfragen."
+        path="/404"
+        noindex
+      />
       {/* Subtle street atmosphere */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-foreground/5 to-transparent" />
