@@ -68,7 +68,7 @@ const TourSEOTab = ({ tour, onChange, validationErrors, onPublish }: TourSEOTabP
   const keyword = (tour?.focus_keyword || '').toLowerCase().trim();
 
   const seoChecks: { label: string; ok: boolean; hint?: string }[] = [
-    { label: 'H1 / Reisetitel vorhanden', ok: Boolean(tour?.title), hint: 'Titel der Reise im Tab „Basis“ ergänzen' },
+    { label: 'H1 / Reiseziel vorhanden', ok: Boolean(tour?.destination), hint: 'Reiseziel im Tab „Basis“ ergänzen' },
     { label: `SEO-Titel gesetzt (30–60 Zeichen)`, ok: titleLen >= 30 && titleLen <= 60, hint: titleLen === 0 ? 'fehlt' : `aktuell ${titleLen} Zeichen` },
     { label: 'Meta-Beschreibung gesetzt (120–160 Zeichen)', ok: descLen >= 120 && descLen <= 160, hint: descLen === 0 ? 'fehlt' : `aktuell ${descLen} Zeichen` },
     { label: 'Sprechender URL-Slug', ok: Boolean(tour?.slug), hint: 'Slug generieren' },

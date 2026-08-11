@@ -165,7 +165,7 @@ const TourDetailPage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-muted/30">
       <SEO
-        title={(tourData.tour as any).meta_title || `${tourData.tour.title} – Busreise buchen`}
+        title={(tourData.tour as any).meta_title || `${tourData.tour.destination} – Busreise buchen`}
         description={
           (tourData.tour as any).meta_description ||
           (tourData.tour.short_description || `Busreise nach ${tourData.tour.destination} mit Metropol Tours: Termine, Leistungen und Preise auf einen Blick.`).slice(0, 155)
@@ -177,7 +177,7 @@ const TourDetailPage = () => {
           breadcrumbJsonLd([
             { name: "Startseite", path: "/" },
             { name: "Reisen", path: "/reisen" },
-            { name: tourData.tour.title, path: `/reisen/${tourData.tour.slug || tourData.tour.id}` },
+            { name: tourData.tour.destination, path: `/reisen/${tourData.tour.slug || tourData.tour.id}` },
           ]),
           faqJsonLd(FAQ_ITEMS),
         ]}
