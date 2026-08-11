@@ -4,6 +4,8 @@ import { CalendarClock, Sparkles, Users, MapPin, ArrowRight, BellRing } from "lu
 import { Button } from "@/components/ui/button";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import SEO from "@/components/seo/SEO";
+import { breadcrumbJsonLd } from "@/lib/seo";
 
 const TITLE = "Pauschalreisen – demnächst verfügbar | METROPOL TOURS";
 const DESCRIPTION =
@@ -57,6 +59,12 @@ const PauschalreisenSoonPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Pauschalreisen mit dem Bus – bald buchbar"
+        description="Unsere Pauschalreisen mit Bus, Hotel und Transfer sind bald online buchbar. Bis dahin beraten wir Sie persönlich zu Gruppen- und Busreisen."
+        path="/reisen"
+        jsonLd={breadcrumbJsonLd([{ name: "Startseite", path: "/" }, { name: "Pauschalreisen", path: "/reisen" }])}
+      />
 
 
       <Header />

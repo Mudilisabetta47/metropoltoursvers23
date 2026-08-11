@@ -26,6 +26,8 @@ import ConsentCheckbox from "@/components/common/ConsentCheckbox";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import businessHero from "@/assets/metropol-bus-business.png.asset.json";
 import contactIllustration from "@/assets/contact-illustration.jpg.asset.json";
+import SEO from "@/components/seo/SEO";
+import { breadcrumbJsonLd } from "@/lib/seo";
 
 const iconMap: Record<string, React.ElementType> = {
   School, Users, MapPin, Trophy, Plane, PartyPopper,
@@ -194,6 +196,12 @@ const BusinessServicesPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO
+        title="Reisebus mieten – Gruppenreisen, Klassenfahrten & Firmenfahrten"
+        description="Bus mieten mit Fahrer für Gruppenreisen, Vereinsfahrten, Klassenfahrten und Firmenfahrten. Angebot ab Bremen, Hamburg, Hannover oder Berlin anfragen."
+        path="/business"
+        jsonLd={breadcrumbJsonLd([{ name: "Startseite", path: "/" }, { name: "Bus mieten & Gruppenreisen", path: "/business" }])}
+      />
       <Header />
       
       <main className="flex-1 pt-20 lg:pt-24">

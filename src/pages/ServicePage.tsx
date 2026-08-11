@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import serviceHero from "@/assets/service-hero.jpg";
+import SEO from "@/components/seo/SEO";
+import { breadcrumbJsonLd } from "@/lib/seo";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -65,6 +67,12 @@ const ServicePage = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO
+        title="Service & Hilfe rund um Ihre Busreise"
+        description="Alles zu Buchung, Gepäck, Umbuchung und Kontakt bei Metropol Tours. Unser Serviceteam ist Montag bis Freitag von 8 bis 20 Uhr für Sie erreichbar."
+        path="/service"
+        jsonLd={breadcrumbJsonLd([{ name: "Startseite", path: "/" }, { name: "Service", path: "/service" }])}
+      />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <Header />
 

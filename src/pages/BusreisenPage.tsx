@@ -10,6 +10,8 @@ import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
 import { supabase } from "@/integrations/supabase/client";
+import SEO from "@/components/seo/SEO";
+import { breadcrumbJsonLd } from "@/lib/seo";
 
 const CANONICAL = "https://www.metours.de/busreisen";
 const TITLE = "Busreisen ab Hannover, Bremen & Hamburg | Metropol Tours";
@@ -187,6 +189,12 @@ const BusreisenPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Busreisen ab Bremen, Hamburg & Hannover – Termine & Preise"
+        description="Komfortable Busreisen mit Metropol Tours: aktuelle Verbindungen und Termine ab Bremen, Hamburg, Hannover und Berlin. Moderne Reisebusse mit WLAN und Klimaanlage."
+        path="/busreisen"
+        jsonLd={breadcrumbJsonLd([{ name: "Startseite", path: "/" }, { name: "Busreisen", path: "/busreisen" }])}
+      />
       <Header />
 
       {/* Hero */}

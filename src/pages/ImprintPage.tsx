@@ -4,6 +4,7 @@ import LegalMarkdown from '@/components/legal/LegalMarkdown';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { supabase } from '@/integrations/supabase/client';
+import SEO from "@/components/seo/SEO";
 
 export default function ImprintPage() {
   const [content, setContent] = useState<string | null>(null);
@@ -25,6 +26,11 @@ export default function ImprintPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO
+        title="Impressum"
+        description="Impressum und Anbieterkennzeichnung von Metropol Tours nach § 5 TMG mit Kontaktdaten und Registerangaben."
+        path="/imprint"
+      />
       <Header />
       <main className="flex-1 pt-20 lg:pt-24">
         <div className="container mx-auto px-4 py-12 max-w-3xl">
