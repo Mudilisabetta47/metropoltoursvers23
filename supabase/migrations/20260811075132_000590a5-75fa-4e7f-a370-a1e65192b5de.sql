@@ -1,0 +1,1 @@
+UPDATE public.weekend_trips SET slug = lower(slug) WHERE slug <> lower(slug);
