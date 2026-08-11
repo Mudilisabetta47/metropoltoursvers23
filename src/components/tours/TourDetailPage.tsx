@@ -8,6 +8,8 @@ import {
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
+import SEO from "@/components/seo/SEO";
+import { breadcrumbJsonLd, faqJsonLd } from "@/lib/seo";
 
 import TourHeroSection from "./TourHeroSection";
 import TourStickySidebar from "./TourStickySidebar";
@@ -162,6 +164,24 @@ const TourDetailPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-muted/30">
+      <SEO
+        title={(tourData.tour as any).meta_title || `${tourData.tour.title} – Busreise buchen`}
+        description={
+          (tourData.tour as any).meta_description ||
+          (tourData.tour.short_description || `Busreise nach ${tourData.tour.destination} mit Metropol Tours: Termine, Leistungen und Preise auf einen Blick.`).slice(0, 155)
+        }
+        path={`/reisen/${tourData.tour.slug || tourData.tour.id}`}
+        image={(tourData.tour as any).og_image_url || getHeroImage()}
+        noindex={Boolean((tourData.tour as any).seo_noindex)}
+        jsonLd={[
+          breadcrumbJsonLd([
+            { name: "Startseite", path: "/" },
+            { name: "Reisen", path: "/reisen" },
+            { name: tourData.tour.title, path: `/reisen/${tourData.tour.slug || tourData.tour.id}` },
+          ]),
+          faqJsonLd(FAQ_ITEMS),
+        ]}
+      />
       <Header />
       <main className="flex-1 pt-16 lg:pt-20">
         {/* Hero: Gallery + Title + Reviews */}

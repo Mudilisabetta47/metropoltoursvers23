@@ -14,6 +14,8 @@ import { Separator } from "@/components/ui/separator";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
+import SEO from "@/components/seo/SEO";
+import { breadcrumbJsonLd } from "@/lib/seo";
 
 interface WeekendTrip {
   id: string;
@@ -105,6 +107,20 @@ const WeekendTripDetailPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO
+        title={`Wochenendtrip ${trip.destination} ab ${trip.departure_city} mit dem Bus`}
+        description={
+          trip.short_description?.slice(0, 155) ||
+          `Kurztrip nach ${trip.destination} (${trip.country}) mit dem Reisebus ab ${trip.departure_city}. Termine, Leistungen und Zustiegsorte bei Metropol Tours.`
+        }
+        path={`/wochenendtrips/${trip.slug}`}
+        image={trip.hero_image_url || trip.image_url || undefined}
+        jsonLd={breadcrumbJsonLd([
+          { name: "Startseite", path: "/" },
+          { name: "Wochenendtrips", path: "/wochenendtrips" },
+          { name: trip.destination, path: `/wochenendtrips/${trip.slug}` },
+        ])}
+      />
       <Header />
       <main className="flex-1 pt-16 lg:pt-20">
         {/* Hero */}
