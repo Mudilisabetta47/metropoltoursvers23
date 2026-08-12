@@ -71,6 +71,8 @@ const AdminB2BCustomers = lazy(() => import("./pages/AdminB2BCustomers"));
 const AdminComplaints = lazy(() => import("./pages/AdminComplaints"));
 const AdminDispoBoard = lazy(() => import("./pages/AdminDispoBoard"));
 const AdminDispatch = lazy(() => import("./pages/AdminDispatch"));
+const AdminFleetControl = lazy(() => import("./pages/AdminFleetControl"));
+const DriverNavPage = lazy(() => import("./pages/DriverNavPage"));
 const AdminSLAMonitor = lazy(() => import("./pages/AdminSLAMonitor"));
 const AdminIncidentWorkflow = lazy(() => import("./pages/AdminIncidentWorkflow"));
 const PassengerDataPage = lazy(() => import("./pages/PassengerDataPage"));
@@ -241,6 +243,7 @@ const App = () => (
               <Route path="/admin/complaints" element={<AdminComplaints />} />
               <Route path="/admin/dispo-board" element={<AdminDispoBoard />} />
               <Route path="/admin/dispatch" element={<AdminDispatch />} />
+              <Route path="/admin/leitstelle" element={<AdminFleetControl />} />
               <Route path="/admin/fahrtenplanung" element={<AdminDispatch />} />
               <Route path="/admin/sla-monitor" element={<AdminSLAMonitor />} />
               <Route path="/admin/incident-workflow" element={<AdminIncidentWorkflow />} />
@@ -256,6 +259,8 @@ const App = () => (
              <Route path="/admin/trips" element={<AdminTrips />} />
               <Route path="/verfolge" element={<TrackTripLandingPage />} />
               <Route path="/verfolge/:tripNumber" element={<TrackTripPage />} />
+              <Route path="/fahrer/navi" element={<DriverNavPage />} />
+              <Route path="/admin/driver-nav" element={<DriverNavPage />} />
               <Route path="/fahrer" element={<Navigate to="/admin/driver" replace />} />
               <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
               <Route path="*" element={<NotFound />} />
