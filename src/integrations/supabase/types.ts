@@ -990,33 +990,60 @@ export type Database = {
       buses: {
         Row: {
           amenities: string[] | null
+          axles: number | null
+          bus_number: string | null
           created_at: string
+          emission_class: string | null
+          fuel_type: string | null
+          height_cm: number | null
           id: string
           is_active: boolean
           layout: Json
+          length_cm: number | null
           license_plate: string
           name: string
+          routing_notes: string | null
           total_seats: number
+          weight_kg: number | null
+          width_cm: number | null
         }
         Insert: {
           amenities?: string[] | null
+          axles?: number | null
+          bus_number?: string | null
           created_at?: string
+          emission_class?: string | null
+          fuel_type?: string | null
+          height_cm?: number | null
           id?: string
           is_active?: boolean
           layout?: Json
+          length_cm?: number | null
           license_plate: string
           name: string
+          routing_notes?: string | null
           total_seats?: number
+          weight_kg?: number | null
+          width_cm?: number | null
         }
         Update: {
           amenities?: string[] | null
+          axles?: number | null
+          bus_number?: string | null
           created_at?: string
+          emission_class?: string | null
+          fuel_type?: string | null
+          height_cm?: number | null
           id?: string
           is_active?: boolean
           layout?: Json
+          length_cm?: number | null
           license_plate?: string
           name?: string
+          routing_notes?: string | null
           total_seats?: number
+          weight_kg?: number | null
+          width_cm?: number | null
         }
         Relationships: []
       }
@@ -1786,6 +1813,157 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      dispatch_messages: {
+        Row: {
+          body: string
+          created_at: string
+          driver_user_id: string
+          id: string
+          order_id: string | null
+          read_at: string | null
+          sender_id: string | null
+          sender_role: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          driver_user_id: string
+          id?: string
+          order_id?: string | null
+          read_at?: string | null
+          sender_id?: string | null
+          sender_role?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          driver_user_id?: string
+          id?: string
+          order_id?: string | null
+          read_at?: string | null
+          sender_id?: string | null
+          sender_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispatch_messages_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dispatch_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dispatch_orders: {
+        Row: {
+          accepted_at: string | null
+          arrived_at: string | null
+          bus_id: string | null
+          created_at: string
+          created_by: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          departure_at: string | null
+          destination_address: string | null
+          destination_lat: number | null
+          destination_lng: number | null
+          destination_name: string | null
+          distance_km: number | null
+          driver_user_id: string | null
+          duration_min: number | null
+          eta: string | null
+          id: string
+          notes: string | null
+          order_number: string
+          origin_address: string | null
+          origin_lat: number | null
+          origin_lng: number | null
+          origin_name: string | null
+          priority: string
+          progress_percent: number
+          reject_reason: string | null
+          started_at: string | null
+          status: string
+          title: string
+          updated_at: string
+          waypoints: Json
+        }
+        Insert: {
+          accepted_at?: string | null
+          arrived_at?: string | null
+          bus_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          departure_at?: string | null
+          destination_address?: string | null
+          destination_lat?: number | null
+          destination_lng?: number | null
+          destination_name?: string | null
+          distance_km?: number | null
+          driver_user_id?: string | null
+          duration_min?: number | null
+          eta?: string | null
+          id?: string
+          notes?: string | null
+          order_number: string
+          origin_address?: string | null
+          origin_lat?: number | null
+          origin_lng?: number | null
+          origin_name?: string | null
+          priority?: string
+          progress_percent?: number
+          reject_reason?: string | null
+          started_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          waypoints?: Json
+        }
+        Update: {
+          accepted_at?: string | null
+          arrived_at?: string | null
+          bus_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          departure_at?: string | null
+          destination_address?: string | null
+          destination_lat?: number | null
+          destination_lng?: number | null
+          destination_name?: string | null
+          distance_km?: number | null
+          driver_user_id?: string | null
+          duration_min?: number | null
+          eta?: string | null
+          id?: string
+          notes?: string | null
+          order_number?: string
+          origin_address?: string | null
+          origin_lat?: number | null
+          origin_lng?: number | null
+          origin_name?: string | null
+          priority?: string
+          progress_percent?: number
+          reject_reason?: string | null
+          started_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          waypoints?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispatch_orders_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       driver_checklists: {
         Row: {
@@ -2764,6 +2942,72 @@ export type Database = {
           },
         ]
       }
+      fleet_positions: {
+        Row: {
+          accuracy_m: number | null
+          bus_id: string | null
+          created_at: string
+          driver_user_id: string
+          heading: number
+          id: string
+          is_demo: boolean
+          latitude: number
+          longitude: number
+          order_id: string | null
+          source: string
+          speed_kmh: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accuracy_m?: number | null
+          bus_id?: string | null
+          created_at?: string
+          driver_user_id: string
+          heading?: number
+          id?: string
+          is_demo?: boolean
+          latitude: number
+          longitude: number
+          order_id?: string | null
+          source?: string
+          speed_kmh?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accuracy_m?: number | null
+          bus_id?: string | null
+          created_at?: string
+          driver_user_id?: string
+          heading?: number
+          id?: string
+          is_demo?: boolean
+          latitude?: number
+          longitude?: number
+          order_id?: string | null
+          source?: string
+          speed_kmh?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fleet_positions_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fleet_positions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dispatch_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fuel_log: {
         Row: {
           bus_id: string
@@ -3307,6 +3551,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      navigation_alert_rules: {
+        Row: {
+          country_code: string
+          created_at: string
+          description: string | null
+          id: string
+          is_enabled: boolean
+          label: string
+          rule_key: string
+          updated_at: string
+        }
+        Insert: {
+          country_code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean
+          label: string
+          rule_key: string
+          updated_at?: string
+        }
+        Update: {
+          country_code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean
+          label?: string
+          rule_key?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       operations_metrics: {
         Row: {
@@ -6710,6 +6987,7 @@ export type Database = {
       generate_admin_booking_number: { Args: never; Returns: string }
       generate_complaint_number: { Args: never; Returns: string }
       generate_contract_number: { Args: never; Returns: string }
+      generate_dispatch_order_number: { Args: never; Returns: string }
       generate_inquiry_number: { Args: never; Returns: string }
       generate_line_trip_number: { Args: never; Returns: string }
       generate_personnel_number: { Args: never; Returns: string }
