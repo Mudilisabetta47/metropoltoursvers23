@@ -56,7 +56,8 @@ const menuSections: MenuSection[] = [
       { path: "/admin/ai-insights", label: "KI-Chat-Analyse", icon: Sparkles, allowedRoles: ALL_STAFF },
       { path: "/admin/support-tickets", label: "Support-Tickets", icon: Sparkles, allowedRoles: ALL_STAFF },
       { path: "/admin/wallboard", label: "Wallboard", icon: Tv, allowedRoles: MANAGEMENT },
-      { path: "/admin/ops", label: "Live-Betrieb", icon: Activity, allowedRoles: OPS_STAFF },
+      { path: "/admin/ops", label: "OPS Center", icon: Radio, allowedRoles: OPS_STAFF },
+      { path: "/admin/live-betrieb", label: "Live-Betrieb", icon: Activity, allowedRoles: OPS_STAFF },
       { path: "/admin/departures", label: "Kalender", icon: CalendarClock, allowedRoles: ALL_STAFF },
     ],
   },
@@ -74,7 +75,6 @@ const menuSections: MenuSection[] = [
     items: [
       { path: "/admin/trips", label: "Alle Fahrten & Verspätungen", icon: AlertTriangle, allowedRoles: OPS_STAFF },
       { path: "/admin/tour-builder", label: "Tourenplanung", icon: Map, allowedRoles: MANAGEMENT },
-      { path: "/ops", label: "OPS Center", icon: Radio, allowedRoles: OPS_STAFF },
       { path: "/admin/leitstelle", label: "Flottenleitstelle", icon: Radio, allowedRoles: OPS_STAFF },
 
       { path: "/admin/dispatch", label: "Fahrt-Disposition", icon: ClipboardList, allowedRoles: OPS_STAFF },

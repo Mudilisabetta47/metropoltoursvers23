@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   AlertTriangle, Bus as BusIcon, ChevronRight, Layers, Loader2, MapPin, MessageSquare,
   Navigation, Plus, Radio, Route as RouteIcon, Send, X,
