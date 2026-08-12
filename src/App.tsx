@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { CartProvider } from "@/hooks/useCart";
 import ComingSoonPage from "./pages/ComingSoonPage";
 import CookieBanner from "./components/CookieBanner";
 import TravelAdvisorChat from "./components/chat/TravelAdvisorChat";
@@ -98,6 +99,14 @@ const AdminCopilotAudit = lazy(() => import("./pages/AdminCopilotAudit"));
 const AdminAIInsights = lazy(() => import("./pages/AdminAIInsights"));
 const AdminSupportTickets = lazy(() => import("./pages/AdminSupportTickets"));
 const FISPage = lazy(() => import("./pages/FISPage"));
+const ShopPage = lazy(() => import("./pages/shop/ShopPage"));
+const ShopProductPage = lazy(() => import("./pages/shop/ShopProductPage"));
+const ShopCartPage = lazy(() => import("./pages/shop/ShopCartPage"));
+const ShopCheckoutPage = lazy(() => import("./pages/shop/ShopCheckoutPage"));
+const ShopOrderConfirmationPage = lazy(() => import("./pages/shop/ShopOrderConfirmationPage"));
+const ShopWishlistPage = lazy(() => import("./pages/shop/ShopWishlistPage"));
+const ShopOrdersPage = lazy(() => import("./pages/shop/ShopOrdersPage"));
+const AdminShop = lazy(() => import("./pages/AdminShop"));
 
 const queryClient = new QueryClient();
 
