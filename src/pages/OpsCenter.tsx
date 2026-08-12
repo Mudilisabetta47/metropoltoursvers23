@@ -5,6 +5,7 @@ import {
   Navigation, Plus, Radio, Route as RouteIcon, Send, X,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import AdminLayout from "@/components/admin/AdminLayout";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
 import {
   DispatchOrder, FLEET_STATUS_COLOR, FLEET_STATUS_LABEL, ORDER_STATUS_LABEL,
@@ -32,7 +33,7 @@ const timeFmt = (iso: string | null | undefined) =>
 const OpsCenter = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, isAdmin, isOffice, isAgent, isLoading: authLoading } = useAuth();
+  const { user } = useAuth();
   const { token } = useMapboxToken();
   const { drivers, buses, positions, orders, isLoading } = useFleetOverview();
   const { hazards, createHazard } = useOpsHazards();
@@ -135,15 +136,7 @@ const OpsCenter = () => {
     return Math.round((new Date(o.eta).getTime() - planned.getTime()) / 60000);
   };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#0a0d13] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-  if (!user) return <Navigate to={`/auth?redirect=${encodeURIComponent(location.pathname)}`} replace />;
-  if (!isAdmin && !isOffice && !isAgent) return <Navigate to="/" replace />;
+
 
   const remainingKm =
     selectedPos && selectedOrder?.destination_lat
@@ -157,7 +150,8 @@ const OpsCenter = () => {
   const delay = delayMinutes(selectedOrder);
 
   return (
-    <div className="fixed inset-0 bg-[#0a0d13] flex flex-col">
+    <AdminLayout title="OPS Center" subtitle="Live-Leitstelle: Flotte, Routen, Verkehr und Fahrer-Kommunikation">
+    <div className="h-[calc(100vh-11rem)] min-h-[560px] rounded-xl overflow-hidden border border-zinc-800 bg-[#0a0d13] flex flex-col">
       {/* Kopf: Live-Kennzahlen */}
       <header className="shrink-0 border-b border-zinc-800 bg-[#0f1218] px-4 py-2.5 flex items-center gap-4 flex-wrap">
         <div className="flex items-center gap-2 mr-2">
@@ -434,6 +428,7 @@ const OpsCenter = () => {
         onCreate={createHazard}
       />
     </div>
+    </AdminLayout>
   );
 };
 
