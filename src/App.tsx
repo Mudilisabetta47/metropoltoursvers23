@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { CartProvider } from "@/hooks/useCart";
 import ComingSoonPage from "./pages/ComingSoonPage";
 import CookieBanner from "./components/CookieBanner";
 import TravelAdvisorChat from "./components/chat/TravelAdvisorChat";
@@ -98,6 +99,14 @@ const AdminCopilotAudit = lazy(() => import("./pages/AdminCopilotAudit"));
 const AdminAIInsights = lazy(() => import("./pages/AdminAIInsights"));
 const AdminSupportTickets = lazy(() => import("./pages/AdminSupportTickets"));
 const FISPage = lazy(() => import("./pages/FISPage"));
+const ShopPage = lazy(() => import("./pages/shop/ShopPage"));
+const ShopProductPage = lazy(() => import("./pages/shop/ShopProductPage"));
+const ShopCartPage = lazy(() => import("./pages/shop/ShopCartPage"));
+const ShopCheckoutPage = lazy(() => import("./pages/shop/ShopCheckoutPage"));
+const ShopOrderConfirmationPage = lazy(() => import("./pages/shop/ShopOrderConfirmationPage"));
+const ShopWishlistPage = lazy(() => import("./pages/shop/ShopWishlistPage"));
+const ShopOrdersPage = lazy(() => import("./pages/shop/ShopOrdersPage"));
+const AdminShop = lazy(() => import("./pages/AdminShop"));
 
 const queryClient = new QueryClient();
 
@@ -154,6 +163,7 @@ const BackendHostRedirect = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
+      <CartProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -166,6 +176,14 @@ const App = () => (
             <PublicGate>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/shop" element={<ShopPage />} />
+              <Route path="/shop/produkt/:slug" element={<ShopProductPage />} />
+              <Route path="/shop/warenkorb" element={<ShopCartPage />} />
+              <Route path="/shop/kasse" element={<ShopCheckoutPage />} />
+              <Route path="/shop/bestellung/:orderNumber" element={<ShopOrderConfirmationPage />} />
+              <Route path="/shop/wunschliste" element={<ShopWishlistPage />} />
+              <Route path="/shop/bestellungen" element={<ShopOrdersPage />} />
+              <Route path="/admin/shop" element={<AdminShop />} />
 
               <Route path="/search" element={<SearchPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
@@ -275,6 +293,7 @@ const App = () => (
         </BrowserRouter>
         <CookieBanner />
       </TooltipProvider>
+      </CartProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
