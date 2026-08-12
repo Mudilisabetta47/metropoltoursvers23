@@ -45,6 +45,9 @@ const OpsCenter = () => {
   const [hazardOpen, setHazardOpen] = useState(false);
   const [pickPoint, setPickPoint] = useState<{ lat: number; lng: number } | null>(null);
   const [chatInput, setChatInput] = useState("");
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "en_route" | "break" | "lost" | "offline">("all");
+  const [sortBy, setSortBy] = useState<"bus" | "delay" | "speed" | "gps">("bus");
   const { messages, send } = useDispatchMessages(selected ?? undefined);
 
   // Ticker fuer GPS-Alter
@@ -129,6 +132,44 @@ const OpsCenter = () => {
     };
   }, [positions, activeOrders, hazards]);
 
+  const delayMinutesOf = (o: DispatchOrder | null | undefined) => {
+    if (!o?.eta || !o.departure_at || !o.duration_min) return 0;
+    const planned = new Date(new Date(o.departure_at).getTime() + o.duration_min * 60000);
+    return Math.round((new Date(o.eta).getTime() - planned.getTime()) / 60000);
+  };
+
+  const fleetRows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const rows = positions.map((p) => {
+      const order = orderByDriver[p.driver_user_id];
+      return {
+        pos: p,
+        order,
+        health: gpsHealth(p.updated_at),
+        driver: labels[p.driver_user_id]?.driver ?? "Fahrer",
+        bus: labels[p.driver_user_id]?.bus ?? "Bus",
+        delay: delayMinutesOf(order),
+      };
+    });
+    const filtered = rows.filter((r) => {
+      if (q && !`${r.driver} ${r.bus} ${r.order?.order_number ?? ""} ${r.order?.destination_name ?? ""}`.toLowerCase().includes(q))
+        return false;
+      if (statusFilter === "all") return true;
+      if (statusFilter === "lost") return r.health === "lost";
+      if (statusFilter === "offline") return r.health === "offline";
+      return r.health !== "offline" && r.pos.status === statusFilter;
+    });
+    const order = { live: 0, lost: 1, offline: 2 } as const;
+    return filtered.sort((a, b) => {
+      if (sortBy === "delay") return b.delay - a.delay;
+      if (sortBy === "speed") return b.pos.speed_kmh - a.pos.speed_kmh;
+      if (sortBy === "gps") return order[a.health] - order[b.health];
+      return a.bus.localeCompare(b.bus);
+    });
+  }, [positions, orderByDriver, labels, query, statusFilter, sortBy]);
+
+  const visiblePositions = useMemo(() => fleetRows.map((r) => r.pos), [fleetRows]);
+
   const delayMinutes = (o: DispatchOrder | null) => {
     if (!o?.eta || !o.departure_at) return 0;
     const planned = o.duration_min ? new Date(new Date(o.departure_at).getTime() + o.duration_min * 60000) : null;
@@ -189,11 +230,95 @@ const OpsCenter = () => {
         </div>
       </header>
 
-      <div className="flex-1 relative">
+      <div className="flex-1 flex min-h-0">
+      {/* LINKS: Flotten- und Fahrerliste */}
+      <aside className="w-[290px] shrink-0 border-r border-zinc-800 bg-[#0f1218] flex flex-col min-h-0">
+        <div className="p-2.5 space-y-2 border-b border-zinc-800">
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Bus, Fahrer, Auftrag, Ziel …"
+            className="h-8 bg-white text-black text-sm"
+          />
+          <div className="flex flex-wrap gap-1">
+            {([
+              ["all", `Alle ${positions.length}`],
+              ["en_route", `Unterwegs ${kpi.enRoute}`],
+              ["break", `Pause ${kpi.pause}`],
+              ["lost", `GPS ${kpi.gpsLost}`],
+              ["offline", `Offline ${kpi.offline}`],
+            ] as const).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setStatusFilter(key)}
+                className={cn(
+                  "px-2 py-0.5 rounded text-[11px] border",
+                  statusFilter === key
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-zinc-900 text-zinc-400 border-zinc-700 hover:text-white",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-1 text-[11px] text-zinc-500">
+            <span>Sortierung:</span>
+            {([
+              ["bus", "Bus"],
+              ["delay", "Verspätung"],
+              ["speed", "Tempo"],
+              ["gps", "GPS"],
+            ] as const).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setSortBy(key)}
+                className={cn("px-1.5 py-0.5 rounded", sortBy === key ? "bg-zinc-800 text-white" : "hover:text-zinc-300")}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto divide-y divide-zinc-800/70">
+          {fleetRows.length === 0 && (
+            <p className="p-4 text-xs text-zinc-500">Keine Fahrzeuge für diesen Filter.</p>
+          )}
+          {fleetRows.map((r) => (
+            <button
+              key={r.pos.id}
+              onClick={() => setSelected(r.pos.driver_user_id)}
+              className={cn(
+                "w-full text-left px-3 py-2 hover:bg-zinc-800/60 transition-colors",
+                selected === r.pos.driver_user_id && "bg-zinc-800",
+              )}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-white truncate">{r.bus}</span>
+                <span className="text-[11px]" style={{ color: GPS_HEALTH_COLOR[r.health] }}>
+                  {r.health === "live" ? "🟢" : r.health === "lost" ? "🟠" : "🔴"}
+                </span>
+              </div>
+              <p className="text-xs text-zinc-400 truncate">{r.driver}</p>
+              <div className="flex items-center gap-2 mt-1 text-[11px]">
+                <span style={{ color: FLEET_STATUS_COLOR[r.pos.status] }}>● {FLEET_STATUS_LABEL[r.pos.status]}</span>
+                <span className="text-zinc-500">{Math.round(r.pos.speed_kmh)} km/h</span>
+                {r.delay > 0 && <span className="text-amber-400">+{r.delay}′</span>}
+              </div>
+              <p className="text-[11px] text-zinc-500 truncate">
+                {r.order ? `${r.order.order_number} → ${r.order.destination_name ?? "Ziel"}` : "Kein Auftrag"}
+              </p>
+            </button>
+          ))}
+        </div>
+      </aside>
+
+      <div className="flex-1 relative min-w-0">
         {token ? (
           <OpsMap
             token={token}
-            positions={positions}
+            positions={visiblePositions}
             labels={labels}
             orderByDriver={orderByDriver}
             hazards={hazards}
@@ -259,7 +384,7 @@ const OpsCenter = () => {
 
         {/* Fahrzeug-Detailpanel */}
         {selectedPos && (
-          <aside className="absolute top-0 right-0 bottom-0 z-20 w-[340px] bg-[#0f1218]/97 border-l border-zinc-800 overflow-y-auto">
+          <aside className="absolute top-0 right-0 bottom-0 z-20 w-[340px] bg-[#0f1218]/98 border-l border-zinc-800 overflow-y-auto">
             <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
               <span className="text-xs uppercase tracking-wide text-zinc-500">Fahrzeug</span>
               <Button size="icon" variant="ghost" className="h-8 w-8 text-zinc-400" onClick={() => setSelected(null)}>
@@ -336,6 +461,17 @@ const OpsCenter = () => {
                 <Button
                   variant="outline"
                   className="w-full justify-start border-zinc-700 text-zinc-200"
+                  onClick={() => {
+                    setLayers((p) => ({ ...p, buses: true }));
+                    setSelected(null);
+                    setTimeout(() => setSelected(selectedPos.driver_user_id), 0);
+                  }}
+                >
+                  <Radio className="w-4 h-4 mr-2" /> Fahrzeug verfolgen
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start border-zinc-700 text-zinc-200"
                   onClick={() => setLayers((p) => ({ ...p, routes: true }))}
                 >
                   <RouteIcon className="w-4 h-4 mr-2" /> Route anzeigen
@@ -398,6 +534,7 @@ const OpsCenter = () => {
             </div>
           </aside>
         )}
+      </div>
       </div>
 
       <RerouteDialog
