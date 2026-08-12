@@ -246,7 +246,7 @@ const App = () => (
               <Route path="/admin/dispatch" element={<AdminDispatch />} />
               <Route path="/admin/leitstelle" element={<AdminFleetControl />} />
               <Route path="/ops" element={<OpsCenter />} />
-              <Route path="/admin/ops" element={<OpsCenter />} />
+              
               <Route path="/admin/fahrtenplanung" element={<AdminDispatch />} />
               <Route path="/admin/sla-monitor" element={<AdminSLAMonitor />} />
               <Route path="/admin/incident-workflow" element={<AdminIncidentWorkflow />} />
