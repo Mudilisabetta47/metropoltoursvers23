@@ -293,6 +293,7 @@ const App = () => (
         </BrowserRouter>
         <CookieBanner />
       </TooltipProvider>
+      </CartProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
