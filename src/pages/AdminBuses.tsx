@@ -28,9 +28,18 @@ interface BusForm {
   total_seats: number;
   amenities: string[];
   is_active: boolean;
+  bus_number: string;
+  height_cm: string;
+  width_cm: string;
+  length_cm: string;
+  weight_kg: string;
+  axles: string;
+  emission_class: string;
+  fuel_type: string;
+  routing_notes: string;
 }
 
-const emptyForm: BusForm = { name: "", license_plate: "", total_seats: 50, amenities: ["wifi", "power", "wc"], is_active: true };
+const emptyForm: BusForm = { name: "", license_plate: "", total_seats: 50, amenities: ["wifi", "power", "wc"], is_active: true, bus_number: "", height_cm: "", width_cm: "", length_cm: "", weight_kg: "", axles: "", emission_class: "", fuel_type: "", routing_notes: "" };
 
 const AdminBuses = () => {
   const [buses, setBuses] = useState<any[]>([]);
@@ -58,7 +67,14 @@ const AdminBuses = () => {
 
   const openEdit = (b: any) => {
     setEditingId(b.id);
-    setForm({ name: b.name, license_plate: b.license_plate, total_seats: b.total_seats, amenities: b.amenities || [], is_active: b.is_active });
+    setForm({
+      name: b.name, license_plate: b.license_plate, total_seats: b.total_seats,
+      amenities: b.amenities || [], is_active: b.is_active,
+      bus_number: b.bus_number ?? "", height_cm: b.height_cm?.toString() ?? "",
+      width_cm: b.width_cm?.toString() ?? "", length_cm: b.length_cm?.toString() ?? "",
+      weight_kg: b.weight_kg?.toString() ?? "", axles: b.axles?.toString() ?? "",
+      emission_class: b.emission_class ?? "", fuel_type: b.fuel_type ?? "", routing_notes: b.routing_notes ?? "",
+    });
     setDialogOpen(true);
   };
 
@@ -69,7 +85,16 @@ const AdminBuses = () => {
   const save = async () => {
     if (!form.name || !form.license_plate) { toast.error("Name und Kennzeichen sind Pflicht"); return; }
     setSaving(true);
-    const payload = { name: form.name, license_plate: form.license_plate, total_seats: form.total_seats, amenities: form.amenities, is_active: form.is_active };
+    const num = (v: string) => (v.trim() === "" ? null : Number(v));
+    const payload: any = {
+      name: form.name, license_plate: form.license_plate, total_seats: form.total_seats,
+      amenities: form.amenities, is_active: form.is_active,
+      bus_number: form.bus_number || null,
+      height_cm: num(form.height_cm), width_cm: num(form.width_cm), length_cm: num(form.length_cm),
+      weight_kg: num(form.weight_kg), axles: num(form.axles),
+      emission_class: form.emission_class || null, fuel_type: form.fuel_type || null,
+      routing_notes: form.routing_notes || null,
+    };
     const { error } = editingId
       ? await supabase.from("buses").update(payload).eq("id", editingId)
       : await supabase.from("buses").insert(payload);
@@ -151,7 +176,7 @@ const AdminBuses = () => {
 
       {/* Create / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white sm:max-w-md">
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? "Fahrzeug bearbeiten" : "Neues Fahrzeug"}</DialogTitle>
             <DialogDescription className="text-zinc-400">Fahrzeugdaten eingeben</DialogDescription>
@@ -178,6 +203,47 @@ const AdminBuses = () => {
                     <a.icon className="w-3.5 h-3.5" /> {a.label}
                   </label>
                 ))}
+              </div>
+            </div>
+            <div className="pt-2 border-t border-zinc-800 space-y-3">
+              <p className="text-sm font-semibold text-white">Fahrzeugprofil (für Bus-Routing)</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-zinc-300">Busnummer</Label>
+                  <Input className="bg-zinc-800 border-zinc-700 text-white" value={form.bus_number} onChange={e => setForm(f => ({ ...f, bus_number: e.target.value }))} placeholder="z.B. MT-07" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-zinc-300">Achsen</Label>
+                  <Input type="number" className="bg-zinc-800 border-zinc-700 text-white" value={form.axles} onChange={e => setForm(f => ({ ...f, axles: e.target.value }))} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-zinc-300">Höhe (cm)</Label>
+                  <Input type="number" className="bg-zinc-800 border-zinc-700 text-white" value={form.height_cm} onChange={e => setForm(f => ({ ...f, height_cm: e.target.value }))} placeholder="380" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-zinc-300">Breite (cm)</Label>
+                  <Input type="number" className="bg-zinc-800 border-zinc-700 text-white" value={form.width_cm} onChange={e => setForm(f => ({ ...f, width_cm: e.target.value }))} placeholder="255" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-zinc-300">Länge (cm)</Label>
+                  <Input type="number" className="bg-zinc-800 border-zinc-700 text-white" value={form.length_cm} onChange={e => setForm(f => ({ ...f, length_cm: e.target.value }))} placeholder="1370" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-zinc-300">Gewicht (kg)</Label>
+                  <Input type="number" className="bg-zinc-800 border-zinc-700 text-white" value={form.weight_kg} onChange={e => setForm(f => ({ ...f, weight_kg: e.target.value }))} placeholder="19000" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-zinc-300">Emissionsklasse</Label>
+                  <Input className="bg-zinc-800 border-zinc-700 text-white" value={form.emission_class} onChange={e => setForm(f => ({ ...f, emission_class: e.target.value }))} placeholder="Euro 6" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-zinc-300">Kraftstoff</Label>
+                  <Input className="bg-zinc-800 border-zinc-700 text-white" value={form.fuel_type} onChange={e => setForm(f => ({ ...f, fuel_type: e.target.value }))} placeholder="Diesel" />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-zinc-300">Routing-Hinweise</Label>
+                <Input className="bg-zinc-800 border-zinc-700 text-white" value={form.routing_notes} onChange={e => setForm(f => ({ ...f, routing_notes: e.target.value }))} placeholder="z.B. keine Innenstadt Bremen Altstadt" />
               </div>
             </div>
             <div className="flex items-center gap-3">

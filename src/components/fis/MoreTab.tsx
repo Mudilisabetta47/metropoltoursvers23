@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, LogOut, Settings, Bell, Shield, Download, ExternalLink, RefreshCw } from "lucide-react";
+import { FileText, LogOut, Settings, Bell, Shield, Download, ExternalLink, RefreshCw, Navigation } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 
@@ -93,6 +93,7 @@ const MoreTab = ({ userId }: { userId: string }) => {
           window.location.href = `/admin/driver?v=${Date.now()}`;
         }} />
         <MenuItem icon={Bell} label="Benachrichtigungen" onClick={() => {}} />
+        <MenuItem icon={Navigation} label="Fahrer-Navi öffnen" onClick={() => navigate("/fahrer/navi")} />
         <MenuItem icon={Shield} label="Datenschutz & Sicherheit" onClick={() => navigate("/privacy")} />
         <MenuItem icon={Settings} label="Einstellungen" onClick={() => {}} />
         <MenuItem icon={ExternalLink} label="Zurück zum Admin-Cockpit" onClick={() => navigate("/admin/dashboard")} />
