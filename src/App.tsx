@@ -163,6 +163,7 @@ const BackendHostRedirect = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
+      <CartProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -175,6 +176,14 @@ const App = () => (
             <PublicGate>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/shop" element={<ShopPage />} />
+              <Route path="/shop/produkt/:slug" element={<ShopProductPage />} />
+              <Route path="/shop/warenkorb" element={<ShopCartPage />} />
+              <Route path="/shop/kasse" element={<ShopCheckoutPage />} />
+              <Route path="/shop/bestellung/:orderNumber" element={<ShopOrderConfirmationPage />} />
+              <Route path="/shop/wunschliste" element={<ShopWishlistPage />} />
+              <Route path="/shop/bestellungen" element={<ShopOrdersPage />} />
+              <Route path="/admin/shop" element={<AdminShop />} />
 
               <Route path="/search" element={<SearchPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
