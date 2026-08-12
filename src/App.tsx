@@ -196,8 +196,8 @@ const App = () => (
               <Route path="/admin/copilot-audit" element={<AdminCopilotAudit />} />
               <Route path="/admin/ai-insights" element={<AdminAIInsights />} />
               <Route path="/admin/support-tickets" element={<AdminSupportTickets />} />
-              <Route path="/admin/ops" element={<OpsCenter />} />
-              <Route path="/admin/live-betrieb" element={<OperationsDashboard />} />
+              <Route path="/admin/ops" element={<OperationsDashboard />} />
+              <Route path="/admin/ops-center" element={<OpsCenter />} />
               <Route path="/admin/driver" element={<FISPage />} />
               <Route path="/admin/inquiries" element={<AdminInquiriesPage />} />
               <Route path="/admin/inquiries/:inquiryId" element={<AdminInquiryDetail />} />
@@ -246,7 +246,7 @@ const App = () => (
               <Route path="/admin/dispo-board" element={<AdminDispoBoard />} />
               <Route path="/admin/dispatch" element={<AdminDispatch />} />
               <Route path="/admin/leitstelle" element={<AdminFleetControl />} />
-              <Route path="/ops" element={<Navigate to="/admin/ops" replace />} />
+              <Route path="/ops" element={<Navigate to="/admin/ops-center" replace />} />
               
               <Route path="/admin/fahrtenplanung" element={<AdminDispatch />} />
               <Route path="/admin/sla-monitor" element={<AdminSLAMonitor />} />
