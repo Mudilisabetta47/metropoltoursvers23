@@ -271,3 +271,39 @@ export const updateOrderStatus = async (
   const { error } = await db.from("dispatch_orders").update(patch).eq("id", orderId);
   if (error) throw error;
 };
+
+/**
+ * Route eines Auftrags aus dem OPS Center neu setzen.
+ * Erhoeht `route_version` – die Fahrer-Navi uebernimmt die Route dadurch
+ * automatisch per Supabase Realtime (mit kurzer Ansage, ohne Bedienung).
+ */
+export const pushRouteUpdate = async (
+  order: DispatchOrder,
+  payload: {
+    waypoints: { name: string; address?: string; lat: number; lng: number }[];
+    destination: { name: string; address?: string; lat: number; lng: number };
+    geometry: GeoJSON.LineString;
+    distanceKm: number;
+    durationMin: number;
+    note?: string;
+  },
+) => {
+  const { error } = await db
+    .from("dispatch_orders")
+    .update({
+      waypoints: payload.waypoints,
+      destination_name: payload.destination.name,
+      destination_address: payload.destination.address ?? payload.destination.name,
+      destination_lat: payload.destination.lat,
+      destination_lng: payload.destination.lng,
+      route_geometry: payload.geometry,
+      route_version: (order.route_version ?? 1) + 1,
+      route_updated_at: new Date().toISOString(),
+      route_note: payload.note ?? "Neue Route vom OPS Center.",
+      distance_km: payload.distanceKm,
+      duration_min: payload.durationMin,
+      eta: new Date(Date.now() + payload.durationMin * 60000).toISOString(),
+    })
+    .eq("id", order.id);
+  if (error) throw error;
+};
