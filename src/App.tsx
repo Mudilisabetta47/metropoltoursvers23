@@ -73,6 +73,7 @@ const AdminDispoBoard = lazy(() => import("./pages/AdminDispoBoard"));
 const AdminDispatch = lazy(() => import("./pages/AdminDispatch"));
 const AdminFleetControl = lazy(() => import("./pages/AdminFleetControl"));
 const DriverNavPage = lazy(() => import("./pages/DriverNavPage"));
+const OpsCenter = lazy(() => import("./pages/OpsCenter"));
 const AdminSLAMonitor = lazy(() => import("./pages/AdminSLAMonitor"));
 const AdminIncidentWorkflow = lazy(() => import("./pages/AdminIncidentWorkflow"));
 const PassengerDataPage = lazy(() => import("./pages/PassengerDataPage"));
@@ -244,6 +245,8 @@ const App = () => (
               <Route path="/admin/dispo-board" element={<AdminDispoBoard />} />
               <Route path="/admin/dispatch" element={<AdminDispatch />} />
               <Route path="/admin/leitstelle" element={<AdminFleetControl />} />
+              <Route path="/ops" element={<OpsCenter />} />
+              <Route path="/admin/ops" element={<OpsCenter />} />
               <Route path="/admin/fahrtenplanung" element={<AdminDispatch />} />
               <Route path="/admin/sla-monitor" element={<AdminSLAMonitor />} />
               <Route path="/admin/incident-workflow" element={<AdminIncidentWorkflow />} />
