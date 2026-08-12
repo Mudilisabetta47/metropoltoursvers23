@@ -44,7 +44,12 @@ export interface DispatchOrder {
   started_at: string | null;
   arrived_at: string | null;
   created_at: string;
+  route_geometry: GeoJSON.LineString | null;
+  route_version: number;
+  route_updated_at: string | null;
+  route_note: string | null;
 }
+
 
 export interface FleetPosition {
   id: string;
