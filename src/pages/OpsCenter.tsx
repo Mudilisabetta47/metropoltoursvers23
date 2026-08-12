@@ -186,6 +186,9 @@ const OpsCenter = () => {
           <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-200" onClick={() => navigate("/admin/leitstelle")}>
             Leitstelle
           </Button>
+          <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-200" onClick={() => navigate("/admin/live-betrieb")}>
+            Klassische Ansicht
+          </Button>
         </div>
       </header>
 
