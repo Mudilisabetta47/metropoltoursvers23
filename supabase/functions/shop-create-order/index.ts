@@ -170,7 +170,6 @@ serve(async (req) => {
         couponCode = c.code;
         discount = c.percent_off ? (subtotal * Number(c.percent_off)) / 100 : Number(c.amount_off ?? 0);
         discount = Math.min(Math.round(discount * 100) / 100, subtotal);
-        await supabase.rpc("noop_placeholder").catch(() => {});
       }
     }
 
