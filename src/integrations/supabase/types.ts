@@ -1883,6 +1883,10 @@ export type Database = {
           priority: string
           progress_percent: number
           reject_reason: string | null
+          route_geometry: Json | null
+          route_note: string | null
+          route_updated_at: string | null
+          route_version: number
           started_at: string | null
           status: string
           title: string
@@ -1916,6 +1920,10 @@ export type Database = {
           priority?: string
           progress_percent?: number
           reject_reason?: string | null
+          route_geometry?: Json | null
+          route_note?: string | null
+          route_updated_at?: string | null
+          route_version?: number
           started_at?: string | null
           status?: string
           title: string
@@ -1949,6 +1957,10 @@ export type Database = {
           priority?: string
           progress_percent?: number
           reject_reason?: string | null
+          route_geometry?: Json | null
+          route_note?: string | null
+          route_updated_at?: string | null
+          route_version?: number
           started_at?: string | null
           status?: string
           title?: string
@@ -3612,6 +3624,63 @@ export type Database = {
           metric_hour?: number | null
           metric_type?: string
           value?: number
+        }
+        Relationships: []
+      }
+      ops_hazards: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          hazard_type: string
+          id: string
+          is_active: boolean
+          latitude: number
+          longitude: number
+          radius_m: number
+          severity: string
+          source: string
+          speed_limit_kmh: number | null
+          title: string
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          hazard_type: string
+          id?: string
+          is_active?: boolean
+          latitude: number
+          longitude: number
+          radius_m?: number
+          severity?: string
+          source?: string
+          speed_limit_kmh?: number | null
+          title: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          hazard_type?: string
+          id?: string
+          is_active?: boolean
+          latitude?: number
+          longitude?: number
+          radius_m?: number
+          severity?: string
+          source?: string
+          speed_limit_kmh?: number | null
+          title?: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
         }
         Relationships: []
       }
