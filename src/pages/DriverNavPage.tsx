@@ -163,6 +163,23 @@ const DriverNavPage = () => {
     if (activeOrder && ["accepted", "en_route", "paused"].includes(activeOrder.status) && !route) computeRoute();
   }, [activeOrder?.id, activeOrder?.status, computeRoute, route]);
 
+  // Routenänderung aus dem OPS Center: sichtbar + hörbar übernehmen
+  const routeVersionRef = useRef<{ orderId: string; version: number } | null>(null);
+  useEffect(() => {
+    if (!activeOrder) return;
+    const version = activeOrder.route_version ?? 1;
+    const prev = routeVersionRef.current;
+    routeVersionRef.current = { orderId: activeOrder.id, version };
+    if (!prev || prev.orderId !== activeOrder.id || version <= prev.version) return;
+    toast.info(activeOrder.route_note || "Neue Route vom OPS Center.", { duration: 8000 });
+    speak("Neue Route vom OPS Center.", voice);
+    setStepIndex(0);
+    setRoute(null);
+    computeRoute();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeOrder?.id, activeOrder?.route_version]);
+
+
   // Fortschritt, Off-Route-Neuberechnung, Sprachführung
   useEffect(() => {
     if (!navigating || !route || !pos || !activeOrder) return;
