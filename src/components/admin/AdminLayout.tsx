@@ -74,7 +74,9 @@ const menuSections: MenuSection[] = [
     items: [
       { path: "/admin/trips", label: "Alle Fahrten & Verspätungen", icon: AlertTriangle, allowedRoles: OPS_STAFF },
       { path: "/admin/tour-builder", label: "Tourenplanung", icon: Map, allowedRoles: MANAGEMENT },
+      { path: "/ops", label: "OPS Center", icon: Radio, allowedRoles: OPS_STAFF },
       { path: "/admin/leitstelle", label: "Flottenleitstelle", icon: Radio, allowedRoles: OPS_STAFF },
+
       { path: "/admin/dispatch", label: "Fahrt-Disposition", icon: ClipboardList, allowedRoles: OPS_STAFF },
       { path: "/admin/lines", label: "Linien & Fahrpläne", icon: Route, allowedRoles: MANAGEMENT },
       { path: "/admin/line-trips", label: "Tages-Fahrten (Linie)", icon: Clock, allowedRoles: OPS_STAFF },
