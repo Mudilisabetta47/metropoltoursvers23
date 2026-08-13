@@ -100,6 +100,7 @@ const menuSections: MenuSection[] = [
     items: [
       { path: "/admin/tour-builder", label: "Reisen", icon: Map, allowedRoles: MANAGEMENT },
       { path: "/admin/weekend-trip-builder", label: "Wochenend-Reisen", icon: Sparkles, allowedRoles: MANAGEMENT },
+      { path: "/admin/shop", label: "Online-Shop", icon: ShoppingBag, allowedRoles: MANAGEMENT },
       { path: "/admin/coupons", label: "Gutscheine & Aktionen", icon: Tag, allowedRoles: MANAGEMENT },
       { path: "/admin/dynamic-pricing", label: "Preise & Kontingente", icon: TrendingUp, allowedRoles: MANAGEMENT },
     ],
