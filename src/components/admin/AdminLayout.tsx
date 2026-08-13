@@ -7,7 +7,7 @@ import {
   ChevronRight, Sparkles, Activity, Command, ChevronsLeft,
   ChevronsRight, Menu, X, IdCard, Wallet, Building2, MessageCircleWarning, Tv, Wrench, TrendingUp,
   Sun, Moon, MonitorSmartphone, Briefcase, FileSignature, Receipt, Fuel, Scale,
-  Gauge, Radio, CalendarClock, AlertTriangle, ClipboardCheck, BookOpen, Tag, Clock,
+  Gauge, Radio, CalendarClock, AlertTriangle, ClipboardCheck, BookOpen, Tag, Clock, ShoppingBag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -100,6 +100,7 @@ const menuSections: MenuSection[] = [
     items: [
       { path: "/admin/tour-builder", label: "Reisen", icon: Map, allowedRoles: MANAGEMENT },
       { path: "/admin/weekend-trip-builder", label: "Wochenend-Reisen", icon: Sparkles, allowedRoles: MANAGEMENT },
+      { path: "/admin/shop", label: "Online-Shop", icon: ShoppingBag, allowedRoles: MANAGEMENT },
       { path: "/admin/coupons", label: "Gutscheine & Aktionen", icon: Tag, allowedRoles: MANAGEMENT },
       { path: "/admin/dynamic-pricing", label: "Preise & Kontingente", icon: TrendingUp, allowedRoles: MANAGEMENT },
     ],
