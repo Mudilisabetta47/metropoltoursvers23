@@ -181,7 +181,7 @@ export default function AdminShop() {
     load();
   };
 
-  const updateOrder = async (id: string, patch: Record<string, string>) => {
+  const updateOrder = async (id: string, patch: { status?: string; tracking_number?: string }) => {
     const { error } = await supabase.from("shop_orders").update(patch).eq("id", id);
     if (error) return toast({ title: "Fehler", description: error.message, variant: "destructive" });
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, ...patch } as ShopOrder : o)));
