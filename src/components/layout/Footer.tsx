@@ -22,12 +22,15 @@ const Footer = () => {
       { name: "Städtereisen", path: "/business" },
     ],
     services: [
-      { name: "Schulfahrten", path: "/business" },
-      { name: "Privatfahrten", path: "/business" },
-      { name: "Shuttle-Service", path: "/business" },
-      { name: "Flughafentransfer", path: "/business" },
-      { name: "Eventfahrten", path: "/business" },
+      { name: "Bus mieten", path: "/bus-mieten" },
+      { name: "Reisebus mit Fahrer", path: "/reisebus-mit-fahrer" },
+      { name: "Schulfahrten", path: "/schulfahrten" },
+      { name: "Vereinsfahrten", path: "/vereinsfahrten" },
+      { name: "Shuttle-Service", path: "/shuttle-service" },
+      { name: "Flughafentransfer", path: "/flughafentransfer" },
+      { name: "Bus-Charter", path: "/bus-charter" },
     ],
+
     service: [
       { name: "Hilfe & FAQ", path: "/service" },
       { name: "Fahrt verfolgen", path: "/verfolge" },
