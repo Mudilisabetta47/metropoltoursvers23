@@ -17,8 +17,8 @@ const Footer = () => {
       { name: "Pauschalreisen (bald)", path: "/reisen" },
 
       { name: "Linienfahrten", path: "/search" },
-      { name: "Gruppenreisen", path: "/business" },
-      { name: "Tagesausflüge", path: "/business" },
+      { name: "Gruppenreisen", path: "/gruppenreisen" },
+      { name: "Tagesausflüge", path: "/ausflugsfahrten" },
       { name: "Städtereisen", path: "/business" },
     ],
     services: [
@@ -245,6 +245,30 @@ const Footer = () => {
                 className="px-3 py-1.5 text-sm bg-muted-foreground/10 rounded-full text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
               >
                 {route}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Standorte / Regionen */}
+        <div className="mt-8 pt-8 border-t border-muted-foreground/10">
+          <h4 className="font-semibold text-primary-foreground mb-4">Busvermietung in Ihrer Region</h4>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { name: "Busunternehmen Hannover", path: "/busunternehmen-hannover" },
+              { name: "Bus mieten Hannover", path: "/bus-mieten-hannover" },
+              { name: "Reisebus mieten Hannover", path: "/reisebus-mieten-hannover" },
+              { name: "Busvermietung Hannover", path: "/busvermietung-hannover" },
+              { name: "Bus mieten Bremen", path: "/bus-mieten-bremen" },
+              { name: "Reisebus mieten Bremen", path: "/reisebus-mieten-bremen" },
+              { name: "Busvermietung Bremen", path: "/busvermietung-bremen" },
+            ].map((l) => (
+              <Link
+                key={l.path}
+                to={l.path}
+                className="px-3 py-1.5 text-sm bg-muted-foreground/10 rounded-full text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+              >
+                {l.name}
               </Link>
             ))}
           </div>
