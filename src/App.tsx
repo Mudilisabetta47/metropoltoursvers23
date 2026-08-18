@@ -12,6 +12,7 @@ import TravelAdvisorChat from "./components/chat/TravelAdvisorChat";
 import AnalyticsLoader from "./components/AnalyticsLoader";
 import NoIndexRoutes from "./components/NoIndexRoutes";
 import { ScrollToTop } from "./components/ScrollToTop";
+import { landingSlugs } from "./content/landing";
 
 // Lazy-loaded pages for code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -87,6 +88,7 @@ const AdminDynamicPricing = lazy(() => import("./pages/AdminDynamicPricing"));
 const AdminJobs = lazy(() => import("./pages/AdminJobs"));
 const AdminContracts = lazy(() => import("./pages/AdminContracts"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const LandingPage = lazy(() => import("./pages/LandingPage"));
 const AdminStub = lazy(() => import("./pages/AdminStub"));
 const AdminLines = lazy(() => import("./pages/AdminLines"));
 const AdminLineTrips = lazy(() => import("./pages/AdminLineTrips"));
@@ -285,6 +287,9 @@ const App = () => (
               <Route path="/admin/driver-nav" element={<DriverNavPage />} />
               <Route path="/fahrer" element={<Navigate to="/admin/driver" replace />} />
               <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
+              {landingSlugs.map((slug) => (
+                <Route key={slug} path={`/${slug}`} element={<LandingPage />} />
+              ))}
               <Route path="*" element={<NotFound />} />
             </Routes>
             </PublicGate>
