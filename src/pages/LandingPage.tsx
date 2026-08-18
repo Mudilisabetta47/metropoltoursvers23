@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -356,8 +356,9 @@ export function LandingView({ content }: { content: LandingContent }) {
 
 /** Route-Wrapper: /:landingSlug */
 export default function LandingPage() {
-  const { landingSlug } = useParams();
-  const content = landingSlug ? landingBySlug[landingSlug] : undefined;
+  const { pathname } = useLocation();
+  const slug = pathname.replace(/^\/+|\/+$/g, "");
+  const content = landingBySlug[slug];
   if (!content) return <NotFound />;
   return <LandingView content={content} />;
 }
