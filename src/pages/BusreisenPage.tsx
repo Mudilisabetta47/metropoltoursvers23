@@ -77,11 +77,11 @@ const BusreisenPage = () => {
         supabase.from("stops").select("*").order("stop_order"),
         supabase
           .from("package_tours")
-          .select("id, slug, destination, country, price_from, hero_image_url, image_url, short_description")
-          .eq("is_active", true)
-          .eq("publish_status", "published")
+          .select("id, slug, destination, country, price_from, hero_image_url, image_url, short_description, publish_status, is_active")
+          .neq("publish_status", "archived")
           .order("price_from", { ascending: true })
           .limit(6),
+
       ]);
       setStops(stopData || []);
       setTours(tourData || []);
