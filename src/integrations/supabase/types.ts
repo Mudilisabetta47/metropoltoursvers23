@@ -7551,36 +7551,7 @@ export type Database = {
           seat_id: string | null
           trip_id: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "seat_holds_destination_stop_id_fkey"
-            columns: ["destination_stop_id"]
-            isOneToOne: false
-            referencedRelation: "stops"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "seat_holds_origin_stop_id_fkey"
-            columns: ["origin_stop_id"]
-            isOneToOne: false
-            referencedRelation: "stops"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "seat_holds_seat_id_fkey"
-            columns: ["seat_id"]
-            isOneToOne: false
-            referencedRelation: "seats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "seat_holds_trip_id_fkey"
-            columns: ["trip_id"]
-            isOneToOne: false
-            referencedRelation: "trips"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Functions: {
@@ -7709,6 +7680,22 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      list_seat_hold_availability: {
+        Args: never
+        Returns: {
+          destination_stop_id: string
+          destination_stop_name: string
+          destination_stop_order: number
+          expires_at: string
+          id: string
+          is_own_hold: boolean
+          origin_stop_id: string
+          origin_stop_name: string
+          origin_stop_order: number
+          seat_id: string
+          trip_id: string
+        }[]
       }
       log_pii_access: {
         Args: {
