@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.enforce_tour_published_for_booking() FROM PUBLIC, anon, authenticated;
