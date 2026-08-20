@@ -184,6 +184,18 @@ const TourDetailPage = () => {
       />
       <Header />
       <main className="flex-1 pt-16 lg:pt-20">
+        {!isTourBookable(tourData.tour as any) && (
+          <div className="max-w-[1240px] mx-auto px-4 pt-4">
+            <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <Lock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-amber-900">{TOUR_NOT_BOOKABLE_TITLE}</p>
+                <p className="text-sm text-amber-800">{TOUR_NOT_BOOKABLE_TEXT}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Hero: Gallery + Title + Reviews */}
         <TourHeroSection
           tour={tourData.tour}
