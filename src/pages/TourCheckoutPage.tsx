@@ -31,6 +31,8 @@ import { useRecaptcha } from "@/hooks/useRecaptcha";
 import {
   TourTariff, TourDate, TourRoute, TourLuggageAddon, TourExtra, ExtendedPackageTour,
 } from "@/hooks/useTourBuilder";
+import { isTourBookable, TOUR_NOT_BOOKABLE_TITLE, TOUR_NOT_BOOKABLE_TEXT } from "@/lib/tourAvailability";
+
 
 type PaymentMethod = "paypal" | "stripe";
 type CheckoutStep = "summary" | "passengers" | "payment" | "confirmation";
