@@ -35,7 +35,10 @@ interface Tour {
   hero_image_url: string | null;
   image_url: string | null;
   short_description: string | null;
+  publish_status: string | null;
+  is_active: boolean | null;
 }
+
 
 const FAQS = [
   {
