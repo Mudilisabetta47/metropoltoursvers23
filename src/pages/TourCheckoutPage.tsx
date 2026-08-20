@@ -54,13 +54,6 @@ interface PickupStop {
   meeting_point?: string;
 }
 
-const BANK_DETAILS = {
-  recipient: "METROPOL TOURS GmbH",
-  iban: "DE89 3704 0044 0532 0130 00",
-  bic: "COBADEFFXXX",
-  bank: "Commerzbank",
-};
-
 const fadeIn = {
   initial: { opacity: 0, y: 16 },
   animate: { opacity: 1, y: 0 },
