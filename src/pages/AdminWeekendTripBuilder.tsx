@@ -16,9 +16,23 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useWeekendTripBuilder, ViaStop } from "@/hooks/useWeekendTripBuilder";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+interface RouteOption { id: string; name: string; }
+interface BusOption { id: string; name: string; total_seats: number; }
+interface DepartureOption {
+  id: string;
+  departure_date: string;
+  departure_time: string;
+  arrival_time: string;
+  bus_id: string;
+  is_active: boolean;
+}
 
 const tabs = [
   { id: 'basics', label: 'Basis', icon: Bus, color: 'bg-sky-500/15 text-sky-400' },
+  { id: 'schedule', label: 'Termine & Kapazität', icon: Calendar, color: 'bg-violet-500/15 text-violet-400' },
   { id: 'description', label: 'Beschreibung', icon: FileText, color: 'bg-emerald-500/15 text-emerald-400' },
   { id: 'inclusions', label: 'Leistungen', icon: Check, color: 'bg-blue-500/15 text-blue-400' },
   { id: 'stops', label: 'Haltestellen', icon: MapPin, color: 'bg-amber-500/15 text-amber-400' },
@@ -38,8 +52,79 @@ const AdminWeekendTripBuilder = () => {
 
   const [activeTab, setActiveTab] = useState('basics');
   const [isCreating, setIsCreating] = useState(false);
+  const [isAddingDeparture, setIsAddingDeparture] = useState(false);
+  const [routes, setRoutes] = useState<RouteOption[]>([]);
+  const [buses, setBuses] = useState<BusOption[]>([]);
+  const [departures, setDepartures] = useState<DepartureOption[]>([]);
+  const [schedule, setSchedule] = useState({ busId: '', date: '', departureTime: '', arrivalTime: '' });
 
   useEffect(() => { if (tripId) fetchTrip(); }, [tripId, fetchTrip]);
+
+  useEffect(() => {
+    const loadOptions = async () => {
+      const [{ data: routeData }, { data: busData }] = await Promise.all([
+        supabase.from('routes').select('id, name').eq('is_active', true).order('name'),
+        supabase.from('buses').select('id, name, total_seats').eq('is_active', true).order('name'),
+      ]);
+      setRoutes((routeData || []) as RouteOption[]);
+      setBuses((busData || []) as BusOption[]);
+    };
+    loadOptions();
+  }, []);
+
+  useEffect(() => {
+    const loadDepartures = async () => {
+      if (!trip.route_id) {
+        setDepartures([]);
+        return;
+      }
+      const today = new Date().toISOString().slice(0, 10);
+      const { data } = await supabase
+        .from('trips')
+        .select('id, departure_date, departure_time, arrival_time, bus_id, is_active')
+        .eq('route_id', trip.route_id)
+        .gte('departure_date', today)
+        .order('departure_date')
+        .order('departure_time');
+      setDepartures((data || []) as DepartureOption[]);
+    };
+    loadDepartures();
+  }, [trip.route_id]);
+
+  const addDeparture = async () => {
+    if (!trip.route_id || !schedule.busId || !schedule.date || !schedule.departureTime || !schedule.arrivalTime) {
+      toast({ title: 'Bitte Strecke, Bus, Datum und Uhrzeiten vollständig angeben', variant: 'destructive' });
+      return false;
+    }
+    setIsAddingDeparture(true);
+    const { data, error } = await supabase.from('trips').insert({
+      route_id: trip.route_id,
+      bus_id: schedule.busId,
+      departure_date: schedule.date,
+      departure_time: schedule.departureTime,
+      arrival_time: schedule.arrivalTime,
+      base_price: trip.base_price,
+      is_active: true,
+    }).select('id, departure_date, departure_time, arrival_time, bus_id, is_active').single();
+    setIsAddingDeparture(false);
+    if (error) {
+      toast({ title: 'Termin konnte nicht angelegt werden', description: error.message, variant: 'destructive' });
+      return false;
+    }
+    setDepartures((current) => [...current, data as DepartureOption].sort((a, b) => `${a.departure_date}${a.departure_time}`.localeCompare(`${b.departure_date}${b.departure_time}`)));
+    setSchedule({ busId: schedule.busId, date: '', departureTime: '', arrivalTime: '' });
+    toast({ title: 'Abfahrt angelegt und online buchbar' });
+    return true;
+  };
+
+  const removeDeparture = async (departureId: string) => {
+    const { error } = await supabase.from('trips').update({ is_active: false }).eq('id', departureId);
+    if (error) {
+      toast({ title: 'Termin konnte nicht deaktiviert werden', description: error.message, variant: 'destructive' });
+      return;
+    }
+    setDepartures((current) => current.filter((departure) => departure.id !== departureId));
+  };
 
   const handleCreate = async () => {
     setIsCreating(true);
@@ -140,6 +225,18 @@ const AdminWeekendTripBuilder = () => {
                     <Input value={trip.country} onChange={e => updateField('country', e.target.value)}
                       className="bg-[#151920] border-[#2a3040] mt-1" />
                   </div>
+                 <div>
+                   <Label className="text-white text-xs">Buchungsstrecke *</Label>
+                   <Select value={trip.route_id || ''} onValueChange={value => updateField('route_id', value)}>
+                     <SelectTrigger className="bg-[#151920] border-[#2a3040] mt-1 text-white">
+                       <SelectValue placeholder="Strecke auswählen" />
+                     </SelectTrigger>
+                     <SelectContent>
+                       {routes.map(route => <SelectItem key={route.id} value={route.id}>{route.name}</SelectItem>)}
+                     </SelectContent>
+                   </Select>
+                   <p className="text-xs text-zinc-500 mt-1">Die Strecke legt Start, Zustiege und Ziel für den Checkout fest.</p>
+                 </div>
                   <div>
                     <Label className="text-white text-xs flex items-center gap-1"><Clock className="w-3 h-3" />Fahrzeit</Label>
                     <Input value={trip.duration || ''} onChange={e => updateField('duration', e.target.value)}
@@ -186,6 +283,87 @@ const AdminWeekendTripBuilder = () => {
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* ─── SCHEDULE ─── */}
+          {activeTab === 'schedule' && (
+            <div className="space-y-6">
+              <Card className="bg-[#1a1f2a] border-[#2a3040]">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2"><Calendar className="w-5 h-5 text-violet-400" />Neue Abfahrt anlegen</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  {!trip.route_id && (
+                    <div className="border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-300 rounded-lg">
+                      Wähle zuerst unter „Basis“ eine Buchungsstrecke aus.
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-white text-xs">Reisebus / Kapazität *</Label>
+                      <Select value={schedule.busId} onValueChange={busId => setSchedule(current => ({ ...current, busId }))}>
+                        <SelectTrigger className="bg-[#151920] border-[#2a3040] mt-1 text-white"><SelectValue placeholder="Bus auswählen" /></SelectTrigger>
+                        <SelectContent>
+                          {buses.map(bus => <SelectItem key={bus.id} value={bus.id}>{bus.name} · {bus.total_seats} Plätze</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-white text-xs">Abfahrtsdatum *</Label>
+                      <Input type="date" min={new Date().toISOString().slice(0, 10)} value={schedule.date}
+                        onChange={event => setSchedule(current => ({ ...current, date: event.target.value }))}
+                        className="bg-[#151920] border-[#2a3040] mt-1" />
+                    </div>
+                    <div>
+                      <Label className="text-white text-xs">Abfahrtszeit *</Label>
+                      <Input type="time" value={schedule.departureTime}
+                        onChange={event => setSchedule(current => ({ ...current, departureTime: event.target.value }))}
+                        className="bg-[#151920] border-[#2a3040] mt-1" />
+                    </div>
+                    <div>
+                      <Label className="text-white text-xs">Ankunftszeit *</Label>
+                      <Input type="time" value={schedule.arrivalTime}
+                        onChange={event => setSchedule(current => ({ ...current, arrivalTime: event.target.value }))}
+                        className="bg-[#151920] border-[#2a3040] mt-1" />
+                    </div>
+                  </div>
+                  <Button onClick={addDeparture} disabled={isAddingDeparture || !tripId || !trip.route_id} className="bg-violet-600 hover:bg-violet-700">
+                    {isAddingDeparture ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+                    Abfahrt veröffentlichen
+                  </Button>
+                  {!tripId && <p className="text-xs text-zinc-500">Erstelle den Wochenendtrip zuerst; danach kannst du seine Abfahrten veröffentlichen.</p>}
+                </CardContent>
+              </Card>
+
+              <Card className="bg-[#1a1f2a] border-[#2a3040]">
+                <CardHeader><CardTitle className="text-white text-base">Kommende buchbare Abfahrten</CardTitle></CardHeader>
+                <CardContent>
+                  {departures.length === 0 ? (
+                    <p className="text-sm text-zinc-500 py-4">Noch keine zukünftige Abfahrt vorhanden. Ohne Termin ist der Trip sichtbar, aber nicht buchbar.</p>
+                  ) : (
+                    <div className="divide-y divide-[#2a3040]">
+                      {departures.map(departure => {
+                        const bus = buses.find(item => item.id === departure.bus_id);
+                        return (
+                          <div key={departure.id} className="flex items-center justify-between gap-4 py-4">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-lg bg-violet-500/15 flex items-center justify-center"><Calendar className="w-5 h-5 text-violet-400" /></div>
+                              <div>
+                                <p className="text-white font-medium">{new Intl.DateTimeFormat('de-DE', { dateStyle: 'full' }).format(new Date(`${departure.departure_date}T12:00:00`))}</p>
+                                <p className="text-xs text-zinc-400">{departure.departure_time.slice(0, 5)}–{departure.arrival_time.slice(0, 5)} Uhr · {bus?.name || 'Bus'} · {bus?.total_seats || 0} Plätze</p>
+                              </div>
+                            </div>
+                            <Button variant="ghost" size="icon" onClick={() => removeDeparture(departure.id)} className="text-red-400 hover:text-red-300 hover:bg-red-500/10" aria-label="Abfahrt deaktivieren">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           )}
 
           {/* ─── DESCRIPTION ─── */}
