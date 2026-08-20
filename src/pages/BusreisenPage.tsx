@@ -250,20 +250,27 @@ const BusreisenPage = () => {
               {tours.map((tour) => {
                 const img = tour.hero_image_url || tour.image_url || "/placeholder.svg";
                 const slug = tour.slug || tour.id;
+                const bookable = tour.publish_status === "published" && tour.is_active !== false;
                 return (
                   <Link
                     key={tour.id}
                     to={`/reisen/${slug}`}
                     className="group bg-card border border-border/40 rounded-2xl overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all"
                   >
-                    <div className="aspect-[4/3] overflow-hidden bg-muted">
+                    <div className="aspect-[4/3] overflow-hidden bg-muted relative">
                       <img
                         src={img}
                         alt={`Busreise nach ${tour.destination}`}
                         loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                       />
+                      {!bookable && (
+                        <span className="absolute top-3 left-3 rounded-full bg-background/90 border border-border px-3 py-1 text-xs font-semibold text-foreground">
+                          Demnächst buchbar
+                        </span>
+                      )}
                     </div>
+
                     <div className="p-5">
                       <div className="text-xs text-muted-foreground mb-1">{tour.country}</div>
                       <h3 className="text-lg font-bold text-foreground mb-2">
