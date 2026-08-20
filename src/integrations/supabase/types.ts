@@ -758,15 +758,19 @@ export type Database = {
       bookings: {
         Row: {
           booked_by_agent_id: string | null
+          booking_number: string | null
           created_at: string
           destination_stop_id: string
           extras: Json | null
           id: string
+          is_test: boolean
+          luggage: Json
           origin_stop_id: string
           passenger_email: string
           passenger_first_name: string
           passenger_last_name: string
           passenger_phone: string | null
+          payment_method: string | null
           price_paid: number
           seat_id: string
           status: Database["public"]["Enums"]["booking_status"]
@@ -777,15 +781,19 @@ export type Database = {
         }
         Insert: {
           booked_by_agent_id?: string | null
+          booking_number?: string | null
           created_at?: string
           destination_stop_id: string
           extras?: Json | null
           id?: string
+          is_test?: boolean
+          luggage?: Json
           origin_stop_id: string
           passenger_email: string
           passenger_first_name: string
           passenger_last_name: string
           passenger_phone?: string | null
+          payment_method?: string | null
           price_paid: number
           seat_id: string
           status?: Database["public"]["Enums"]["booking_status"]
@@ -796,15 +804,19 @@ export type Database = {
         }
         Update: {
           booked_by_agent_id?: string | null
+          booking_number?: string | null
           created_at?: string
           destination_stop_id?: string
           extras?: Json | null
           id?: string
+          is_test?: boolean
+          luggage?: Json
           origin_stop_id?: string
           passenger_email?: string
           passenger_first_name?: string
           passenger_last_name?: string
           passenger_phone?: string | null
+          payment_method?: string | null
           price_paid?: number
           seat_id?: string
           status?: Database["public"]["Enums"]["booking_status"]
@@ -6722,6 +6734,7 @@ export type Database = {
       }
       trips: {
         Row: {
+          arrival_date: string | null
           arrival_time: string
           base_price: number
           bus_id: string
@@ -6734,6 +6747,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          arrival_date?: string | null
           arrival_time: string
           base_price: number
           bus_id: string
@@ -6746,6 +6760,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          arrival_date?: string | null
           arrival_time?: string
           base_price?: number
           bus_id?: string
@@ -7536,36 +7551,7 @@ export type Database = {
           seat_id: string | null
           trip_id: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "seat_holds_destination_stop_id_fkey"
-            columns: ["destination_stop_id"]
-            isOneToOne: false
-            referencedRelation: "stops"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "seat_holds_origin_stop_id_fkey"
-            columns: ["origin_stop_id"]
-            isOneToOne: false
-            referencedRelation: "stops"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "seat_holds_seat_id_fkey"
-            columns: ["seat_id"]
-            isOneToOne: false
-            referencedRelation: "seats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "seat_holds_trip_id_fkey"
-            columns: ["trip_id"]
-            isOneToOne: false
-            referencedRelation: "trips"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Functions: {
@@ -7607,6 +7593,7 @@ export type Database = {
         Returns: number
       }
       generate_admin_booking_number: { Args: never; Returns: string }
+      generate_booking_number: { Args: never; Returns: string }
       generate_complaint_number: { Args: never; Returns: string }
       generate_contract_number: { Args: never; Returns: string }
       generate_dispatch_order_number: { Args: never; Returns: string }
@@ -7693,6 +7680,22 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      list_seat_hold_availability: {
+        Args: never
+        Returns: {
+          destination_stop_id: string
+          destination_stop_name: string
+          destination_stop_order: number
+          expires_at: string
+          id: string
+          is_own_hold: boolean
+          origin_stop_id: string
+          origin_stop_name: string
+          origin_stop_order: number
+          seat_id: string
+          trip_id: string
+        }[]
       }
       log_pii_access: {
         Args: {

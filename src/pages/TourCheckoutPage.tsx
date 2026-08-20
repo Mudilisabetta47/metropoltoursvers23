@@ -54,13 +54,6 @@ interface PickupStop {
   meeting_point?: string;
 }
 
-const BANK_DETAILS = {
-  recipient: "METROPOL TOURS GmbH",
-  iban: "DE89 3704 0044 0532 0130 00",
-  bic: "COBADEFFXXX",
-  bank: "Commerzbank",
-};
-
 const fadeIn = {
   initial: { opacity: 0, y: 16 },
   animate: { opacity: 1, y: 0 },
@@ -907,32 +900,10 @@ const TourCheckoutPage = () => {
                           Eine Bestätigung wurde an <strong className="text-foreground">{passengerInfo[0]?.email}</strong> gesendet.
                         </p>
 
-                        {/* Bank Details */}
-                        <div className="bg-muted/40 rounded-xl p-5 border border-border/50">
-                          <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
-                            <Banknote className="w-5 h-5 text-primary" />
-                            Überweisungsdaten
-                          </h3>
-                          <div className="space-y-2.5">
-                            {[
-                              { label: "Empfänger", value: BANK_DETAILS.recipient },
-                              { label: "IBAN", value: BANK_DETAILS.iban },
-                              { label: "BIC", value: BANK_DETAILS.bic },
-                              { label: "Bank", value: BANK_DETAILS.bank },
-                              { label: "Verwendungszweck", value: `Buchung ${bookingNumber}` },
-                              { label: "Betrag", value: `${totalPrice.toFixed(2)} €` },
-                            ].map((item) => (
-                              <div key={item.label} className="flex items-center justify-between p-3 bg-card rounded-lg border border-border/50">
-                                <div>
-                                  <span className="text-muted-foreground text-xs">{item.label}</span>
-                                  <p className="font-semibold text-foreground">{item.value}</p>
-                                </div>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10" onClick={() => copyToClipboard(item.value)}>
-                                  <Copy className="w-3.5 h-3.5" />
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
+                        <div className="bg-muted/40 rounded-xl p-5 border border-border/50 text-center">
+                          <p className="text-sm text-muted-foreground">
+                            Zahlung erfolgt online per <strong className="text-foreground">{paymentMethodLabel}</strong> – eine Überweisung ist nicht erforderlich.
+                          </p>
                         </div>
 
                         {/* Documents */}

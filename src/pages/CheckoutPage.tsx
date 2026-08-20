@@ -59,7 +59,8 @@ interface StopDetails {
 const CheckoutPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin, isOffice, isAgent } = useAuth();
+  const isStaff = isAdmin || isOffice || isAgent;
   const { downloadTicket, isDownloading } = useTicketDownload();
   
   // Support both direct trip params and route-based params (for weekend trips)
@@ -97,7 +98,7 @@ const CheckoutPage = () => {
     { id: "insurance", name: "Reiseversicherung", description: "Stornierung & Gepäckschutz", price: 7.99, icon: <Shield className="w-5 h-5" />, selected: false },
   ]);
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal" | "sofort">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal" | "test">("card");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [bookingIds, setBookingIds] = useState<string[]>([]);
@@ -356,6 +357,15 @@ const CheckoutPage = () => {
             passenger_phone: passenger.phone || null,
             price_paid: price + extras.filter(e => e.selected).reduce((sum, e) => sum + e.price, 0),
             status: 'confirmed',
+            payment_method: paymentMethod,
+            is_test: paymentMethod === 'test',
+            luggage: [
+              { type: 'checked', name: 'Reisegepäck (max. 20 kg)', quantity: 1 },
+              { type: 'carry_on', name: 'Handgepäck', quantity: 1 },
+              ...(selectedExtras.some((e) => e.id === 'luggage')
+                ? [{ type: 'checked', name: 'Zusatzgepäck (max. 20 kg)', quantity: 1 }]
+                : []),
+            ],
             extras: selectedExtras
           })
           .select('id')
@@ -648,7 +658,10 @@ const CheckoutPage = () => {
                     {[
                       { id: "card", label: "Kredit-/Debitkarte", icon: <CreditCard className="w-5 h-5" /> },
                       { id: "paypal", label: "PayPal", icon: <span className="text-sm font-bold">PP</span> },
-                      { id: "sofort", label: "Sofortüberweisung", icon: <span className="text-sm font-bold">S</span> },
+                      // Interne Testzahlung – ausschliesslich fuer Mitarbeitende sichtbar
+                      ...(isStaff
+                        ? [{ id: "test", label: "Testzahlung (nur intern, Sandbox)", icon: <span className="text-sm font-bold">TEST</span> }]
+                        : []),
                     ].map((method) => (
                       <div
                         key={method.id}
@@ -687,6 +700,17 @@ const CheckoutPage = () => {
                           <Input placeholder="123" className="mt-1" />
                         </div>
                       </div>
+                    </div>
+                  )}
+
+                  {paymentMethod === "test" && (
+                    <div className="space-y-2 p-4 rounded-xl border border-amber-500/40 bg-amber-500/10 text-sm">
+                      <p className="font-semibold">Interne Testzahlung (Sandbox)</p>
+                      <p className="text-muted-foreground">
+                        Es wird keine echte Zahlung ausgelöst und es werden keine Kartendaten gespeichert.
+                        Die Buchung wird als Testbuchung markiert.
+                      </p>
+                      <p className="text-muted-foreground">Test-Karte (Sandbox): 4242 4242 4242 4242 · 12/34 · CVC 123</p>
                     </div>
                   )}
 

@@ -146,6 +146,7 @@ const handler = async (req: Request): Promise<Response> => {
           *,
           trip:trips(
             departure_date,
+            arrival_date,
             departure_time,
             arrival_time,
             route:routes(name)
@@ -199,6 +200,7 @@ const handler = async (req: Request): Promise<Response> => {
           *,
           trip:trips(
             departure_date,
+            arrival_date,
             departure_time,
             arrival_time,
             route:routes(name)
@@ -238,278 +240,216 @@ const handler = async (req: Request): Promise<Response> => {
       color: { dark: "#000000", light: "#ffffff" },
     });
 
-    // Format date and time
-    const departureDate = new Date(booking.trip.departure_date);
-    const formattedDate = departureDate.toLocaleDateString("de-DE", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    // ---- Company contact data from system settings (never hardcoded in the frontend) ----
+    const settingsClient = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: generalSettings } = await settingsClient
+      .from("app_settings")
+      .select("settings")
+      .eq("section_key", "general")
+      .maybeSingle();
+    const company = (generalSettings?.settings ?? {}) as Record<string, string>;
+    const companyName = escapeHtml(company.name || "METROPOL TOURS");
+    const companyPhone = escapeHtml(company.phone || "");
+    const companyEmail = escapeHtml(company.email || "");
+    const companyWeb = escapeHtml(company.website || "");
 
-    const formatTime = (time: string) => time.slice(0, 5);
+    // ---- Dates / times (fully dynamic, overnight aware) ----
+    const dFmt = (d: Date) =>
+      d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+    const dFmtLong = (d: Date) =>
+      d.toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "long", year: "numeric" });
+    const formatTime = (time: string | null) => (time ? String(time).slice(0, 5) : "--:--");
+
+    const departureDate = new Date(`${booking.trip.departure_date}T00:00:00`);
+    let arrivalDate: Date;
+    if (booking.trip.arrival_date) {
+      arrivalDate = new Date(`${booking.trip.arrival_date}T00:00:00`);
+    } else {
+      arrivalDate = new Date(departureDate);
+      const dep = formatTime(booking.trip.departure_time);
+      const arr = formatTime(booking.trip.arrival_time);
+      if (arr !== "--:--" && dep !== "--:--" && arr <= dep) {
+        arrivalDate.setDate(arrivalDate.getDate() + 1);
+      }
+    }
+    const overnightDays = Math.round(
+      (arrivalDate.getTime() - departureDate.getTime()) / 86400000,
+    );
 
     // Escape user-provided data
     const safeFirstName = escapeHtml(booking.passenger_first_name);
     const safeLastName = escapeHtml(booking.passenger_last_name);
-    const safeOriginCity = escapeHtml(booking.origin_stop.city);
-    const safeDestCity = escapeHtml(booking.destination_stop.city);
-    const safeOriginStop = escapeHtml(booking.origin_stop.name);
-    const safeDestStop = escapeHtml(booking.destination_stop.name);
-    const safeSeatNumber = escapeHtml(booking.seat.seat_number);
-    const safeRouteName = escapeHtml(booking.trip.route.name);
+    const originCity = booking.origin_stop?.city || booking.origin_stop?.name || "";
+    const destCity = booking.destination_stop?.city || booking.destination_stop?.name || "";
+    const safeOriginCity = escapeHtml(originCity);
+    const safeDestCity = escapeHtml(destCity);
+    const safeOriginStop = escapeHtml(booking.origin_stop?.name || "");
+    const safeDestStop = escapeHtml(booking.destination_stop?.name || "");
+    const safeSeatNumber = escapeHtml(booking.seat?.seat_number || "");
     const safeTicketNumber = escapeHtml(booking.ticket_number);
+    const safeBookingNumber = escapeHtml(booking.booking_number || "");
 
-    // Parse extras safely
-    const extras = booking.extras || [];
+    // Route: always the concrete origin -> destination of THIS booking
+    const routeLabel = `${safeOriginCity} → ${safeDestCity}`;
+
+    // Payment method (dynamic)
+    const paymentLabels: Record<string, string> = {
+      card: "Kreditkarte",
+      creditcard: "Kreditkarte",
+      paypal: "PayPal",
+      stripe: "Kreditkarte",
+      invoice: "Rechnung",
+      test: "Testzahlung (Sandbox)",
+    };
+    const paymentLabel = escapeHtml(
+      paymentLabels[String(booking.payment_method || "").toLowerCase()] ||
+        booking.payment_method ||
+        "—",
+    );
+
+    // Luggage (dynamic; fallback to the configured standard allowance)
+    const luggage = Array.isArray(booking.luggage) ? booking.luggage : [];
+    const luggageItems: string[] = luggage.length > 0
+      ? luggage.map((l: any) =>
+          `${escapeHtml(String(l.quantity ?? 1))} × ${escapeHtml(l.name || l.type || "Gepäckstück")}`)
+      : ["1 × Reisegepäck (max. 20 kg)", "1 × Handgepäck"];
+
+    // Optional extras – only rendered when present
+    const extras = Array.isArray(booking.extras) ? booking.extras : [];
     const extrasHtml = extras.length > 0
-      ? extras.map((e: any) => `<div style="display: inline-block; background: #e8f5e9; padding: 4px 12px; border-radius: 12px; margin: 2px; font-size: 12px;">${escapeHtml(e.name || '')}</div>`).join("")
-      : '<span style="color: #666;">Keine</span>';
+      ? extras.map((e: any) => `<span class="chip">${escapeHtml(e.name || "")}</span>`).join("")
+      : "";
 
-    // Generate HTML ticket
+    const isTest = booking.is_test === true;
+
     const ticketHtml = `
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ticket ${safeTicketNumber}</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #f5f5f5;
-      padding: 20px;
-    }
-    
-    .ticket {
-      max-width: 600px;
-      margin: 0 auto;
-      background: white;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    }
-    
-    .header {
-      background: linear-gradient(135deg, #1a5f2a 0%, #2d8a3e 100%);
-      color: white;
-      padding: 24px;
-      text-align: center;
-    }
-    
-    .header h1 {
-      font-size: 24px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-    
-    .header .subtitle {
-      font-size: 14px;
-      opacity: 0.9;
-    }
-    
-    .ticket-number {
-      background: rgba(255,255,255,0.2);
-      padding: 8px 16px;
-      border-radius: 20px;
-      display: inline-block;
-      margin-top: 12px;
-      font-weight: 600;
-      font-size: 16px;
-      letter-spacing: 1px;
-    }
-    
-    .content {
-      padding: 24px;
-    }
-    
-    .route-section {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20px;
-      background: #f8f9fa;
-      border-radius: 12px;
-      margin-bottom: 20px;
-    }
-    
-    .location {
-      text-align: center;
-      flex: 1;
-    }
-    
-    .location .city {
-      font-size: 20px;
-      font-weight: 700;
-      color: #1a5f2a;
-    }
-    
-    .location .stop {
-      font-size: 12px;
-      color: #666;
-      margin-top: 4px;
-    }
-    
-    .location .time {
-      font-size: 24px;
-      font-weight: 600;
-      margin-top: 8px;
-    }
-    
-    .arrow {
-      flex: 0 0 60px;
-      text-align: center;
-      font-size: 24px;
-      color: #1a5f2a;
-    }
-    
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-    
-    .info-item {
-      padding: 16px;
-      background: #f8f9fa;
-      border-radius: 8px;
-    }
-    
-    .info-item .label {
-      font-size: 11px;
-      color: #666;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-    }
-    
-    .info-item .value {
-      font-size: 16px;
-      font-weight: 600;
-      color: #333;
-    }
-    
-    .qr-section {
-      text-align: center;
-      padding: 20px;
-      border-top: 2px dashed #e0e0e0;
-      margin-top: 20px;
-    }
-    
-    .qr-section img {
-      width: 150px;
-      height: 150px;
-    }
-    
-    .qr-section .hint {
-      font-size: 12px;
-      color: #666;
-      margin-top: 8px;
-    }
-    
-    .footer {
-      background: #f8f9fa;
-      padding: 16px 24px;
-      text-align: center;
-      font-size: 11px;
-      color: #666;
-      border-top: 1px solid #e0e0e0;
-    }
-    
-    .extras-section {
-      margin-top: 16px;
-    }
-    
-    .price-highlight {
-      background: linear-gradient(135deg, #1a5f2a 0%, #2d8a3e 100%);
-      color: white;
-      padding: 16px;
-      border-radius: 8px;
-      text-align: center;
-      margin-top: 20px;
-    }
-    
-    .price-highlight .amount {
-      font-size: 28px;
-      font-weight: 700;
-    }
-    
-    .price-highlight .label {
-      font-size: 12px;
-      opacity: 0.9;
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    :root { --green:#00892c; --green-dark:#0b5c26; --ink:#101512; --muted:#6b7280; --line:#e6e8ea; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; background:#f2f4f3; color:var(--ink); padding:20px 12px; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .ticket { max-width:620px; margin:0 auto; background:#fff; border-radius:18px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,.09); }
+    .header { background:linear-gradient(135deg,var(--green-dark) 0%,var(--green) 100%); color:#fff; padding:26px 24px; text-align:center; }
+    .header .brand { font-size:22px; font-weight:800; letter-spacing:2px; }
+    .header .subtitle { font-size:13px; opacity:.92; margin-top:4px; }
+    .header .tnr { display:inline-block; margin-top:14px; background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.28); padding:7px 16px; border-radius:999px; font-weight:600; font-size:14px; letter-spacing:1px; }
+    .testbadge { display:inline-block; margin-top:10px; background:#b45309; color:#fff; padding:5px 14px; border-radius:999px; font-size:12px; font-weight:700; letter-spacing:1px; }
+    .content { padding:22px 24px 8px; }
+    .route-head { text-align:center; padding:18px 12px; border:1px solid var(--line); border-radius:14px; background:#fafbfa; }
+    .route-head .cities { font-size:26px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; color:var(--green-dark); line-height:1.25; }
+    .legs { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px; }
+    .leg { border:1px solid var(--line); border-radius:14px; padding:14px 16px; }
+    .leg .lbl { font-size:11px; font-weight:700; letter-spacing:1px; color:var(--green); text-transform:uppercase; }
+    .leg .stop { font-size:15px; font-weight:600; margin-top:6px; }
+    .leg .date { font-size:13px; color:var(--muted); margin-top:4px; }
+    .leg .time { font-size:26px; font-weight:800; margin-top:6px; line-height:1; }
+    .nextday { display:inline-block; margin-top:8px; background:#fff4e5; color:#9a5b00; border:1px solid #ffd9a8; font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+    .box { border:1px solid var(--line); border-radius:14px; padding:14px 16px; }
+    .box .lbl { font-size:11px; font-weight:700; letter-spacing:1px; color:var(--muted); text-transform:uppercase; }
+    .box .val { font-size:17px; font-weight:700; margin-top:5px; }
+    .box ul { list-style:none; margin-top:6px; }
+    .box li { font-size:14px; font-weight:500; padding:3px 0; }
+    .chip { display:inline-block; background:#e9f7ee; color:var(--green-dark); padding:4px 11px; border-radius:999px; margin:3px 4px 0 0; font-size:12px; font-weight:600; }
+    .price { margin-top:14px; background:linear-gradient(135deg,var(--green-dark) 0%,var(--green) 100%); color:#fff; border-radius:14px; padding:18px; text-align:center; }
+    .price .lbl { font-size:11px; letter-spacing:1.5px; text-transform:uppercase; opacity:.9; font-weight:700; }
+    .price .amount { font-size:32px; font-weight:800; margin-top:4px; }
+    .price .pm { font-size:13px; opacity:.95; margin-top:6px; }
+    .qr { text-align:center; margin-top:18px; padding:22px 16px 6px; border-top:2px dashed var(--line); }
+    .qr img { width:190px; height:190px; }
+    .qr .hint { font-size:13px; font-weight:600; margin-top:10px; }
+    .nrs { display:flex; justify-content:center; gap:22px; flex-wrap:wrap; margin-top:14px; font-size:12px; color:var(--muted); }
+    .nrs strong { color:var(--ink); }
+    .notice { margin:16px 0 0; font-size:12px; color:var(--muted); text-align:center; line-height:1.6; }
+    .footer { margin-top:18px; background:#0f1512; color:#cfd6d1; padding:18px 24px; text-align:center; font-size:12px; line-height:1.7; }
+    .footer .fname { color:#fff; font-weight:700; letter-spacing:1.5px; font-size:13px; }
+    @media (max-width:520px) { .legs,.grid { grid-template-columns:1fr; } .route-head .cities { font-size:21px; } }
+    @media print { body { background:#fff; padding:0; } .ticket { box-shadow:none; max-width:100%; } }
   </style>
 </head>
 <body>
   <div class="ticket">
     <div class="header">
-      <h1>🚌 METROPOL TOURS</h1>
-      <div class="subtitle">Elektronisches Ticket</div>
-      <div class="ticket-number">${safeTicketNumber}</div>
+      <div class="brand">${companyName}</div>
+      <div class="subtitle">🚌 Elektronisches Ticket</div>
+      <div class="tnr">${safeTicketNumber}</div>
+      ${isTest ? '<div class="testbadge">TESTBUCHUNG – NICHT GÜLTIG</div>' : ""}
     </div>
-    
+
     <div class="content">
-      <div class="route-section">
-        <div class="location">
-          <div class="city">${safeOriginCity}</div>
-          <div class="stop">${safeOriginStop}</div>
+      <div class="route-head">
+        <div class="cities">${routeLabel}</div>
+      </div>
+
+      <div class="legs">
+        <div class="leg">
+          <div class="lbl">Abfahrt</div>
+          <div class="stop">${safeOriginStop || safeOriginCity}</div>
+          <div class="date">${dFmtLong(departureDate)}</div>
           <div class="time">${formatTime(booking.trip.departure_time)}</div>
         </div>
-        <div class="arrow">→</div>
-        <div class="location">
-          <div class="city">${safeDestCity}</div>
-          <div class="stop">${safeDestStop}</div>
+        <div class="leg">
+          <div class="lbl">Ankunft</div>
+          <div class="stop">${safeDestStop || safeDestCity}</div>
+          <div class="date">${dFmtLong(arrivalDate)}</div>
           <div class="time">${formatTime(booking.trip.arrival_time)}</div>
+          ${overnightDays > 0 ? `<div class="nextday">Ankunft am ${dFmt(arrivalDate)} (+${overnightDays} Tag${overnightDays > 1 ? "e" : ""})</div>` : ""}
         </div>
       </div>
-      
-      <div class="info-grid">
-        <div class="info-item">
-          <div class="label">Fahrgast</div>
-          <div class="value">${safeFirstName} ${safeLastName}</div>
+
+      <div class="grid">
+        <div class="box">
+          <div class="lbl">Fahrgast</div>
+          <div class="val">${safeFirstName} ${safeLastName}</div>
         </div>
-        <div class="info-item">
-          <div class="label">Datum</div>
-          <div class="value">${formattedDate}</div>
+        <div class="box">
+          <div class="lbl">Sitzplatz</div>
+          <div class="val">${safeSeatNumber || "Freie Platzwahl"}</div>
         </div>
-        <div class="info-item">
-          <div class="label">Sitzplatz</div>
-          <div class="value">${safeSeatNumber}</div>
+        <div class="box">
+          <div class="lbl">Gepäck</div>
+          <ul>${luggageItems.map((t) => `<li>🧳 ${t}</li>`).join("")}</ul>
         </div>
-        <div class="info-item">
-          <div class="label">Route</div>
-          <div class="value">${safeRouteName}</div>
-        </div>
-      </div>
-      
-      <div class="extras-section">
-        <div class="info-item">
-          <div class="label">Extras</div>
-          <div class="value">${extrasHtml}</div>
+        <div class="box">
+          <div class="lbl">Route</div>
+          <div class="val" style="font-size:15px">${routeLabel}</div>
         </div>
       </div>
-      
-      <div class="price-highlight">
-        <div class="label">Bezahlter Betrag</div>
-        <div class="amount">${booking.price_paid.toFixed(2)} €</div>
+
+      ${extrasHtml ? `<div class="box" style="margin-top:12px"><div class="lbl">Extras</div><div>${extrasHtml}</div></div>` : ""}
+
+      <div class="price">
+        <div class="lbl">Bezahlter Betrag</div>
+        <div class="amount">${Number(booking.price_paid ?? 0).toFixed(2).replace(".", ",")} €</div>
+        <div class="pm">Zahlungsmethode: ${paymentLabel}</div>
       </div>
-      
-      <div class="qr-section">
-        <img src="${qrCodeDataUrl}" alt="QR Code" />
-        <div class="hint">Bitte diesen QR-Code bei der Kontrolle vorzeigen</div>
+
+      <div class="qr">
+        <img src="${qrCodeDataUrl}" alt="QR-Code ${safeTicketNumber}" />
+        <div class="hint">Bitte QR-Code beim Einstieg vorzeigen.</div>
+        <div class="nrs">
+          <span>Ticket-Nr.: <strong>${safeTicketNumber}</strong></span>
+          ${safeBookingNumber ? `<span>Buchungs-Nr.: <strong>${safeBookingNumber}</strong></span>` : ""}
+        </div>
       </div>
+
+      <p class="notice">
+        Dieses Ticket ist nur für den angegebenen Fahrgast und die angegebene Fahrt gültig.<br>
+        Bitte halten Sie das Ticket beim Einstieg digital oder ausgedruckt bereit.<br>
+        Bitte seien Sie mindestens 15 Minuten vor Abfahrt am Abfahrtsort.
+      </p>
     </div>
-    
+
     <div class="footer">
-      <p>Buchungsdatum: ${new Date(booking.created_at).toLocaleDateString("de-DE")}</p>
-      <p style="margin-top: 8px;">Bitte erscheinen Sie mindestens 15 Minuten vor Abfahrt am Abfahrtsort.</p>
+      <div class="fname">${companyName}</div>
+      <div>Kundenservice${companyPhone ? ` · ${companyPhone}` : ""}${companyEmail ? ` · ${companyEmail}` : ""}${companyWeb ? ` · ${companyWeb}` : ""}</div>
+      <div style="opacity:.7;margin-top:6px">Buchungsdatum: ${dFmt(new Date(booking.created_at))}</div>
     </div>
   </div>
 </body>
