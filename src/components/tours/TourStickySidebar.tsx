@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { 
   Calendar, Users, Luggage, Shield, Check,
-  Minus, Plus, AlertCircle, Zap
+  Minus, Plus, AlertCircle, Zap, Lock, Mail
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import { ExtendedPackageTour, TourDate, TourTariff } from "@/hooks/useTourBuilder";
+import { isTourBookable, TOUR_NOT_BOOKABLE_TITLE, TOUR_NOT_BOOKABLE_TEXT } from "@/lib/tourAvailability";
 
 interface TourStickySidebarProps {
   tour: ExtendedPackageTour;
@@ -32,6 +33,8 @@ const TourStickySidebar = ({
   onParticipantsChange, onSelectTariff,
 }: TourStickySidebarProps) => {
   const navigate = useNavigate();
+  const bookable = isTourBookable(tour as any);
+
 
   const formatDate = (dateStr: string) => {
     try { return format(parseISO(dateStr), 'dd.MM.yyyy', { locale: de }); }
