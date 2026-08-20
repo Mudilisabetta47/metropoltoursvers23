@@ -84,7 +84,12 @@ const BusreisenPage = () => {
 
       ]);
       setStops(stopData || []);
-      setTours(tourData || []);
+      const sortedTours = [...(tourData || [])].sort((a: any, b: any) => {
+        const rank = (t: any) => (t.publish_status === "published" && t.is_active !== false ? 0 : 1);
+        return rank(a) - rank(b);
+      });
+      setTours(sortedTours as Tour[]);
+
     })();
   }, []);
 
