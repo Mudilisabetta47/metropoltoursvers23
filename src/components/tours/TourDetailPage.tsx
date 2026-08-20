@@ -174,7 +174,7 @@ const TourDetailPage = () => {
         }
         path={`/reisen/${tourData.tour.slug || tourData.tour.id}`}
         image={(tourData.tour as any).og_image_url || getHeroImage()}
-        noindex={Boolean((tourData.tour as any).seo_noindex)}
+        noindex={Boolean((tourData.tour as any).seo_noindex) || !isTourBookable(tourData.tour as any)}
         jsonLd={[
           breadcrumbJsonLd([
             { name: "Startseite", path: "/" },
