@@ -61,7 +61,7 @@ const WeekendTripDetailPage = () => {
       const { data, error } = await (supabase as any)
         .from("weekend_trips")
         .select("*")
-        .eq("slug", destination)
+        .ilike("slug", destination)
         .eq("is_active", true)
         .single();
       if (error) throw error;
