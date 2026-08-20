@@ -398,7 +398,31 @@ const TourCheckoutPage = () => {
     );
   }
 
+  // === NICHT VERÖFFENTLICHT: keine Buchung möglich ===
+  if (!isTourBookable(tour as any) && currentStep !== "confirmation") {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <main className="flex-1 pt-20 lg:pt-24 flex flex-col items-center justify-center text-center px-4">
+          <Lock className="w-16 h-16 text-muted-foreground mb-4" />
+          <h2 className="text-2xl font-bold text-foreground mb-2">{TOUR_NOT_BOOKABLE_TITLE}</h2>
+          <p className="text-muted-foreground mb-6 max-w-md">{TOUR_NOT_BOOKABLE_TEXT}</p>
+          <div className="flex flex-wrap gap-3 justify-center">
+            <Button onClick={() => navigate(`/reisen/${(tour as any).slug || tour.id}`)} variant="outline">
+              Zur Reiseübersicht
+            </Button>
+            <Button onClick={() => navigate(`/service?betreff=${encodeURIComponent(`Anfrage: ${tour.destination}`)}`)}>
+              Unverbindlich anfragen
+            </Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   const paymentMethodLabel = selectedPaymentMethod === "paypal" ? "PayPal" : "Kreditkarte";
+
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
