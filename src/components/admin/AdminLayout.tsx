@@ -1,4 +1,5 @@
-import { ReactNode, useState, useEffect } from "react";
+import {
+  FlaskConical, ReactNode, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, FileText, Bus, Users, DollarSign, Shield,
@@ -130,6 +131,7 @@ const menuSections: MenuSection[] = [
       { path: "/admin/cost-estimate", label: "Kalkulation", icon: Calculator, allowedRoles: MANAGEMENT },
       { path: "/admin/payroll", label: "Lohnabrechnung", icon: Wallet, allowedRoles: ADMIN_ONLY },
       { path: "/admin/payment-audit", label: "Zahlungs-Audit", icon: Shield, allowedRoles: ADMIN_ONLY },
+      { path: "/admin/testdaten", label: "Testdaten & Testzahlung", icon: FlaskConical, allowedRoles: ALL_STAFF },
     ],
   },
   {
