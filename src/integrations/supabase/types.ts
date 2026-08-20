@@ -758,15 +758,19 @@ export type Database = {
       bookings: {
         Row: {
           booked_by_agent_id: string | null
+          booking_number: string | null
           created_at: string
           destination_stop_id: string
           extras: Json | null
           id: string
+          is_test: boolean
+          luggage: Json
           origin_stop_id: string
           passenger_email: string
           passenger_first_name: string
           passenger_last_name: string
           passenger_phone: string | null
+          payment_method: string | null
           price_paid: number
           seat_id: string
           status: Database["public"]["Enums"]["booking_status"]
@@ -777,15 +781,19 @@ export type Database = {
         }
         Insert: {
           booked_by_agent_id?: string | null
+          booking_number?: string | null
           created_at?: string
           destination_stop_id: string
           extras?: Json | null
           id?: string
+          is_test?: boolean
+          luggage?: Json
           origin_stop_id: string
           passenger_email: string
           passenger_first_name: string
           passenger_last_name: string
           passenger_phone?: string | null
+          payment_method?: string | null
           price_paid: number
           seat_id: string
           status?: Database["public"]["Enums"]["booking_status"]
@@ -796,15 +804,19 @@ export type Database = {
         }
         Update: {
           booked_by_agent_id?: string | null
+          booking_number?: string | null
           created_at?: string
           destination_stop_id?: string
           extras?: Json | null
           id?: string
+          is_test?: boolean
+          luggage?: Json
           origin_stop_id?: string
           passenger_email?: string
           passenger_first_name?: string
           passenger_last_name?: string
           passenger_phone?: string | null
+          payment_method?: string | null
           price_paid?: number
           seat_id?: string
           status?: Database["public"]["Enums"]["booking_status"]
@@ -6722,6 +6734,7 @@ export type Database = {
       }
       trips: {
         Row: {
+          arrival_date: string | null
           arrival_time: string
           base_price: number
           bus_id: string
@@ -6734,6 +6747,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          arrival_date?: string | null
           arrival_time: string
           base_price: number
           bus_id: string
@@ -6746,6 +6760,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          arrival_date?: string | null
           arrival_time?: string
           base_price?: number
           bus_id?: string
@@ -7607,6 +7622,7 @@ export type Database = {
         Returns: number
       }
       generate_admin_booking_number: { Args: never; Returns: string }
+      generate_booking_number: { Args: never; Returns: string }
       generate_complaint_number: { Args: never; Returns: string }
       generate_contract_number: { Args: never; Returns: string }
       generate_dispatch_order_number: { Args: never; Returns: string }
