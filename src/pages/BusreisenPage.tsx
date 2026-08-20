@@ -35,7 +35,10 @@ interface Tour {
   hero_image_url: string | null;
   image_url: string | null;
   short_description: string | null;
+  publish_status: string | null;
+  is_active: boolean | null;
 }
+
 
 const FAQS = [
   {
@@ -74,14 +77,19 @@ const BusreisenPage = () => {
         supabase.from("stops").select("*").order("stop_order"),
         supabase
           .from("package_tours")
-          .select("id, slug, destination, country, price_from, hero_image_url, image_url, short_description")
-          .eq("is_active", true)
-          .eq("publish_status", "published")
+          .select("id, slug, destination, country, price_from, hero_image_url, image_url, short_description, publish_status, is_active")
+          .neq("publish_status", "archived")
           .order("price_from", { ascending: true })
           .limit(6),
+
       ]);
       setStops(stopData || []);
-      setTours(tourData || []);
+      const sortedTours = [...(tourData || [])].sort((a: any, b: any) => {
+        const rank = (t: any) => (t.publish_status === "published" && t.is_active !== false ? 0 : 1);
+        return rank(a) - rank(b);
+      });
+      setTours(sortedTours as Tour[]);
+
     })();
   }, []);
 
@@ -242,20 +250,27 @@ const BusreisenPage = () => {
               {tours.map((tour) => {
                 const img = tour.hero_image_url || tour.image_url || "/placeholder.svg";
                 const slug = tour.slug || tour.id;
+                const bookable = tour.publish_status === "published" && tour.is_active !== false;
                 return (
                   <Link
                     key={tour.id}
                     to={`/reisen/${slug}`}
                     className="group bg-card border border-border/40 rounded-2xl overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all"
                   >
-                    <div className="aspect-[4/3] overflow-hidden bg-muted">
+                    <div className="aspect-[4/3] overflow-hidden bg-muted relative">
                       <img
                         src={img}
                         alt={`Busreise nach ${tour.destination}`}
                         loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                       />
+                      {!bookable && (
+                        <span className="absolute top-3 left-3 rounded-full bg-background/90 border border-border px-3 py-1 text-xs font-semibold text-foreground">
+                          Demnächst buchbar
+                        </span>
+                      )}
                     </div>
+
                     <div className="p-5">
                       <div className="text-xs text-muted-foreground mb-1">{tour.country}</div>
                       <h3 className="text-lg font-bold text-foreground mb-2">

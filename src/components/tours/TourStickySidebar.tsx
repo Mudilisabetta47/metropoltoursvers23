@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { 
   Calendar, Users, Luggage, Shield, Check,
-  Minus, Plus, AlertCircle, Zap
+  Minus, Plus, AlertCircle, Zap, Lock, Mail
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import { ExtendedPackageTour, TourDate, TourTariff } from "@/hooks/useTourBuilder";
+import { isTourBookable, TOUR_NOT_BOOKABLE_TITLE, TOUR_NOT_BOOKABLE_TEXT } from "@/lib/tourAvailability";
 
 interface TourStickySidebarProps {
   tour: ExtendedPackageTour;
@@ -32,6 +33,8 @@ const TourStickySidebar = ({
   onParticipantsChange, onSelectTariff,
 }: TourStickySidebarProps) => {
   const navigate = useNavigate();
+  const bookable = isTourBookable(tour as any);
+
 
   const formatDate = (dateStr: string) => {
     try { return format(parseISO(dateStr), 'dd.MM.yyyy', { locale: de }); }
@@ -51,6 +54,7 @@ const TourStickySidebar = ({
   const totalPrice = pricePerPerson * participants;
 
   const handleBooking = () => {
+    if (!bookable) return;
     const params = new URLSearchParams({
       tour: tour.id,
       date: selectedDate?.id || '',
@@ -59,6 +63,7 @@ const TourStickySidebar = ({
     });
     navigate(`/reisen/checkout?${params.toString()}`);
   };
+
 
   return (
     <div className="sticky top-[140px]">
@@ -156,10 +161,28 @@ const TourStickySidebar = ({
           )}
 
           {/* CTA */}
-          <Button size="lg" className="w-full text-lg font-semibold py-6 shadow-lg"
-            onClick={handleBooking} disabled={!selectedDate}>
-            {selectedDate ? 'Jetzt buchen' : 'Termin auswählen'}
-          </Button>
+          {bookable ? (
+            <Button size="lg" className="w-full text-lg font-semibold py-6 shadow-lg"
+              onClick={handleBooking} disabled={!selectedDate}>
+              {selectedDate ? 'Jetzt buchen' : 'Termin auswählen'}
+            </Button>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-start gap-2 text-sm px-3 py-3 rounded-lg bg-muted border border-border">
+                <Lock className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-foreground">{TOUR_NOT_BOOKABLE_TITLE}</p>
+                  <p className="text-muted-foreground text-xs mt-1">{TOUR_NOT_BOOKABLE_TEXT}</p>
+                </div>
+              </div>
+              <Button size="lg" variant="outline" className="w-full text-base font-semibold py-6"
+                onClick={() => navigate(`/service?betreff=${encodeURIComponent(`Anfrage: ${tour.destination}`)}`)}>
+                <Mail className="w-4 h-4 mr-2" />
+                Unverbindlich anfragen
+              </Button>
+            </div>
+          )}
+
 
           {/* Trust Signals */}
           <div className="space-y-1.5 text-xs text-muted-foreground">

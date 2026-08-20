@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Loader2, ChevronLeft } from "lucide-react";
+import { Loader2, ChevronLeft, Lock } from "lucide-react";
+import { isTourBookable, TOUR_NOT_BOOKABLE_TITLE, TOUR_NOT_BOOKABLE_TEXT } from "@/lib/tourAvailability";
+
 import { Button } from "@/components/ui/button";
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
@@ -172,7 +174,7 @@ const TourDetailPage = () => {
         }
         path={`/reisen/${tourData.tour.slug || tourData.tour.id}`}
         image={(tourData.tour as any).og_image_url || getHeroImage()}
-        noindex={Boolean((tourData.tour as any).seo_noindex)}
+        noindex={Boolean((tourData.tour as any).seo_noindex) || !isTourBookable(tourData.tour as any)}
         jsonLd={[
           breadcrumbJsonLd([
             { name: "Startseite", path: "/" },
@@ -184,6 +186,18 @@ const TourDetailPage = () => {
       />
       <Header />
       <main className="flex-1 pt-16 lg:pt-20">
+        {!isTourBookable(tourData.tour as any) && (
+          <div className="max-w-[1240px] mx-auto px-4 pt-4">
+            <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <Lock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-amber-900">{TOUR_NOT_BOOKABLE_TITLE}</p>
+                <p className="text-sm text-amber-800">{TOUR_NOT_BOOKABLE_TEXT}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Hero: Gallery + Title + Reviews */}
         <TourHeroSection
           tour={tourData.tour}
