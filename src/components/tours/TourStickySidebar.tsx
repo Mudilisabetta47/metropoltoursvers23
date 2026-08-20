@@ -54,6 +54,7 @@ const TourStickySidebar = ({
   const totalPrice = pricePerPerson * participants;
 
   const handleBooking = () => {
+    if (!bookable) return;
     const params = new URLSearchParams({
       tour: tour.id,
       date: selectedDate?.id || '',
@@ -62,6 +63,7 @@ const TourStickySidebar = ({
     });
     navigate(`/reisen/checkout?${params.toString()}`);
   };
+
 
   return (
     <div className="sticky top-[140px]">
