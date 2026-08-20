@@ -17,6 +17,14 @@ import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/seo/SEO";
 import { breadcrumbJsonLd } from "@/lib/seo";
 
+interface BookableDeparture {
+  id: string;
+  departure_date: string;
+  departure_time: string;
+  originStopId: string;
+  destinationStopId: string;
+}
+
 interface WeekendTrip {
   id: string;
   destination: string;
@@ -60,6 +68,49 @@ const WeekendTripDetailPage = () => {
       return data as WeekendTrip;
     },
     enabled: !!destination,
+  });
+
+  const { data: bookableDeparture, isLoading: isLoadingDeparture } = useQuery({
+    queryKey: ["weekend-trip-departure", trip?.route_id, selectedStopIndex],
+    queryFn: async () => {
+      if (!trip?.route_id) return null;
+
+      const today = new Date().toISOString().slice(0, 10);
+      const [{ data: departures, error: departureError }, { data: stops, error: stopsError }] = await Promise.all([
+        supabase
+          .from("trips")
+          .select("id, departure_date, departure_time")
+          .eq("route_id", trip.route_id)
+          .eq("is_active", true)
+          .gte("departure_date", today)
+          .order("departure_date")
+          .order("departure_time")
+          .limit(1),
+        supabase
+          .from("stops")
+          .select("id, city, stop_order")
+          .eq("route_id", trip.route_id)
+          .order("stop_order"),
+      ]);
+
+      if (departureError) throw departureError;
+      if (stopsError) throw stopsError;
+      if (!departures?.[0] || !stops || stops.length < 2) return null;
+
+      const selectedCity = selectedStopIndex >= 0
+        ? trip.via_stops[selectedStopIndex]?.city
+        : trip.departure_city;
+      const origin = stops.find((stop) => stop.city.toLocaleLowerCase("de") === selectedCity?.toLocaleLowerCase("de")) || stops[0];
+      const destinationStop = stops[stops.length - 1];
+      if (!origin || !destinationStop || origin.stop_order >= destinationStop.stop_order) return null;
+
+      return {
+        ...departures[0],
+        originStopId: origin.id,
+        destinationStopId: destinationStop.id,
+      } as BookableDeparture;
+    },
+    enabled: Boolean(trip?.route_id),
   });
 
   const heroImage = trip?.hero_image_url || trip?.image_url || "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=80";
@@ -480,6 +531,17 @@ const WeekendTripDetailPage = () => {
                         <p className="text-sm text-foreground">Fahrzeit: {trip.duration}</p>
                       </div>
                     )}
+                    {bookableDeparture && (
+                      <div className="flex items-center gap-3">
+                        <Calendar className="w-5 h-5 text-primary" />
+                        <div>
+                          <p className="font-bold text-foreground">
+                            {new Intl.DateTimeFormat("de-DE", { dateStyle: "long" }).format(new Date(`${bookableDeparture.departure_date}T12:00:00`))}
+                          </p>
+                          <p className="text-sm text-muted-foreground">Abfahrt {bookableDeparture.departure_time.slice(0, 5)} Uhr</p>
+                        </div>
+                      </div>
+                    )}
                     <div className="flex items-center gap-3">
                       <Users className="w-5 h-5 text-primary" />
                       <div className="flex-1">
@@ -522,8 +584,18 @@ const WeekendTripDetailPage = () => {
                     </div>
 
                     <Button size="lg" className="w-full text-lg font-bold py-6 shadow-lg"
-                      onClick={() => navigate(`/wochenendtrips/${trip.slug}/buchen`)}>
-                      Jetzt buchen
+                      disabled={isLoadingDeparture || !bookableDeparture}
+                      onClick={() => {
+                        if (!bookableDeparture) return;
+                        const params = new URLSearchParams({
+                          tripId: bookableDeparture.id,
+                          fromStopId: bookableDeparture.originStopId,
+                          toStopId: bookableDeparture.destinationStopId,
+                          passengers: participants.toString(),
+                        });
+                        navigate(`/checkout?${params.toString()}`);
+                      }}>
+                      {isLoadingDeparture ? "Termin wird geprüft…" : bookableDeparture ? "Jetzt buchen" : "Derzeit kein Termin buchbar"}
                     </Button>
 
                     <div className="text-center text-xs text-muted-foreground">
