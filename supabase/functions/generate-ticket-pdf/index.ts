@@ -146,6 +146,7 @@ const handler = async (req: Request): Promise<Response> => {
           *,
           trip:trips(
             departure_date,
+            arrival_date,
             departure_time,
             arrival_time,
             route:routes(name)
@@ -199,6 +200,7 @@ const handler = async (req: Request): Promise<Response> => {
           *,
           trip:trips(
             departure_date,
+            arrival_date,
             departure_time,
             arrival_time,
             route:routes(name)
