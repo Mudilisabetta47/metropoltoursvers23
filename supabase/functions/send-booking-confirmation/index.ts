@@ -717,6 +717,9 @@ const handler = async (req: Request): Promise<Response> => {
         ...(attachments.length > 0 ? { attachments } : {}),
       });
       console.log("Customer email sent with", attachments.length, "attachments:", customerEmailRes);
+      await logEmail(supabase, "tour_booking_confirmation", booking.contact_email, customerEmailRes, {
+        booking_id: booking.id, booking_number: booking.booking_number, attachments: attachments.length,
+      });
 
       // 2) Send admin notification
       const adminEmailRes = await resend.emails.send({
@@ -726,6 +729,30 @@ const handler = async (req: Request): Promise<Response> => {
         html: buildAdminEmailHtml(booking, tour, date, tariff, pickup),
       });
       console.log("Admin email sent:", adminEmailRes);
+      await logEmail(supabase, "tour_booking_admin_notice", ADMIN_EMAILS.join(","), adminEmailRes, {
+        booking_id: booking.id, booking_number: booking.booking_number,
+      });
+
+      // 3) Im Backend-Posteingang ablegen
+      await pushToInbox(supabase, {
+        subject: `Neue Buchung ${booking.booking_number} – ${tour?.destination || "Reise"} – ${Number(booking.total_price || 0).toFixed(2)} €`,
+        body: [
+          `Buchungsnummer: ${booking.booking_number}`,
+          `Reise: ${tour?.destination || "-"} (${tour?.location || "-"}, ${tour?.country || "-"})`,
+          `Termin: ${date?.departure_date || "-"} – ${date?.return_date || "-"}`,
+          `Tarif: ${tariff?.name || "-"}`,
+          `Teilnehmer: ${booking.participants}`,
+          `Zustieg: ${pickup ? `${pickup.city} (${pickup.departure_time || "-"})` : "-"}`,
+          `Kunde: ${booking.contact_first_name} ${booking.contact_last_name} · ${booking.contact_email} · ${booking.contact_phone || "-"}`,
+          `Status: ${booking.status} · Gesamtpreis: ${Number(booking.total_price || 0).toFixed(2)} €`,
+        ].join("\n"),
+        sourceType: "booking",
+        sourceId: booking.id,
+        senderEmail: booking.contact_email,
+        senderName: `${booking.contact_first_name} ${booking.contact_last_name}`,
+        tags: ["buchung", "pauschalreise"],
+      });
+
 
       return new Response(JSON.stringify({ 
         success: true, 
