@@ -43,7 +43,52 @@ const COMPANY = {
   hrb: "HRB 12345",
 };
 
-const ADMIN_EMAILS = ["kundenservice@metours.de", "kundenservice@metours.de"];
+const ADMIN_EMAILS = ["info@metours.de", "buchung@metours.de", "kundenservice@metours.de"];
+
+// Protokolliert jeden Versand und legt die Buchung im Backend-Posteingang ab
+async function logEmail(
+  supabase: any,
+  template: string,
+  recipient: string,
+  res: any,
+  metadata: Record<string, unknown> = {},
+) {
+  try {
+    const failed = !!res?.error;
+    await supabase.from("email_send_log").insert({
+      template_name: template,
+      recipient_email: recipient,
+      message_id: res?.data?.id ?? res?.id ?? null,
+      status: failed ? "failed" : "sent",
+      error_message: failed ? String(res.error?.message ?? res.error) : null,
+      metadata,
+    });
+  } catch (e) {
+    console.error("email_send_log insert failed:", e);
+  }
+}
+
+async function pushToInbox(
+  supabase: any,
+  opts: { subject: string; body: string; sourceType: string; sourceId: string; senderEmail?: string; senderName?: string; tags?: string[] },
+) {
+  try {
+    await supabase.from("admin_mailbox").insert({
+      folder: "inbox",
+      subject: opts.subject,
+      body: opts.body,
+      sender_email: opts.senderEmail ?? null,
+      sender_name: opts.senderName ?? null,
+      recipient_email: ADMIN_EMAILS[0],
+      source_type: opts.sourceType,
+      source_id: opts.sourceId,
+      tags: opts.tags ?? [],
+    });
+  } catch (e) {
+    console.error("admin_mailbox insert failed:", e);
+  }
+}
+
 
 // Animated bus GIF (public CDN hosted animated travel GIFs)
 const BUS_GIF = "https://media.giphy.com/media/3o7btNa0RUYa5E7iiQ/giphy.gif";
