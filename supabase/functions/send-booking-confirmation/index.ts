@@ -43,7 +43,52 @@ const COMPANY = {
   hrb: "HRB 12345",
 };
 
-const ADMIN_EMAILS = ["kundenservice@metours.de", "kundenservice@metours.de"];
+const ADMIN_EMAILS = ["info@metours.de", "buchung@metours.de", "kundenservice@metours.de"];
+
+// Protokolliert jeden Versand und legt die Buchung im Backend-Posteingang ab
+async function logEmail(
+  supabase: any,
+  template: string,
+  recipient: string,
+  res: any,
+  metadata: Record<string, unknown> = {},
+) {
+  try {
+    const failed = !!res?.error;
+    await supabase.from("email_send_log").insert({
+      template_name: template,
+      recipient_email: recipient,
+      message_id: res?.data?.id ?? res?.id ?? null,
+      status: failed ? "failed" : "sent",
+      error_message: failed ? String(res.error?.message ?? res.error) : null,
+      metadata,
+    });
+  } catch (e) {
+    console.error("email_send_log insert failed:", e);
+  }
+}
+
+async function pushToInbox(
+  supabase: any,
+  opts: { subject: string; body: string; sourceType: string; sourceId: string; senderEmail?: string; senderName?: string; tags?: string[] },
+) {
+  try {
+    await supabase.from("admin_mailbox").insert({
+      folder: "inbox",
+      subject: opts.subject,
+      body: opts.body,
+      sender_email: opts.senderEmail ?? null,
+      sender_name: opts.senderName ?? null,
+      recipient_email: ADMIN_EMAILS[0],
+      source_type: opts.sourceType,
+      source_id: opts.sourceId,
+      tags: opts.tags ?? [],
+    });
+  } catch (e) {
+    console.error("admin_mailbox insert failed:", e);
+  }
+}
+
 
 // Animated bus GIF (public CDN hosted animated travel GIFs)
 const BUS_GIF = "https://media.giphy.com/media/3o7btNa0RUYa5E7iiQ/giphy.gif";
@@ -672,6 +717,9 @@ const handler = async (req: Request): Promise<Response> => {
         ...(attachments.length > 0 ? { attachments } : {}),
       });
       console.log("Customer email sent with", attachments.length, "attachments:", customerEmailRes);
+      await logEmail(supabase, "tour_booking_confirmation", booking.contact_email, customerEmailRes, {
+        booking_id: booking.id, booking_number: booking.booking_number, attachments: attachments.length,
+      });
 
       // 2) Send admin notification
       const adminEmailRes = await resend.emails.send({
@@ -681,6 +729,30 @@ const handler = async (req: Request): Promise<Response> => {
         html: buildAdminEmailHtml(booking, tour, date, tariff, pickup),
       });
       console.log("Admin email sent:", adminEmailRes);
+      await logEmail(supabase, "tour_booking_admin_notice", ADMIN_EMAILS.join(","), adminEmailRes, {
+        booking_id: booking.id, booking_number: booking.booking_number,
+      });
+
+      // 3) Im Backend-Posteingang ablegen
+      await pushToInbox(supabase, {
+        subject: `Neue Buchung ${booking.booking_number} – ${tour?.destination || "Reise"} – ${Number(booking.total_price || 0).toFixed(2)} €`,
+        body: [
+          `Buchungsnummer: ${booking.booking_number}`,
+          `Reise: ${tour?.destination || "-"} (${tour?.location || "-"}, ${tour?.country || "-"})`,
+          `Termin: ${date?.departure_date || "-"} – ${date?.return_date || "-"}`,
+          `Tarif: ${tariff?.name || "-"}`,
+          `Teilnehmer: ${booking.participants}`,
+          `Zustieg: ${pickup ? `${pickup.city} (${pickup.departure_time || "-"})` : "-"}`,
+          `Kunde: ${booking.contact_first_name} ${booking.contact_last_name} · ${booking.contact_email} · ${booking.contact_phone || "-"}`,
+          `Status: ${booking.status} · Gesamtpreis: ${Number(booking.total_price || 0).toFixed(2)} €`,
+        ].join("\n"),
+        sourceType: "booking",
+        sourceId: booking.id,
+        senderEmail: booking.contact_email,
+        senderName: `${booking.contact_first_name} ${booking.contact_last_name}`,
+        tags: ["buchung", "pauschalreise"],
+      });
+
 
       return new Response(JSON.stringify({ 
         success: true, 
@@ -754,6 +826,43 @@ const handler = async (req: Request): Promise<Response> => {
   </div>
   <div class="footer"><p>${COMPANY.email} · ${COMPANY.phone}</p><p>© ${new Date().getFullYear()} METROPOL TOURS</p></div>
 </div></body></html>`,
+      });
+      await logEmail(supabase, "line_booking_confirmation", booking.passenger_email, emailResponse, {
+        booking_id: booking.id, ticket_number: booking.ticket_number,
+      });
+
+      // Admin-Benachrichtigung + Posteingang
+      const lineAdminRes = await resend.emails.send({
+        from: "METROPOL TOURS System <booking@app.metours.de>",
+        to: ADMIN_EMAILS,
+        subject: `🔔 Neue Buchung ${safeTicket} – ${safeFrom} → ${safeTo} – ${(booking.price_paid || 0).toFixed(2)}€`,
+        html: `<div style="font-family:Arial,sans-serif;line-height:1.6">
+          <h2 style="color:#1a5f2a;margin:0 0 12px">Neue Linienbuchung</h2>
+          <p><strong>Ticket:</strong> ${safeTicket}<br/>
+          <strong>Strecke:</strong> ${safeFrom} → ${safeTo}<br/>
+          <strong>Datum:</strong> ${escapeHtml(booking.trip?.departure_date || "-")} ${escapeHtml(booking.trip?.departure_time || "")}<br/>
+          <strong>Fahrgast:</strong> ${safeFirst} ${safeLast} · ${escapeHtml(booking.passenger_email || "")} · ${escapeHtml(booking.passenger_phone || "-")}<br/>
+          <strong>Status:</strong> ${escapeHtml(String(booking.status))} · <strong>Preis:</strong> ${(booking.price_paid || 0).toFixed(2)} €</p>
+        </div>`,
+      });
+      await logEmail(supabase, "line_booking_admin_notice", ADMIN_EMAILS.join(","), lineAdminRes, {
+        booking_id: booking.id, ticket_number: booking.ticket_number,
+      });
+
+      await pushToInbox(supabase, {
+        subject: `Neue Buchung ${booking.ticket_number} – ${booking.origin_stop?.city || "-"} → ${booking.destination_stop?.city || "-"} – ${(booking.price_paid || 0).toFixed(2)} €`,
+        body: [
+          `Ticket: ${booking.ticket_number}`,
+          `Strecke: ${booking.origin_stop?.city || "-"} → ${booking.destination_stop?.city || "-"}`,
+          `Datum: ${booking.trip?.departure_date || "-"} ${booking.trip?.departure_time || ""}`,
+          `Fahrgast: ${booking.passenger_first_name} ${booking.passenger_last_name} · ${booking.passenger_email} · ${booking.passenger_phone || "-"}`,
+          `Status: ${booking.status} · Preis: ${(booking.price_paid || 0).toFixed(2)} €`,
+        ].join("\n"),
+        sourceType: "booking",
+        sourceId: booking.id,
+        senderEmail: booking.passenger_email,
+        senderName: `${booking.passenger_first_name} ${booking.passenger_last_name}`,
+        tags: ["buchung", "linie"],
       });
 
       return new Response(JSON.stringify({ success: true, data: emailResponse }), {
