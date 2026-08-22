@@ -82,24 +82,40 @@ interface Props {
   destination: string;
   location?: string | null;
   country?: string | null;
+  /** Exakte Hotelposition aus der Datenbank – hat Vorrang vor der Textsuche */
+  lat?: number | null;
+  lon?: number | null;
+  hotelName?: string | null;
+  hotelAddress?: string | null;
 }
 
-const loadSurroundings = async (query: string): Promise<CacheEntry | null> => {
+const loadSurroundings = async (
+  query: string,
+  coords?: { lat: number; lon: number } | null,
+): Promise<CacheEntry | null> => {
   const cached = readCache(query);
   if (cached) return cached;
   const running = inflight.get(query);
   if (running) return running;
 
   const task = (async (): Promise<CacheEntry | null> => {
-    const geoRes = await fetchWithTimeout(
-      `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`,
-      { headers: { Accept: "application/json" } },
-      6000
-    );
-    const geo = await geoRes.json();
-    if (!Array.isArray(geo) || geo.length === 0) return null;
-    const lat = parseFloat(geo[0].lat);
-    const lon = parseFloat(geo[0].lon);
+    let lat: number;
+    let lon: number;
+    if (coords) {
+      lat = coords.lat;
+      lon = coords.lon;
+    } else {
+      const geoRes = await fetchWithTimeout(
+        `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`,
+        { headers: { Accept: "application/json" } },
+        6000
+      );
+      const geo = await geoRes.json();
+      if (!Array.isArray(geo) || geo.length === 0) return null;
+      lat = parseFloat(geo[0].lat);
+      lon = parseFloat(geo[0].lon);
+    }
+
 
     const overpass = `
 [out:json][timeout:10];
