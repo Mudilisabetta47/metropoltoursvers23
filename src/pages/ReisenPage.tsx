@@ -316,9 +316,11 @@ const ReisenPage = () => {
   }, [tours, travelTab, searchQuery, sortBy, activeCategory, selectedDurations, selectedMonths, selectedCities, selectedServices, priceRange, onlyAvailable]);
 
   const activeFilterCount = [
-
     activeCategory !== "all",
     selectedDurations.length > 0,
+    selectedMonths.length > 0,
+    selectedCities.length > 0,
+    selectedServices.length > 0,
     priceRange[0] > 0 || priceRange[1] < maxPrice,
     onlyAvailable,
   ].filter(Boolean).length;
@@ -326,6 +328,9 @@ const ReisenPage = () => {
   const clearFilters = () => {
     setActiveCategory("all");
     setSelectedDurations([]);
+    setSelectedMonths([]);
+    setSelectedCities([]);
+    setSelectedServices([]);
     setPriceRange([0, maxPrice]);
     setOnlyAvailable(false);
     setSearchQuery("");
