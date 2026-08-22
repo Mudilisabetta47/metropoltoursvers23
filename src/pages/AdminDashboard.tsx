@@ -27,60 +27,17 @@ const eur = (n: number) =>
 
 const num = (n: number) => new Intl.NumberFormat("de-DE").format(n);
 
-// ----- Demo data (fallback so the cockpit always feels alive) -----
+// ----- Live data types (no demo data – everything comes from the backend) -----
 const now = new Date();
-const demoDepartures = [
-  { time: addMinutes(now, 35),  route: "Hannover → Amsterdam",        bus: "ME-RB 4521", driver: "Krüger, M.",  pax: 47, cap: 49, status: "boarding" },
-  { time: addMinutes(now, 120), route: "Hamburg → Prag",              bus: "ME-RB 4108", driver: "Yilmaz, A.",  pax: 38, cap: 49, status: "scheduled" },
-  { time: addMinutes(now, 210), route: "Berlin → Wien (Nachtfahrt)",  bus: "ME-RB 5070", driver: "Schulz, T.",  pax: 49, cap: 49, status: "full" },
-  { time: addMinutes(now, 360), route: "Hannover → Paris",            bus: "ME-RB 3309", driver: "Bauer, L.",   pax: 22, cap: 49, status: "scheduled" },
-  { time: addMinutes(now, 480), route: "Bremen → Kopenhagen",         bus: "ME-RB 2204", driver: "Demir, S.",   pax: 31, cap: 49, status: "scheduled" },
-];
 
-const demoBookings = [
-  { id: "TKT-2026-004921", customer: "Familie Petrov",   route: "Hannover → Amsterdam",   pax: 4, price: 312.00, status: "pending"   },
-  { id: "TKT-2026-004919", customer: "Yıldız, Selma",    route: "Hamburg → Prag",          pax: 2, price: 178.00, status: "confirmed" },
-  { id: "TKT-2026-004917", customer: "Schreiber GmbH",   route: "Charter · Goslar–Berlin", pax: 47, price: 3490.00, status: "pending" },
-  { id: "TKT-2026-004914", customer: "Becker, Lena",      route: "Berlin → Wien",          pax: 1, price: 119.00, status: "paid"      },
-  { id: "TKT-2026-004908", customer: "Reisegruppe Rentnerbund Celle", route: "Tagestour · Norderney", pax: 38, price: 2280.00, status: "confirmed" },
-  { id: "TKT-2026-004901", customer: "Aydın, Murat",      route: "Hannover → Istanbul",   pax: 3, price: 645.00, status: "pending"   },
-];
+type DepartureRow = { id: string; time: Date; route: string; bus: string; driver: string; pax: number; cap: number; status: string };
+type BookingRow = { id: string; key: string; customer: string; route: string; pax: number; price: number; status: string };
+type InquiryRow = { id: string; customer: string; subject: string; date: Date | null; pax: number; prio: string; source: string };
+type MaintenanceRow = { bus: string; typ: string; faellig: Date; km: number; status: string };
+type InvoiceRow = { id: string; kunde: string; betrag: number; faellig: Date | null; status: string };
+type DriverRow = { name: string; status: string; tour: string; lenkzeit: number; max: number };
+type IncidentRow = { id: string; typ: string; bus: string; ort: string; prio: string };
 
-const demoInquiries = [
-  { id: "INQ-2026-009212", customer: "VfL Lerchenberg e.V.", subject: "Vereinsfahrt EM-Spiel",       date: addDays(now, 12), pax: 53, prio: "hoch", source: "Webformular" },
-  { id: "INQ-2026-009208", customer: "Stadt Hildesheim",     subject: "Klassenfahrt Stufe 9",        date: addDays(now, 21), pax: 84, prio: "mittel", source: "Telefon" },
-  { id: "INQ-2026-009201", customer: "Müller Touristik",     subject: "Subcharter Mailand",          date: addDays(now, 4),  pax: 49, prio: "hoch", source: "E-Mail" },
-  { id: "INQ-2026-009197", customer: "Hochzeit Yilmaz/Kaya", subject: "Gäste-Shuttle Hannover",      date: addDays(now, 31), pax: 65, prio: "niedrig", source: "Webformular" },
-];
-
-const demoMaintenance = [
-  { bus: "ME-RB 4108", typ: "TÜV / HU",       fällig: addDays(now, 3),   km: 487_200, status: "kritisch" },
-  { bus: "ME-RB 2204", typ: "Inspektion 80k", fällig: addDays(now, 9),   km: 798_540, status: "warnung"  },
-  { bus: "ME-RB 5070", typ: "UVV Prüfung",    fällig: addDays(now, 14),  km: 122_310, status: "warnung"  },
-  { bus: "ME-RB 3309", typ: "Klimaanlage",    fällig: addDays(now, 21),  km: 612_080, status: "planbar"  },
-];
-
-const demoInvoices = [
-  { id: "RE-2026-0184", kunde: "Stadt Wolfsburg",       betrag: 4860, fällig: addDays(now, -3), status: "überfällig" },
-  { id: "RE-2026-0181", kunde: "BSG Continental",       betrag: 1290, fällig: addDays(now,  2), status: "offen" },
-  { id: "RE-2026-0179", kunde: "Reisebüro Sonnental",   betrag:  720, fällig: addDays(now,  6), status: "offen" },
-  { id: "RE-2026-0172", kunde: "TUI Deutschland GmbH",  betrag: 8930, fällig: addDays(now, 11), status: "offen" },
-];
-
-const demoDrivers = [
-  { name: "Krüger, M.",  status: "im Einsatz",  tour: "→ Amsterdam",    lenkzeit: 3.2, max: 9 },
-  { name: "Yilmaz, A.",  status: "Pause",       tour: "Vorbereitung",   lenkzeit: 1.0, max: 9 },
-  { name: "Schulz, T.",  status: "im Einsatz",  tour: "→ Wien",         lenkzeit: 6.4, max: 9 },
-  { name: "Bauer, L.",   status: "verfügbar",   tour: "—",              lenkzeit: 0.0, max: 9 },
-  { name: "Demir, S.",   status: "Schichtende", tour: "↩ Kopenhagen",   lenkzeit: 8.7, max: 9 },
-  { name: "Petersen, J.",status: "krank",       tour: "—",              lenkzeit: 0.0, max: 9 },
-];
-
-const demoIncidents = [
-  { id: "VOR-3091", typ: "Verspätung 45 min", bus: "ME-RB 4108", ort: "A2 Stau Bielefeld",   prio: "mittel" },
-  { id: "VOR-3088", typ: "Klimaanlage defekt", bus: "ME-RB 2204", ort: "Werkstatt Lehrte",   prio: "hoch"   },
-  { id: "VOR-3084", typ: "Kundenbeschwerde",   bus: "ME-RB 3309", ort: "Buchung TKT-…4791",  prio: "niedrig"},
-];
 
 // status -> chip class
 const chip: Record<string, string> = {
