@@ -124,37 +124,8 @@ const FeaturesSection = () => {
       }} />
 
       <div className="container mx-auto px-4 relative z-10">
-        {/* Stats Bar */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-24"
-        >
-          {[
-            { value: "50.000+", label: "Zufriedene Kunden" },
-            { value: "200+", label: "Reiseziele" },
-            { value: "99%", label: "Pünktlichkeit" },
-            { value: "8-18 Uhr", label: "Support" },
-          ].map((stat, i) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1, duration: 0.5 }}
-              className="relative group"
-            >
-              <div className="bg-card border border-border/40 rounded-2xl p-6 text-center hover:border-primary/20 transition-all duration-500 hover:shadow-lg hover:shadow-primary/[0.06] hover:-translate-y-1">
-                <div className="text-2xl lg:text-3xl font-bold text-foreground mb-1">
-                  <AnimatedNumber value={stat.value} />
-                </div>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
+
+
 
         {/* Feature Cards - Light & Clean */}
         <motion.div
