@@ -15,7 +15,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/seo/SEO";
-import { breadcrumbJsonLd } from "@/lib/seo";
+import { breadcrumbJsonLd, weekendTripJsonLd } from "@/lib/seo";
 import ShareButton from "@/components/common/ShareButton";
 
 
