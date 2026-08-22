@@ -227,19 +227,36 @@ out center;`;
   return task;
 };
 
-const TourSurroundingsSection = ({ destination, location, country }: Props) => {
+const TourSurroundingsSection = ({
+  destination,
+  location,
+  country,
+  lat,
+  lon,
+  hotelName,
+  hotelAddress,
+}: Props) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [visible, setVisible] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
+
+  const coords = useMemo(
+    () => (Number.isFinite(lat) && Number.isFinite(lon) ? { lat: lat as number, lon: lon as number } : null),
+    [lat, lon]
+  );
 
   const query = useMemo(
-    () => [location, destination, country].filter(Boolean).join(", "),
-    [location, destination, country]
+    () =>
+      coords
+        ? `geo:${coords.lat.toFixed(4)},${coords.lon.toFixed(4)}`
+        : [hotelAddress, location, destination, country].filter(Boolean).join(", "),
+    [coords, hotelAddress, location, destination, country]
   );
 
   const cached = query ? readCache(query) : null;
   const [loading, setLoading] = useState(!cached);
   const [groups, setGroups] = useState<Groups>(cached?.groups ?? EMPTY);
-  const [center, setCenter] = useState<{ lat: number; lon: number } | null>(cached?.center ?? null);
+  const [center, setCenter] = useState<{ lat: number; lon: number } | null>(cached?.center ?? coords);
 
   // Erst laden, wenn der Abschnitt in Sichtweite kommt
   useEffect(() => {
