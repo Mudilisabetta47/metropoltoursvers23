@@ -316,23 +316,24 @@ const PackageTourDetailPage = () => {
 
         {/* Photo mosaic */}
         <section className="container mx-auto px-4 pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:h-[440px] lg:h-[500px]">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <button
               type="button"
               onClick={() => setLightbox(0)}
-              className="md:col-span-2 relative aspect-[16/10] md:aspect-auto md:h-full rounded-2xl overflow-hidden group"
+              className="md:col-span-2 relative h-[240px] md:h-[440px] lg:h-[500px] rounded-2xl overflow-hidden group"
             >
 
               <img src={mosaic[0]} alt={`Pauschalreise ${dbTour.destination}`} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
             </button>
-            <div className="grid grid-cols-2 md:grid-cols-1 md:grid-rows-2 gap-3 md:h-full">
+            <div className="grid grid-cols-2 md:grid-cols-1 gap-3">
               {[mosaic[1], mosaic[2]].map((img, i) => (
                 <button
                   key={i}
                   type="button"
                   onClick={() => img && setLightbox(i + 1)}
-                  className="relative aspect-[4/3] md:aspect-auto md:h-full md:min-h-0 rounded-2xl overflow-hidden bg-muted group"
+                  className="relative h-[120px] md:h-[214px] lg:h-[244px] rounded-2xl overflow-hidden bg-muted group"
                 >
+
 
                   {img ? (
                     <img src={img} alt={`${dbTour.destination} Eindruck ${i + 2}`} loading="lazy" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
