@@ -15,6 +15,7 @@ import sliderWochenendtrips from "@/assets/slider-wochenendtrips.jpg";
 import sliderGruppenreisen from "@/assets/slider-gruppenreisen.jpg";
 import sliderStrandurlaub from "@/assets/slider-strandurlaub.jpg";
 import sliderKulturreisen from "@/assets/slider-kulturreisen.jpg";
+import AiBadge from "@/components/common/AiBadge";
 
 interface Slide {
   image: string;

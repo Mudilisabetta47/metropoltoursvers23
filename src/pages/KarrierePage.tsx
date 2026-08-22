@@ -25,6 +25,7 @@ import karriereBus from "@/assets/karriere-bus.jpg";
 import karriereTeam from "@/assets/karriere-team.jpg";
 import SEO from "@/components/seo/SEO";
 import { breadcrumbJsonLd } from "@/lib/seo";
+import AiBadge from "@/components/common/AiBadge";
 
 interface JobListing {
   id: string;
@@ -266,25 +267,28 @@ const KarrierePage = () => {
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15, duration: 0.6 }}
-                    className="hidden sm:block w-28 lg:w-40 aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl shadow-black/20 -mr-2"
+                    className="relative hidden sm:block w-28 lg:w-40 aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl shadow-black/20 -mr-2"
                   >
                     <img src={karriereTeam} alt="Team von Metropol Tours" width={1024} height={1024} className="w-full h-full object-cover" />
+                    <AiBadge />
                   </motion.div>
                   <motion.div
                     initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.25, duration: 0.6 }}
-                    className="w-52 sm:w-64 lg:w-80 aspect-square rounded-3xl overflow-hidden shadow-2xl shadow-black/25 z-10"
+                    className="relative w-52 sm:w-64 lg:w-80 aspect-square rounded-3xl overflow-hidden shadow-2xl shadow-black/25 z-10"
                   >
                     <img src={karriereDriver} alt="Busfahrerin am Steuer" width={1024} height={1024} className="w-full h-full object-cover" />
+                    <AiBadge />
                   </motion.div>
                   <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.35, duration: 0.6 }}
-                    className="hidden sm:block w-28 lg:w-40 aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl shadow-black/20 -ml-2"
+                    className="relative hidden sm:block w-28 lg:w-40 aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl shadow-black/20 -ml-2"
                   >
                     <img src={karriereBus} alt="Metropol Tours Reisebus" width={1024} height={1024} className="w-full h-full object-cover" />
+                    <AiBadge />
                   </motion.div>
                 </div>
 

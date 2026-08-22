@@ -40,6 +40,7 @@ import tourSerbien from "@/assets/tour-serbien.jpg";
 import tourNordmazedonien from "@/assets/tour-nordmazedonien.jpg";
 import tourAlbanien from "@/assets/tour-albanien.jpg";
 import tourKosovo from "@/assets/tour-kosovo.jpg";
+import AiBadge from "@/components/common/AiBadge";
 
 const imageMap: Record<string, string> = {
   '/tour-croatia.jpg': tourCroatia,

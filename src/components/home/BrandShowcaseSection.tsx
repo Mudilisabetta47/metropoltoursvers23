@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import busCoast from "@/assets/metropol-bus-coast.png.asset.json";
 import busRome from "@/assets/metropol-bus-rome.png.asset.json";
 import busGroup from "@/assets/metropol-bus-group.png.asset.json";
+import AiBadge from "@/components/common/AiBadge";
 
 const cards = [
   {
