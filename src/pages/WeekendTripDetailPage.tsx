@@ -230,9 +230,13 @@ const WeekendTripDetailPage = () => {
 
             {/* Action Buttons */}
             <div className="absolute top-4 right-4 flex items-center gap-2">
-              <Button variant="secondary" size="sm" className="bg-card/90 backdrop-blur hover:bg-card shadow-lg gap-2">
-                <Share2 className="w-4 h-4" /><span className="hidden sm:inline">Teilen</span>
-              </Button>
+              <ShareButton
+                variant="secondary"
+                title={`${trip.title} – Metropol Tours`}
+                text={`Schau dir diesen Wochenendtrip an: ${trip.title}`}
+                className="bg-card/90 backdrop-blur hover:bg-card shadow-lg gap-2"
+              />
+
               <Button variant="secondary" size="sm" className="bg-card/90 backdrop-blur hover:bg-card shadow-lg gap-2">
                 <Heart className="w-4 h-4" /><span className="hidden sm:inline">Merken</span>
               </Button>
