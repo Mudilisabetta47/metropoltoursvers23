@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,21 +11,27 @@ serve(async (req) => {
   }
 
   try {
-    // Require authenticated session to prevent token abuse / billing fraud
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-    );
-    const token = authHeader.replace('Bearer ', '');
-    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
-    if (userErr || !userData?.user?.id) {
+    // Öffentlich nutzbar (Karten auf der Website), aber auf eigene Origins beschränkt,
+    // um Token-Missbrauch/Billing-Fraud zu verhindern.
+    const origin = req.headers.get('Origin') || req.headers.get('Referer') || '';
+    const allowed = [
+      'metours.de',
+      'lovable.app',
+      'lovableproject.com',
+      'localhost',
+      '127.0.0.1',
+    ];
+    const hasApiKey = Boolean(req.headers.get('apikey') || req.headers.get('Authorization'));
+    const originOk = origin === '' ? false : allowed.some((h) => {
+      try {
+        const host = new URL(origin).hostname;
+        return host === h || host.endsWith(`.${h}`);
+      } catch {
+        return false;
+      }
+    });
+
+    if (!hasApiKey || !originOk) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
