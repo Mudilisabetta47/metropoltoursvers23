@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
 import { 
   MapPin, Bus, Ticket, Users,
-  School, Trophy, Plane, PartyPopper, ArrowRight, Loader2, Shield, Zap, Sparkles
+  School, Trophy, Plane, PartyPopper, ArrowRight, Loader2, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useServiceTypes, useCMSContent } from "@/hooks/useCMS";
