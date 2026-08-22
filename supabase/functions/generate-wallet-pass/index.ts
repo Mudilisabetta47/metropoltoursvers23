@@ -291,7 +291,9 @@ serve(async (req) => {
     if (!pass) {
       const serial = `MT-${ticketNumber}-${randomToken(8)}`;
       const token = randomToken(24);
-      const passUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-wallet-pass?action=view&serial=${serial}&token=${token}&type=${booking_type}`;
+      const passUrl = pass_type === "apple"
+        ? `${Deno.env.get("SUPABASE_URL")}/functions/v1/apple-wallet-pass?serial=${serial}&token=${token}`
+        : `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-wallet-pass?action=view&serial=${serial}&token=${token}&type=${booking_type}`;
       const ins = await admin.from("wallet_passes").insert({
         booking_id: booking_type === "bus" ? booking_id : null,
         tour_booking_id: booking_type === "tour" ? booking_id : null,
@@ -301,14 +303,26 @@ serve(async (req) => {
       pass = ins.data;
     }
 
+    // Bestehende Apple-Pässe ggf. auf echten .pkpass-Endpunkt migrieren
+    let finalUrl = pass!.pass_url as string;
+    if (pass_type === "apple" && (!finalUrl || finalUrl.includes("action=view"))) {
+      finalUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/apple-wallet-pass?serial=${pass!.serial_number}&token=${pass!.auth_token}`;
+      await admin.from("wallet_passes").update({ pass_url: finalUrl }).eq("id", pass!.id);
+    }
+
+    const appleReady = !!(Deno.env.get("APPLE_PASS_TYPE_IDENTIFIER") && Deno.env.get("APPLE_TEAM_IDENTIFIER") &&
+      Deno.env.get("APPLE_PASS_CERT_P12_BASE64") && Deno.env.get("APPLE_WWDR_CERT_PEM"));
+
     const previewHtml = renderPassHtml(toPassDisplay(booking_type, booking));
     return new Response(JSON.stringify({
       ok: true,
-      pass_url: pass!.pass_url,
-      pass_html: previewHtml,
+      pass_url: finalUrl,
+      preview_html: previewHtml,
+      apple_ready: appleReady,
       serial: pass!.serial_number,
       pass_type,
     }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
 
   } catch (err: any) {
     console.error("generate-wallet-pass failed", err);
