@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ChevronLeft, ChevronRight, Sparkles, Star, Shield, Users, Bus, Palmtree, MapPin, UsersRound, Landmark, Calendar, ChevronDown, Plus, Minus, Phone, Search } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, ShieldCheck, Users, Bus, Palmtree, MapPin, UsersRound, Landmark, Calendar, ChevronDown, Plus, Minus, Phone, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -411,25 +411,21 @@ const HeroSlider = () => {
 
           {/* Trust bar */}
           <div className="mt-3 lg:mt-4 flex items-center gap-2 lg:gap-5 flex-wrap hidden sm:flex">
-            <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
-              <div className="flex">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
-                ))}
-              </div>
-              <span className="font-bold text-white text-xs">4.9/5</span>
+            <div className="flex items-center gap-1.5 text-xs bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
+              <Bus className="w-3.5 h-3.5 text-primary" />
+              <span className="font-semibold text-white">Individuelle Busreisen</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
-              <Users className="w-3.5 h-3.5 text-primary" />
-              <span className="font-semibold text-white">50.000+ Kunden</span>
+              <MapPin className="w-3.5 h-3.5 text-primary" />
+              <span className="font-semibold text-white">Ab Hannover &amp; Norddeutschland</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
-              <Shield className="w-3.5 h-3.5 text-primary" />
-              <span className="font-semibold text-white">Sichere Zahlung</span>
+              <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+              <span className="font-semibold text-white">SSL-geschützte Buchung</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
-              <Sparkles className="w-3.5 h-3.5 text-accent" />
-              <span className="font-semibold text-white">Bis -25% Frühbucher</span>
+              <Phone className="w-3.5 h-3.5 text-primary" />
+              <span className="font-semibold text-white">Persönliche Beratung</span>
             </div>
           </div>
         </div>
