@@ -409,6 +409,7 @@ const ReisenPage = () => {
                   <img src={theme.image} alt={theme.label}
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                  <AiBadge className="top-3 right-3 bottom-auto" />
                   <div className="absolute bottom-5 left-5 right-5 text-white">
                     <p className="text-[10px] uppercase tracking-[0.18em] font-bold text-primary mb-1">{theme.subtitle}</p>
                     <h3 className="font-serif text-xl md:text-2xl leading-tight">{theme.label}</h3>
