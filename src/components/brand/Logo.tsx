@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
-import logoAsset from '@/assets/metropol-logo.png.asset.json';
-import logoLightAsset from '@/assets/metropol-logo-light.png.asset.json';
+const logoAsset = { url: '/brand/metropol-logo.png' };
+const logoLightAsset = { url: '/brand/metropol-logo-light.png' };
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
