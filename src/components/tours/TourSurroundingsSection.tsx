@@ -304,14 +304,21 @@ const TourSurroundingsSection = ({
     return () => {
       cancelled = true;
     };
-  }, [query, visible]);
+  }, [query, visible, coords]);
 
+  const allPois = useMemo(
+    () =>
+      [...groups.attractions, ...groups.food, ...groups.nature, ...groups.transit, ...groups.airports]
+        .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lon))
+        .map((p) => ({ name: p.name, kind: p.kind, lat: p.lat as number, lon: p.lon as number })),
+    [groups]
+  );
 
   const hasAny =
     groups.attractions.length + groups.food.length + groups.nature.length +
     groups.transit.length + groups.airports.length > 0;
 
-  if (!loading && !hasAny && visible) return <div ref={containerRef} className="hidden" />;
+  if (!loading && !hasAny && visible && !center) return <div ref={containerRef} className="hidden" />;
 
   const List = ({
     title,
