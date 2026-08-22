@@ -76,8 +76,7 @@ const TourSurroundingsSection = ({ destination, location, country }: Props) => {
   node(around:12000,${lat},${lon})["natural"~"^(beach|peak)$"]["name"];
   node(around:6000,${lat},${lon})["railway"="station"]["name"];
   node(around:2000,${lat},${lon})["highway"="bus_stop"]["name"];
-  node(around:60000,${lat},${lon})["aeroway"="aerodrome"]["name"]["iata"];
-  way(around:60000,${lat},${lon})["aeroway"="aerodrome"]["name"]["iata"];
+  node(around:40000,${lat},${lon})["aeroway"="aerodrome"]["name"]["iata"];
 );
 out center;`;
 
@@ -94,7 +93,7 @@ out center;`;
             clearTimeout(timer);
             if (!res.ok) continue;
             op = await res.json();
-            if (op?.elements?.length) break;
+            if (op) break;
           } catch {
             // try next endpoint
           }
