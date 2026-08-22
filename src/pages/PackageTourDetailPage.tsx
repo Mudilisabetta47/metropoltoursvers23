@@ -316,12 +316,13 @@ const PackageTourDetailPage = () => {
 
         {/* Photo mosaic */}
         <section className="container mx-auto px-4 pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:h-[440px] lg:h-[500px]">
             <button
               type="button"
               onClick={() => setLightbox(0)}
-              className="md:col-span-2 relative aspect-[16/10] md:aspect-[16/9] rounded-2xl overflow-hidden group"
+              className="md:col-span-2 relative aspect-[16/10] md:aspect-auto md:h-full rounded-2xl overflow-hidden group"
             >
+
               <img src={mosaic[0]} alt={`Pauschalreise ${dbTour.destination}`} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
             </button>
             <div className="grid grid-cols-2 md:grid-cols-1 md:grid-rows-2 gap-3 md:h-full">
