@@ -303,6 +303,7 @@ const ReisenPage = () => {
           <img src={editorialHero} alt="Premium Reisebus an der Adria-Küste"
             className="absolute inset-0 w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/30 to-black/70" />
+          <AiBadge className="bottom-4 right-4" />
 
           <div className="relative h-full max-w-[1240px] mx-auto px-4 sm:px-6 flex flex-col justify-center text-white">
             <span className="inline-flex items-center gap-2 self-start px-3 py-1 rounded-full border border-white/30 backdrop-blur-md text-[11px] uppercase tracking-[0.18em] font-semibold mb-6">
@@ -548,6 +549,7 @@ const ReisenPage = () => {
                           <img src={heroSrc} alt={tour.destination}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                          {!heroSrc.startsWith("http") && <AiBadge className="top-4 right-4 bottom-auto" />}
 
                           {/* Badges */}
                           <div className="absolute top-4 left-4 flex flex-col gap-1.5">
