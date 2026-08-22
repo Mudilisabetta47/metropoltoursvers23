@@ -173,7 +173,7 @@ const OpsMap = ({
                   )}
                 >
                   {label?.bus ?? "Bus"} · {label?.driver ?? "Fahrer"} · {Math.round(p.speed_kmh)} km/h
-                  {p.is_demo && <span className="ml-1 text-amber-400">DEMO</span>}
+                  
                 </div>
                 <div
                   className={cn(
