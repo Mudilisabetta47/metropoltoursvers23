@@ -12,17 +12,16 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Allowlist for bookable extras (server side pricing – never trust the client)
 const EXTRA_PRICES: Record<string, number> = {
-  luggage: 15,
-  insurance: 9,
-  priority: 5,
-  meal: 12,
+  luggage: 9.99,
+  pet: 14.99,
+  insurance: 7.99,
 };
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { bookingIds, returnPath } = await req.json().catch(() => ({}));
+    const { bookingIds, returnPath, method } = await req.json().catch(() => ({}));
     if (!Array.isArray(bookingIds) || bookingIds.length === 0 || bookingIds.length > 10 || !bookingIds.every((b) => typeof b === "string" && UUID.test(b))) {
       return new Response(JSON.stringify({ error: "Invalid bookingIds" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400,
@@ -96,6 +95,7 @@ serve(async (req) => {
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
+      payment_method_types: method === "paypal" ? ["paypal"] : ["card"],
       customer_email: bookings[0].passenger_email,
       line_items: [{
         price_data: {
