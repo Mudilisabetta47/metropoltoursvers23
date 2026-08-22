@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
-import { MapPin, Share2, Heart, ChevronRight, Clock, Bus, Hotel, Coffee, Images, X, ChevronLeft as ChevronLeftIcon, Sun, ShieldCheck, Lock, BadgeCheck, Wallet, Phone } from "lucide-react";
+import { MapPin, Heart, ChevronRight, Clock, Bus, Hotel, Coffee, Images, X, ChevronLeft as ChevronLeftIcon, Sun, ShieldCheck, Lock, BadgeCheck, Wallet, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ExtendedPackageTour } from "@/hooks/useTourBuilder";
+import MapboxLocationMap from "@/components/maps/MapboxLocationMap";
+import ShareButton from "@/components/common/ShareButton";
+
 
 interface TourHeroSectionProps {
   tour: ExtendedPackageTour;
