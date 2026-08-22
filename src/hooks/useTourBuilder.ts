@@ -446,6 +446,10 @@ export function useTourBuilder(tourId?: string) {
         documents_required: tourData.documents_required ?? null,
         included_services: tourData.included_services ?? [],
         itinerary: tourData.itinerary ?? [],
+        hotel_name: tourData.hotel_name ?? null,
+        hotel_address: tourData.hotel_address ?? null,
+        latitude: tourData.latitude ?? null,
+        longitude: tourData.longitude ?? null,
       };
 
       // Create the tour
