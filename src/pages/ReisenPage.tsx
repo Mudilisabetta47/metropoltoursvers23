@@ -103,6 +103,9 @@ const ReisenPage = () => {
   const [sortBy, setSortBy] = useState("popular");
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedDurations, setSelectedDurations] = useState<string[]>([]);
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  const [selectedCities, setSelectedCities] = useState<string[]>([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const [onlyAvailable, setOnlyAvailable] = useState(false);
   const [savedTours, setSavedTours] = useState<Set<string>>(new Set());
@@ -128,6 +131,24 @@ const ReisenPage = () => {
   const toggleDuration = (key: string) => {
     setSelectedDurations(prev =>
       prev.includes(key) ? prev.filter(d => d !== key) : [...prev, key]
+    );
+  };
+
+  const toggleMonth = (key: string) => {
+    setSelectedMonths(prev =>
+      prev.includes(key) ? prev.filter(m => m !== key) : [...prev, key]
+    );
+  };
+
+  const toggleCity = (key: string) => {
+    setSelectedCities(prev =>
+      prev.includes(key) ? prev.filter(c => c !== key) : [...prev, key]
+    );
+  };
+
+  const toggleService = (key: string) => {
+    setSelectedServices(prev =>
+      prev.includes(key) ? prev.filter(s => s !== key) : [...prev, key]
     );
   };
 
@@ -159,6 +180,42 @@ const ReisenPage = () => {
       });
     });
     return chips;
+  }, [tours]);
+
+  // Dynamic filter options derived from real tour data
+  const monthOptions = useMemo(() => {
+    const months = new Map<string, { key: string; label: string }>();
+    tours.forEach(t => {
+      if (!t.departure_date) return;
+      const d = parseISO(t.departure_date);
+      const key = format(d, "yyyy-MM");
+      const label = format(d, "MMMM yyyy", { locale: de });
+      if (!months.has(key)) months.set(key, { key, label });
+    });
+    return Array.from(months.values()).sort((a, b) => a.key.localeCompare(b.key));
+  }, [tours]);
+
+  const cityOptions = useMemo(() => {
+    const cities = new Map<string, string>();
+    tours.forEach(t => {
+      const city = t.location?.trim();
+      if (city && !cities.has(city.toLowerCase())) cities.set(city.toLowerCase(), city);
+    });
+    return Array.from(cities.entries()).map(([key, label]) => ({ key, label })).sort((a, b) => a.label.localeCompare(b.label));
+  }, [tours]);
+
+  const serviceOptions = useMemo(() => {
+    const services = new Map<string, string>();
+    const normalize = (s: string) => s.toLowerCase().replace(/[^\w\s]/g, "").trim();
+    tours.forEach(t => {
+      (t.included_services || []).forEach(s => {
+        const raw = s.trim();
+        if (!raw) return;
+        const key = normalize(raw);
+        if (!services.has(key)) services.set(key, raw);
+      });
+    });
+    return Array.from(services.entries()).map(([key, label]) => ({ key, label })).sort((a, b) => a.label.localeCompare(b.label));
   }, [tours]);
 
   // Autocomplete suggestions
@@ -227,6 +284,23 @@ const ReisenPage = () => {
       const ranges = selectedDurations.map(k => DURATION_CHIPS.find(c => c.key === k)!);
       result = result.filter(t => ranges.some(r => t.duration_days >= r.min && t.duration_days <= r.max));
     }
+    if (selectedMonths.length > 0) {
+      result = result.filter(t => {
+        if (!t.departure_date) return false;
+        const key = format(parseISO(t.departure_date), "yyyy-MM");
+        return selectedMonths.includes(key);
+      });
+    }
+    if (selectedCities.length > 0) {
+      result = result.filter(t => selectedCities.includes(t.location?.trim().toLowerCase() || ""));
+    }
+    if (selectedServices.length > 0) {
+      result = result.filter(t =>
+        selectedServices.every(key =>
+          (t.included_services || []).some(s => s.toLowerCase().replace(/[^\w\s]/g, "").trim() === key)
+        )
+      );
+    }
     result = result.filter(t => t.price_from >= priceRange[0] && t.price_from <= priceRange[1]);
     if (onlyAvailable) {
       result = result.filter(t => (t.max_participants || 50) - (t.current_participants || 0) > 0);
@@ -239,21 +313,14 @@ const ReisenPage = () => {
       default: result.sort((a, b) => (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0)); break;
     }
     return result;
-  }, [tours, travelTab, searchQuery, sortBy, activeCategory, selectedDurations, priceRange, onlyAvailable]);
-
-  // Vergangene Termine getrennt anzeigen (Referenzen: "wir sind schon gefahren")
-  const isPast = (t: typeof tours[number]) =>
-    !!t.departure_date && new Date(t.departure_date).getTime() < new Date().setHours(0, 0, 0, 0);
-  const upcomingTours = useMemo(() => filteredTours.filter(t => !isPast(t)), [filteredTours]);
-  const pastTours = useMemo(
-    () => filteredTours.filter(isPast).sort((a, b) => new Date(b.departure_date).getTime() - new Date(a.departure_date).getTime()),
-    [filteredTours]
-  );
+  }, [tours, travelTab, searchQuery, sortBy, activeCategory, selectedDurations, selectedMonths, selectedCities, selectedServices, priceRange, onlyAvailable]);
 
   const activeFilterCount = [
-
     activeCategory !== "all",
     selectedDurations.length > 0,
+    selectedMonths.length > 0,
+    selectedCities.length > 0,
+    selectedServices.length > 0,
     priceRange[0] > 0 || priceRange[1] < maxPrice,
     onlyAvailable,
   ].filter(Boolean).length;
@@ -261,6 +328,9 @@ const ReisenPage = () => {
   const clearFilters = () => {
     setActiveCategory("all");
     setSelectedDurations([]);
+    setSelectedMonths([]);
+    setSelectedCities([]);
+    setSelectedServices([]);
     setPriceRange([0, maxPrice]);
     setOnlyAvailable(false);
     setSearchQuery("");
@@ -296,22 +366,60 @@ const ReisenPage = () => {
         </div>
       </div>
       <Separator />
-      <div className="flex items-center justify-between">
-        <Label htmlFor="available" className="text-sm font-medium cursor-pointer">Nur verfügbare Reisen</Label>
-        <Checkbox id="available" checked={onlyAvailable} onCheckedChange={(v) => setOnlyAvailable(v as boolean)} />
+      <div>
+        <h4 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" /> Abfahrtsmonat</h4>
+        {monthOptions.length === 0 ? (
+          <p className="text-xs text-muted-foreground">Keine Termine verfügbar.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {monthOptions.map(m => (
+              <button key={m.key} onClick={() => toggleMonth(m.key)}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-medium border transition-all capitalize",
+                  selectedMonths.includes(m.key)
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card text-muted-foreground border-border hover:border-primary/50"
+                )}>{m.label}</button>
+            ))}
+          </div>
+        )}
       </div>
       <Separator />
       <div>
-        <h4 className="font-semibold text-sm text-foreground mb-3">Leistungen inklusive</h4>
-        <div className="space-y-2.5">
-          {[{ icon: Hotel, label: "Hotel inkl." }, { icon: Coffee, label: "Frühstück inkl." }, { icon: Bus, label: "Busfahrt inkl." }, { icon: Shield, label: "Versicherung optional" }].map((item, i) => (
-            <div key={i} className="flex items-center gap-2.5 text-sm text-muted-foreground">
-              <item.icon className="w-4 h-4 text-primary" />
-              <span>{item.label}</span>
-              <Check className="w-3.5 h-3.5 text-primary ml-auto" />
-            </div>
-          ))}
-        </div>
+        <h4 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" /> Abfahrtsort</h4>
+        {cityOptions.length === 0 ? (
+          <p className="text-xs text-muted-foreground">Keine Abfahrtsorte verfügbar.</p>
+        ) : (
+          <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
+            {cityOptions.map(c => (
+              <div key={c.key} className="flex items-center gap-2">
+                <Checkbox id={`city-${c.key}`} checked={selectedCities.includes(c.key)} onCheckedChange={() => toggleCity(c.key)} />
+                <Label htmlFor={`city-${c.key}`} className="text-sm text-muted-foreground cursor-pointer">{c.label}</Label>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <Separator />
+      <div>
+        <h4 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2"><Check className="w-4 h-4 text-primary" /> Leistungen inklusive</h4>
+        {serviceOptions.length === 0 ? (
+          <p className="text-xs text-muted-foreground">Keine Leistungsdetails hinterlegt.</p>
+        ) : (
+          <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
+            {serviceOptions.map(s => (
+              <div key={s.key} className="flex items-center gap-2">
+                <Checkbox id={`svc-${s.key}`} checked={selectedServices.includes(s.key)} onCheckedChange={() => toggleService(s.key)} />
+                <Label htmlFor={`svc-${s.key}`} className="text-sm text-muted-foreground cursor-pointer">{s.label}</Label>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <Separator />
+      <div className="flex items-center justify-between">
+        <Label htmlFor="available" className="text-sm font-medium cursor-pointer">Nur verfügbare Reisen</Label>
+        <Checkbox id="available" checked={onlyAvailable} onCheckedChange={(v) => setOnlyAvailable(v as boolean)} />
       </div>
       {activeFilterCount > 0 && (
         <>
@@ -534,7 +642,7 @@ const ReisenPage = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-                  {upcomingTours.map((tour) => {
+                  {filteredTours.map((tour) => {
                     const availableSeats = (tour.max_participants || 50) - (tour.current_participants || 0);
                     const isSaved = savedTours.has(tour.id);
                     const heroSrc = getImageSrc(tour.image_url, tour.hero_image_url, tour.destination);
@@ -640,88 +748,6 @@ const ReisenPage = () => {
                 </div>
               )}
 
-              {/* Bereits durchgeführte Reisen */}
-              {!isLoading && pastTours.length > 0 && (
-                <div className="mt-16 pt-10 border-t border-border">
-                  <div className="flex items-end justify-between gap-4 mb-6">
-                    <div>
-                      <span className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">Referenzen</span>
-                      <h2 className="font-serif text-2xl md:text-3xl text-foreground mt-1">Bereits durchgeführte Reisen</h2>
-                      <p className="text-sm text-muted-foreground mt-1">Diese Termine sind vorbei – ein Einblick, wohin wir bereits gefahren sind.</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-7">
-                    {pastTours.map((tour) => {
-                      const heroSrc = getImageSrc(tour.image_url, (tour as any).hero_image_url, tour.destination);
-                      return (
-                        <article key={tour.id}
-                          className="group bg-card rounded-2xl overflow-hidden border border-border hover:border-foreground/20 hover:shadow-[0_20px_50px_-20px_rgba(0,0,0,0.25)] transition-all duration-500 flex flex-col">
-                          <div className="relative aspect-[16/11] overflow-hidden cursor-pointer"
-                            onClick={() => navigate(`/reisen/${tour.slug || tour.id}`)}>
-                            <img src={heroSrc} alt={`Pauschalreise nach ${tour.destination} mit dem Reisebus`} loading="lazy"
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                            {!heroSrc.startsWith("http") && <AiBadge className="top-4 right-4 bottom-auto" />}
-                            <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between text-white">
-                              <div className="flex items-center gap-1.5 text-xs font-medium">
-                                <MapPin className="w-3.5 h-3.5" />
-                                <span className="drop-shadow">{tour.country}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="p-5 flex-1 flex flex-col">
-                            <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">
-                              <span>{tour.location}</span>
-                              <span className="w-1 h-1 bg-border rounded-full" />
-                              <span>{tour.duration_days} Tage</span>
-                              <span className="w-1 h-1 bg-border rounded-full" />
-                              <span className="flex items-center gap-0.5 text-amber-500">
-                                <Star className="w-3 h-3 fill-current" /> 4.8
-                              </span>
-                            </div>
-
-                            <h3 className="font-serif text-xl md:text-2xl text-foreground leading-snug mb-3 cursor-pointer group-hover:text-primary transition-colors line-clamp-2"
-                              onClick={() => navigate(`/reisen/${tour.slug || tour.id}`)}>
-                              {tour.destination}
-                            </h3>
-
-                            {tour.short_description && (
-                              <p className="text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-2">
-                                {tour.short_description}
-                              </p>
-                            )}
-
-                            <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-muted-foreground mb-4">
-                              <span className="flex items-center gap-1"><Hotel className="w-3.5 h-3.5 text-primary" /> Hotel</span>
-                              <span className="flex items-center gap-1"><Coffee className="w-3.5 h-3.5 text-primary" /> Frühstück</span>
-                              <span className="flex items-center gap-1"><Bus className="w-3.5 h-3.5 text-primary" /> Reisebus</span>
-                            </div>
-
-                            <div className="mt-auto pt-4 border-t border-border flex items-end justify-between gap-3">
-                              <div>
-                                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                                  Neue Termine auf Anfrage
-                                </p>
-                                <div className="flex items-baseline gap-1.5">
-                                  <span className="text-xs text-muted-foreground">ab</span>
-                                  <span className="font-serif text-3xl font-bold text-foreground">{tour.price_from}€</span>
-                                </div>
-                                <p className="text-[10px] text-muted-foreground">pro Person · alles inkl.</p>
-                              </div>
-                              <Button size="sm" className="rounded-xl"
-                                onClick={() => navigate(`/reisen/${tour.slug || tour.id}`)}>
-                                Details
-                                <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                              </Button>
-                            </div>
-                          </div>
-                        </article>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
 
             </div>
           </div>
