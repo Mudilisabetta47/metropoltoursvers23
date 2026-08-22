@@ -4,6 +4,13 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { Loader2 } from "lucide-react";
 
+export interface MapPoi {
+  name: string;
+  lat: number;
+  lon: number;
+  kind?: string;
+}
+
 interface MapboxLocationMapProps {
   /** Freitext-Suche (z. B. "Novalja, Kroatien") – wird per Mapbox Geocoding aufgelöst */
   query?: string;
@@ -13,6 +20,12 @@ interface MapboxLocationMapProps {
   zoom?: number;
   className?: string;
   label?: string;
+  /** Umgebungs-Punkte, die zusätzlich als Marker gezeigt werden */
+  pois?: MapPoi[];
+  /** Kartenausschnitt automatisch auf alle POIs anpassen */
+  fitPois?: boolean;
+  /** Scroll-Zoom aktivieren (für Vollbild/Dialog sinnvoll) */
+  scrollZoom?: boolean;
 }
 
 const MapboxLocationMap = ({
@@ -22,6 +35,9 @@ const MapboxLocationMap = ({
   zoom = 11,
   className = "w-full h-[70vh]",
   label,
+  pois,
+  fitPois = false,
+  scrollZoom = false,
 }: MapboxLocationMapProps) => {
   const { token, isLoading } = useMapboxToken();
   const containerRef = useRef<HTMLDivElement>(null);
