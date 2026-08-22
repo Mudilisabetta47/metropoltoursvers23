@@ -642,7 +642,7 @@ const ReisenPage = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-                  {upcomingTours.map((tour) => {
+                  {filteredTours.map((tour) => {
                     const availableSeats = (tour.max_participants || 50) - (tour.current_participants || 0);
                     const isSaved = savedTours.has(tour.id);
                     const heroSrc = getImageSrc(tour.image_url, tour.hero_image_url, tour.destination);
