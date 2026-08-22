@@ -14,6 +14,7 @@ import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import { ExtendedPackageTour, TourDate, TourTariff } from "@/hooks/useTourBuilder";
 import { isTourBookable, TOUR_NOT_BOOKABLE_TITLE, TOUR_NOT_BOOKABLE_TEXT } from "@/lib/tourAvailability";
+import TourInquiryDialog from "@/components/tours/TourInquiryDialog";
 
 interface TourStickySidebarProps {
   tour: ExtendedPackageTour;
@@ -175,11 +176,14 @@ const TourStickySidebar = ({
                   <p className="text-muted-foreground text-xs mt-1">{TOUR_NOT_BOOKABLE_TEXT}</p>
                 </div>
               </div>
-              <Button size="lg" variant="outline" className="w-full text-base font-semibold py-6"
-                onClick={() => navigate(`/service?betreff=${encodeURIComponent(`Anfrage: ${tour.destination}`)}`)}>
-                <Mail className="w-4 h-4 mr-2" />
-                Unverbindlich anfragen
-              </Button>
+              <TourInquiryDialog
+                tourId={tour.slug || tour.id}
+                destination={tour.destination}
+                departureDate={selectedDate ? formatDate(selectedDate.departure_date) : null}
+                participants={participants}
+                totalPrice={totalPrice}
+              />
+
             </div>
           )}
 
