@@ -120,15 +120,21 @@ out center;`;
     // Alle Spiegel parallel anfragen – der schnellste gewinnt
     let op: any = null;
     try {
-      op = await Promise.any(
-        endpoints.map(async (url) => {
-          const res = await fetchWithTimeout(url, { method: "POST", body: overpass }, 9000);
-          if (!res.ok) throw new Error(String(res.status));
-          const json = await res.json();
-          if (!json?.elements) throw new Error("empty");
-          return json;
-        })
-      );
+      op = await new Promise<any>((resolve, reject) => {
+        let failed = 0;
+        endpoints.forEach((url) => {
+          fetchWithTimeout(url, { method: "POST", body: overpass }, 9000)
+            .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
+            .then((json) => {
+              if (json?.elements) resolve(json);
+              else throw new Error("empty");
+            })
+            .catch(() => {
+              failed += 1;
+              if (failed === endpoints.length) reject(new Error("all mirrors failed"));
+            });
+        });
+      });
     } catch {
       op = null;
     }
