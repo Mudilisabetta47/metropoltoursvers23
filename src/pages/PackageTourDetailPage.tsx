@@ -18,7 +18,6 @@ import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
-import MapboxLocationMap from "@/components/maps/MapboxLocationMap";
 import TourSurroundingsSection from "@/components/tours/TourSurroundingsSection";
 
 import { useAuth } from "@/hooks/useAuth";
