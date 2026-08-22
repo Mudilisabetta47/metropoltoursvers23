@@ -21,6 +21,7 @@ export interface SearchTour {
   price_from: number;
   departure_date: string;
   image: string;
+  category?: string | null;
 }
 
 interface TravelSearchBarProps {
@@ -28,10 +29,12 @@ interface TravelSearchBarProps {
   query: string;
   onQueryChange: (value: string) => void;
   onSearch: () => void;
+  activeTab: "pauschal" | "kurz";
+  onTabChange: (tab: "pauschal" | "kurz") => void;
   className?: string;
 }
 
-const TravelSearchBar = ({ tours, query, onQueryChange, onSearch, className }: TravelSearchBarProps) => {
+const TravelSearchBar = ({ tours, query, onQueryChange, onSearch, activeTab, onTabChange, className }: TravelSearchBarProps) => {
   const navigate = useNavigate();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [dialogQuery, setDialogQuery] = useState("");
@@ -39,28 +42,32 @@ const TravelSearchBar = ({ tours, query, onQueryChange, onSearch, className }: T
   const [travellers, setTravellers] = useState(2);
 
   const tabs = [
-    { key: "pauschal", label: "Pauschalreisen", icon: Bus, path: "/reisen" },
-    { key: "kurz", label: "Kurzurlaub", icon: Luggage, path: "/wochenendtrips" },
+    { key: "pauschal" as const, label: "Pauschalreisen", icon: Bus },
+    { key: "kurz" as const, label: "Kurzurlaub", icon: Luggage },
   ];
 
   const destinations = useMemo(() => {
-    if (!dialogQuery.trim()) return tours.slice(0, 12);
+    const isWeekend = (t: SearchTour) => (t.category || "").toLowerCase() === "weekend";
+    const scoped = tours.filter(t => (activeTab === "kurz" ? isWeekend(t) : !isWeekend(t)));
+    if (!dialogQuery.trim()) return scoped.slice(0, 12);
     const q = dialogQuery.toLowerCase();
-    return tours
+    return scoped
       .filter(t =>
         t.destination.toLowerCase().includes(q) || t.country.toLowerCase().includes(q)
       )
       .slice(0, 12);
-  }, [tours, dialogQuery]);
+  }, [tours, dialogQuery, activeTab]);
 
   const openTour = (t: SearchTour) => {
     setPickerOpen(false);
-    navigate(`/reisen/${t.slug || t.id}`);
+    const isWeekend = (t.category || "").toLowerCase() === "weekend";
+    navigate(isWeekend ? `/wochenendtrips/${t.slug || t.id}` : `/reisen/${t.slug || t.id}`);
   };
 
   const surpriseMe = () => {
-    if (tours.length === 0) return;
-    const pick = tours[Math.floor(Math.random() * tours.length)];
+    const pool = destinations.length > 0 ? destinations : tours;
+    if (pool.length === 0) return;
+    const pick = pool[Math.floor(Math.random() * pool.length)];
     openTour(pick);
   };
 
@@ -72,13 +79,13 @@ const TravelSearchBar = ({ tours, query, onQueryChange, onSearch, className }: T
     <div className={cn("w-full max-w-5xl", className)}>
       {/* Tab strip */}
       <div className="flex items-center gap-1 rounded-t-2xl bg-foreground/95 px-2 pt-2 pb-1 backdrop-blur-xl">
-        {tabs.map((tab, i) => {
-          const active = i === 0;
+        {tabs.map((tab) => {
+          const active = tab.key === activeTab;
           return (
             <button
               key={tab.key}
               type="button"
-              onClick={() => !active && navigate(tab.path)}
+              onClick={() => onTabChange(tab.key)}
               className={cn(
                 "flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-colors",
                 active
@@ -212,14 +219,14 @@ const TravelSearchBar = ({ tours, query, onQueryChange, onSearch, className }: T
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </button>
 
-            <button type="button" onClick={() => { setPickerOpen(false); navigate("/wochenendtrips"); }}
+            <button type="button" onClick={() => { setPickerOpen(false); onTabChange("kurz"); onSearch(); }}
               className="flex w-full items-center gap-4 rounded-xl p-3 text-left transition-colors hover:bg-muted">
               <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 text-primary">
                 <Luggage className="h-6 w-6" />
               </span>
               <span className="flex-1">
                 <span className="block font-bold text-foreground">Kurzurlaub buchen leicht gemacht</span>
-                <span className="block text-sm text-muted-foreground">Kurzreisen übers Wochenende</span>
+                <span className="block text-sm text-muted-foreground">Wochenendtrips ab Hannover & Umgebung</span>
               </span>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </button>

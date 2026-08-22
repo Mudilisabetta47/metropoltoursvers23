@@ -107,6 +107,7 @@ const ReisenPage = () => {
   const [onlyAvailable, setOnlyAvailable] = useState(false);
   const [savedTours, setSavedTours] = useState<Set<string>>(new Set());
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [travelTab, setTravelTab] = useState<"pauschal" | "kurz">("pauschal");
 
   const getImageSrc = (imageUrl: string | null, heroUrl: string | null | undefined, destination: string) => {
     const url = heroUrl || imageUrl;
@@ -179,7 +180,6 @@ const ReisenPage = () => {
   const searchTours = useMemo(
     () =>
       tours
-        .filter(t => !t.departure_date || new Date(t.departure_date).getTime() >= new Date().setHours(0, 0, 0, 0))
         .map(t => ({
           id: t.id,
           slug: t.slug,
@@ -188,6 +188,7 @@ const ReisenPage = () => {
           duration_days: t.duration_days,
           price_from: t.price_from,
           departure_date: t.departure_date,
+          category: t.category,
           image: getImageSrc(t.image_url, (t as any).hero_image_url, t.destination),
         })),
     [tours]
@@ -203,7 +204,8 @@ const ReisenPage = () => {
   }, [maxPrice]);
 
   const filteredTours = useMemo(() => {
-    let result = [...tours];
+    const isWeekend = (t: typeof tours[number]) => (t.category || "").toLowerCase() === "weekend";
+    let result = tours.filter(t => (travelTab === "kurz" ? isWeekend(t) : !isWeekend(t)));
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(t =>
@@ -237,7 +239,7 @@ const ReisenPage = () => {
       default: result.sort((a, b) => (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0)); break;
     }
     return result;
-  }, [tours, searchQuery, sortBy, activeCategory, selectedDurations, priceRange, onlyAvailable]);
+  }, [tours, travelTab, searchQuery, sortBy, activeCategory, selectedDurations, priceRange, onlyAvailable]);
 
   // Vergangene Termine getrennt anzeigen (Referenzen: "wir sind schon gefahren")
   const isPast = (t: typeof tours[number]) =>
@@ -353,6 +355,8 @@ const ReisenPage = () => {
               query={searchQuery}
               onQueryChange={setSearchQuery}
               onSearch={scrollToCatalog}
+              activeTab={travelTab}
+              onTabChange={(tab) => { setTravelTab(tab); setActiveCategory("all"); scrollToCatalog(); }}
             />
 
 
