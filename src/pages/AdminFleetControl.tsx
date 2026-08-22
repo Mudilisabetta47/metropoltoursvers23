@@ -3,8 +3,6 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
@@ -17,7 +15,6 @@ import {
   DispatchOrder, FLEET_STATUS_COLOR, FLEET_STATUS_LABEL, ORDER_STATUS_LABEL,
   useDispatchMessages, useFleetOverview, updateOrderStatus,
 } from "@/hooks/useFleet";
-import { useDemoGps } from "@/lib/navigation/demoGps";
 import FleetMap from "@/components/fleet/FleetMap";
 import OrderDialog from "@/components/fleet/OrderDialog";
 import { buildVehicleProfile, etaFrom, formatDuration, formatKm, requestRoute, vehicleProfileWarnings } from "@/lib/navigation/routing";
@@ -30,13 +27,11 @@ const AdminFleetControl = () => {
   const { drivers, buses, positions, orders, isLoading, reload } = useFleetOverview();
   const [selectedDriver, setSelectedDriver] = useState<string | null>(null);
   const [orderDialog, setOrderDialog] = useState(false);
-  const [demoMode, setDemoMode] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [routeGeom, setRouteGeom] = useState<GeoJSON.LineString | null>(null);
   const [routeInfo, setRouteInfo] = useState<{ km: number; min: number } | null>(null);
   const [routing, setRouting] = useState(false);
 
-  useDemoGps(demoMode, token, orders, positions);
   const { messages, send } = useDispatchMessages(selectedDriver ?? undefined);
 
   const busById = useMemo(() => new Map(buses.map((b) => [b.id, b])), [buses]);
@@ -126,10 +121,6 @@ const AdminFleetControl = () => {
       subtitle="Live-Disposition, Fahreraufträge und Navigation"
       actions={
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30">
-            <Switch id="demo" checked={demoMode} onCheckedChange={setDemoMode} />
-            <Label htmlFor="demo" className="text-xs text-amber-300 cursor-pointer">Demo-GPS</Label>
-          </div>
           <Button onClick={() => setOrderDialog(true)}>
             <Plus className="w-4 h-4 mr-1" /> Auftrag senden
           </Button>
@@ -178,7 +169,6 @@ const AdminFleetControl = () => {
                     <div className="text-[11px] text-zinc-400 flex items-center gap-2 mt-0.5">
                       <Bus className="w-3 h-3" />
                       {bus ? (bus.bus_number || bus.name) : "kein Bus"}
-                      {p?.is_demo && <span className="text-amber-400">DEMO</span>}
                     </div>
                     <div className="text-[11px] text-zinc-500 truncate mt-0.5">
                       {o ? `${o.order_number} · ${ORDER_STATUS_LABEL[o.status]}` : "kein aktiver Auftrag"}
@@ -219,7 +209,6 @@ const AdminFleetControl = () => {
               <Radio className="w-3 h-3 mr-1 text-emerald-400" /> Realtime aktiv
             </Badge>
             {routing && <Badge className="bg-zinc-900/90 text-zinc-300 border border-zinc-700">Route wird berechnet …</Badge>}
-            {demoMode && <Badge className="bg-amber-500/20 text-amber-300 border border-amber-500/40">Demo-GPS-Simulation läuft</Badge>}
           </div>
         </div>
 

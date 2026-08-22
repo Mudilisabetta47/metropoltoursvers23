@@ -2,7 +2,7 @@ import { LogoLight } from "@/components/brand/Logo";
 import { ReactNode, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  FlaskConical, LayoutDashboard, FileText, Bus, Users, DollarSign, Shield,
+  LayoutDashboard, FileText, Bus, Users, DollarSign, Shield,
   UserCheck, Settings, LogOut, Map, Mail, Inbox, Calendar, Route,
   MapPin, ChevronDown, Calculator, Truck, ClipboardList, Search,
   ChevronRight, Sparkles, Activity, Command, ChevronsLeft,
@@ -131,7 +131,6 @@ const menuSections: MenuSection[] = [
       { path: "/admin/cost-estimate", label: "Kalkulation", icon: Calculator, allowedRoles: MANAGEMENT },
       { path: "/admin/payroll", label: "Lohnabrechnung", icon: Wallet, allowedRoles: ADMIN_ONLY },
       { path: "/admin/payment-audit", label: "Zahlungs-Audit", icon: Shield, allowedRoles: ADMIN_ONLY },
-      { path: "/admin/testdaten", label: "Testdaten & Testzahlung", icon: FlaskConical, allowedRoles: ALL_STAFF },
     ],
   },
   {

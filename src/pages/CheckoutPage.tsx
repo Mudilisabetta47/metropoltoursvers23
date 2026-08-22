@@ -98,7 +98,7 @@ const CheckoutPage = () => {
     { id: "insurance", name: "Reiseversicherung", description: "Stornierung & Gepäckschutz", price: 7.99, icon: <Shield className="w-5 h-5" />, selected: false },
   ]);
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal" | "test">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal">("card");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [bookingIds, setBookingIds] = useState<string[]>([]);
@@ -115,6 +115,33 @@ const CheckoutPage = () => {
       .maybeSingle()
       .then(({ data }) => setAgbAvailable(!!data));
   }, []);
+
+  // Rückkehr von Stripe: Zahlung serverseitig verifizieren und Buchung bestätigen
+  useEffect(() => {
+    const stripeSession = searchParams.get('session_id');
+    const cancelled = searchParams.get('payment') === 'cancelled';
+    if (cancelled) {
+      toast.error('Zahlung abgebrochen – Ihre Buchung wurde nicht bestätigt.');
+      return;
+    }
+    if (!stripeSession) return;
+
+    setIsProcessing(true);
+    supabase.functions
+      .invoke('verify-bus-payment', { body: { sessionId: stripeSession } })
+      .then(({ data, error }) => {
+        if (error || !data?.success) {
+          toast.error('Zahlung konnte nicht bestätigt werden. Bitte kontaktieren Sie uns.');
+          return;
+        }
+        setBookingIds(data.bookingIds ?? []);
+        setBookingNumbers(data.ticketNumbers ?? []);
+        setCurrentStep('confirmation');
+        toast.success('Zahlung erfolgreich – Buchung bestätigt!');
+      })
+      .finally(() => setIsProcessing(false));
+  }, [searchParams]);
+
 
   useEffect(() => {
     if (tripId && fromStopId && toStopId) {
@@ -319,6 +346,10 @@ const CheckoutPage = () => {
   };
 
   const processBooking = async () => {
+    if (!user) {
+      toast.error("Bitte melden Sie sich an, um die Buchung abzuschließen.");
+      return;
+    }
     setIsProcessing(true);
     const sessionId = getSessionId();
     const generatedNumbers: string[] = [];
@@ -327,7 +358,7 @@ const CheckoutPage = () => {
     try {
       for (let i = 0; i < passengerInfo.length; i++) {
         const passenger = passengerInfo[i];
-        
+
         // Generate ticket number
         const { data: ticketNumber, error: ticketError } = await supabase
           .rpc('generate_ticket_number');
@@ -346,7 +377,7 @@ const CheckoutPage = () => {
           .from('bookings')
           .insert({
             ticket_number: ticketNumber,
-            user_id: user?.id || null,
+            user_id: user.id,
             trip_id: trip!.id,
             origin_stop_id: originStop!.id,
             destination_stop_id: destinationStop!.id,
@@ -356,9 +387,10 @@ const CheckoutPage = () => {
             passenger_email: passenger.email,
             passenger_phone: passenger.phone || null,
             price_paid: price + extras.filter(e => e.selected).reduce((sum, e) => sum + e.price, 0),
-            status: 'confirmed',
+            status: 'pending',
+            payment_status: 'unpaid',
             payment_method: paymentMethod,
-            is_test: paymentMethod === 'test',
+
             luggage: [
               { type: 'checked', name: 'Reisegepäck (max. 20 kg)', quantity: 1 },
               { type: 'carry_on', name: 'Handgepäck', quantity: 1 },
@@ -375,8 +407,27 @@ const CheckoutPage = () => {
 
         generatedNumbers.push(ticketNumber);
         generatedIds.push(bookingData.id);
+      }
 
-        // Delete the seat hold
+      setBookingNumbers(generatedNumbers);
+      setBookingIds(generatedIds);
+      sessionStorage.setItem('mt_pending_bookings', JSON.stringify(generatedNumbers));
+
+      // Start the real payment – booking is only confirmed after Stripe reports success
+      const { data: payData, error: payError } = await supabase.functions.invoke('create-bus-payment', {
+        body: {
+          bookingIds: generatedIds,
+          method: paymentMethod,
+          returnPath: `${window.location.pathname}${window.location.search}`,
+        },
+      });
+
+      if (payError || !payData?.url) {
+        throw new Error(payError?.message || 'Zahlung konnte nicht gestartet werden');
+      }
+
+      // Release the seat holds only once the payment session exists
+      for (const passenger of passengerInfo) {
         await supabase
           .from('seat_holds')
           .delete()
@@ -385,22 +436,7 @@ const CheckoutPage = () => {
           .eq('session_id', sessionId);
       }
 
-      setBookingNumbers(generatedNumbers);
-      setBookingIds(generatedIds);
-
-      // Send confirmation emails for each booking
-      for (const bookingId of generatedIds) {
-        try {
-          await supabase.functions.invoke('send-booking-confirmation', {
-            body: { bookingId },
-          });
-        } catch (emailError) {
-          console.error("Error sending confirmation email:", emailError);
-        }
-      }
-
-      setCurrentStep("confirmation");
-      toast.success("Buchung erfolgreich abgeschlossen!");
+      window.location.href = payData.url as string;
     } catch (error) {
       console.error('Error creating booking:', error);
       toast.error('Fehler bei der Buchung. Bitte versuchen Sie es erneut.');
@@ -408,6 +444,7 @@ const CheckoutPage = () => {
       setIsProcessing(false);
     }
   };
+
 
   const handlePrevStep = () => {
     if (currentStep === "details") setCurrentStep("seats");
@@ -658,11 +695,8 @@ const CheckoutPage = () => {
                     {[
                       { id: "card", label: "Kredit-/Debitkarte", icon: <CreditCard className="w-5 h-5" /> },
                       { id: "paypal", label: "PayPal", icon: <span className="text-sm font-bold">PP</span> },
-                      // Interne Testzahlung – ausschliesslich fuer Mitarbeitende sichtbar
-                      ...(isStaff
-                        ? [{ id: "test", label: "Testzahlung (nur intern, Sandbox)", icon: <span className="text-sm font-bold">TEST</span> }]
-                        : []),
                     ].map((method) => (
+
                       <div
                         key={method.id}
                         onClick={() => setPaymentMethod(method.id as any)}
@@ -684,35 +718,16 @@ const CheckoutPage = () => {
                     ))}
                   </div>
 
-                  {paymentMethod === "card" && (
-                    <div className="space-y-4 p-4 bg-muted/50 rounded-xl">
-                      <div>
-                        <Label>Kartennummer</Label>
-                        <Input placeholder="1234 5678 9012 3456" className="mt-1" />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label>Gültig bis</Label>
-                          <Input placeholder="MM/YY" className="mt-1" />
-                        </div>
-                        <div>
-                          <Label>CVV</Label>
-                          <Input placeholder="123" className="mt-1" />
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  <div className="space-y-4 p-4 bg-muted/50 rounded-xl text-sm text-muted-foreground">
+                    Die Zahlung erfolgt über unseren zertifizierten Zahlungsanbieter Stripe. Nach dem Klick auf
+                    „Jetzt buchen" werden Sie sicher weitergeleitet und Ihre Buchung wird nach erfolgreicher Zahlung
+                    automatisch bestätigt.
+                  </div>
 
-                  {paymentMethod === "test" && (
-                    <div className="space-y-2 p-4 rounded-xl border border-amber-500/40 bg-amber-500/10 text-sm">
-                      <p className="font-semibold">Interne Testzahlung (Sandbox)</p>
-                      <p className="text-muted-foreground">
-                        Es wird keine echte Zahlung ausgelöst und es werden keine Kartendaten gespeichert.
-                        Die Buchung wird als Testbuchung markiert.
-                      </p>
-                      <p className="text-muted-foreground">Test-Karte (Sandbox): 4242 4242 4242 4242 · 12/34 · CVC 123</p>
-                    </div>
-                  )}
+
+
+
+
 
                   {agbAvailable === false && (
                     <div className="mt-6 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">

@@ -62,7 +62,6 @@ const AdminMailbox = lazy(() => import("./pages/AdminMailbox"));
 const AdminCoupons = lazy(() => import("./pages/AdminCoupons"));
 const AdminAuditLog = lazy(() => import("./pages/AdminAuditLog"));
 const AdminPaymentAudit = lazy(() => import("./pages/AdminPaymentAudit"));
-const AdminTestData = lazy(() => import("./pages/AdminTestData"));
 const AdminDriverDetail = lazy(() => import("./pages/AdminDriverDetail"));
 const AdminFleetCompliance = lazy(() => import("./pages/AdminFleetCompliance"));
 const AdminTollVignettes = lazy(() => import("./pages/AdminTollVignettes"));
@@ -257,7 +256,6 @@ const App = () => (
               <Route path="/admin/coupons" element={<AdminCoupons />} />
               <Route path="/admin/audit" element={<AdminAuditLog />} />
               <Route path="/admin/payment-audit" element={<AdminPaymentAudit />} />
-              <Route path="/admin/testdaten" element={<AdminTestData />} />
               <Route path="/admin/fleet-compliance" element={<AdminFleetCompliance />} />
               <Route path="/admin/toll-vignettes" element={<AdminTollVignettes />} />
               <Route path="/admin/fuel-log" element={<AdminFuelLog />} />
