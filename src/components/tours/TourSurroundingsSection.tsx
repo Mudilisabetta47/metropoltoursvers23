@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, FerrisWheel, Utensils, Mountain, TrainFront, Plane } from "lucide-react";
 import MapboxLocationMap from "@/components/maps/MapboxLocationMap";
 
@@ -18,6 +18,46 @@ interface Groups {
 }
 
 const EMPTY: Groups = { attractions: [], food: [], nature: [], transit: [], airports: [] };
+
+// ---- Caching: verhindert wiederholte, langsame OSM-Abfragen ----
+const CACHE_TTL = 1000 * 60 * 60 * 24 * 7; // 7 Tage
+type CacheEntry = { groups: Groups; center: { lat: number; lon: number }; ts: number };
+const memCache = new Map<string, CacheEntry>();
+const inflight = new Map<string, Promise<CacheEntry | null>>();
+
+const cacheKey = (q: string) => `metours:surroundings:${q.toLowerCase()}`;
+
+const readCache = (q: string): CacheEntry | null => {
+  const mem = memCache.get(q);
+  if (mem && Date.now() - mem.ts < CACHE_TTL) return mem;
+  try {
+    const raw = localStorage.getItem(cacheKey(q));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as CacheEntry;
+    if (!parsed?.ts || Date.now() - parsed.ts > CACHE_TTL) return null;
+    memCache.set(q, parsed);
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const writeCache = (q: string, entry: CacheEntry) => {
+  memCache.set(q, entry);
+  try {
+    localStorage.setItem(cacheKey(q), JSON.stringify(entry));
+  } catch { /* Speicher voll – egal */ }
+};
+
+const fetchWithTimeout = async (url: string, init: RequestInit, ms: number) => {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+};
 
 const haversine = (aLat: number, aLon: number, bLat: number, bLon: number) => {
   const R = 6371;
