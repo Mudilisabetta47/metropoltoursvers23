@@ -593,71 +593,16 @@ const PackageTourDetailPage = () => {
                   </CardContent>
                 </Card>
 
-                {/* Umgebung / Lage */}
-                <Card id="umgebung" className="border border-border rounded-2xl overflow-hidden scroll-mt-24">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-primary" />
-                      Lage & Umgebung
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="rounded-xl overflow-hidden border border-border bg-muted min-h-[260px]">
-                        {geo ? (
-                          <MapboxLocationMap
-                            lat={geo.lat}
-                            lon={geo.lon}
-                            zoom={11}
-                            label={dbTour.destination}
-                            className="w-full h-full min-h-[260px]"
-                          />
-                        ) : (
-                          <div className="w-full h-full min-h-[260px] flex items-center justify-center text-sm text-muted-foreground">
-                            Karte wird geladen …
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="space-y-3">
-                        <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/50">
-                          <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                          <div>
-                            <div className="text-sm font-medium">Reiseziel</div>
-                            <div className="text-sm text-muted-foreground">{geo?.label || dbTour.location}</div>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/50">
-                          <Bus className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                          <div>
-                            <div className="text-sm font-medium">Anreise</div>
-                            <div className="text-sm text-muted-foreground">Bequem im Fernreisebus – Zustiege in Hannover, Bremen und Hamburg auf Anfrage.</div>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/50">
-                          <Hotel className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                          <div>
-                            <div className="text-sm font-medium">Unterkunft</div>
-                            <div className="text-sm text-muted-foreground">Ausgewählte Hotels in zentraler Lage – Details im persönlichen Angebot.</div>
-                          </div>
-                        </div>
-                        {geo && (
-                          <a
-                            href={`https://www.google.com/maps/search/?api=1&query=${geo.lat},${geo.lon}`}
-                            target="_blank"
-                            rel="noreferrer noopener"
-                            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-                          >
-                            Größere Karte anzeigen <ArrowRight className="w-3.5 h-3.5" />
-                          </a>
-                        )}
-                        <p className="text-xs text-muted-foreground">
-                          Entfernungen sind Näherungswerte und können abweichen.
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* Umgebung / Lage – dynamisch anhand der echten Hotelposition */}
+                <TourSurroundingsSection
+                  destination={dbTour.destination}
+                  location={dbTour.location}
+                  country={dbTour.country}
+                  lat={geo?.lat}
+                  lon={geo?.lon}
+                  hotelName={anyTour?.hotel_name || null}
+                  hotelAddress={anyTour?.hotel_address || geo?.label || null}
+                />
               </div>
 
 
