@@ -288,11 +288,11 @@ const TourSurroundingsSection = ({
 
     let cancelled = false;
     setLoading(true);
-    loadSurroundings(query)
+    loadSurroundings(query, coords)
       .then((entry) => {
         if (cancelled) return;
         setGroups(entry?.groups ?? EMPTY);
-        setCenter(entry?.center ?? null);
+        setCenter(entry?.center ?? coords);
       })
       .catch(() => {
         if (!cancelled) setGroups(EMPTY);
