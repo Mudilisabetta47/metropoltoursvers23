@@ -650,28 +650,71 @@ const ReisenPage = () => {
                       <p className="text-sm text-muted-foreground mt-1">Diese Termine sind vorbei – ein Einblick, wohin wir bereits gefahren sind.</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-7">
                     {pastTours.map((tour) => {
-                      const heroSrc = getImageSrc(tour.image_url, tour.hero_image_url, tour.destination);
+                      const heroSrc = getImageSrc(tour.image_url, (tour as any).hero_image_url, tour.destination);
                       return (
                         <article key={tour.id}
-                          onClick={() => navigate(`/reisen/${tour.slug || tour.id}`)}
-                          className="group cursor-pointer bg-card rounded-2xl overflow-hidden border border-border hover:border-foreground/20 transition-all">
-                          <div className="relative aspect-[16/10] overflow-hidden">
+                          className="group bg-card rounded-2xl overflow-hidden border border-border hover:border-foreground/20 hover:shadow-[0_20px_50px_-20px_rgba(0,0,0,0.25)] transition-all duration-500 flex flex-col">
+                          <div className="relative aspect-[16/11] overflow-hidden cursor-pointer"
+                            onClick={() => navigate(`/reisen/${tour.slug || tour.id}`)}>
                             <img src={heroSrc} alt={tour.destination} loading="lazy"
-                              className="w-full h-full object-cover grayscale-[35%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                            {!heroSrc.startsWith("http") && <AiBadge className="top-3 right-3 bottom-auto" />}
-                            <span className="absolute top-3 left-3 bg-foreground/85 text-background text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
-                              Durchgeführt
-                            </span>
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                            {!heroSrc.startsWith("http") && <AiBadge className="top-4 right-4 bottom-auto" />}
+                            <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between text-white">
+                              <div className="flex items-center gap-1.5 text-xs font-medium">
+                                <MapPin className="w-3.5 h-3.5" />
+                                <span className="drop-shadow">{tour.country}</span>
+                              </div>
+                            </div>
                           </div>
-                          <div className="p-4">
-                            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">
-                              {tour.departure_date ? format(parseISO(tour.departure_date), "dd. MMMM yyyy", { locale: de }) : ""} · {tour.country}
-                            </p>
-                            <h3 className="font-serif text-lg text-foreground leading-snug line-clamp-1">{tour.destination}</h3>
-                            <p className="text-xs text-muted-foreground mt-1">{tour.duration_days} Tage · ab {tour.price_from}€</p>
+
+                          <div className="p-5 flex-1 flex flex-col">
+                            <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+                              <span>{tour.location}</span>
+                              <span className="w-1 h-1 bg-border rounded-full" />
+                              <span>{tour.duration_days} Tage</span>
+                              <span className="w-1 h-1 bg-border rounded-full" />
+                              <span className="flex items-center gap-0.5 text-amber-500">
+                                <Star className="w-3 h-3 fill-current" /> 4.8
+                              </span>
+                            </div>
+
+                            <h3 className="font-serif text-xl md:text-2xl text-foreground leading-snug mb-3 cursor-pointer group-hover:text-primary transition-colors line-clamp-2"
+                              onClick={() => navigate(`/reisen/${tour.slug || tour.id}`)}>
+                              {tour.destination}
+                            </h3>
+
+                            {tour.short_description && (
+                              <p className="text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-2">
+                                {tour.short_description}
+                              </p>
+                            )}
+
+                            <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-muted-foreground mb-4">
+                              <span className="flex items-center gap-1"><Hotel className="w-3.5 h-3.5 text-primary" /> Hotel</span>
+                              <span className="flex items-center gap-1"><Coffee className="w-3.5 h-3.5 text-primary" /> Frühstück</span>
+                              <span className="flex items-center gap-1"><Bus className="w-3.5 h-3.5 text-primary" /> Reisebus</span>
+                            </div>
+
+                            <div className="mt-auto pt-4 border-t border-border flex items-end justify-between gap-3">
+                              <div>
+                                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                                  Neue Termine auf Anfrage
+                                </p>
+                                <div className="flex items-baseline gap-1.5">
+                                  <span className="text-xs text-muted-foreground">ab</span>
+                                  <span className="font-serif text-3xl font-bold text-foreground">{tour.price_from}€</span>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground">pro Person · alles inkl.</p>
+                              </div>
+                              <Button size="sm" className="rounded-xl"
+                                onClick={() => navigate(`/reisen/${tour.slug || tour.id}`)}>
+                                Details
+                                <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                              </Button>
+                            </div>
                           </div>
                         </article>
                       );
