@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
-  Loader2, ChevronLeft, ChevronRight, MapPin, Share2, Heart,
+  Loader2, ChevronLeft, ChevronRight, MapPin, Heart,
   Calendar, Clock, Users, Bus, ArrowRight, Star, Wifi, Plug,
   Armchair, Check, X, TrendingUp, Minus, Plus
 } from "lucide-react";
