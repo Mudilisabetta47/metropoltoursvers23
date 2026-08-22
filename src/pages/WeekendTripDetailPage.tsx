@@ -234,8 +234,8 @@ const WeekendTripDetailPage = () => {
             <div className="absolute top-4 right-4 flex items-center gap-2">
               <ShareButton
                 variant="secondary"
-                title={`${trip.title} – Metropol Tours`}
-                text={`Schau dir diesen Wochenendtrip an: ${trip.title}`}
+                title={`${trip.destination} – Metropol Tours`}
+                text={`Schau dir diesen Wochenendtrip an: ${trip.destination}`}
                 className="bg-card/90 backdrop-blur hover:bg-card shadow-lg gap-2"
               />
 
