@@ -60,20 +60,33 @@ async function loadDynamicEntries(): Promise<SitemapEntry[]> {
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  const seen = new Set<string>();
   const entries: SitemapEntry[] = [];
 
-  // Wochenendtrips (öffentlich sichtbar = is_active)
-  const { data: trips, error: tripsError } = await supabase
+  const addTrip = (slug: string | null) => {
+    if (!slug) return;
+    const normalized = slug.trim().toLowerCase();
+    if (seen.has(normalized)) return;
+    seen.add(normalized);
+    entries.push({ path: `/wochenendtrips/${normalized}`, changefreq: "weekly", priority: "0.7" });
+  };
+
+  // Wochenendtrips (legacy Tabelle)
+  const { data: legacyTrips, error: legacyError } = await supabase
     .from("weekend_trips")
     .select("slug")
     .eq("is_active", true);
-  if (tripsError) console.warn("sitemap: weekend_trips:", tripsError.message);
-  for (const t of trips || []) {
-    if (t.slug) entries.push({ path: `/wochenendtrips/${t.slug}`, changefreq: "weekly", priority: "0.7" });
-  }
+  if (legacyError) console.warn("sitemap: weekend_trips:", legacyError.message);
+  for (const t of legacyTrips || []) addTrip(t.slug);
 
-  // Hinweis: Pauschalreisen-Detailseiten (/reisen/:slug) leiten aktuell auf
-  // /business weiter und werden deshalb bewusst nicht aufgenommen.
+  // Wochenendtrips aus dem Package-Tour-System (das ist die aktuelle Quelle für /wochenendtrips)
+  const { data: packageTrips, error: packageError } = await supabase
+    .from("package_tours")
+    .select("slug")
+    .eq("is_active", true)
+    .eq("category", "weekend");
+  if (packageError) console.warn("sitemap: package_tours weekend:", packageError.message);
+  for (const t of packageTrips || []) addTrip(t.slug);
 
   return entries;
 }

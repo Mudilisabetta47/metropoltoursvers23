@@ -94,3 +94,40 @@ export const faqJsonLd = (items: { q: string; a: string }[]) => ({
     acceptedAnswer: { "@type": "Answer", text: i.a },
   })),
 });
+
+/** Produkt-/Angebotsdaten für einen Wochenendtrip (Preis, Verfügbarkeit, Marke). */
+export const weekendTripJsonLd = (opts: {
+  destination: string;
+  country: string;
+  departureCity: string;
+  slug: string;
+  description: string;
+  image?: string | null;
+  price: number;
+  isBookable: boolean;
+}) => ({
+  "@context": "https://schema.org",
+  "@type": "Product",
+  name: `Wochenendtrip ${opts.destination}`,
+  description: opts.description,
+  image: opts.image ? absoluteUrl(opts.image) : undefined,
+  brand: {
+    "@type": "Brand",
+    name: SITE_NAME,
+  },
+  url: absoluteUrl(`/wochenendtrips/${opts.slug}`),
+  offers: {
+    "@type": "Offer",
+    url: absoluteUrl(`/wochenendtrips/${opts.slug}`),
+    priceCurrency: "EUR",
+    price: opts.price.toFixed(2),
+    availability: opts.isBookable
+      ? "https://schema.org/InStock"
+      : "https://schema.org/PreOrder",
+    eligibleRegion: {
+      "@type": "Country",
+      name: "DE",
+    },
+    description: `Busreise ab ${opts.departureCity} nach ${opts.destination} (${opts.country})`,
+  },
+});

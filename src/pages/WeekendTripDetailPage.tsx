@@ -15,7 +15,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/seo/SEO";
-import { breadcrumbJsonLd } from "@/lib/seo";
+import { breadcrumbJsonLd, weekendTripJsonLd } from "@/lib/seo";
 import ShareButton from "@/components/common/ShareButton";
 
 
@@ -168,11 +168,25 @@ const WeekendTripDetailPage = () => {
         }
         path={`/wochenendtrips/${trip.slug}`}
         image={trip.hero_image_url || trip.image_url || undefined}
-        jsonLd={breadcrumbJsonLd([
-          { name: "Startseite", path: "/" },
-          { name: "Wochenendtrips", path: "/wochenendtrips" },
-          { name: trip.destination, path: `/wochenendtrips/${trip.slug}` },
-        ])}
+        jsonLd={[
+          breadcrumbJsonLd([
+            { name: "Startseite", path: "/" },
+            { name: "Wochenendtrips", path: "/wochenendtrips" },
+            { name: trip.destination, path: `/wochenendtrips/${trip.slug}` },
+          ]),
+          weekendTripJsonLd({
+            destination: trip.destination,
+            country: trip.country,
+            departureCity: trip.departure_city,
+            slug: trip.slug,
+            description:
+              trip.short_description ||
+              `Kurztrip nach ${trip.destination} (${trip.country}) mit dem Reisebus ab ${trip.departure_city}.`,
+            image: trip.hero_image_url || trip.image_url,
+            price: pricePerPerson,
+            isBookable: !!bookableDeparture,
+          }),
+        ]}
       />
       <Header />
       <main className="flex-1 pt-16 lg:pt-20">
