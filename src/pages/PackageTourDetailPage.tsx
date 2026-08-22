@@ -320,8 +320,9 @@ const PackageTourDetailPage = () => {
             <button
               type="button"
               onClick={() => setLightbox(0)}
-              className="md:col-span-2 relative aspect-[16/10] md:aspect-[16/9] rounded-2xl overflow-hidden group"
+              className="md:col-span-2 relative h-[240px] md:h-[440px] lg:h-[500px] rounded-2xl overflow-hidden group"
             >
+
               <img src={mosaic[0]} alt={`Pauschalreise ${dbTour.destination}`} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
             </button>
             <div className="grid grid-cols-2 md:grid-cols-1 gap-3">
@@ -330,8 +331,10 @@ const PackageTourDetailPage = () => {
                   key={i}
                   type="button"
                   onClick={() => img && setLightbox(i + 1)}
-                  className="relative aspect-[4/3] md:aspect-auto md:h-full rounded-2xl overflow-hidden bg-muted group"
+                  className="relative h-[120px] md:h-[214px] lg:h-[244px] rounded-2xl overflow-hidden bg-muted group"
                 >
+
+
                   {img ? (
                     <img src={img} alt={`${dbTour.destination} Eindruck ${i + 2}`} loading="lazy" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                   ) : (
