@@ -210,8 +210,8 @@ const App = () => (
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/widerruf" element={<WiderrufPage />} />
               <Route path="/karriere" element={<KarrierePage />} />
-              <Route path="/pauschalreisen/:tourId" element={<PackageTourDetailPage />} />
-              <Route path="/reisen/:tourId" element={<PackageTourDetailPage />} />
+              <Route path="/pauschalreisen/:tourId" element={<TourDetailPage />} />
+              <Route path="/reisen/:tourId" element={<TourDetailPage />} />
               <Route path="/reisen/checkout" element={<TourCheckoutPage />} />
               <Route path="/tour-checkout" element={<TourCheckoutPage />} />
               <Route path="/admin" element={<AdminRedirect />} />
