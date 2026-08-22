@@ -32,6 +32,7 @@ import groupImg from "@/assets/hero-group-travel.jpg";
 import heroBus from "@/assets/hero-bus.jpg";
 import metropolHero from "@/assets/metropol-bus-hero.jpg";
 import journey from "@/assets/journey-hero.jpg";
+import nightBusAsset from "@/assets/metropol-night-bus.jpg.asset.json";
 
 const IMAGES: Record<LandingImageKey, string> = {
   busReal,
@@ -66,7 +67,7 @@ const Section = ({
 
 export function LandingView({ content }: { content: LandingContent }) {
   const path = `/${content.slug}`;
-  const hero = IMAGES[content.heroImage] ?? metropolHero;
+  const hero = nightBusAsset.url;
 
   const schemas: Record<string, unknown>[] = [
     breadcrumbJsonLd([
