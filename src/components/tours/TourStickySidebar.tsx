@@ -207,7 +207,7 @@ const TourStickySidebar = ({
       </Card>
 
       {/* Early Bird */}
-      {selectedDate?.early_bird_discount_percent && selectedDate.early_bird_discount_percent > 0 && (
+      {!!selectedDate?.early_bird_discount_percent && selectedDate.early_bird_discount_percent > 0 && (
         <Card className="mt-4 border-amber-200 bg-amber-50">
           <CardContent className="p-4 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
