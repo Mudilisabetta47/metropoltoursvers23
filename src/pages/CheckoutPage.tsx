@@ -681,24 +681,13 @@ const CheckoutPage = () => {
                     ))}
                   </div>
 
-                  {paymentMethod === "card" && (
-                    <div className="space-y-4 p-4 bg-muted/50 rounded-xl">
-                      <div>
-                        <Label>Kartennummer</Label>
-                        <Input placeholder="1234 5678 9012 3456" className="mt-1" />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label>Gültig bis</Label>
-                          <Input placeholder="MM/YY" className="mt-1" />
-                        </div>
-                        <div>
-                          <Label>CVV</Label>
-                          <Input placeholder="123" className="mt-1" />
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  <div className="space-y-4 p-4 bg-muted/50 rounded-xl text-sm text-muted-foreground">
+                    Die Zahlung erfolgt über unseren zertifizierten Zahlungsanbieter Stripe. Nach dem Klick auf
+                    „Jetzt buchen" werden Sie sicher weitergeleitet und Ihre Buchung wird nach erfolgreicher Zahlung
+                    automatisch bestätigt.
+                  </div>
+
+
 
 
 
