@@ -70,23 +70,33 @@ const TourSurroundingsSection = ({ destination, location, country }: Props) => {
         const overpass = `
 [out:json][timeout:25];
 (
-  node(around:6000,${lat},${lon})["tourism"~"attraction|museum|viewpoint|theme_park|zoo"]["name"];
-  node(around:6000,${lat},${lon})["historic"~"castle|monument|memorial|ruins"]["name"];
-  node(around:1500,${lat},${lon})["amenity"~"restaurant|cafe"]["name"];
-  node(around:15000,${lat},${lon})["natural"~"beach|peak|wood"]["name"];
-  node(around:8000,${lat},${lon})["railway"="station"]["name"];
-  node(around:4000,${lat},${lon})["highway"="bus_stop"]["name"];
-  node(around:60000,${lat},${lon})["aeroway"="aerodrome"]["name"];
-  way(around:60000,${lat},${lon})["aeroway"="aerodrome"]["name"];
+  node(around:5000,${lat},${lon})["tourism"~"^(attraction|museum|viewpoint|theme_park|zoo)$"]["name"];
+  node(around:5000,${lat},${lon})["historic"~"^(castle|monument|memorial|ruins)$"]["name"];
+  node(around:1200,${lat},${lon})["amenity"~"^(restaurant|cafe)$"]["name"];
+  node(around:12000,${lat},${lon})["natural"~"^(beach|peak)$"]["name"];
+  node(around:6000,${lat},${lon})["railway"="station"]["name"];
+  node(around:2000,${lat},${lon})["highway"="bus_stop"]["name"];
+  node(around:40000,${lat},${lon})["aeroway"="aerodrome"]["name"]["iata"];
 );
-out center 120;`;
+out center;`;
 
-        const opRes = await fetch("https://overpass-api.de/api/interpreter", {
-          method: "POST",
-          body: overpass,
-        });
-        const op = await opRes.json();
-        if (cancelled) return;
+        const endpoints = [
+          "https://overpass.kumi.systems/api/interpreter",
+          "https://overpass-api.de/api/interpreter",
+        ];
+        let op: any = null;
+        for (const url of endpoints) {
+          try {
+            const res = await fetch(url, { method: "POST", body: overpass });
+            if (!res.ok) continue;
+            op = await res.json();
+            if (op?.elements?.length) break;
+          } catch {
+            // try next endpoint
+          }
+        }
+        if (cancelled || !op) return;
+
 
         const next: Groups = { attractions: [], food: [], nature: [], transit: [], airports: [] };
         const seen = new Set<string>();
