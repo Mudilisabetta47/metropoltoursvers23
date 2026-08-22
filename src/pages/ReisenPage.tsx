@@ -366,22 +366,60 @@ const ReisenPage = () => {
         </div>
       </div>
       <Separator />
-      <div className="flex items-center justify-between">
-        <Label htmlFor="available" className="text-sm font-medium cursor-pointer">Nur verfügbare Reisen</Label>
-        <Checkbox id="available" checked={onlyAvailable} onCheckedChange={(v) => setOnlyAvailable(v as boolean)} />
+      <div>
+        <h4 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" /> Abfahrtsmonat</h4>
+        {monthOptions.length === 0 ? (
+          <p className="text-xs text-muted-foreground">Keine Termine verfügbar.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {monthOptions.map(m => (
+              <button key={m.key} onClick={() => toggleMonth(m.key)}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-medium border transition-all capitalize",
+                  selectedMonths.includes(m.key)
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card text-muted-foreground border-border hover:border-primary/50"
+                )}>{m.label}</button>
+            ))}
+          </div>
+        )}
       </div>
       <Separator />
       <div>
-        <h4 className="font-semibold text-sm text-foreground mb-3">Leistungen inklusive</h4>
-        <div className="space-y-2.5">
-          {[{ icon: Hotel, label: "Hotel inkl." }, { icon: Coffee, label: "Frühstück inkl." }, { icon: Bus, label: "Busfahrt inkl." }, { icon: Shield, label: "Versicherung optional" }].map((item, i) => (
-            <div key={i} className="flex items-center gap-2.5 text-sm text-muted-foreground">
-              <item.icon className="w-4 h-4 text-primary" />
-              <span>{item.label}</span>
-              <Check className="w-3.5 h-3.5 text-primary ml-auto" />
-            </div>
-          ))}
-        </div>
+        <h4 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" /> Abfahrtsort</h4>
+        {cityOptions.length === 0 ? (
+          <p className="text-xs text-muted-foreground">Keine Abfahrtsorte verfügbar.</p>
+        ) : (
+          <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
+            {cityOptions.map(c => (
+              <div key={c.key} className="flex items-center gap-2">
+                <Checkbox id={`city-${c.key}`} checked={selectedCities.includes(c.key)} onCheckedChange={() => toggleCity(c.key)} />
+                <Label htmlFor={`city-${c.key}`} className="text-sm text-muted-foreground cursor-pointer">{c.label}</Label>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <Separator />
+      <div>
+        <h4 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2"><Check className="w-4 h-4 text-primary" /> Leistungen inklusive</h4>
+        {serviceOptions.length === 0 ? (
+          <p className="text-xs text-muted-foreground">Keine Leistungsdetails hinterlegt.</p>
+        ) : (
+          <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
+            {serviceOptions.map(s => (
+              <div key={s.key} className="flex items-center gap-2">
+                <Checkbox id={`svc-${s.key}`} checked={selectedServices.includes(s.key)} onCheckedChange={() => toggleService(s.key)} />
+                <Label htmlFor={`svc-${s.key}`} className="text-sm text-muted-foreground cursor-pointer">{s.label}</Label>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <Separator />
+      <div className="flex items-center justify-between">
+        <Label htmlFor="available" className="text-sm font-medium cursor-pointer">Nur verfügbare Reisen</Label>
+        <Checkbox id="available" checked={onlyAvailable} onCheckedChange={(v) => setOnlyAvailable(v as boolean)} />
       </div>
       {activeFilterCount > 0 && (
         <>
