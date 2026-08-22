@@ -19,6 +19,7 @@ import AiBadge from "@/components/common/AiBadge";
 
 interface Slide {
   image: string;
+  alt: string;
   badge: string;
   title: string;
   highlight: string;
@@ -31,6 +32,7 @@ interface Slide {
 const slides: Slide[] = [
   {
     image: sliderPauschalreisen,
+    alt: "Grüner METROPOL TOURS Reisebus auf einer Landstraße – individuelle Busreisen ab Hannover",
     badge: "Gruppenreisen auf Anfrage",
     title: "Ihre individuelle",
     highlight: "Busreise",
@@ -41,6 +43,7 @@ const slides: Slide[] = [
   },
   {
     image: sliderStrandurlaub,
+    alt: "Sonniger Sandstrand mit türkisem Meer – Strandurlaub als Busreise mit METROPOL TOURS",
     badge: "Sonne & Meer",
     title: "Unvergesslicher",
     highlight: "Strandurlaub",
@@ -51,6 +54,7 @@ const slides: Slide[] = [
   },
   {
     image: sliderWochenendtrips,
+    alt: "Europäische Altstadt bei Sonnenuntergang – Wochenendtrips mit dem Reisebus",
     badge: "Kurzurlaub",
     title: "Spannende",
     highlight: "Wochenendtrips",
@@ -61,6 +65,7 @@ const slides: Slide[] = [
   },
   {
     image: sliderGruppenreisen,
+    alt: "Reisegruppe steigt in einen Reisebus ein – Gruppenreisen für Vereine, Firmen und Schulen",
     badge: "Gemeinsam reisen",
     title: "Individuelle",
     highlight: "Gruppenreisen",
@@ -71,6 +76,7 @@ const slides: Slide[] = [
   },
   {
     image: sliderKulturreisen,
+    alt: "Historische Sehenswürdigkeit mit antiker Architektur – Kulturreisen mit dem Bus auf dem Balkan",
     badge: "Kultur & Geschichte",
     title: "Faszinierende",
     highlight: "Kulturreisen",
