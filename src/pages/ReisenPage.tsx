@@ -220,7 +220,17 @@ const ReisenPage = () => {
     return result;
   }, [tours, searchQuery, sortBy, activeCategory, selectedDurations, priceRange, onlyAvailable]);
 
+  // Vergangene Termine getrennt anzeigen (Referenzen: "wir sind schon gefahren")
+  const isPast = (t: typeof tours[number]) =>
+    !!t.departure_date && new Date(t.departure_date).getTime() < new Date().setHours(0, 0, 0, 0);
+  const upcomingTours = useMemo(() => filteredTours.filter(t => !isPast(t)), [filteredTours]);
+  const pastTours = useMemo(
+    () => filteredTours.filter(isPast).sort((a, b) => new Date(b.departure_date).getTime() - new Date(a.departure_date).getTime()),
+    [filteredTours]
+  );
+
   const activeFilterCount = [
+
     activeCategory !== "all",
     selectedDurations.length > 0,
     priceRange[0] > 0 || priceRange[1] < maxPrice,
