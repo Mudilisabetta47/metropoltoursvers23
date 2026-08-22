@@ -182,6 +182,42 @@ const ReisenPage = () => {
     return chips;
   }, [tours]);
 
+  // Dynamic filter options derived from real tour data
+  const monthOptions = useMemo(() => {
+    const months = new Map<string, { key: string; label: string }>();
+    tours.forEach(t => {
+      if (!t.departure_date) return;
+      const d = parseISO(t.departure_date);
+      const key = format(d, "yyyy-MM");
+      const label = format(d, "MMMM yyyy", { locale: de });
+      if (!months.has(key)) months.set(key, { key, label });
+    });
+    return Array.from(months.values()).sort((a, b) => a.key.localeCompare(b.key));
+  }, [tours]);
+
+  const cityOptions = useMemo(() => {
+    const cities = new Map<string, string>();
+    tours.forEach(t => {
+      const city = t.location?.trim();
+      if (city && !cities.has(city.toLowerCase())) cities.set(city.toLowerCase(), city);
+    });
+    return Array.from(cities.entries()).map(([key, label]) => ({ key, label })).sort((a, b) => a.label.localeCompare(b.label));
+  }, [tours]);
+
+  const serviceOptions = useMemo(() => {
+    const services = new Map<string, string>();
+    const normalize = (s: string) => s.toLowerCase().replace(/[^\w\s]/g, "").trim();
+    tours.forEach(t => {
+      (t.included_services || []).forEach(s => {
+        const raw = s.trim();
+        if (!raw) return;
+        const key = normalize(raw);
+        if (!services.has(key)) services.set(key, raw);
+      });
+    });
+    return Array.from(services.entries()).map(([key, label]) => ({ key, label })).sort((a, b) => a.label.localeCompare(b.label));
+  }, [tours]);
+
   // Autocomplete suggestions
   const searchSuggestions = useMemo(() => {
     if (!searchQuery.trim()) {
