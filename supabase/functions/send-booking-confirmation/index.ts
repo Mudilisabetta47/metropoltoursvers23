@@ -35,12 +35,12 @@ const BANK = {
 
 const COMPANY = {
   name: "METROPOL TOURS GmbH",
-  address: "Musterstraße 1, 20095 Hamburg",
-  phone: "+49 176 47144200",
+  address: "Rudolf-Diesel-Weg 8, 30419 Hannover",
+  phone: "+49 511 80781106",
   email: "kundenservice@metours.de",
   web: "metours.de",
-  ustId: "DE123456789",
-  hrb: "HRB 12345",
+  ustId: "",
+  hrb: "HRB 222247, AG Hannover",
 };
 
 const ADMIN_EMAILS = ["info@metours.de", "buchung@metours.de", "kundenservice@metours.de"];
@@ -95,7 +95,7 @@ const BUS_GIF = "https://media.giphy.com/media/3o7btNa0RUYa5E7iiQ/giphy.gif";
 const TRAVEL_GIF = "https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif";
 
 // Inline SVG Logo as base64 data URI for email compatibility
-const LOGO_BASE64 = "https://www.metours.de/__l5e/assets-v1/b3795491-7fcc-4d33-9886-c04b2cb7be83/metropol-logo-light.png";
+const LOGO_BASE64 = "https://www.metours.de/brand/metropol-logo-light.png";
 
 function buildCustomerEmailHtml(booking: any, tour: any, date: any, tariff: any, pickup: any): string {
   const safeFirst = escapeHtml(booking.contact_first_name);
