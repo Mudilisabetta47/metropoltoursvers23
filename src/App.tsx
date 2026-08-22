@@ -21,7 +21,6 @@ const CheckoutPage = lazy(() => import("./pages/CheckoutPage"));
 const ServicePage = lazy(() => import("./pages/ServicePage"));
 
 const BusreisenPage = lazy(() => import("./pages/BusreisenPage"));
-const PackageTourDetailPage = lazy(() => import("./pages/PackageTourDetailPage"));
 const ReisenPage = lazy(() => import("./pages/ReisenPage"));
 
 const BusinessServicesPage = lazy(() => import("./pages/BusinessServicesPage"));
