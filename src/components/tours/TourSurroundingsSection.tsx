@@ -348,21 +348,65 @@ const TourSurroundingsSection = ({
     );
   };
 
+  const mapTitle = hotelName || hotelAddress || location || destination;
+
   return (
-    <section ref={containerRef} className="bg-card border border-border rounded-xl p-6 scroll-mt-36">
-      <div className="flex items-start justify-between gap-4 mb-1">
-        <h2 className="text-2xl font-bold text-foreground">Umgebung</h2>
+    <section
+      ref={containerRef}
+      id="umgebung"
+      className="bg-card border border-border rounded-xl p-6 scroll-mt-36"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-1">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">
+            {hotelName ? `Umgebung des Hotels` : "Umgebung"}
+          </h2>
+          {(hotelName || hotelAddress) && (
+            <p className="text-sm text-muted-foreground mt-0.5">
+              {[hotelName, hotelAddress].filter(Boolean).join(" · ")}
+            </p>
+          )}
+        </div>
+        {center && (
+          <Button variant="outline" size="sm" onClick={() => setMapOpen(true)} className="gap-2">
+            <MapIcon className="w-4 h-4" /> Karte anzeigen
+          </Button>
+        )}
       </div>
       {center && (
         <div className="mt-4 mb-6 rounded-xl overflow-hidden border border-border">
           <MapboxLocationMap
             lat={center.lat}
             lon={center.lon}
-            zoom={12}
+            zoom={13}
+            label={mapTitle}
+            pois={allPois}
             className="w-full h-[280px] md:h-[340px]"
           />
         </div>
       )}
+
+      <Dialog open={mapOpen} onOpenChange={setMapOpen}>
+        <DialogContent className="max-w-5xl p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-5 pb-3">
+            <DialogTitle>{mapTitle} – Lage & Umgebung</DialogTitle>
+          </DialogHeader>
+          {center && mapOpen && (
+            <MapboxLocationMap
+              lat={center.lat}
+              lon={center.lon}
+              zoom={14}
+              label={mapTitle}
+              pois={allPois}
+              fitPois
+              scrollZoom
+              className="w-full h-[70vh]"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+
 
 
       {loading ? (
