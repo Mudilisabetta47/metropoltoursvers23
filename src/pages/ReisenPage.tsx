@@ -134,6 +134,24 @@ const ReisenPage = () => {
     );
   };
 
+  const toggleMonth = (key: string) => {
+    setSelectedMonths(prev =>
+      prev.includes(key) ? prev.filter(m => m !== key) : [...prev, key]
+    );
+  };
+
+  const toggleCity = (key: string) => {
+    setSelectedCities(prev =>
+      prev.includes(key) ? prev.filter(c => c !== key) : [...prev, key]
+    );
+  };
+
+  const toggleService = (key: string) => {
+    setSelectedServices(prev =>
+      prev.includes(key) ? prev.filter(s => s !== key) : [...prev, key]
+    );
+  };
+
   // Dynamic chips (countries + categories + tags)
   const categoryChips = useMemo(() => {
     const chips: { key: string; label: string }[] = [{ key: "all", label: "Alle Reisen" }];
