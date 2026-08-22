@@ -1,36 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FerrisWheel, Utensils, Mountain, TrainFront, Plane, Map as MapIcon } from "lucide-react";
-import MapboxLocationMap from "@/components/maps/MapboxLocationMap";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FerrisWheel, Utensils, Mountain, TrainFront, Plane } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { findCuratedSurroundings, type CuratedPoi, type CuratedSurroundings } from "@/data/surroundings";
 
-
-interface Poi {
-  name: string;
-  kind: string;
-  distanceKm: number;
-  lat?: number;
-  lon?: number;
-}
-
-interface Groups {
-  attractions: Poi[];
-  food: Poi[];
-  nature: Poi[];
-  transit: Poi[];
-  airports: Poi[];
-}
+type Groups = CuratedSurroundings;
 
 const EMPTY: Groups = { attractions: [], food: [], nature: [], transit: [], airports: [] };
 
 // ---- Caching: verhindert wiederholte, langsame OSM-Abfragen ----
 const CACHE_TTL = 1000 * 60 * 60 * 24 * 7; // 7 Tage
-type CacheEntry = { groups: Groups; center: { lat: number; lon: number }; ts: number };
+type CacheEntry = { groups: Groups; ts: number };
 const memCache = new Map<string, CacheEntry>();
 const inflight = new Map<string, Promise<CacheEntry | null>>();
 
-const cacheKey = (q: string) => `metours:surroundings:${q.toLowerCase()}`;
+const cacheKey = (q: string) => `metours:surroundings:v2:${q.toLowerCase()}`;
 
 const readCache = (q: string): CacheEntry | null => {
   const mem = memCache.get(q);
@@ -59,11 +42,17 @@ const formatDistance = (km: number) => {
   return `${km.toLocaleString("de-DE", { maximumFractionDigits: 1 })} km`;
 };
 
+const mapPois = (items: any[]): CuratedPoi[] =>
+  (items ?? []).map((p) => ({
+    name: p.name,
+    kind: p.kind,
+    distance: typeof p.distanceKm === "number" ? formatDistance(p.distanceKm) : "",
+  }));
+
 interface Props {
   destination: string;
   location?: string | null;
   country?: string | null;
-  /** Exakte Hotelposition aus der Datenbank – hat Vorrang vor der Textsuche */
   lat?: number | null;
   lon?: number | null;
   hotelName?: string | null;
@@ -80,25 +69,21 @@ const loadSurroundings = async (
   if (running) return running;
 
   const task = (async (): Promise<CacheEntry | null> => {
-    // Serverseitig laden (Overpass/Nominatim sind im Browser durch CORS/CSP blockiert)
     const { data, error } = await supabase.functions.invoke("tour-surroundings", {
       body: coords ? { lat: coords.lat, lon: coords.lon } : { query },
     });
     if (error || !data?.ok || !data?.groups) return null;
 
     const groups: Groups = {
-      attractions: data.groups.attractions ?? [],
-      food: data.groups.food ?? [],
-      nature: data.groups.nature ?? [],
-      transit: data.groups.transit ?? [],
-      airports: data.groups.airports ?? [],
+      attractions: mapPois(data.groups.attractions),
+      food: mapPois(data.groups.food),
+      nature: mapPois(data.groups.nature),
+      transit: mapPois(data.groups.transit),
+      airports: mapPois(data.groups.airports),
     };
-    const total =
-      groups.attractions.length + groups.food.length + groups.nature.length +
-      groups.transit.length + groups.airports.length;
+    const total = Object.values(groups).reduce((n, arr) => n + arr.length, 0);
 
-    const entry: CacheEntry = { groups, center: data.center ?? coords ?? { lat: 0, lon: 0 }, ts: Date.now() };
-    // Leere Ergebnisse nicht cachen – sonst bleibt die Umgebung tagelang leer
+    const entry: CacheEntry = { groups, ts: Date.now() };
     if (total > 0) writeCache(query, entry);
     return entry;
   })().finally(() => inflight.delete(query));
@@ -106,7 +91,6 @@ const loadSurroundings = async (
   inflight.set(query, task);
   return task;
 };
-
 
 const TourSurroundingsSection = ({
   destination,
@@ -119,7 +103,11 @@ const TourSurroundingsSection = ({
 }: Props) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [visible, setVisible] = useState(false);
-  const [mapOpen, setMapOpen] = useState(false);
+
+  const curated = useMemo(
+    () => findCuratedSurroundings(destination, location, country, hotelName, hotelAddress),
+    [destination, location, country, hotelName, hotelAddress]
+  );
 
   const coords = useMemo(
     () => (Number.isFinite(lat) && Number.isFinite(lon) ? { lat: lat as number, lon: lon as number } : null),
@@ -134,15 +122,14 @@ const TourSurroundingsSection = ({
     [coords, hotelAddress, location, destination, country]
   );
 
-  const cached = query ? readCache(query) : null;
-  const [loading, setLoading] = useState(!cached);
-  const [groups, setGroups] = useState<Groups>(cached?.groups ?? EMPTY);
-  const [center, setCenter] = useState<{ lat: number; lon: number } | null>(cached?.center ?? coords);
+  const cached = !curated && query ? readCache(query) : null;
+  const [loading, setLoading] = useState(!curated && !cached);
+  const [groups, setGroups] = useState<Groups>(curated ?? cached?.groups ?? EMPTY);
 
   // Erst laden, wenn der Abschnitt in Sichtweite kommt
   useEffect(() => {
     const el = containerRef.current;
-    if (!el || visible) return;
+    if (!el || visible || curated) return;
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {
@@ -154,14 +141,18 @@ const TourSurroundingsSection = ({
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [visible]);
+  }, [visible, curated]);
 
   useEffect(() => {
+    if (curated) {
+      setGroups(curated);
+      setLoading(false);
+      return;
+    }
     if (!query) return;
     const hit = readCache(query);
     if (hit) {
       setGroups(hit.groups);
-      setCenter(hit.center);
       setLoading(false);
       return;
     }
@@ -171,9 +162,7 @@ const TourSurroundingsSection = ({
     setLoading(true);
     loadSurroundings(query, coords)
       .then((entry) => {
-        if (cancelled) return;
-        setGroups(entry?.groups ?? EMPTY);
-        setCenter(entry?.center ?? coords);
+        if (!cancelled) setGroups(entry?.groups ?? EMPTY);
       })
       .catch(() => {
         if (!cancelled) setGroups(EMPTY);
@@ -185,28 +174,18 @@ const TourSurroundingsSection = ({
     return () => {
       cancelled = true;
     };
-  }, [query, visible, coords]);
+  }, [query, visible, coords, curated]);
 
-  const allPois = useMemo(
-    () =>
-      [...groups.attractions, ...groups.food, ...groups.nature, ...groups.transit, ...groups.airports]
-        .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lon))
-        .map((p) => ({ name: p.name, kind: p.kind, lat: p.lat as number, lon: p.lon as number })),
-    [groups]
-  );
+  const hasAny = Object.values(groups).reduce((n, arr) => n + arr.length, 0) > 0;
 
-  const hasAny =
-    groups.attractions.length + groups.food.length + groups.nature.length +
-    groups.transit.length + groups.airports.length > 0;
-
-  if (!loading && !hasAny && visible && !center) return <div ref={containerRef} className="hidden" />;
+  if (!loading && !hasAny) return <div ref={containerRef} className="hidden" />;
 
   const List = ({
     title,
     icon: Icon,
     items,
     showKind = true,
-  }: { title: string; icon: any; items: Poi[]; showKind?: boolean }) => {
+  }: { title: string; icon: any; items: CuratedPoi[]; showKind?: boolean }) => {
     if (items.length === 0) return null;
     return (
       <div className="mb-8">
@@ -216,12 +195,15 @@ const TourSurroundingsSection = ({
         </div>
         <ul className="space-y-2.5">
           {items.map((p, i) => (
-            <li key={`${p.name}-${i}`} className="flex items-baseline justify-between gap-4 text-sm">
+            <li
+              key={`${p.name}-${i}`}
+              className="flex items-baseline justify-between gap-4 text-sm border-b border-border/50 pb-2 last:border-0"
+            >
               <span className="text-foreground">
-                {showKind && <span className="text-muted-foreground">{p.kind} · </span>}
+                {showKind && p.kind && <span className="text-muted-foreground">{p.kind} · </span>}
                 {p.name}
               </span>
-              <span className="text-muted-foreground whitespace-nowrap">{formatDistance(p.distanceKm)}</span>
+              <span className="text-muted-foreground whitespace-nowrap">{p.distance}</span>
             </li>
           ))}
         </ul>
@@ -229,69 +211,25 @@ const TourSurroundingsSection = ({
     );
   };
 
-  const mapTitle = hotelName || hotelAddress || location || destination;
-
   return (
     <section
       ref={containerRef}
       id="umgebung"
       className="bg-card border border-border rounded-xl p-6 scroll-mt-36"
     >
-      <div className="flex flex-wrap items-start justify-between gap-4 mb-1">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">
-            {hotelName ? `Umgebung des Hotels` : "Umgebung"}
-          </h2>
-          {(hotelName || hotelAddress) && (
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {[hotelName, hotelAddress].filter(Boolean).join(" · ")}
-            </p>
-          )}
-        </div>
-        {center && (
-          <Button variant="outline" size="sm" onClick={() => setMapOpen(true)} className="gap-2">
-            <MapIcon className="w-4 h-4" /> Karte anzeigen
-          </Button>
+      <div className="mb-4">
+        <h2 className="text-2xl font-bold text-foreground">
+          {hotelName ? "Umgebung des Hotels" : "Was ist in der Umgebung?"}
+        </h2>
+        {(hotelName || hotelAddress) && (
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {[hotelName, hotelAddress].filter(Boolean).join(" · ")}
+          </p>
         )}
       </div>
-      {center && (
-        <div className="mt-4 mb-6 rounded-xl overflow-hidden border border-border">
-          <MapboxLocationMap
-            lat={center.lat}
-            lon={center.lon}
-            zoom={13}
-            label={mapTitle}
-            pois={allPois}
-            className="w-full h-[280px] md:h-[340px]"
-          />
-        </div>
-      )}
-
-      <Dialog open={mapOpen} onOpenChange={setMapOpen}>
-        <DialogContent className="max-w-5xl p-0 overflow-hidden">
-          <DialogHeader className="px-6 pt-5 pb-3">
-            <DialogTitle>{mapTitle} – Lage & Umgebung</DialogTitle>
-          </DialogHeader>
-          {center && mapOpen && (
-            <MapboxLocationMap
-              lat={center.lat}
-              lon={center.lon}
-              zoom={14}
-              label={mapTitle}
-              pois={allPois}
-              fitPois
-              scrollZoom
-              className="w-full h-[70vh]"
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-
-
-
 
       {loading ? (
-        <div className="mt-4 grid md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-4" aria-busy="true">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-4" aria-busy="true">
           {Array.from({ length: 3 }).map((_, col) => (
             <div key={col} className="space-y-3">
               <div className="h-5 w-40 rounded bg-muted animate-pulse" />
@@ -302,7 +240,7 @@ const TourSurroundingsSection = ({
           ))}
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-10 mt-4">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-10">
           <div>
             <List title="Top-Attraktionen" icon={FerrisWheel} items={groups.attractions} showKind={false} />
           </div>
@@ -318,7 +256,7 @@ const TourSurroundingsSection = ({
       )}
 
       <p className="text-xs text-muted-foreground mt-2">
-        Die kürzeste geschätzte Luftlinie wird angezeigt, die tatsächlichen Entfernungen können abweichen. Daten: OpenStreetMap.
+        Angegeben sind geschätzte Entfernungen (Luftlinie) – tatsächliche Wege können abweichen.
       </p>
     </section>
   );
