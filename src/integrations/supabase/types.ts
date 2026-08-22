@@ -5415,6 +5415,36 @@ export type Database = {
         }
         Relationships: []
       }
+      surroundings_cache: {
+        Row: {
+          cache_key: string
+          created_at: string
+          id: string
+          lat: number
+          lon: number
+          payload: Json
+          updated_at: string
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          id?: string
+          lat: number
+          lon: number
+          payload: Json
+          updated_at?: string
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          id?: string
+          lat?: number
+          lon?: number
+          payload?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       system_status: {
         Row: {
           error_message: string | null
