@@ -21,7 +21,7 @@ const CheckoutPage = lazy(() => import("./pages/CheckoutPage"));
 const ServicePage = lazy(() => import("./pages/ServicePage"));
 
 const BusreisenPage = lazy(() => import("./pages/BusreisenPage"));
-const PauschalreisenSoonPage = lazy(() => import("./pages/PauschalreisenSoonPage"));
+const ReisenPage = lazy(() => import("./pages/ReisenPage"));
 
 const BusinessServicesPage = lazy(() => import("./pages/BusinessServicesPage"));
 const BookingsPage = lazy(() => import("./pages/BookingsPage"));
@@ -191,8 +191,9 @@ const App = () => (
               <Route path="/search" element={<SearchPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/service" element={<ServicePage />} />
-              {/* Pauschalreisen: Buchung noch nicht offen – Info-/Teaser-Seite */}
-              <Route path="/reisen" element={<PauschalreisenSoonPage />} />
+              {/* Pauschalreisen-Katalog */}
+              <Route path="/reisen" element={<ReisenPage />} />
+
               <Route path="/pauschalreisen" element={<Navigate to="/reisen" replace />} />
 
               <Route path="/busreisen" element={<BusreisenPage />} />
