@@ -661,9 +661,9 @@ const AdminDashboard = () => {
               { l: "Buchungs-Engine", v: "betriebsbereit", ok: true },
               { l: "Zahlungs-Gateway (Stripe/PayPal)", v: "betriebsbereit", ok: true },
               { l: "E-Mail-Versand", v: "betriebsbereit", ok: true },
-              { l: "Live-Tracking GPS", v: "12/14 Busse senden", ok: true },
+              { l: "Live-Tracking GPS", v: `${counts.readyBuses}/${counts.totalBuses} Busse aktiv`, ok: counts.readyBuses > 0 },
               { l: "Wallboard Public", v: "online", ok: true },
-              { l: "TÜV Compliance", v: "1 Fahrzeug kritisch", ok: false },
+              { l: "TÜV Compliance", v: `${maintenance.filter((m) => m.status === "kritisch").length} Fahrzeuge kritisch`, ok: maintenance.every((m) => m.status !== "kritisch") },
             ].map((s) => (
               <div key={s.l} className="flex items-center justify-between border-b border-white/5 pb-1.5 last:border-0">
                 <span className="text-zinc-300">{s.l}</span>
@@ -683,9 +683,9 @@ const AdminDashboard = () => {
         <span className="flex items-center gap-2">
           <Timer className="h-3 w-3" /> Letzter Sync {format(lastUpdate, "HH:mm:ss")}
           <span className="text-zinc-700">·</span>
-          <Fuel className="h-3 w-3" /> Ø Verbrauch Flotte 27,3 l/100km
+          <Fuel className="h-3 w-3" /> {counts.totalBuses} Fahrzeuge im Bestand
           <span className="text-zinc-700">·</span>
-          <Star className="h-3 w-3" /> 4.8 ★ (1.842 Bewertungen)
+          <Star className="h-3 w-3" /> {loading ? "lädt Live-Daten…" : "Live-Daten"}
         </span>
       </div>
     </AdminLayout>
