@@ -90,6 +90,24 @@ const PackageTourDetailPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [consent, setConsent] = useState(false);
   const [inquiryNumber, setInquiryNumber] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState<number | null>(null);
+  const [geo, setGeo] = useState<{ lat: number; lon: number; label: string } | null>(null);
+
+  const geoQuery = dbTour ? `${dbTour.location || ""} ${dbTour.destination || ""}`.trim() : "";
+
+  useEffect(() => {
+    if (!geoQuery) return;
+    let active = true;
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(geoQuery)}`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((rows) => {
+        if (!active || !Array.isArray(rows) || rows.length === 0) return;
+        setGeo({ lat: parseFloat(rows[0].lat), lon: parseFloat(rows[0].lon), label: rows[0].display_name });
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, [geoQuery]);
+
 
   const getImageSrc = (tour: PackageTour) => {
     const url = tour.hero_image_url || tour.image_url;
