@@ -23,6 +23,7 @@ import TourInclusionsSection from "./TourInclusionsSection";
 import TourRoutesSection from "./TourRoutesSection";
 import TourInfoSection from "./TourInfoSection";
 import TourLegalSection from "./TourLegalSection";
+import TourSurroundingsSection from "./TourSurroundingsSection";
 
 import {
   TourTariff, TourDate, TourRoute, TourInclusion, TourLegal, TourLuggageAddon, ExtendedPackageTour
@@ -262,7 +263,14 @@ const TourDetailPage = () => {
                 <TourLegalSection legalSections={tourData.legalSections} tariffs={tourData.tariffs} />
               )}
 
-              {/* FAQ */}
+              {/* Umgebung */}
+              <TourSurroundingsSection
+                destination={tourData.tour.destination}
+                location={(tourData.tour as any).location}
+                country={(tourData.tour as any).country}
+              />
+
+
               <section className="scroll-mt-36">
                 <h2 className="text-xl font-bold text-foreground mb-4">Häufige Fragen</h2>
                 <Accordion type="single" collapsible className="space-y-2">
