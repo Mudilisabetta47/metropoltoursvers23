@@ -14,7 +14,7 @@ const Footer = () => {
     reisen: [
       { name: "Busreisen", path: "/busreisen" },
       { name: "Wochenendtrips", path: "/wochenendtrips" },
-      { name: "Pauschalreisen (bald)", path: "/reisen" },
+      { name: "Pauschalreisen", path: "/reisen" },
 
       { name: "Linienfahrten", path: "/search" },
       { name: "Gruppenreisen", path: "/gruppenreisen" },
