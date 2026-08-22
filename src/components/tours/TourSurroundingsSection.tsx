@@ -83,12 +83,14 @@ out center;`;
         const endpoints = [
           "https://overpass-api.de/api/interpreter",
           "https://overpass.kumi.systems/api/interpreter",
+          "https://overpass.osm.ch/api/interpreter",
+          "https://overpass.private.coffee/api/interpreter",
         ];
         let op: any = null;
         for (const url of endpoints) {
           try {
             const ctrl = new AbortController();
-            const timer = setTimeout(() => ctrl.abort(), 40000);
+            const timer = setTimeout(() => ctrl.abort(), 20000);
             const res = await fetch(url, { method: "POST", body: overpass, signal: ctrl.signal });
             clearTimeout(timer);
             if (!res.ok) continue;
