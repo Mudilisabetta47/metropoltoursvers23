@@ -144,11 +144,23 @@ out center;`;
         const sortTrim = (arr: Poi[], n: number) =>
           arr.sort((a, b) => a.distanceKm - b.distanceKm).slice(0, n);
 
+        const rank: Record<string, number> = { Museum: 0, Attraktion: 0, Aussichtspunkt: 1, Sehenswürdigkeit: 2 };
+        const attractions = next.attractions
+          .sort((a, b) => (rank[a.kind] ?? 3) - (rank[b.kind] ?? 3) || a.distanceKm - b.distanceKm)
+          .slice(0, 10)
+          .sort((a, b) => a.distanceKm - b.distanceKm);
+
+        const transit = [
+          ...sortTrim(next.transit.filter((t) => t.kind === "Bahnhof"), 3),
+          ...sortTrim(next.transit.filter((t) => t.kind !== "Bahnhof"), 3),
+        ];
+
         setGroups({
-          attractions: sortTrim(next.attractions, 10),
+          attractions,
           food: sortTrim(next.food, 6),
           nature: sortTrim(next.nature, 5),
-          transit: sortTrim(next.transit, 6),
+          transit,
+
           airports: sortTrim(next.airports, 3),
         });
       } catch {
