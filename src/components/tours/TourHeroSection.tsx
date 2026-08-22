@@ -74,20 +74,8 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
     return () => { cancelled = true; };
   }, [mapOpen, coords, queryString, tour.destination, tour.location, tour.country]);
 
-  // Map-URL: bei bekannten Koordinaten präzise bbox + Marker, sonst Freitextsuche-Fallback
-  const osmEmbedUrl = (() => {
-    if (coords) {
-      const marker = `&marker=${coords.lat}%2C${coords.lon}`;
-      if (coords.bbox) {
-        const [w, s, e, n] = coords.bbox;
-        return `https://www.openstreetmap.org/export/embed.html?bbox=${w}%2C${s}%2C${e}%2C${n}&layer=mapnik${marker}`;
-      }
-      // Fallback: ~0.05° Box um den Punkt (≈ Stadtzoom)
-      const d = 0.04;
-      return `https://www.openstreetmap.org/export/embed.html?bbox=${coords.lon - d}%2C${coords.lat - d}%2C${coords.lon + d}%2C${coords.lat + d}&layer=mapnik${marker}`;
-    }
-    return `https://www.openstreetmap.org/export/embed.html?layer=mapnik&search=${mapQuery}`;
-  })();
+  void geocoding;
+
 
   // Build gallery from available images
   const allImages: string[] = [];
