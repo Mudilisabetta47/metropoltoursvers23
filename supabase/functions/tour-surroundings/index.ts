@@ -79,10 +79,12 @@ out center;`;
           },
           body: `data=${encodeURIComponent(overpass)}`,
         }, 25000);
-        if (!res.ok) continue;
+        if (!res.ok) { console.log("mirror fail", url, res.status); continue; }
         const json = await res.json().catch(() => null);
+        console.log("mirror ok", url, Array.isArray(json?.elements) ? json.elements.length : "no-elements");
         if (Array.isArray(json?.elements) && json.elements.length > 0) { op = json; break; }
-      } catch (_) { /* nächster Mirror */ }
+      } catch (e) { console.log("mirror error", url, String(e)); }
+
     }
 
 
