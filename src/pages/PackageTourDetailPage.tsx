@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import ConsentCheckbox from "@/components/common/ConsentCheckbox";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { 
   MapPin, Calendar, Users, Star, Check, 
-  ChevronLeft, Phone, Mail, ArrowRight, X,
-  Palmtree, Hotel, Bus, Camera, Ticket, CircleArrowRight, CircleArrowLeft, Loader2
+  ChevronLeft, ChevronRight, Clock, Phone, Mail, ArrowRight, X,
+  Palmtree, Hotel, Bus, Camera, Ticket, CircleArrowRight, CircleArrowLeft, Loader2,
+  Wifi, Plug, Armchair
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
