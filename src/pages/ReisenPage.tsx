@@ -41,6 +41,7 @@ import tourNordmazedonien from "@/assets/tour-nordmazedonien.jpg";
 import tourAlbanien from "@/assets/tour-albanien.jpg";
 import tourKosovo from "@/assets/tour-kosovo.jpg";
 import AiBadge from "@/components/common/AiBadge";
+import TravelSearchBar from "@/components/reisen/TravelSearchBar";
 
 const imageMap: Record<string, string> = {
   '/tour-croatia.jpg': tourCroatia,
@@ -173,6 +174,23 @@ const ReisenPage = () => {
       .slice(0, 8)
       .map(t => ({ id: t.id, slug: t.slug, label: t.destination, sub: `${t.country} · ${t.duration_days} Tage` }));
   }, [tours, searchQuery]);
+
+  const searchTours = useMemo(
+    () =>
+      tours
+        .filter(t => !t.departure_date || new Date(t.departure_date).getTime() >= new Date().setHours(0, 0, 0, 0))
+        .map(t => ({
+          id: t.id,
+          slug: t.slug,
+          destination: t.destination,
+          country: t.country,
+          duration_days: t.duration_days,
+          price_from: t.price_from,
+          departure_date: t.departure_date,
+          image: getImageSrc(t.image_url, (t as any).hero_image_url, t.destination),
+        })),
+    [tours]
+  );
 
   const maxPrice = useMemo(() => {
     if (tours.length === 0) return 1000;
