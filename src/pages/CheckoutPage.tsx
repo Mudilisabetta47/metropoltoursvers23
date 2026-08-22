@@ -319,6 +319,10 @@ const CheckoutPage = () => {
   };
 
   const processBooking = async () => {
+    if (!user) {
+      toast.error("Bitte melden Sie sich an, um die Buchung abzuschließen.");
+      return;
+    }
     setIsProcessing(true);
     const sessionId = getSessionId();
     const generatedNumbers: string[] = [];
@@ -327,7 +331,7 @@ const CheckoutPage = () => {
     try {
       for (let i = 0; i < passengerInfo.length; i++) {
         const passenger = passengerInfo[i];
-        
+
         // Generate ticket number
         const { data: ticketNumber, error: ticketError } = await supabase
           .rpc('generate_ticket_number');
@@ -346,7 +350,7 @@ const CheckoutPage = () => {
           .from('bookings')
           .insert({
             ticket_number: ticketNumber,
-            user_id: user?.id || null,
+            user_id: user.id,
             trip_id: trip!.id,
             origin_stop_id: originStop!.id,
             destination_stop_id: destinationStop!.id,
@@ -356,7 +360,8 @@ const CheckoutPage = () => {
             passenger_email: passenger.email,
             passenger_phone: passenger.phone || null,
             price_paid: price + extras.filter(e => e.selected).reduce((sum, e) => sum + e.price, 0),
-            status: 'confirmed',
+            status: 'pending',
+            payment_status: 'unpaid',
             payment_method: paymentMethod,
 
             luggage: [
@@ -375,8 +380,27 @@ const CheckoutPage = () => {
 
         generatedNumbers.push(ticketNumber);
         generatedIds.push(bookingData.id);
+      }
 
-        // Delete the seat hold
+      setBookingNumbers(generatedNumbers);
+      setBookingIds(generatedIds);
+      sessionStorage.setItem('mt_pending_bookings', JSON.stringify(generatedNumbers));
+
+      // Start the real payment – booking is only confirmed after Stripe reports success
+      const { data: payData, error: payError } = await supabase.functions.invoke('create-bus-payment', {
+        body: {
+          bookingIds: generatedIds,
+          method: paymentMethod,
+          returnPath: `${window.location.pathname}${window.location.search}`,
+        },
+      });
+
+      if (payError || !payData?.url) {
+        throw new Error(payError?.message || 'Zahlung konnte nicht gestartet werden');
+      }
+
+      // Release the seat holds only once the payment session exists
+      for (const passenger of passengerInfo) {
         await supabase
           .from('seat_holds')
           .delete()
@@ -385,22 +409,7 @@ const CheckoutPage = () => {
           .eq('session_id', sessionId);
       }
 
-      setBookingNumbers(generatedNumbers);
-      setBookingIds(generatedIds);
-
-      // Send confirmation emails for each booking
-      for (const bookingId of generatedIds) {
-        try {
-          await supabase.functions.invoke('send-booking-confirmation', {
-            body: { bookingId },
-          });
-        } catch (emailError) {
-          console.error("Error sending confirmation email:", emailError);
-        }
-      }
-
-      setCurrentStep("confirmation");
-      toast.success("Buchung erfolgreich abgeschlossen!");
+      window.location.href = payData.url as string;
     } catch (error) {
       console.error('Error creating booking:', error);
       toast.error('Fehler bei der Buchung. Bitte versuchen Sie es erneut.');
@@ -408,6 +417,7 @@ const CheckoutPage = () => {
       setIsProcessing(false);
     }
   };
+
 
   const handlePrevStep = () => {
     if (currentStep === "details") setCurrentStep("seats");
