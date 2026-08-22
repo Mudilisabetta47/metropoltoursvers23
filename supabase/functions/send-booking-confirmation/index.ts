@@ -95,10 +95,7 @@ const BUS_GIF = "https://media.giphy.com/media/3o7btNa0RUYa5E7iiQ/giphy.gif";
 const TRAVEL_GIF = "https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif";
 
 // Inline SVG Logo as base64 data URI for email compatibility
-const LOGO_BASE64 = (() => {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 48" width="240" height="48"><rect x="0" y="4" width="40" height="40" rx="10" fill="#00CC36"/><path d="M10 18h20v12a4 4 0 01-4 4H14a4 4 0 01-4-4V18z" fill="none" stroke="white" stroke-width="2"/><rect x="12" y="20" width="7" height="6" rx="1" fill="white" opacity="0.9"/><rect x="21" y="20" width="7" height="6" rx="1" fill="white" opacity="0.9"/><circle cx="15" cy="35" r="2.5" fill="white"/><circle cx="25" cy="35" r="2.5" fill="white"/><line x1="10" y1="15" x2="30" y2="15" stroke="white" stroke-width="2" stroke-linecap="round"/><text x="50" y="22" font-family="Arial,sans-serif" font-size="18" font-weight="800" fill="white" letter-spacing="1">METROPOL</text><text x="164" y="22" font-family="Arial,sans-serif" font-size="18" font-weight="800" fill="#00CC36" letter-spacing="1">TOURS</text><text x="50" y="38" font-family="Arial,sans-serif" font-size="9" fill="white" opacity="0.7" letter-spacing="2">REISEN VERBINDET</text></svg>`;
-  return `data:image/svg+xml;base64,${btoa(svg)}`;
-})();
+const LOGO_BASE64 = "https://www.metours.de/__l5e/assets-v1/b3795491-7fcc-4d33-9886-c04b2cb7be83/metropol-logo-light.png";
 
 function buildCustomerEmailHtml(booking: any, tour: any, date: any, tariff: any, pickup: any): string {
   const safeFirst = escapeHtml(booking.contact_first_name);

@@ -1,3 +1,4 @@
+import { LogoLight } from "@/components/brand/Logo";
 import { ReactNode, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -356,16 +357,10 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
 
             {/* Brand pill */}
             <div className="flex items-center gap-2 pl-4 pr-5 h-full border-r border-white/[0.06]">
-              <div className="w-7 h-7 rounded-md bg-[#00CC36] flex items-center justify-center shadow-[0_0_18px_-4px_rgba(0,204,54,0.7)]">
-                <Bus className="w-4 h-4 text-black" strokeWidth={2.5} />
-              </div>
-              <div className="leading-none">
-                <div className="text-[13px] font-bold text-white tracking-tight">
-                  METROPOL<span className="text-[#00CC36]">•</span>TOURS
-                </div>
-                <div className="text-[9px] uppercase tracking-[0.18em] text-zinc-500 mt-0.5">Cockpit</div>
-              </div>
+              <LogoLight size="sm" className="h-6" />
+              <div className="text-[9px] uppercase tracking-[0.18em] text-zinc-500">Cockpit</div>
             </div>
+
 
             {/* Context selectors — real dropdowns */}
             <div className="hidden md:flex items-stretch h-full">

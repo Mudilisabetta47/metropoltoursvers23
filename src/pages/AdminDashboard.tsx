@@ -27,60 +27,17 @@ const eur = (n: number) =>
 
 const num = (n: number) => new Intl.NumberFormat("de-DE").format(n);
 
-// ----- Demo data (fallback so the cockpit always feels alive) -----
+// ----- Live data types (no demo data – everything comes from the backend) -----
 const now = new Date();
-const demoDepartures = [
-  { time: addMinutes(now, 35),  route: "Hannover → Amsterdam",        bus: "ME-RB 4521", driver: "Krüger, M.",  pax: 47, cap: 49, status: "boarding" },
-  { time: addMinutes(now, 120), route: "Hamburg → Prag",              bus: "ME-RB 4108", driver: "Yilmaz, A.",  pax: 38, cap: 49, status: "scheduled" },
-  { time: addMinutes(now, 210), route: "Berlin → Wien (Nachtfahrt)",  bus: "ME-RB 5070", driver: "Schulz, T.",  pax: 49, cap: 49, status: "full" },
-  { time: addMinutes(now, 360), route: "Hannover → Paris",            bus: "ME-RB 3309", driver: "Bauer, L.",   pax: 22, cap: 49, status: "scheduled" },
-  { time: addMinutes(now, 480), route: "Bremen → Kopenhagen",         bus: "ME-RB 2204", driver: "Demir, S.",   pax: 31, cap: 49, status: "scheduled" },
-];
 
-const demoBookings = [
-  { id: "TKT-2026-004921", customer: "Familie Petrov",   route: "Hannover → Amsterdam",   pax: 4, price: 312.00, status: "pending"   },
-  { id: "TKT-2026-004919", customer: "Yıldız, Selma",    route: "Hamburg → Prag",          pax: 2, price: 178.00, status: "confirmed" },
-  { id: "TKT-2026-004917", customer: "Schreiber GmbH",   route: "Charter · Goslar–Berlin", pax: 47, price: 3490.00, status: "pending" },
-  { id: "TKT-2026-004914", customer: "Becker, Lena",      route: "Berlin → Wien",          pax: 1, price: 119.00, status: "paid"      },
-  { id: "TKT-2026-004908", customer: "Reisegruppe Rentnerbund Celle", route: "Tagestour · Norderney", pax: 38, price: 2280.00, status: "confirmed" },
-  { id: "TKT-2026-004901", customer: "Aydın, Murat",      route: "Hannover → Istanbul",   pax: 3, price: 645.00, status: "pending"   },
-];
+type DepartureRow = { id: string; time: Date; route: string; bus: string; driver: string; pax: number; cap: number; status: string };
+type BookingRow = { id: string; key: string; customer: string; route: string; pax: number; price: number; status: string };
+type InquiryRow = { id: string; customer: string; subject: string; date: Date | null; pax: number; prio: string; source: string };
+type MaintenanceRow = { bus: string; typ: string; faellig: Date; km: number; status: string };
+type InvoiceRow = { id: string; kunde: string; betrag: number; faellig: Date | null; status: string };
+type DriverRow = { name: string; status: string; tour: string; lenkzeit: number; max: number };
+type IncidentRow = { id: string; typ: string; bus: string; ort: string; prio: string };
 
-const demoInquiries = [
-  { id: "INQ-2026-009212", customer: "VfL Lerchenberg e.V.", subject: "Vereinsfahrt EM-Spiel",       date: addDays(now, 12), pax: 53, prio: "hoch", source: "Webformular" },
-  { id: "INQ-2026-009208", customer: "Stadt Hildesheim",     subject: "Klassenfahrt Stufe 9",        date: addDays(now, 21), pax: 84, prio: "mittel", source: "Telefon" },
-  { id: "INQ-2026-009201", customer: "Müller Touristik",     subject: "Subcharter Mailand",          date: addDays(now, 4),  pax: 49, prio: "hoch", source: "E-Mail" },
-  { id: "INQ-2026-009197", customer: "Hochzeit Yilmaz/Kaya", subject: "Gäste-Shuttle Hannover",      date: addDays(now, 31), pax: 65, prio: "niedrig", source: "Webformular" },
-];
-
-const demoMaintenance = [
-  { bus: "ME-RB 4108", typ: "TÜV / HU",       fällig: addDays(now, 3),   km: 487_200, status: "kritisch" },
-  { bus: "ME-RB 2204", typ: "Inspektion 80k", fällig: addDays(now, 9),   km: 798_540, status: "warnung"  },
-  { bus: "ME-RB 5070", typ: "UVV Prüfung",    fällig: addDays(now, 14),  km: 122_310, status: "warnung"  },
-  { bus: "ME-RB 3309", typ: "Klimaanlage",    fällig: addDays(now, 21),  km: 612_080, status: "planbar"  },
-];
-
-const demoInvoices = [
-  { id: "RE-2026-0184", kunde: "Stadt Wolfsburg",       betrag: 4860, fällig: addDays(now, -3), status: "überfällig" },
-  { id: "RE-2026-0181", kunde: "BSG Continental",       betrag: 1290, fällig: addDays(now,  2), status: "offen" },
-  { id: "RE-2026-0179", kunde: "Reisebüro Sonnental",   betrag:  720, fällig: addDays(now,  6), status: "offen" },
-  { id: "RE-2026-0172", kunde: "TUI Deutschland GmbH",  betrag: 8930, fällig: addDays(now, 11), status: "offen" },
-];
-
-const demoDrivers = [
-  { name: "Krüger, M.",  status: "im Einsatz",  tour: "→ Amsterdam",    lenkzeit: 3.2, max: 9 },
-  { name: "Yilmaz, A.",  status: "Pause",       tour: "Vorbereitung",   lenkzeit: 1.0, max: 9 },
-  { name: "Schulz, T.",  status: "im Einsatz",  tour: "→ Wien",         lenkzeit: 6.4, max: 9 },
-  { name: "Bauer, L.",   status: "verfügbar",   tour: "—",              lenkzeit: 0.0, max: 9 },
-  { name: "Demir, S.",   status: "Schichtende", tour: "↩ Kopenhagen",   lenkzeit: 8.7, max: 9 },
-  { name: "Petersen, J.",status: "krank",       tour: "—",              lenkzeit: 0.0, max: 9 },
-];
-
-const demoIncidents = [
-  { id: "VOR-3091", typ: "Verspätung 45 min", bus: "ME-RB 4108", ort: "A2 Stau Bielefeld",   prio: "mittel" },
-  { id: "VOR-3088", typ: "Klimaanlage defekt", bus: "ME-RB 2204", ort: "Werkstatt Lehrte",   prio: "hoch"   },
-  { id: "VOR-3084", typ: "Kundenbeschwerde",   bus: "ME-RB 3309", ort: "Buchung TKT-…4791",  prio: "niedrig"},
-];
 
 // status -> chip class
 const chip: Record<string, string> = {
@@ -117,53 +74,196 @@ const AdminDashboard = () => {
   const [period, setPeriod] = useState("month");
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [counts, setCounts] = useState({
-    bookingsToday: 23, revenueMonth: 184_320, openInquiries: 14,
-    activeTrips: 7, readyBuses: 11, totalBuses: 14, openPayments: 9,
-    openPaymentsAmount: 18_640, complaints: 3, nextDepartures: demoDepartures.length,
+    bookingsToday: 0, revenueMonth: 0, openInquiries: 0,
+    activeTrips: 0, readyBuses: 0, totalBuses: 0, openPayments: 0,
+    openPaymentsAmount: 0, complaints: 0, nextDepartures: 0,
   });
+  const [departures, setDepartures] = useState<DepartureRow[]>([]);
+  const [recentBookings, setRecentBookings] = useState<BookingRow[]>([]);
+  const [inquiries, setInquiries] = useState<InquiryRow[]>([]);
+  const [maintenance, setMaintenance] = useState<MaintenanceRow[]>([]);
+  const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
+  const [drivers, setDrivers] = useState<DriverRow[]>([]);
+  const [incidents, setIncidents] = useState<IncidentRow[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // attempt to fetch real numbers, fall back to demo
-  useEffect(() => {
-    (async () => {
-      try {
-        const today = new Date(); today.setHours(0, 0, 0, 0);
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-        const [b, inq, comp, buses] = await Promise.all([
-          supabase.from("bookings").select("id, price_paid, created_at, status", { count: "exact" })
-            .gte("created_at", today.toISOString()),
-          supabase.from("package_tour_inquiries").select("id", { count: "exact", head: true })
-            .eq("status", "new"),
-          supabase.from("complaints").select("id", { count: "exact", head: true })
-            .in("status", ["open", "in_progress"]),
-          supabase.from("buses").select("id, status"),
-        ]);
-        const revRows = await supabase.from("bookings").select("price_paid")
-          .gte("created_at", monthStart.toISOString()).in("status", ["confirmed", "completed"]);
-        const rev = (revRows.data ?? []).reduce((s, r: any) => s + Number(r.price_paid || 0), 0);
+  const loadLiveData = useMemo(() => async () => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const in24h = new Date(Date.now() + 24 * 3600 * 1000);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-        setCounts((c) => ({
-          ...c,
-          bookingsToday: b.count ?? c.bookingsToday,
-          openInquiries: inq.count ?? c.openInquiries,
-          complaints: comp.count ?? c.complaints,
-          totalBuses: buses.data?.length ?? c.totalBuses,
-          readyBuses: (buses.data ?? []).filter((x: any) => x.status === "active").length || c.readyBuses,
-          revenueMonth: rev || c.revenueMonth,
-        }));
-      } catch { /* keep demo */ }
-    })();
+    const [
+      lineBookings, tourBookings, inqRes, compRes, busesRes,
+      tripsRes, maintRes, invRes, incRes, driverRes,
+    ] = await Promise.all([
+      supabase.from("bookings")
+        .select("id, ticket_number, booking_number, passenger_first_name, passenger_last_name, price_paid, status, created_at, trip_id")
+        .order("created_at", { ascending: false }).limit(30),
+      supabase.from("tour_bookings")
+        .select("id, booking_number, contact_first_name, contact_last_name, participants, total_price, status, created_at, tour_id, package_tours(destination, title)")
+        .order("created_at", { ascending: false }).limit(30),
+      supabase.from("package_tour_inquiries")
+        .select("id, inquiry_number, first_name, last_name, destination, participants, departure_date, status, created_at")
+        .order("created_at", { ascending: false }).limit(8),
+      supabase.from("complaints").select("id", { count: "exact", head: true }).in("status", ["open", "in_progress"]),
+      supabase.from("buses").select("id, status, license_plate"),
+      supabase.from("line_trips")
+        .select("id, planned_departure, status, delay_minutes, bus_id, driver_id, bus_lines(name), buses(license_plate, total_seats)")
+        .gte("planned_departure", today.toISOString())
+        .lte("planned_departure", in24h.toISOString())
+        .order("planned_departure", { ascending: true }).limit(8),
+      supabase.from("fleet_maintenance")
+        .select("id, current_km, tuev_date, uvv_date, next_inspection_date, buses(license_plate)")
+        .order("tuev_date", { ascending: true }).limit(6),
+      supabase.from("tour_invoices")
+        .select("id, invoice_number, amount, status, issued_at, tour_bookings(contact_first_name, contact_last_name)")
+        .neq("status", "paid").order("issued_at", { ascending: true }).limit(6),
+      supabase.from("incidents")
+        .select("id, title, type, severity, status, description, created_at")
+        .neq("status", "resolved").order("created_at", { ascending: false }).limit(6),
+      supabase.from("driver_status").select("user_id, status, note, updated_at").limit(10),
+    ]);
+
+    // --- KPIs ---
+    const lb = lineBookings.data ?? [];
+    const tb = tourBookings.data ?? [];
+    const bookingsToday =
+      lb.filter((b: any) => new Date(b.created_at) >= today).length +
+      tb.filter((b: any) => new Date(b.created_at) >= today).length;
+    const revenueMonth =
+      lb.filter((b: any) => new Date(b.created_at) >= monthStart && ["confirmed", "completed"].includes(b.status))
+        .reduce((s: number, b: any) => s + Number(b.price_paid || 0), 0) +
+      tb.filter((b: any) => new Date(b.created_at) >= monthStart && ["confirmed", "paid", "completed"].includes(b.status))
+        .reduce((s: number, b: any) => s + Number(b.total_price || 0), 0);
+    const openInvoices = invRes.data ?? [];
+
+    setCounts({
+      bookingsToday,
+      revenueMonth,
+      openInquiries: (inqRes.data ?? []).filter((q: any) => ["new", "open"].includes(q.status)).length,
+      activeTrips: (tripsRes.data ?? []).filter((t: any) => ["running", "delayed", "boarding"].includes(t.status)).length,
+      readyBuses: (busesRes.data ?? []).filter((b: any) => b.status === "active").length,
+      totalBuses: busesRes.data?.length ?? 0,
+      openPayments: openInvoices.length,
+      openPaymentsAmount: openInvoices.reduce((s: number, i: any) => s + Number(i.amount || 0), 0),
+      complaints: compRes.count ?? 0,
+      nextDepartures: (tripsRes.data ?? []).length,
+    });
+
+    // --- Lists ---
+    setDepartures((tripsRes.data ?? []).map((t: any) => ({
+      id: t.id,
+      time: new Date(t.planned_departure),
+      route: t.bus_lines?.name ?? "Linienfahrt",
+      bus: t.buses?.license_plate ?? "—",
+      driver: t.driver_id ? "zugewiesen" : "offen",
+      pax: 0,
+      cap: t.buses?.total_seats ?? 0,
+      status: t.status === "delayed" ? "scheduled" : (t.status ?? "scheduled"),
+    })));
+
+    const merged: BookingRow[] = [
+      ...lb.map((b: any) => ({
+        key: `l-${b.id}`,
+        id: b.ticket_number || b.booking_number || "—",
+        customer: `${b.passenger_last_name ?? ""}, ${b.passenger_first_name ?? ""}`.replace(/^, |, $/, "") || "—",
+        route: "Linienfahrt",
+        pax: 1,
+        price: Number(b.price_paid || 0),
+        status: b.status,
+      })),
+      ...tb.map((b: any) => ({
+        key: `t-${b.id}`,
+        id: b.booking_number || "—",
+        customer: `${b.contact_last_name ?? ""}, ${b.contact_first_name ?? ""}`.replace(/^, |, $/, "") || "—",
+        route: b.package_tours?.destination || b.package_tours?.title || "Pauschalreise",
+        pax: Number(b.participants || 1),
+        price: Number(b.total_price || 0),
+        status: b.status,
+      })),
+    ].slice(0, 8);
+    setRecentBookings(merged);
+
+    setInquiries((inqRes.data ?? []).map((q: any) => ({
+      id: q.id,
+      customer: `${q.last_name ?? ""}, ${q.first_name ?? ""}`.replace(/^, |, $/, "") || "—",
+      subject: q.destination || q.inquiry_number,
+      date: q.departure_date ? new Date(q.departure_date) : null,
+      pax: Number(q.participants || 0),
+      prio: Number(q.participants || 0) >= 40 ? "hoch" : Number(q.participants || 0) >= 15 ? "mittel" : "niedrig",
+      source: q.status === "new" ? "Neu" : q.status,
+    })));
+
+    setMaintenance((maintRes.data ?? []).map((m: any) => {
+      const due = m.tuev_date ? new Date(m.tuev_date) : m.next_inspection_date ? new Date(m.next_inspection_date) : new Date();
+      const days = Math.round((+due - Date.now()) / 86400000);
+      return {
+        bus: m.buses?.license_plate ?? "—",
+        typ: m.tuev_date ? "TÜV / HU" : "Inspektion",
+        faellig: due,
+        km: Number(m.current_km || 0),
+        status: days < 7 ? "kritisch" : days < 30 ? "warnung" : "planbar",
+      };
+    }));
+
+    setInvoices(openInvoices.map((i: any) => ({
+      id: i.invoice_number,
+      kunde: `${i.tour_bookings?.contact_last_name ?? ""}, ${i.tour_bookings?.contact_first_name ?? ""}`.replace(/^, |, $/, "") || "—",
+      betrag: Number(i.amount || 0),
+      faellig: i.issued_at ? new Date(i.issued_at) : null,
+      status: i.status === "overdue" ? "überfällig" : "offen",
+    })));
+
+    setIncidents((incRes.data ?? []).map((i: any) => ({
+      id: i.id.slice(0, 8).toUpperCase(),
+      typ: i.title || i.type,
+      bus: i.type ?? "—",
+      ort: i.description?.slice(0, 40) ?? "—",
+      prio: i.severity === "critical" || i.severity === "high" ? "hoch" : i.severity === "medium" ? "mittel" : "niedrig",
+    })));
+
+    const driverIds = (driverRes.data ?? []).map((d: any) => d.user_id);
+    let names: Record<string, string> = {};
+    if (driverIds.length) {
+      const { data: profs } = await supabase.from("profiles").select("user_id, first_name, last_name").in("user_id", driverIds);
+      names = Object.fromEntries((profs ?? []).map((p: any) => [p.user_id, `${p.last_name ?? ""}, ${p.first_name ?? ""}`.replace(/^, |, $/, "")]));
+    }
+    setDrivers((driverRes.data ?? []).map((d: any) => ({
+      name: names[d.user_id] || "Fahrer",
+      status: d.status ?? "unbekannt",
+      tour: d.note ?? "—",
+      lenkzeit: 0,
+      max: 9,
+    })));
+
+    setLastUpdate(new Date());
+    setLoading(false);
   }, []);
 
+  useEffect(() => {
+    loadLiveData().catch(() => setLoading(false));
+    // Live: neue Buchungen sofort erkennen
+    const channel = supabase
+      .channel("cockpit-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => loadLiveData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "tour_bookings" }, () => loadLiveData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "package_tour_inquiries" }, () => loadLiveData())
+      .subscribe();
+    const iv = setInterval(() => loadLiveData().catch(() => {}), 60_000);
+    return () => { supabase.removeChannel(channel); clearInterval(iv); };
+  }, [loadLiveData]);
+
   const kpis: Kpi[] = useMemo(() => [
-    { label: "Buchungen heute",   value: num(counts.bookingsToday), delta: +12, icon: Receipt,  accent: "from-emerald-500/20 to-emerald-500/0", onClick: () => navigate("/admin/bookings") },
-    { label: "Umsatz Monat",      value: eur(counts.revenueMonth),  delta: +8,  icon: TrendingUp, accent: "from-sky-500/20 to-sky-500/0",         onClick: () => navigate("/admin/finances") },
-    { label: "Offene Anfragen",   value: num(counts.openInquiries), sub: "5 priorisiert", icon: Mail, accent: "from-amber-500/20 to-amber-500/0", onClick: () => navigate("/admin/inquiries") },
+    { label: "Buchungen heute",   value: num(counts.bookingsToday), icon: Receipt,  accent: "from-emerald-500/20 to-emerald-500/0", onClick: () => navigate("/admin/bookings") },
+    { label: "Umsatz Monat",      value: eur(counts.revenueMonth),  icon: TrendingUp, accent: "from-sky-500/20 to-sky-500/0",         onClick: () => navigate("/admin/finances") },
+    { label: "Offene Anfragen",   value: num(counts.openInquiries), icon: Mail, accent: "from-amber-500/20 to-amber-500/0", onClick: () => navigate("/admin/inquiries") },
     { label: "Aktive Fahrten",    value: num(counts.activeTrips),   sub: "live",          icon: Activity, accent: "from-emerald-500/20 to-emerald-500/0", onClick: () => navigate("/admin/dispatch") },
-    { label: "Einsatzbereite Busse", value: `${counts.readyBuses}/${counts.totalBuses}`, sub: "3 in Werkstatt", icon: Bus, accent: "from-sky-500/20 to-sky-500/0", onClick: () => navigate("/admin/buses") },
+    { label: "Einsatzbereite Busse", value: `${counts.readyBuses}/${counts.totalBuses}`, icon: Bus, accent: "from-sky-500/20 to-sky-500/0", onClick: () => navigate("/admin/buses") },
     { label: "Offene Zahlungen",  value: eur(counts.openPaymentsAmount), sub: `${counts.openPayments} Rechnungen`, icon: Euro, accent: "from-amber-500/20 to-amber-500/0", onClick: () => navigate("/admin/finances") },
-    { label: "Reklamationen",     value: num(counts.complaints),    sub: "1 eskaliert",   icon: AlertTriangle, accent: "from-red-500/20 to-red-500/0", onClick: () => navigate("/admin/complaints") },
+    { label: "Reklamationen",     value: num(counts.complaints),    icon: AlertTriangle, accent: "from-red-500/20 to-red-500/0", onClick: () => navigate("/admin/complaints") },
     { label: "Nächste Abfahrten", value: num(counts.nextDepartures),sub: "in 24 h",       icon: Clock, accent: "from-violet-500/20 to-violet-500/0", onClick: () => navigate("/admin/departures") },
   ], [counts, navigate]);
+
 
   const quickActions = [
     { label: "Buchung erstellen", icon: Plus,          onClick: () => navigate("/admin/bookings?new=1"), tone: "primary" },
@@ -274,7 +374,7 @@ const AdminDashboard = () => {
               <CardTitle className="text-white text-base flex items-center gap-2">
                 <Radio className="h-4 w-4 text-[#00CC36] animate-pulse" /> Live-Betrieb
               </CardTitle>
-              <p className="text-xs text-zinc-500 mt-0.5">Heute geplante Fahrten · {demoDepartures.length} Abfahrten</p>
+              <p className="text-xs text-zinc-500 mt-0.5">Heute geplante Fahrten · {departures.length} Abfahrten</p>
             </div>
             <Tabs defaultValue="abfahrten" className="w-auto">
               <TabsList className="bg-white/5 border border-white/10 h-8">
@@ -297,7 +397,7 @@ const AdminDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {demoDepartures.map((d, i) => {
+                {departures.map((d, i) => {
                   const pct = Math.round((d.pax / d.cap) * 100);
                   return (
                     <TableRow key={i} className="border-white/5 hover:bg-white/[0.03]">
@@ -339,15 +439,15 @@ const AdminDashboard = () => {
             <p className="text-xs text-zinc-500">Verfügbarkeit & Lenkzeiten heute</p>
           </CardHeader>
           <CardContent className="space-y-2">
-            {demoDrivers.map((d) => {
+            {drivers.map((d) => {
               const pct = (d.lenkzeit / d.max) * 100;
               const tone = d.status === "im Einsatz" ? "text-emerald-300"
                 : d.status === "verfügbar" ? "text-sky-300"
                 : d.status === "krank" ? "text-red-300" : "text-zinc-400";
               return (
-                <div key={d.name} className="flex items-center gap-3 rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
+                <div key={`${d.name}-${d.tour}`} className="flex items-center gap-3 rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
                   <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#00CC36]/30 to-sky-500/20 flex items-center justify-center text-xs font-semibold text-white">
-                    {d.name.split(",")[0][0]}{d.name.split(", ")[1]?.[0]}
+                    {(d.name.split(",")[0]?.[0] ?? "F")}{d.name.split(", ")[1]?.[0] ?? ""}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
@@ -373,7 +473,7 @@ const AdminDashboard = () => {
               <CardTitle className="text-white text-base flex items-center gap-2">
                 <Receipt className="h-4 w-4 text-[#00CC36]" /> Offene Buchungen
               </CardTitle>
-              <p className="text-xs text-zinc-500">Letzte 24 h · {demoBookings.length} Vorgänge</p>
+              <p className="text-xs text-zinc-500">Letzte 24 h · {recentBookings.length} Vorgänge</p>
             </div>
             <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white" onClick={() => navigate("/admin/bookings")}>
               Alle anzeigen <ChevronRight className="h-3 w-3 ml-1" />
@@ -392,8 +492,8 @@ const AdminDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {demoBookings.map((b) => (
-                  <TableRow key={b.id} className="border-white/5 hover:bg-white/[0.03] cursor-pointer">
+                {recentBookings.map((b) => (
+                  <TableRow key={b.key} className="border-white/5 hover:bg-white/[0.03] cursor-pointer">
                     <TableCell className="font-mono text-[11px] text-zinc-400">{b.id}</TableCell>
                     <TableCell className="text-zinc-100 text-sm">{b.customer}</TableCell>
                     <TableCell className="text-zinc-300 text-sm">{b.route}</TableCell>
@@ -413,10 +513,10 @@ const AdminDashboard = () => {
             <CardTitle className="text-white text-base flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-400" /> Offene Vorfälle
             </CardTitle>
-            <p className="text-xs text-zinc-500">{demoIncidents.length} aktiv · 1 hoch</p>
+            <p className="text-xs text-zinc-500">{incidents.length} aktiv</p>
           </CardHeader>
           <CardContent className="space-y-2">
-            {demoIncidents.map((i) => (
+            {incidents.map((i) => (
               <div key={i.id} className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-mono text-zinc-500">{i.id}</span>
@@ -457,7 +557,7 @@ const AdminDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {demoInquiries.map((q) => (
+                {inquiries.map((q) => (
                   <TableRow key={q.id} className="border-white/5 hover:bg-white/[0.03] cursor-pointer">
                     <TableCell className="text-zinc-100 text-sm">
                       {q.customer}
@@ -465,7 +565,7 @@ const AdminDashboard = () => {
                     </TableCell>
                     <TableCell className="text-zinc-300 text-sm">
                       {q.subject}
-                      <div className="text-[10px] text-zinc-500">{format(q.date, "dd.MM.yyyy", { locale: de })}</div>
+                      <div className="text-[10px] text-zinc-500">{q.date ? format(q.date, "dd.MM.yyyy", { locale: de }) : "offen"}</div>
                     </TableCell>
                     <TableCell className="text-right text-zinc-300 tabular-nums">{q.pax}</TableCell>
                     <TableCell><Badge variant="outline" className={chip[q.prio]}>{q.prio}</Badge></TableCell>
@@ -497,14 +597,14 @@ const AdminDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {demoMaintenance.map((m) => (
-                  <TableRow key={m.bus} className="border-white/5 hover:bg-white/[0.03]">
+                {maintenance.map((m) => (
+                  <TableRow key={`${m.bus}-${m.typ}`} className="border-white/5 hover:bg-white/[0.03]">
                     <TableCell className="text-zinc-100 text-sm">
                       {m.bus}
                       <div className="text-[10px] text-zinc-500 tabular-nums flex items-center gap-1"><Gauge className="h-3 w-3" />{num(m.km)} km</div>
                     </TableCell>
                     <TableCell className="text-zinc-300 text-sm">{m.typ}</TableCell>
-                    <TableCell className="text-zinc-300 text-sm tabular-nums">{format(m.fällig, "dd.MM.")}</TableCell>
+                    <TableCell className="text-zinc-300 text-sm tabular-nums">{format(m.faellig, "dd.MM.")}</TableCell>
                     <TableCell><Badge variant="outline" className={chip[m.status]}>{m.status}</Badge></TableCell>
                   </TableRow>
                 ))}
@@ -534,11 +634,11 @@ const AdminDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {demoInvoices.map((i) => (
+                {invoices.map((i) => (
                   <TableRow key={i.id} className="border-white/5 hover:bg-white/[0.03]">
                     <TableCell className="font-mono text-[11px] text-zinc-400">{i.id}</TableCell>
                     <TableCell className="text-zinc-100 text-sm">{i.kunde}
-                      <div className="text-[10px] text-zinc-500">fällig {format(i.fällig, "dd.MM.yyyy")}</div>
+                      <div className="text-[10px] text-zinc-500">{i.faellig ? `Rechnung ${format(i.faellig, "dd.MM.yyyy")}` : ""}</div>
                     </TableCell>
                     <TableCell className="text-right text-zinc-100 tabular-nums">{eur(i.betrag)}</TableCell>
                     <TableCell><Badge variant="outline" className={chip[i.status]}>{i.status}</Badge></TableCell>
@@ -561,9 +661,9 @@ const AdminDashboard = () => {
               { l: "Buchungs-Engine", v: "betriebsbereit", ok: true },
               { l: "Zahlungs-Gateway (Stripe/PayPal)", v: "betriebsbereit", ok: true },
               { l: "E-Mail-Versand", v: "betriebsbereit", ok: true },
-              { l: "Live-Tracking GPS", v: "12/14 Busse senden", ok: true },
+              { l: "Live-Tracking GPS", v: `${counts.readyBuses}/${counts.totalBuses} Busse aktiv`, ok: counts.readyBuses > 0 },
               { l: "Wallboard Public", v: "online", ok: true },
-              { l: "TÜV Compliance", v: "1 Fahrzeug kritisch", ok: false },
+              { l: "TÜV Compliance", v: `${maintenance.filter((m) => m.status === "kritisch").length} Fahrzeuge kritisch`, ok: maintenance.every((m) => m.status !== "kritisch") },
             ].map((s) => (
               <div key={s.l} className="flex items-center justify-between border-b border-white/5 pb-1.5 last:border-0">
                 <span className="text-zinc-300">{s.l}</span>
@@ -583,9 +683,9 @@ const AdminDashboard = () => {
         <span className="flex items-center gap-2">
           <Timer className="h-3 w-3" /> Letzter Sync {format(lastUpdate, "HH:mm:ss")}
           <span className="text-zinc-700">·</span>
-          <Fuel className="h-3 w-3" /> Ø Verbrauch Flotte 27,3 l/100km
+          <Fuel className="h-3 w-3" /> {counts.totalBuses} Fahrzeuge im Bestand
           <span className="text-zinc-700">·</span>
-          <Star className="h-3 w-3" /> 4.8 ★ (1.842 Bewertungen)
+          <Star className="h-3 w-3" /> {loading ? "lädt Live-Daten…" : "Live-Daten"}
         </span>
       </div>
     </AdminLayout>
