@@ -66,7 +66,7 @@ const Section = ({
 
 export function LandingView({ content }: { content: LandingContent }) {
   const path = `/${content.slug}`;
-  const hero = IMAGES[content.heroImage] ?? metropolHero;
+  const hero = nightBusAsset.url;
 
   const schemas: Record<string, unknown>[] = [
     breadcrumbJsonLd([
