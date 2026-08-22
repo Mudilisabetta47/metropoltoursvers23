@@ -24,7 +24,8 @@ interface WalletPassButtonProps {
 
 interface PassData {
   pass_url: string;
-  pass_html?: string;
+  preview_html?: string;
+  apple_ready?: boolean;
   serial: string;
   pass_type: "apple" | "google";
 }
@@ -106,7 +107,7 @@ export function WalletPassButton({
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       if (!data?.pass_url) throw new Error("Pass konnte nicht erstellt werden");
-      setPass({ pass_url: data.pass_url, pass_html: data.pass_html, serial: data.serial, pass_type: passType });
+      setPass({ pass_url: data.pass_url, preview_html: data.preview_html, apple_ready: data.apple_ready, serial: data.serial, pass_type: passType });
       await loadStatus();
     } catch (e: any) {
       toast.error(e.message || "Wallet-Pass konnte nicht erstellt werden");
@@ -198,9 +199,9 @@ export function WalletPassButton({
     return new Date(iso).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
   };
 
-  const passOpenUrl = pass?.pass_html
-    ? `data:text/html;charset=utf-8,${encodeURIComponent(pass.pass_html)}`
-    : pass?.pass_url;
+  // Immer der echte HTTPS-Endpunkt (Apple: .pkpass, Google: Pass-Seite) – niemals ein data:-Link
+  const passOpenUrl = pass?.pass_url;
+  const appleBlocked = pass?.pass_type === "apple" && pass?.apple_ready === false;
 
   return (
     <div className="space-y-2">
@@ -268,9 +269,9 @@ export function WalletPassButton({
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
             ) : pass ? (
-              pass.pass_html ? (
+              pass.preview_html ? (
                 <iframe
-                  srcDoc={pass.pass_html}
+                  srcDoc={pass.preview_html}
                   title="Boarding Pass"
                   className="w-full h-80 border-0 bg-white"
                   sandbox="allow-scripts allow-popups"
@@ -292,12 +293,19 @@ export function WalletPassButton({
           {/* Aktionen */}
           {pass && (
             <div className="space-y-2">
-              <Button asChild className="w-full" size="lg">
-                <a href={passOpenUrl} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Pass öffnen & speichern
-                </a>
-              </Button>
+              {appleBlocked ? (
+                <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+                  Apple-Wallet-Zertifikate sind im Backend noch nicht hinterlegt. Benötigt werden:
+                  Pass Type ID, Team ID, Pass-Zertifikat (.p12 als Base64) und das Apple WWDR-Zertifikat (PEM).
+                </div>
+              ) : (
+                <Button asChild className="w-full" size="lg">
+                  <a href={passOpenUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    {pass.pass_type === "apple" ? "Zu Apple Wallet hinzufügen" : "Pass öffnen & speichern"}
+                  </a>
+                </Button>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 <Button variant="outline" onClick={copyLink}>
                   {copied ? <Check className="w-4 h-4 mr-2 text-primary" /> : <Copy className="w-4 h-4 mr-2" />}
@@ -314,7 +322,7 @@ export function WalletPassButton({
               </div>
               <p className="text-xs text-muted-foreground text-center pt-2">
                 {isiOS()
-                  ? "📱 iOS: Tippen Sie nach dem Öffnen oben rechts auf „Teilen“ → „Zu Wallet hinzufügen“."
+                  ? "📱 iOS: Der Pass (.pkpass) öffnet direkt den Apple-Wallet-Dialog – einfach auf „Hinzufügen“ tippen."
                   : isAndroid()
                   ? "📱 Android: Öffnen Sie den Pass und tippen Sie auf „Zu Google Wallet hinzufügen“."
                   : "💡 Öffnen Sie diesen Link auf Ihrem Smartphone, um den Pass zur Wallet hinzuzufügen."}
