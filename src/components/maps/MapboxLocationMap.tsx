@@ -84,7 +84,8 @@ const MapboxLocationMap = ({
     });
     map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), "top-right");
     map.addControl(new mapboxgl.FullscreenControl(), "top-right");
-    map.scrollZoom.disable();
+    if (scrollZoom) map.scrollZoom.enable();
+    else map.scrollZoom.disable();
 
     const el = document.createElement("div");
     el.className = "metours-marker";
@@ -99,7 +100,34 @@ const MapboxLocationMap = ({
       map.remove();
       mapRef.current = null;
     };
-  }, [token, center, zoom, label]);
+  }, [token, center, zoom, label, scrollZoom]);
+
+  // Umgebungs-Marker (POIs)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !center || !pois?.length) return;
+    const markers = pois
+      .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lon))
+      .map((p) => {
+        const dot = document.createElement("div");
+        dot.style.cssText =
+          "width:12px;height:12px;border-radius:9999px;background:#0f1218;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);cursor:pointer";
+        return new mapboxgl.Marker(dot)
+          .setLngLat([p.lon, p.lat])
+          .setPopup(
+            new mapboxgl.Popup({ offset: 12 }).setText(p.kind ? `${p.kind} · ${p.name}` : p.name),
+          )
+          .addTo(map);
+      });
+
+    if (fitPois && markers.length) {
+      const bounds = new mapboxgl.LngLatBounds([center.lon, center.lat], [center.lon, center.lat]);
+      pois.forEach((p) => bounds.extend([p.lon, p.lat]));
+      map.fitBounds(bounds, { padding: 60, maxZoom: 14, duration: 0 });
+    }
+
+    return () => markers.forEach((m) => m.remove());
+  }, [center, pois, fitPois]);
 
   return (
     <div className={`relative ${className}`}>
