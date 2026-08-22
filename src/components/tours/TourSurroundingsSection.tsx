@@ -3,6 +3,7 @@ import { FerrisWheel, Utensils, Mountain, TrainFront, Plane, Map as MapIcon } fr
 import MapboxLocationMap from "@/components/maps/MapboxLocationMap";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 
 
 interface Poi {
@@ -53,26 +54,6 @@ const writeCache = (q: string, entry: CacheEntry) => {
   } catch { /* Speicher voll – egal */ }
 };
 
-const fetchWithTimeout = async (url: string, init: RequestInit, ms: number) => {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), ms);
-  try {
-    return await fetch(url, { ...init, signal: ctrl.signal });
-  } finally {
-    clearTimeout(timer);
-  }
-};
-
-const haversine = (aLat: number, aLon: number, bLat: number, bLon: number) => {
-  const R = 6371;
-  const dLat = ((bLat - aLat) * Math.PI) / 180;
-  const dLon = ((bLon - aLon) * Math.PI) / 180;
-  const s =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((aLat * Math.PI) / 180) * Math.cos((bLat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(s));
-};
-
 const formatDistance = (km: number) => {
   if (km < 1) return `${Math.round(km * 1000)} m`;
   return `${km.toLocaleString("de-DE", { maximumFractionDigits: 1 })} km`;
@@ -99,133 +80,33 @@ const loadSurroundings = async (
   if (running) return running;
 
   const task = (async (): Promise<CacheEntry | null> => {
-    let lat: number;
-    let lon: number;
-    if (coords) {
-      lat = coords.lat;
-      lon = coords.lon;
-    } else {
-      const geoRes = await fetchWithTimeout(
-        `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`,
-        { headers: { Accept: "application/json" } },
-        6000
-      );
-      const geo = await geoRes.json();
-      if (!Array.isArray(geo) || geo.length === 0) return null;
-      lat = parseFloat(geo[0].lat);
-      lon = parseFloat(geo[0].lon);
-    }
-
-
-    const overpass = `
-[out:json][timeout:10];
-(
-  node(around:5000,${lat},${lon})["tourism"~"^(attraction|museum|viewpoint|theme_park|zoo)$"]["name"];
-  node(around:5000,${lat},${lon})["historic"~"^(castle|monument|ruins)$"]["name"];
-  node(around:1200,${lat},${lon})["amenity"~"^(restaurant|cafe)$"]["name"];
-  node(around:12000,${lat},${lon})["natural"~"^(beach|peak)$"]["name"];
-  node(around:6000,${lat},${lon})["railway"="station"]["name"];
-  node(around:2000,${lat},${lon})["highway"="bus_stop"]["name"];
-  node(around:40000,${lat},${lon})["aeroway"="aerodrome"]["name"]["iata"];
-);
-out center;`;
-
-    const endpoints = [
-      "https://overpass.kumi.systems/api/interpreter",
-      "https://overpass-api.de/api/interpreter",
-      "https://overpass.osm.ch/api/interpreter",
-      "https://overpass.private.coffee/api/interpreter",
-    ];
-
-    // Alle Spiegel parallel anfragen – der schnellste gewinnt
-    let op: any = null;
-    try {
-      op = await new Promise<any>((resolve, reject) => {
-        let failed = 0;
-        endpoints.forEach((url) => {
-          fetchWithTimeout(url, { method: "POST", body: overpass }, 9000)
-            .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
-            .then((json) => {
-              if (json?.elements) resolve(json);
-              else throw new Error("empty");
-            })
-            .catch(() => {
-              failed += 1;
-              if (failed === endpoints.length) reject(new Error("all mirrors failed"));
-            });
-        });
-      });
-    } catch {
-      op = null;
-    }
-
-    const center = { lat, lon };
-    if (!op) return { groups: EMPTY, center, ts: Date.now() };
-
-    const next: Groups = { attractions: [], food: [], nature: [], transit: [], airports: [] };
-    const seen = new Set<string>();
-
-    for (const el of op.elements || []) {
-      const t = el.tags || {};
-      const name: string | undefined = t.name;
-      const eLat = el.lat ?? el.center?.lat;
-      const eLon = el.lon ?? el.center?.lon;
-      if (!name || eLat == null || eLon == null) continue;
-      const key = `${name}-${t.amenity || t.tourism || t.natural || t.aeroway || t.railway || t.highway}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      const distanceKm = haversine(lat, lon, eLat, eLon);
-      const pos = { lat: eLat as number, lon: eLon as number };
-
-      if (t.aeroway === "aerodrome") {
-        next.airports.push({ name, kind: "Flughafen", distanceKm, ...pos });
-      } else if (t.railway === "station") {
-        next.transit.push({ name, kind: "Bahnhof", distanceKm, ...pos });
-      } else if (t.highway === "bus_stop") {
-        next.transit.push({ name, kind: "Bus", distanceKm, ...pos });
-      } else if (t.amenity === "restaurant" || t.amenity === "cafe") {
-        next.food.push({ name, kind: t.amenity === "cafe" ? "Café" : "Restaurant", distanceKm, ...pos });
-      } else if (t.natural) {
-        const kind = t.natural === "beach" ? "Strand" : t.natural === "peak" ? "Gipfel" : "Wald";
-        next.nature.push({ name, kind, distanceKm, ...pos });
-      } else {
-        const kind =
-          t.tourism === "museum"
-            ? "Museum"
-            : t.tourism === "viewpoint"
-            ? "Aussichtspunkt"
-            : t.historic
-            ? "Sehenswürdigkeit"
-            : "Attraktion";
-        next.attractions.push({ name, kind, distanceKm, ...pos });
-      }
-    }
-
-    const sortTrim = (arr: Poi[], n: number) => arr.sort((a, b) => a.distanceKm - b.distanceKm).slice(0, n);
-    const rank: Record<string, number> = { Museum: 0, Attraktion: 0, Aussichtspunkt: 1, Sehenswürdigkeit: 2 };
+    // Serverseitig laden (Overpass/Nominatim sind im Browser durch CORS/CSP blockiert)
+    const { data, error } = await supabase.functions.invoke("tour-surroundings", {
+      body: coords ? { lat: coords.lat, lon: coords.lon } : { query },
+    });
+    if (error || !data?.ok || !data?.groups) return null;
 
     const groups: Groups = {
-      attractions: next.attractions
-        .sort((a, b) => (rank[a.kind] ?? 3) - (rank[b.kind] ?? 3) || a.distanceKm - b.distanceKm)
-        .slice(0, 10)
-        .sort((a, b) => a.distanceKm - b.distanceKm),
-      food: sortTrim(next.food, 6),
-      nature: sortTrim(next.nature, 5),
-      transit: [
-        ...sortTrim(next.transit.filter((t) => t.kind === "Bahnhof"), 3),
-        ...sortTrim(next.transit.filter((t) => t.kind !== "Bahnhof"), 3),
-      ],
-      airports: sortTrim(next.airports, 3),
+      attractions: data.groups.attractions ?? [],
+      food: data.groups.food ?? [],
+      nature: data.groups.nature ?? [],
+      transit: data.groups.transit ?? [],
+      airports: data.groups.airports ?? [],
     };
+    const total =
+      groups.attractions.length + groups.food.length + groups.nature.length +
+      groups.transit.length + groups.airports.length;
 
-    const entry: CacheEntry = { groups, center, ts: Date.now() };
-    writeCache(query, entry);
+    const entry: CacheEntry = { groups, center: data.center ?? coords ?? { lat: 0, lon: 0 }, ts: Date.now() };
+    // Leere Ergebnisse nicht cachen – sonst bleibt die Umgebung tagelang leer
+    if (total > 0) writeCache(query, entry);
     return entry;
   })().finally(() => inflight.delete(query));
 
   inflight.set(query, task);
   return task;
 };
+
 
 const TourSurroundingsSection = ({
   destination,

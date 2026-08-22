@@ -268,7 +268,12 @@ const TourDetailPage = () => {
                 destination={tourData.tour.destination}
                 location={(tourData.tour as any).location}
                 country={(tourData.tour as any).country}
+                lat={(tourData.tour as any).latitude}
+                lon={(tourData.tour as any).longitude}
+                hotelName={(tourData.tour as any).hotel_name}
+                hotelAddress={(tourData.tour as any).hotel_address}
               />
+
 
 
               <section className="scroll-mt-36">
