@@ -195,7 +195,7 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
             <div className="flex items-center gap-3 shrink-0">
               <div className="flex gap-2">
                 <ShareButton
-                  title={`${tour.name || tour.destination} – Metropol Tours`}
+                  title={`${tour.destination} – Metropol Tours`}
                   text={`Schau dir diese Busreise nach ${tour.destination} an:`}
                 />
 
