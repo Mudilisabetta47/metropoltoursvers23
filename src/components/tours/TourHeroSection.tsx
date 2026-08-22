@@ -24,7 +24,7 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
     .filter(Boolean)
     .join(", ");
   const mapQuery = encodeURIComponent(queryString);
-  const osmFullUrl = `https://www.openstreetmap.org/search?query=${mapQuery}`;
+  
 
   // Geocoded coords (lat/lon) – wenn vorhanden zoomen wir präzise
   const [coords, setCoords] = useState<{ lat: number; lon: number; bbox?: [number, number, number, number] } | null>(null);
