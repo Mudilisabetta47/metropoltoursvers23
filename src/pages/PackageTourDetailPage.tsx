@@ -233,69 +233,115 @@ const PackageTourDetailPage = () => {
   const includedServices = dbTour.included_services?.length > 0 ? dbTour.included_services : defaultIncluded;
   const itinerary = dbTour.itinerary as { day: number; title: string; description: string }[] || [];
 
+  const gallery = (dbTour.gallery_images || []).filter(Boolean).slice(0, 6);
+  const tags = dbTour.tags || [];
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       
-      <main className="flex-1">
+      <main className="flex-1 pt-16 lg:pt-20">
         {/* Hero Section */}
-        <section className="relative h-[50vh] md:h-[60vh] overflow-hidden">
-          <img
-            src={getImageSrc(dbTour)}
-            alt={dbTour.destination}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-          
-          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12">
-            <div className="container mx-auto">
-              <Button
-                variant="ghost"
-                className="text-white mb-4 hover:bg-white/20"
-                onClick={() => navigate("/")}
-              >
-                <ChevronLeft className="w-4 h-4 mr-2" />
-                Zurück
-              </Button>
-              
-              <div className="flex flex-wrap items-center gap-2 mb-3">
-                <Badge className="bg-primary text-primary-foreground">
-                  <Palmtree className="w-3 h-3 mr-1" />
-                  Pauschalreise
-                </Badge>
-                <Badge variant="secondary" className="bg-white/20 text-white border-0">
-                  {dbTour.duration_days} Tage
-                </Badge>
-                {dbTour.discount_percent > 0 && (
-                  <Badge className="bg-accent text-accent-foreground">
-                    -{dbTour.discount_percent}% Rabatt
-                  </Badge>
-                )}
+        <section className="relative">
+          <div className="relative h-[52vh] lg:h-[60vh] min-h-[420px] max-h-[620px] overflow-hidden">
+            <img
+              src={getImageSrc(dbTour)}
+              alt={`Pauschalreise ${dbTour.destination}`}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/10" />
+
+            {/* Breadcrumb */}
+            <div className="absolute top-0 left-0 right-0 pt-4">
+              <div className="container mx-auto px-4">
+                <nav className="flex items-center gap-2 text-sm text-white/80">
+                  <Link to="/" className="hover:text-white transition-colors font-medium">METROPOL TOURS</Link>
+                  <ChevronRight className="w-4 h-4" />
+                  <Link to="/reisen" className="hover:text-white transition-colors">Pauschalreisen</Link>
+                  <ChevronRight className="w-4 h-4" />
+                  <span className="text-white">{dbTour.destination}</span>
+                </nav>
               </div>
-              
-              <h1 className="text-3xl md:text-5xl font-bold text-white mb-2">
-                {dbTour.destination}
-              </h1>
-              <div className="flex items-center gap-2 text-white/90 text-lg">
-                <MapPin className="w-5 h-5" />
-                {dbTour.location}
+            </div>
+
+            {/* Hero Content */}
+            <div className="absolute bottom-0 left-0 right-0 pb-8">
+              <div className="container mx-auto px-4">
+                <div className="max-w-4xl">
+                  <div className="flex flex-wrap items-center gap-2 mb-4">
+                    <Badge className="bg-primary text-primary-foreground shadow-lg">
+                      <Palmtree className="w-3 h-3 mr-1" />
+                      Pauschalreise
+                    </Badge>
+                    <Badge variant="secondary" className="bg-white/20 text-white border-0 backdrop-blur-sm">
+                      {dbTour.duration_days} Tage
+                    </Badge>
+                    {dbTour.discount_percent > 0 && (
+                      <Badge className="bg-accent text-accent-foreground">
+                        -{dbTour.discount_percent}% Rabatt
+                      </Badge>
+                    )}
+                  </div>
+
+                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 drop-shadow-lg">
+                    {dbTour.destination}
+                  </h1>
+
+                  <div className="flex flex-wrap items-center gap-4 text-white/90 mb-4">
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4" />
+                      <span>{dbTour.location}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="w-4 h-4" />
+                      <span>{formatDate(dbTour.departure_date)} – {formatDate(dbTour.return_date)}</span>
+                    </div>
+                    <div className="flex items-center gap-0.5">
+                      {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />)}
+                      <span className="ml-1 text-sm">(4.8)</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 mb-5">
+                    {[{ icon: Hotel, label: "Hotel inkl." }, { icon: Bus, label: "Komfortbus inkl." }, { icon: Wifi, label: "WLAN an Bord" }].map((p) => (
+                      <div key={p.label} className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-2 text-white text-sm">
+                        <p.icon className="w-4 h-4" /><span>{p.label}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="inline-flex items-end gap-2 bg-card/95 backdrop-blur rounded-xl px-5 py-3 shadow-xl">
+                    <span className="text-muted-foreground text-sm">ab</span>
+                    <span className="text-3xl font-bold text-primary">{dbTour.price_from}€</span>
+                    <span className="text-muted-foreground text-sm pb-1">pro Person</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+
+          {/* Short description bar */}
+          {dbTour.short_description && (
+            <div className="bg-muted/50 border-b border-border">
+              <div className="container mx-auto px-4 py-4">
+                <p className="text-muted-foreground max-w-3xl">{dbTour.short_description}</p>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Main Content */}
-        <section className="py-12">
+        <section className="py-10">
           <div className="container mx-auto px-4">
             <div className="grid lg:grid-cols-3 gap-8">
               {/* Left Column - Tour Details */}
               <div className="lg:col-span-2 space-y-8">
                 {/* Quick Info */}
-                <Card>
+                <Card className="border border-border rounded-2xl">
                   <CardContent className="p-6">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                           <Calendar className="w-5 h-5 text-primary" />
                         </div>
                         <div>
@@ -304,7 +350,7 @@ const PackageTourDetailPage = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                           <CircleArrowRight className="w-5 h-5 text-primary" />
                         </div>
                         <div>
@@ -313,7 +359,7 @@ const PackageTourDetailPage = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                           <CircleArrowLeft className="w-5 h-5 text-primary" />
                         </div>
                         <div>
@@ -322,7 +368,7 @@ const PackageTourDetailPage = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                           <Users className="w-5 h-5 text-primary" />
                         </div>
                         <div>
@@ -335,37 +381,66 @@ const PackageTourDetailPage = () => {
                 </Card>
 
                 {/* Description */}
-                <Card>
+                <Card className="border border-border rounded-2xl">
                   <CardHeader>
                     <CardTitle>Über diese Reise</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground leading-relaxed">
+                    <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
                       {dbTour.description || `Entdecken Sie ${dbTour.destination} auf dieser ${dbTour.duration_days}-tägigen Reise. ${dbTour.location} erwartet Sie mit unvergesslichen Erlebnissen.`}
                     </p>
-                    
-                    {dbTour.highlights && dbTour.highlights.length > 0 && (
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {dbTour.highlights.map((highlight) => (
-                          <Badge key={highlight} variant="secondary">
-                            {highlight}
-                          </Badge>
+
+                    {(tags.length > 0 || (dbTour.highlights && dbTour.highlights.length > 0)) && (
+                      <div className="mt-6 flex flex-wrap gap-2">
+                        {[...(dbTour.highlights || []), ...tags].map((tag, i) => (
+                          <span
+                            key={`${tag}-${i}`}
+                            className="inline-flex items-center rounded-full bg-primary/10 text-primary px-3 py-1.5 text-sm font-medium"
+                          >
+                            #{String(tag).replace(/^#/, "").replace(/\s+/g, "")}
+                          </span>
                         ))}
                       </div>
                     )}
                   </CardContent>
                 </Card>
 
+                {/* Gallery */}
+                {gallery.length > 0 && (
+                  <Card className="border border-border rounded-2xl overflow-hidden">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Camera className="w-5 h-5 text-primary" />
+                        Impressionen
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {gallery.map((img, i) => (
+                          <div key={i} className="relative aspect-[4/3] rounded-xl overflow-hidden group">
+                            <img
+                              src={img}
+                              alt={`${dbTour.destination} Eindruck ${i + 1}`}
+                              loading="lazy"
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Itinerary */}
                 {itinerary.length > 0 && (
-                  <Card>
+                  <Card className="border border-border rounded-2xl">
                     <CardHeader>
                       <CardTitle>Reiseverlauf</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
                         {itinerary.map((day, index) => (
-                          <div key={index} className="flex gap-4">
+                          <div key={index} className="flex gap-4 p-4 rounded-xl bg-muted/40">
                             <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0">
                               {day.day}
                             </div>
@@ -381,34 +456,59 @@ const PackageTourDetailPage = () => {
                 )}
 
                 {/* Included Services */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Im Preis enthalten</CardTitle>
+                <Card className="border border-border rounded-2xl">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Check className="w-4 h-4 text-primary" />
+                      </div>
+                      Inklusive Leistungen
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="grid sm:grid-cols-2 gap-2">
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {includedServices.map((item) => (
-                        <div key={item} className="flex items-center gap-2">
+                        <div key={item} className="flex items-center gap-3 p-3 rounded-xl bg-primary/5">
                           <Check className="w-4 h-4 text-primary shrink-0" />
                           <span className="text-sm">{item}</span>
                         </div>
                       ))}
                     </div>
-                    
-                    <Separator className="my-4" />
-                    
-                    <h4 className="font-medium mb-2 text-muted-foreground">Nicht enthalten:</h4>
-                    <div className="grid sm:grid-cols-2 gap-2">
+
+                    <Separator className="my-6" />
+
+                    <h4 className="font-semibold mb-3 flex items-center gap-2 text-muted-foreground">
+                      <X className="w-4 h-4" /> Nicht enthalten
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {defaultNotIncluded.map((item) => (
-                        <div key={item} className="flex items-center gap-2 text-muted-foreground">
-                          <X className="w-4 h-4 shrink-0" />
-                          <span className="text-sm">{item}</span>
+                        <div key={item} className="flex items-center gap-3 p-3 rounded-xl bg-muted/50">
+                          <X className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <span className="text-sm text-muted-foreground">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Reisekomfort */}
+                <Card className="border border-primary/20 rounded-2xl bg-primary/5">
+                  <CardContent className="p-6">
+                    <h3 className="font-bold mb-4 flex items-center gap-2">
+                      <Bus className="w-5 h-5 text-primary" />Reisekomfort
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {[{ icon: Wifi, label: "WLAN" }, { icon: Plug, label: "Steckdosen" }, { icon: Armchair, label: "Komfortsitze" }, { icon: Hotel, label: "Hotel inkl." }].map((c) => (
+                        <div key={c.label} className="flex items-center gap-2">
+                          <c.icon className="w-5 h-5 text-primary" />
+                          <span className="text-sm">{c.label}</span>
                         </div>
                       ))}
                     </div>
                   </CardContent>
                 </Card>
               </div>
+
 
               {/* Right Column - Booking Form */}
               <div className="lg:col-span-1">
