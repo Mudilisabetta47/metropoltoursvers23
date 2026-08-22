@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FerrisWheel, Utensils, Mountain, TrainFront, Plane } from "lucide-react";
+import { FerrisWheel, Utensils, Mountain, TrainFront, Plane, Map as MapIcon } from "lucide-react";
 import MapboxLocationMap from "@/components/maps/MapboxLocationMap";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 
 interface Poi {
   name: string;
   kind: string;
   distanceKm: number;
+  lat?: number;
+  lon?: number;
 }
 
 interface Groups {
