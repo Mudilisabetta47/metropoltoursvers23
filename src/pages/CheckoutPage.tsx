@@ -116,6 +116,33 @@ const CheckoutPage = () => {
       .then(({ data }) => setAgbAvailable(!!data));
   }, []);
 
+  // Rückkehr von Stripe: Zahlung serverseitig verifizieren und Buchung bestätigen
+  useEffect(() => {
+    const stripeSession = searchParams.get('session_id');
+    const cancelled = searchParams.get('payment') === 'cancelled';
+    if (cancelled) {
+      toast.error('Zahlung abgebrochen – Ihre Buchung wurde nicht bestätigt.');
+      return;
+    }
+    if (!stripeSession) return;
+
+    setIsProcessing(true);
+    supabase.functions
+      .invoke('verify-bus-payment', { body: { sessionId: stripeSession } })
+      .then(({ data, error }) => {
+        if (error || !data?.success) {
+          toast.error('Zahlung konnte nicht bestätigt werden. Bitte kontaktieren Sie uns.');
+          return;
+        }
+        setBookingIds(data.bookingIds ?? []);
+        setBookingNumbers(data.ticketNumbers ?? []);
+        setCurrentStep('confirmation');
+        toast.success('Zahlung erfolgreich – Buchung bestätigt!');
+      })
+      .finally(() => setIsProcessing(false));
+  }, [searchParams]);
+
+
   useEffect(() => {
     if (tripId && fromStopId && toStopId) {
       // Direct trip booking
