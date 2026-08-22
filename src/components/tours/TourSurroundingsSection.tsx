@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Ferris, Loader2 } from "lucide-react";
-import { FerrisWheel, Utensils, Mountain, TrainFront, Plane, ExternalLink } from "lucide-react";
+import { Loader2, FerrisWheel, Utensils, Mountain, TrainFront, Plane, ExternalLink } from "lucide-react";
 
 interface Poi {
   name: string;
