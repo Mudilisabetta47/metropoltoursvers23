@@ -650,6 +650,47 @@ const ReisenPage = () => {
                   })}
                 </div>
               )}
+
+              {/* Bereits durchgeführte Reisen */}
+              {!isLoading && pastTours.length > 0 && (
+                <div className="mt-16 pt-10 border-t border-border">
+                  <div className="flex items-end justify-between gap-4 mb-6">
+                    <div>
+                      <span className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">Referenzen</span>
+                      <h2 className="font-serif text-2xl md:text-3xl text-foreground mt-1">Bereits durchgeführte Reisen</h2>
+                      <p className="text-sm text-muted-foreground mt-1">Diese Termine sind vorbei – ein Einblick, wohin wir bereits gefahren sind.</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {pastTours.map((tour) => {
+                      const heroSrc = getImageSrc(tour.image_url, tour.hero_image_url, tour.destination);
+                      return (
+                        <article key={tour.id}
+                          onClick={() => navigate(`/reisen/${tour.slug || tour.id}`)}
+                          className="group cursor-pointer bg-card rounded-2xl overflow-hidden border border-border hover:border-foreground/20 transition-all">
+                          <div className="relative aspect-[16/10] overflow-hidden">
+                            <img src={heroSrc} alt={tour.destination} loading="lazy"
+                              className="w-full h-full object-cover grayscale-[35%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                            {!heroSrc.startsWith("http") && <AiBadge className="top-3 right-3 bottom-auto" />}
+                            <span className="absolute top-3 left-3 bg-foreground/85 text-background text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+                              Durchgeführt
+                            </span>
+                          </div>
+                          <div className="p-4">
+                            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">
+                              {tour.departure_date ? format(parseISO(tour.departure_date), "dd. MMMM yyyy", { locale: de }) : ""} · {tour.country}
+                            </p>
+                            <h3 className="font-serif text-lg text-foreground leading-snug line-clamp-1">{tour.destination}</h3>
+                            <p className="text-xs text-muted-foreground mt-1">{tour.duration_days} Tage · ab {tour.price_from}€</p>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
             </div>
           </div>
         </div>
