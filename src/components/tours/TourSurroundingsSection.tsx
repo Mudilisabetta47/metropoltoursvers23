@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, FerrisWheel, Utensils, Mountain, TrainFront, Plane, ExternalLink } from "lucide-react";
+import { Loader2, FerrisWheel, Utensils, Mountain, TrainFront, Plane } from "lucide-react";
+import MapboxLocationMap from "@/components/maps/MapboxLocationMap";
+
 
 interface Poi {
   name: string;
