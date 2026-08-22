@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import serviceHero from "@/assets/service-hero.jpg";
 import SEO from "@/components/seo/SEO";
 import { breadcrumbJsonLd } from "@/lib/seo";
+import AiBadge from "@/components/common/AiBadge";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -81,6 +82,7 @@ const ServicePage = () => {
         <section className="relative overflow-hidden py-20 lg:py-28 bg-secondary">
           <div className="absolute inset-0">
             <img src={serviceHero} alt="Komfortabler METROPOL TOURS Reisebus-Innenraum" width={1920} height={1080} className="w-full h-full object-cover" />
+            <AiBadge />
             <div className="absolute inset-0 bg-gradient-to-b from-secondary/95 via-secondary/85 to-secondary/95" />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.2),transparent_70%)]" />
           </div>

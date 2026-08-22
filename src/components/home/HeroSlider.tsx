@@ -15,6 +15,7 @@ import sliderWochenendtrips from "@/assets/slider-wochenendtrips.jpg";
 import sliderGruppenreisen from "@/assets/slider-gruppenreisen.jpg";
 import sliderStrandurlaub from "@/assets/slider-strandurlaub.jpg";
 import sliderKulturreisen from "@/assets/slider-kulturreisen.jpg";
+import AiBadge from "@/components/common/AiBadge";
 
 interface Slide {
   image: string;
@@ -151,6 +152,8 @@ const HeroSlider = () => {
             width={1920}
             height={1080}
           />
+          <AiBadge className="bottom-24 right-4 md:bottom-6" />
+
           <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-black/20" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
         </motion.div>

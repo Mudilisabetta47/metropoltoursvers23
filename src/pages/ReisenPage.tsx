@@ -40,6 +40,7 @@ import tourSerbien from "@/assets/tour-serbien.jpg";
 import tourNordmazedonien from "@/assets/tour-nordmazedonien.jpg";
 import tourAlbanien from "@/assets/tour-albanien.jpg";
 import tourKosovo from "@/assets/tour-kosovo.jpg";
+import AiBadge from "@/components/common/AiBadge";
 
 const imageMap: Record<string, string> = {
   '/tour-croatia.jpg': tourCroatia,
@@ -302,6 +303,7 @@ const ReisenPage = () => {
           <img src={editorialHero} alt="Premium Reisebus an der Adria-Küste"
             className="absolute inset-0 w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/30 to-black/70" />
+          <AiBadge className="bottom-4 right-4" />
 
           <div className="relative h-full max-w-[1240px] mx-auto px-4 sm:px-6 flex flex-col justify-center text-white">
             <span className="inline-flex items-center gap-2 self-start px-3 py-1 rounded-full border border-white/30 backdrop-blur-md text-[11px] uppercase tracking-[0.18em] font-semibold mb-6">
@@ -408,6 +410,7 @@ const ReisenPage = () => {
                   <img src={theme.image} alt={theme.label}
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                  <AiBadge className="top-3 right-3 bottom-auto" />
                   <div className="absolute bottom-5 left-5 right-5 text-white">
                     <p className="text-[10px] uppercase tracking-[0.18em] font-bold text-primary mb-1">{theme.subtitle}</p>
                     <h3 className="font-serif text-xl md:text-2xl leading-tight">{theme.label}</h3>
@@ -546,6 +549,7 @@ const ReisenPage = () => {
                           <img src={heroSrc} alt={tour.destination}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                          {!heroSrc.startsWith("http") && <AiBadge className="top-4 right-4 bottom-auto" />}
 
                           {/* Badges */}
                           <div className="absolute top-4 left-4 flex flex-col gap-1.5">

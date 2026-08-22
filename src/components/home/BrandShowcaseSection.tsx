@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import busCoast from "@/assets/metropol-bus-coast.png.asset.json";
 import busRome from "@/assets/metropol-bus-rome.png.asset.json";
 import busGroup from "@/assets/metropol-bus-group.png.asset.json";
+import AiBadge from "@/components/common/AiBadge";
 
 const cards = [
   {
@@ -78,6 +79,7 @@ const BrandShowcaseSection = () => {
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                <AiBadge className="top-3 right-3 bottom-auto" />
                 <div className="absolute inset-0 p-6 lg:p-7 flex flex-col justify-end text-white">
                   <div className="inline-flex items-center gap-1.5 self-start bg-primary/95 text-primary-foreground rounded-full px-3 py-1 text-xs font-bold mb-3">
                     <c.icon className="w-3.5 h-3.5" />

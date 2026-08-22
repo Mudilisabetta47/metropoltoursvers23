@@ -300,7 +300,10 @@ const Footer = () => {
               {" "}und{" "}
               <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">Nutzungsbedingungen</a>
               {" "}von Google.
+              <br />
+              Hinweis: Einzelne Bilder auf dieser Website wurden mit künstlicher Intelligenz erstellt und sind mit „KI-generiert" gekennzeichnet.
             </span>
+
           </p>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <span>🇩🇪 Made in Germany</span>

@@ -17,6 +17,7 @@ import tourSerbien from "@/assets/tour-serbien.jpg";
 import tourNordmazedonien from "@/assets/tour-nordmazedonien.jpg";
 import tourAlbanien from "@/assets/tour-albanien.jpg";
 import tourKosovo from "@/assets/tour-kosovo.jpg";
+import AiBadge from "@/components/common/AiBadge";
 
 const imageMap: Record<string, string> = {
   '/tour-croatia.jpg': tourCroatia,
@@ -158,6 +159,7 @@ const PackageToursSection = () => {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         loading="lazy"
                       />
+                      {!getImageSrc(featuredTour, featuredTour.destination).startsWith("http") && <AiBadge />}
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-card/80 hidden lg:block" />
                       <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent lg:hidden" />
                       
@@ -257,6 +259,7 @@ const PackageToursSection = () => {
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                           loading="lazy"
                         />
+                        {!getImageSrc(tour, tour.destination).startsWith("http") && <AiBadge className="top-2 right-2 bottom-auto" />}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
                         <div className="absolute bottom-4 left-4 right-4">
                           <h3 className="text-xl font-bold text-white mb-0.5">{tour.destination}</h3>
