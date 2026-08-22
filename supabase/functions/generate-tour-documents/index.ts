@@ -291,7 +291,7 @@ function generateConfirmation(booking: any, tour: any, date: any, tariff: any, p
       <span>${COMPANY.name}</span><span>·</span>
       <span>${COMPANY.address}</span><span>·</span>
       <span>${COMPANY.hrb}</span><span>·</span>
-      <span>USt-IdNr.: ${COMPANY.ustId}</span>
+      ${COMPANY.ustId ? `<span>USt-IdNr.: ${COMPANY.ustId}</span>` : ""}
     </div>
     <div style="margin-top:4px;">AGB: ${COMPANY.web}/terms · Datenschutz: ${COMPANY.web}/privacy</div>
   </div>
@@ -319,8 +319,7 @@ function generateInvoice(booking: any, tour: any, date: any, tariff: any, pickup
       </div>
       <div class="header-meta">
         ${COMPANY.address}<br>
-        USt-IdNr.: ${COMPANY.ustId}<br>
-        Steuernr.: ${COMPANY.steuerNr}
+        ${COMPANY.ustId ? `USt-IdNr.: ${COMPANY.ustId}<br>` : ""}${COMPANY.steuerNr ? `Steuernr.: ${COMPANY.steuerNr}` : ""}
       </div>
     </div>
   </div>
@@ -414,7 +413,7 @@ function generateInvoice(booking: any, tour: any, date: any, tariff: any, pickup
       <span>${COMPANY.name}</span><span>·</span>
       <span>${COMPANY.address}</span><span>·</span>
       <span>${COMPANY.hrb}</span><span>·</span>
-      <span>USt-IdNr.: ${COMPANY.ustId}</span>
+      ${COMPANY.ustId ? `<span>USt-IdNr.: ${COMPANY.ustId}</span>` : ""}
     </div>
     <div style="margin-top:4px;">${COMPANY.web} · ${COMPANY.email} · ${COMPANY.phone}</div>
   </div>
