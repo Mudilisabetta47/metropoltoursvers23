@@ -71,16 +71,27 @@ out center;`;
     let op: any = null;
     try {
       op = await new Promise<any>((resolve, reject) => {
-        let failed = 0;
+        let done = 0;
+        let fallback: any = null;
         for (const url of ENDPOINTS) {
           fetchWithTimeout(url, {
             method: "POST",
             headers: { "Content-Type": "text/plain", "User-Agent": "MetropolTours/1.0 (info@metours.de)" },
             body: overpass,
-          }, 20000)
+          }, 25000)
             .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
-            .then((json) => { if (json?.elements) resolve(json); else throw new Error("empty"); })
-            .catch(() => { failed += 1; if (failed === ENDPOINTS.length) reject(new Error("all mirrors failed")); });
+            .then((json) => {
+              if (Array.isArray(json?.elements) && json.elements.length > 0) resolve(json);
+              else { fallback = json ?? fallback; throw new Error("empty"); }
+            })
+            .catch(() => {})
+            .finally(() => {
+              done += 1;
+              if (done === ENDPOINTS.length) {
+                if (fallback) resolve(fallback);
+                else reject(new Error("all mirrors failed"));
+              }
+            });
         }
       });
     } catch (_) {
