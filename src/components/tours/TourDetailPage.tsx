@@ -23,6 +23,7 @@ import TourInclusionsSection from "./TourInclusionsSection";
 import TourRoutesSection from "./TourRoutesSection";
 import TourInfoSection from "./TourInfoSection";
 import TourLegalSection from "./TourLegalSection";
+import TourSurroundingsSection from "./TourSurroundingsSection";
 
 import {
   TourTariff, TourDate, TourRoute, TourInclusion, TourLegal, TourLuggageAddon, ExtendedPackageTour
