@@ -20,11 +20,19 @@ const fetchWithTimeout = async (url: string, init: RequestInit, ms: number) => {
 };
 
 const ENDPOINTS = [
-  "https://overpass.kumi.systems/api/interpreter",
   "https://overpass-api.de/api/interpreter",
   "https://overpass.osm.ch/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
   "https://overpass.private.coffee/api/interpreter",
 ];
+
+// Kurzlebiger In-Memory-Cache pro Instanz (6h)
+const memCache = new Map<string, { data: any; ts: number }>();
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of memCache) if (now - v.ts > 6 * 60 * 60 * 1000) memCache.delete(k);
+}, 30 * 60 * 1000);
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
