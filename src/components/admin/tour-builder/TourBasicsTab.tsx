@@ -183,6 +183,61 @@ const TourBasicsTab = ({ tour, onChange }: TourBasicsTabProps) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
+              <Label htmlFor="hotel_name" className="text-zinc-300 text-sm font-medium">Hotelname</Label>
+              <Input
+                id="hotel_name"
+                value={(tour as any)?.hotel_name || ''}
+                onChange={(e) => onChange('hotel_name' as any, e.target.value)}
+                placeholder="z.B. Hotel Luna Island"
+                className="bg-zinc-800/60 border-zinc-600/50 focus:border-emerald-500/50 focus:ring-emerald-500/20 text-white placeholder:text-zinc-500"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="hotel_address" className="text-zinc-300 text-sm font-medium">Hoteladresse</Label>
+              <Input
+                id="hotel_address"
+                value={(tour as any)?.hotel_address || ''}
+                onChange={(e) => onChange('hotel_address' as any, e.target.value)}
+                placeholder="Straße, PLZ, Ort, Land"
+                className="bg-zinc-800/60 border-zinc-600/50 focus:border-emerald-500/50 focus:ring-emerald-500/20 text-white placeholder:text-zinc-500"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="latitude" className="text-zinc-300 text-sm font-medium">Breitengrad (Latitude)</Label>
+              <Input
+                id="latitude"
+                type="number"
+                step="0.000001"
+                value={(tour as any)?.latitude ?? ''}
+                onChange={(e) => onChange('latitude' as any, e.target.value === '' ? null : parseFloat(e.target.value))}
+                placeholder="z.B. 44.5561"
+                className="bg-zinc-800/60 border-zinc-600/50 focus:border-emerald-500/50 focus:ring-emerald-500/20 text-white placeholder:text-zinc-500"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="longitude" className="text-zinc-300 text-sm font-medium">Längengrad (Longitude)</Label>
+              <Input
+                id="longitude"
+                type="number"
+                step="0.000001"
+                value={(tour as any)?.longitude ?? ''}
+                onChange={(e) => onChange('longitude' as any, e.target.value === '' ? null : parseFloat(e.target.value))}
+                placeholder="z.B. 14.8877"
+                className="bg-zinc-800/60 border-zinc-600/50 focus:border-emerald-500/50 focus:ring-emerald-500/20 text-white placeholder:text-zinc-500"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-zinc-500">
+            Ohne Koordinaten wird die Hoteladresse automatisch geokodiert – Karte und Umgebung (Attraktionen,
+            Restaurants, Nahverkehr, Flughäfen) werden daraus live berechnet.
+          </p>
+
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
               <Label htmlFor="country" className="text-zinc-300 text-sm font-medium">Land</Label>
               <Input
                 id="country"

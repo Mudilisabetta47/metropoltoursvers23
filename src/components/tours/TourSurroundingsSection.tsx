@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FerrisWheel, Utensils, Mountain, TrainFront, Plane } from "lucide-react";
+import { FerrisWheel, Utensils, Mountain, TrainFront, Plane, Map as MapIcon } from "lucide-react";
 import MapboxLocationMap from "@/components/maps/MapboxLocationMap";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 
 interface Poi {
   name: string;
   kind: string;
   distanceKm: number;
+  lat?: number;
+  lon?: number;
 }
 
 interface Groups {
@@ -78,24 +82,40 @@ interface Props {
   destination: string;
   location?: string | null;
   country?: string | null;
+  /** Exakte Hotelposition aus der Datenbank – hat Vorrang vor der Textsuche */
+  lat?: number | null;
+  lon?: number | null;
+  hotelName?: string | null;
+  hotelAddress?: string | null;
 }
 
-const loadSurroundings = async (query: string): Promise<CacheEntry | null> => {
+const loadSurroundings = async (
+  query: string,
+  coords?: { lat: number; lon: number } | null,
+): Promise<CacheEntry | null> => {
   const cached = readCache(query);
   if (cached) return cached;
   const running = inflight.get(query);
   if (running) return running;
 
   const task = (async (): Promise<CacheEntry | null> => {
-    const geoRes = await fetchWithTimeout(
-      `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`,
-      { headers: { Accept: "application/json" } },
-      6000
-    );
-    const geo = await geoRes.json();
-    if (!Array.isArray(geo) || geo.length === 0) return null;
-    const lat = parseFloat(geo[0].lat);
-    const lon = parseFloat(geo[0].lon);
+    let lat: number;
+    let lon: number;
+    if (coords) {
+      lat = coords.lat;
+      lon = coords.lon;
+    } else {
+      const geoRes = await fetchWithTimeout(
+        `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`,
+        { headers: { Accept: "application/json" } },
+        6000
+      );
+      const geo = await geoRes.json();
+      if (!Array.isArray(geo) || geo.length === 0) return null;
+      lat = parseFloat(geo[0].lat);
+      lon = parseFloat(geo[0].lon);
+    }
+
 
     const overpass = `
 [out:json][timeout:10];
@@ -155,18 +175,19 @@ out center;`;
       if (seen.has(key)) continue;
       seen.add(key);
       const distanceKm = haversine(lat, lon, eLat, eLon);
+      const pos = { lat: eLat as number, lon: eLon as number };
 
       if (t.aeroway === "aerodrome") {
-        next.airports.push({ name, kind: "Flughafen", distanceKm });
+        next.airports.push({ name, kind: "Flughafen", distanceKm, ...pos });
       } else if (t.railway === "station") {
-        next.transit.push({ name, kind: "Bahnhof", distanceKm });
+        next.transit.push({ name, kind: "Bahnhof", distanceKm, ...pos });
       } else if (t.highway === "bus_stop") {
-        next.transit.push({ name, kind: "Bus", distanceKm });
+        next.transit.push({ name, kind: "Bus", distanceKm, ...pos });
       } else if (t.amenity === "restaurant" || t.amenity === "cafe") {
-        next.food.push({ name, kind: t.amenity === "cafe" ? "Café" : "Restaurant", distanceKm });
+        next.food.push({ name, kind: t.amenity === "cafe" ? "Café" : "Restaurant", distanceKm, ...pos });
       } else if (t.natural) {
         const kind = t.natural === "beach" ? "Strand" : t.natural === "peak" ? "Gipfel" : "Wald";
-        next.nature.push({ name, kind, distanceKm });
+        next.nature.push({ name, kind, distanceKm, ...pos });
       } else {
         const kind =
           t.tourism === "museum"
@@ -176,7 +197,7 @@ out center;`;
             : t.historic
             ? "Sehenswürdigkeit"
             : "Attraktion";
-        next.attractions.push({ name, kind, distanceKm });
+        next.attractions.push({ name, kind, distanceKm, ...pos });
       }
     }
 
@@ -206,19 +227,36 @@ out center;`;
   return task;
 };
 
-const TourSurroundingsSection = ({ destination, location, country }: Props) => {
+const TourSurroundingsSection = ({
+  destination,
+  location,
+  country,
+  lat,
+  lon,
+  hotelName,
+  hotelAddress,
+}: Props) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [visible, setVisible] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
+
+  const coords = useMemo(
+    () => (Number.isFinite(lat) && Number.isFinite(lon) ? { lat: lat as number, lon: lon as number } : null),
+    [lat, lon]
+  );
 
   const query = useMemo(
-    () => [location, destination, country].filter(Boolean).join(", "),
-    [location, destination, country]
+    () =>
+      coords
+        ? `geo:${coords.lat.toFixed(4)},${coords.lon.toFixed(4)}`
+        : [hotelAddress, location, destination, country].filter(Boolean).join(", "),
+    [coords, hotelAddress, location, destination, country]
   );
 
   const cached = query ? readCache(query) : null;
   const [loading, setLoading] = useState(!cached);
   const [groups, setGroups] = useState<Groups>(cached?.groups ?? EMPTY);
-  const [center, setCenter] = useState<{ lat: number; lon: number } | null>(cached?.center ?? null);
+  const [center, setCenter] = useState<{ lat: number; lon: number } | null>(cached?.center ?? coords);
 
   // Erst laden, wenn der Abschnitt in Sichtweite kommt
   useEffect(() => {
@@ -250,11 +288,11 @@ const TourSurroundingsSection = ({ destination, location, country }: Props) => {
 
     let cancelled = false;
     setLoading(true);
-    loadSurroundings(query)
+    loadSurroundings(query, coords)
       .then((entry) => {
         if (cancelled) return;
         setGroups(entry?.groups ?? EMPTY);
-        setCenter(entry?.center ?? null);
+        setCenter(entry?.center ?? coords);
       })
       .catch(() => {
         if (!cancelled) setGroups(EMPTY);
@@ -266,14 +304,21 @@ const TourSurroundingsSection = ({ destination, location, country }: Props) => {
     return () => {
       cancelled = true;
     };
-  }, [query, visible]);
+  }, [query, visible, coords]);
 
+  const allPois = useMemo(
+    () =>
+      [...groups.attractions, ...groups.food, ...groups.nature, ...groups.transit, ...groups.airports]
+        .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lon))
+        .map((p) => ({ name: p.name, kind: p.kind, lat: p.lat as number, lon: p.lon as number })),
+    [groups]
+  );
 
   const hasAny =
     groups.attractions.length + groups.food.length + groups.nature.length +
     groups.transit.length + groups.airports.length > 0;
 
-  if (!loading && !hasAny && visible) return <div ref={containerRef} className="hidden" />;
+  if (!loading && !hasAny && visible && !center) return <div ref={containerRef} className="hidden" />;
 
   const List = ({
     title,
@@ -303,21 +348,65 @@ const TourSurroundingsSection = ({ destination, location, country }: Props) => {
     );
   };
 
+  const mapTitle = hotelName || hotelAddress || location || destination;
+
   return (
-    <section ref={containerRef} className="bg-card border border-border rounded-xl p-6 scroll-mt-36">
-      <div className="flex items-start justify-between gap-4 mb-1">
-        <h2 className="text-2xl font-bold text-foreground">Umgebung</h2>
+    <section
+      ref={containerRef}
+      id="umgebung"
+      className="bg-card border border-border rounded-xl p-6 scroll-mt-36"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-1">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">
+            {hotelName ? `Umgebung des Hotels` : "Umgebung"}
+          </h2>
+          {(hotelName || hotelAddress) && (
+            <p className="text-sm text-muted-foreground mt-0.5">
+              {[hotelName, hotelAddress].filter(Boolean).join(" · ")}
+            </p>
+          )}
+        </div>
+        {center && (
+          <Button variant="outline" size="sm" onClick={() => setMapOpen(true)} className="gap-2">
+            <MapIcon className="w-4 h-4" /> Karte anzeigen
+          </Button>
+        )}
       </div>
       {center && (
         <div className="mt-4 mb-6 rounded-xl overflow-hidden border border-border">
           <MapboxLocationMap
             lat={center.lat}
             lon={center.lon}
-            zoom={12}
+            zoom={13}
+            label={mapTitle}
+            pois={allPois}
             className="w-full h-[280px] md:h-[340px]"
           />
         </div>
       )}
+
+      <Dialog open={mapOpen} onOpenChange={setMapOpen}>
+        <DialogContent className="max-w-5xl p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-5 pb-3">
+            <DialogTitle>{mapTitle} – Lage & Umgebung</DialogTitle>
+          </DialogHeader>
+          {center && mapOpen && (
+            <MapboxLocationMap
+              lat={center.lat}
+              lon={center.lon}
+              zoom={14}
+              label={mapTitle}
+              pois={allPois}
+              fitPois
+              scrollZoom
+              className="w-full h-[70vh]"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+
 
 
       {loading ? (

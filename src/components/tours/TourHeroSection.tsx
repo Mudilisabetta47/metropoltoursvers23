@@ -3,7 +3,8 @@ import { MapPin, Heart, ChevronRight, Clock, Bus, Hotel, Coffee, Images, X, Chev
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { ExtendedPackageTour } from "@/hooks/useTourBuilder";
 import MapboxLocationMap from "@/components/maps/MapboxLocationMap";
 import ShareButton from "@/components/common/ShareButton";
@@ -383,6 +384,10 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
       {/* Map Dialog – zeigt Reiseziel auf Mapbox */}
       <Dialog open={mapOpen} onOpenChange={setMapOpen}>
         <DialogContent className="max-w-4xl p-0 overflow-hidden">
+          <VisuallyHidden>
+            <DialogTitle>{tour.destination} – Lage auf der Karte</DialogTitle>
+            <DialogDescription>Interaktive Karte mit der Position des Reiseziels</DialogDescription>
+          </VisuallyHidden>
           <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-card">
             <div className="flex items-center gap-2 min-w-0">
               <MapPin className="w-5 h-5 text-primary shrink-0" />
@@ -419,6 +424,9 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
       {/* Lightbox Dialog */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className="max-w-5xl p-0 bg-black border-0">
+          <VisuallyHidden>
+            <DialogTitle>{tour.destination} – Bildergalerie</DialogTitle>
+          </VisuallyHidden>
           <div className="relative">
             <img
               src={allImages[lightboxIndex] || heroImage}

@@ -3809,6 +3809,8 @@ export type Database = {
           gallery_images: string[] | null
           hero_image_url: string | null
           highlights: string[] | null
+          hotel_address: string | null
+          hotel_name: string | null
           id: string
           image_url: string | null
           included_services: string[] | null
@@ -3816,7 +3818,9 @@ export type Database = {
           is_active: boolean | null
           is_featured: boolean | null
           itinerary: Json | null
+          latitude: number | null
           location: string
+          longitude: number | null
           max_participants: number | null
           meta_description: string | null
           meta_title: string | null
@@ -3850,6 +3854,8 @@ export type Database = {
           gallery_images?: string[] | null
           hero_image_url?: string | null
           highlights?: string[] | null
+          hotel_address?: string | null
+          hotel_name?: string | null
           id?: string
           image_url?: string | null
           included_services?: string[] | null
@@ -3857,7 +3863,9 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           itinerary?: Json | null
+          latitude?: number | null
           location: string
+          longitude?: number | null
           max_participants?: number | null
           meta_description?: string | null
           meta_title?: string | null
@@ -3891,6 +3899,8 @@ export type Database = {
           gallery_images?: string[] | null
           hero_image_url?: string | null
           highlights?: string[] | null
+          hotel_address?: string | null
+          hotel_name?: string | null
           id?: string
           image_url?: string | null
           included_services?: string[] | null
@@ -3898,7 +3908,9 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           itinerary?: Json | null
+          latitude?: number | null
           location?: string
+          longitude?: number | null
           max_participants?: number | null
           meta_description?: string | null
           meta_title?: string | null
