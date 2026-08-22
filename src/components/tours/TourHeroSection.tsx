@@ -387,7 +387,7 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
         </div>
       </div>
 
-      {/* Map Dialog – zeigt Reiseziel auf OpenStreetMap */}
+      {/* Map Dialog – zeigt Reiseziel auf Mapbox */}
       <Dialog open={mapOpen} onOpenChange={setMapOpen}>
         <DialogContent className="max-w-4xl p-0 overflow-hidden">
           <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-card">
@@ -401,7 +401,7 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
               </div>
             </div>
             <a
-              href={osmFullUrl}
+              href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-primary hover:underline font-medium shrink-0 ml-3"
@@ -409,23 +409,19 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
               In Karte öffnen ↗
             </a>
           </div>
-          <div className="relative">
-            {geocoding && !coords && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/60 backdrop-blur-sm">
-                <span className="text-xs text-muted-foreground">Standort wird ermittelt …</span>
-              </div>
-            )}
-            <iframe
-              key={osmEmbedUrl}
-              title={`Karte ${tour.destination}`}
-              src={osmEmbedUrl}
-              className="w-full h-[70vh] border-0"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
+          {mapOpen && (
+            <MapboxLocationMap
+              query={queryString}
+              lat={coords?.lat}
+              lon={coords?.lon}
+              zoom={11}
+              label={tour.destination}
+              className="w-full h-[70vh]"
             />
-          </div>
+          )}
         </DialogContent>
       </Dialog>
+
 
       {/* Lightbox Dialog */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
