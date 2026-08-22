@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ChevronLeft, ChevronRight, Sparkles, Star, Shield, Users, Bus, Palmtree, MapPin, UsersRound, Landmark, Calendar, ChevronDown, Plus, Minus, Phone, Search } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, ShieldCheck, Users, Bus, Palmtree, MapPin, UsersRound, Landmark, Calendar, ChevronDown, Plus, Minus, Phone, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
