@@ -69,34 +69,22 @@ Deno.serve(async (req) => {
 out center;`;
 
     let op: any = null;
-    try {
-      op = await new Promise<any>((resolve, reject) => {
-        let done = 0;
-        let fallback: any = null;
-        for (const url of ENDPOINTS) {
-          fetchWithTimeout(url, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain", "User-Agent": "MetropolTours/1.0 (info@metours.de)" },
-            body: overpass,
-          }, 25000)
-            .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
-            .then((json) => {
-              if (Array.isArray(json?.elements) && json.elements.length > 0) resolve(json);
-              else { fallback = json ?? fallback; throw new Error("empty"); }
-            })
-            .catch(() => {})
-            .finally(() => {
-              done += 1;
-              if (done === ENDPOINTS.length) {
-                if (fallback) resolve(fallback);
-                else reject(new Error("all mirrors failed"));
-              }
-            });
-        }
-      });
-    } catch (_) {
-      op = null;
+    for (const url of ENDPOINTS) {
+      try {
+        const res = await fetchWithTimeout(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "MetropolTours/1.0 (info@metours.de)",
+          },
+          body: `data=${encodeURIComponent(overpass)}`,
+        }, 25000);
+        if (!res.ok) continue;
+        const json = await res.json().catch(() => null);
+        if (Array.isArray(json?.elements) && json.elements.length > 0) { op = json; break; }
+      } catch (_) { /* nächster Mirror */ }
     }
+
 
     if (!op) {
       return new Response(JSON.stringify({ error: "Kartendaten aktuell nicht verfügbar", center: { lat, lon } }), {
