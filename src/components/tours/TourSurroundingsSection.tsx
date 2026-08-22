@@ -3,6 +3,7 @@ import { FerrisWheel, Utensils, Mountain, TrainFront, Plane, Map as MapIcon } fr
 import MapboxLocationMap from "@/components/maps/MapboxLocationMap";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 
 
 interface Poi {
@@ -51,26 +52,6 @@ const writeCache = (q: string, entry: CacheEntry) => {
   try {
     localStorage.setItem(cacheKey(q), JSON.stringify(entry));
   } catch { /* Speicher voll – egal */ }
-};
-
-const fetchWithTimeout = async (url: string, init: RequestInit, ms: number) => {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), ms);
-  try {
-    return await fetch(url, { ...init, signal: ctrl.signal });
-  } finally {
-    clearTimeout(timer);
-  }
-};
-
-const haversine = (aLat: number, aLon: number, bLat: number, bLon: number) => {
-  const R = 6371;
-  const dLat = ((bLat - aLat) * Math.PI) / 180;
-  const dLon = ((bLon - aLon) * Math.PI) / 180;
-  const s =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((aLat * Math.PI) / 180) * Math.cos((bLat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(s));
 };
 
 const formatDistance = (km: number) => {
