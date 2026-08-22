@@ -103,6 +103,9 @@ const ReisenPage = () => {
   const [sortBy, setSortBy] = useState("popular");
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedDurations, setSelectedDurations] = useState<string[]>([]);
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  const [selectedCities, setSelectedCities] = useState<string[]>([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const [onlyAvailable, setOnlyAvailable] = useState(false);
   const [savedTours, setSavedTours] = useState<Set<string>>(new Set());
