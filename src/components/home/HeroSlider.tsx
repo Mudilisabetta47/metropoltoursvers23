@@ -147,10 +147,12 @@ const HeroSlider = () => {
         >
           <img
             src={slide.image}
-            alt={slide.highlight}
+            alt={slide.alt}
             className="w-full h-full object-cover"
             width={1920}
             height={1080}
+            loading={currentSlide === 0 ? "eager" : "lazy"}
+            decoding="async"
           />
           <AiBadge className="bottom-24 right-4 md:bottom-6" />
 
