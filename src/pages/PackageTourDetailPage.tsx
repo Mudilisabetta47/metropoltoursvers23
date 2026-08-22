@@ -237,103 +237,151 @@ const PackageTourDetailPage = () => {
   const gallery = (dbTour.gallery_images || []).filter(Boolean).slice(0, 6);
   const tags = dbTour.tags || [];
 
+  const heroSrc = getImageSrc(dbTour);
+  const photos = [heroSrc, ...gallery.filter((g) => g !== heroSrc)];
+  const mosaic = photos.slice(0, 3);
+  const strip = photos.slice(3, 8);
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      
+
       <main className="flex-1 pt-16 lg:pt-20">
-        {/* Hero Section */}
-        <section className="relative">
-          <div className="relative h-[52vh] lg:h-[60vh] min-h-[420px] max-h-[620px] overflow-hidden">
-            <img
-              src={getImageSrc(dbTour)}
-              alt={`Pauschalreise ${dbTour.destination}`}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/10" />
+        {/* Header block (Booking-Style) */}
+        <section className="border-b border-border bg-card">
+          <div className="container mx-auto px-4 py-6">
+            <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+              <Link to="/" className="hover:text-primary transition-colors font-medium">METROPOL TOURS</Link>
+              <ChevronRight className="w-4 h-4" />
+              <Link to="/reisen" className="hover:text-primary transition-colors">Pauschalreisen</Link>
+              <ChevronRight className="w-4 h-4" />
+              <span className="text-foreground">{dbTour.destination}</span>
+            </nav>
 
-            {/* Breadcrumb */}
-            <div className="absolute top-0 left-0 right-0 pt-4">
-              <div className="container mx-auto px-4">
-                <nav className="flex items-center gap-2 text-sm text-white/80">
-                  <Link to="/" className="hover:text-white transition-colors font-medium">METROPOL TOURS</Link>
-                  <ChevronRight className="w-4 h-4" />
-                  <Link to="/reisen" className="hover:text-white transition-colors">Pauschalreisen</Link>
-                  <ChevronRight className="w-4 h-4" />
-                  <span className="text-white">{dbTour.destination}</span>
-                </nav>
-              </div>
-            </div>
-
-            {/* Hero Content */}
-            <div className="absolute bottom-0 left-0 right-0 pb-8">
-              <div className="container mx-auto px-4">
-                <div className="max-w-4xl">
-                  <div className="flex flex-wrap items-center gap-2 mb-4">
-                    <Badge className="bg-primary text-primary-foreground shadow-lg">
-                      <Palmtree className="w-3 h-3 mr-1" />
-                      Pauschalreise
-                    </Badge>
-                    <Badge variant="secondary" className="bg-white/20 text-white border-0 backdrop-blur-sm">
-                      {dbTour.duration_days} Tage
-                    </Badge>
-                    {dbTour.discount_percent > 0 && (
-                      <Badge className="bg-accent text-accent-foreground">
-                        -{dbTour.discount_percent}% Rabatt
-                      </Badge>
-                    )}
-                  </div>
-
-                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 drop-shadow-lg">
-                    {dbTour.destination}
-                  </h1>
-
-                  <div className="flex flex-wrap items-center gap-4 text-white/90 mb-4">
-                    <div className="flex items-center gap-1.5">
-                      <MapPin className="w-4 h-4" />
-                      <span>{dbTour.location}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="w-4 h-4" />
-                      <span>{formatDate(dbTour.departure_date)} – {formatDate(dbTour.return_date)}</span>
-                    </div>
-                    <div className="flex items-center gap-0.5">
-                      {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />)}
-                      <span className="ml-1 text-sm">(4.8)</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-3 mb-5">
-                    {[{ icon: Hotel, label: "Hotel inkl." }, { icon: Bus, label: "Komfortbus inkl." }, { icon: Wifi, label: "WLAN an Bord" }].map((p) => (
-                      <div key={p.label} className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-2 text-white text-sm">
-                        <p.icon className="w-4 h-4" /><span>{p.label}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="inline-flex items-end gap-2 bg-card/95 backdrop-blur rounded-xl px-5 py-3 shadow-xl">
-                    <span className="text-muted-foreground text-sm">ab</span>
-                    <span className="text-3xl font-bold text-primary">{dbTour.price_from}€</span>
-                    <span className="text-muted-foreground text-sm pb-1">pro Person</span>
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  <Badge className="bg-primary text-primary-foreground">
+                    <Palmtree className="w-3 h-3 mr-1" />Pauschalreise
+                  </Badge>
+                  <Badge variant="secondary">{dbTour.duration_days} Tage</Badge>
+                  {dbTour.discount_percent > 0 && (
+                    <Badge className="bg-accent text-accent-foreground">-{dbTour.discount_percent}% Rabatt</Badge>
+                  )}
+                  <div className="flex items-center gap-0.5 ml-1">
+                    {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />)}
+                    <span className="ml-1 text-sm text-muted-foreground">(4.8)</span>
                   </div>
                 </div>
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2">{dbTour.destination}</h1>
+                <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-primary" />{dbTour.location}</span>
+                  <span className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-primary" />{formatDate(dbTour.departure_date)} – {formatDate(dbTour.return_date)}</span>
+                  <a href="#umgebung" className="text-primary font-medium hover:underline">Karte anzeigen</a>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <div className="text-sm text-muted-foreground">ab</div>
+                  <div className="text-3xl font-bold text-primary leading-none">{dbTour.price_from}€</div>
+                  <div className="text-sm text-muted-foreground">pro Person</div>
+                </div>
+                <Button size="lg" onClick={() => document.getElementById('anfrage')?.scrollIntoView({ behavior: 'smooth' })}>
+                  Verfügbarkeit anfragen
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
               </div>
             </div>
           </div>
+        </section>
 
-          {/* Short description bar */}
-          {dbTour.short_description && (
-            <div className="bg-muted/50 border-b border-border">
-              <div className="container mx-auto px-4 py-4">
-                <p className="text-muted-foreground max-w-3xl">{dbTour.short_description}</p>
-              </div>
+        {/* Photo mosaic */}
+        <section className="container mx-auto px-4 pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <button
+              type="button"
+              onClick={() => setLightbox(0)}
+              className="md:col-span-2 relative aspect-[16/10] md:aspect-[16/9] rounded-2xl overflow-hidden group"
+            >
+              <img src={mosaic[0]} alt={`Pauschalreise ${dbTour.destination}`} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+            </button>
+            <div className="grid grid-cols-2 md:grid-cols-1 gap-3">
+              {[mosaic[1], mosaic[2]].map((img, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => img && setLightbox(i + 1)}
+                  className="relative aspect-[4/3] md:aspect-auto md:h-full rounded-2xl overflow-hidden bg-muted group"
+                >
+                  {img ? (
+                    <img src={img} alt={`${dbTour.destination} Eindruck ${i + 2}`} loading="lazy" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                      <Camera className="w-6 h-6" />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {strip.length > 0 && (
+            <div className="grid grid-cols-3 md:grid-cols-5 gap-3 mt-3">
+              {strip.map((img, i) => {
+                const isLast = i === strip.length - 1 && photos.length > 8;
+                return (
+                  <button key={i} type="button" onClick={() => setLightbox(i + 3)} className="relative aspect-[4/3] rounded-xl overflow-hidden group">
+                    <img src={img} alt={`${dbTour.destination} Eindruck ${i + 4}`} loading="lazy" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    {isLast && (
+                      <span className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-semibold text-sm">
+                        + {photos.length - 8} Fotos
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
+
+          {dbTour.short_description && (
+            <p className="text-muted-foreground max-w-3xl mt-6">{dbTour.short_description}</p>
+          )}
         </section>
+
+        {/* Lightbox */}
+        {lightbox !== null && (
+          <div
+            className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4"
+            onClick={() => setLightbox(null)}
+            role="dialog"
+            aria-label="Bildergalerie"
+          >
+            <button aria-label="Schließen" className="absolute top-4 right-4 text-white p-2" onClick={() => setLightbox(null)}>
+              <X className="w-6 h-6" />
+            </button>
+            <button
+              aria-label="Vorheriges Bild"
+              className="absolute left-4 text-white p-2"
+              onClick={(e) => { e.stopPropagation(); setLightbox((lightbox - 1 + photos.length) % photos.length); }}
+            >
+              <ChevronLeft className="w-8 h-8" />
+            </button>
+            <img src={photos[lightbox]} alt={`${dbTour.destination} Foto ${lightbox + 1}`} className="max-h-[85vh] max-w-[90vw] object-contain rounded-xl" onClick={(e) => e.stopPropagation()} />
+            <button
+              aria-label="Nächstes Bild"
+              className="absolute right-4 text-white p-2"
+              onClick={(e) => { e.stopPropagation(); setLightbox((lightbox + 1) % photos.length); }}
+            >
+              <ChevronRight className="w-8 h-8" />
+            </button>
+          </div>
+        )}
 
         {/* Main Content */}
         <section className="py-10">
           <div className="container mx-auto px-4">
+
             <div className="grid lg:grid-cols-3 gap-8">
               {/* Left Column - Tour Details */}
               <div className="lg:col-span-2 space-y-8">
