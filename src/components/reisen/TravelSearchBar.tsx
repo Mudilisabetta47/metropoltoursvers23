@@ -244,7 +244,7 @@ const TravelSearchBar = ({ tours, query, onQueryChange, onSearch, activeTab, onT
                 {destinations.map((t) => (
                   <button key={t.id} type="button" onClick={() => openTour(t)}
                     className="group relative h-24 overflow-hidden rounded-xl text-left">
-                    <img src={t.image} alt={t.destination} loading="lazy"
+                    <img src={t.image} alt={`Reiseziel ${t.destination} – Busreise mit METROPOL TOURS`} loading="lazy"
                       className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
                     <span className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
                     <span className="absolute bottom-3 left-4 right-4">

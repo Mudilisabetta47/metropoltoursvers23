@@ -232,7 +232,7 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
             className="col-span-2 row-span-2 relative cursor-pointer group"
             onClick={() => openLightbox(0)}
           >
-            <img src={mainImage} alt={tour.destination} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <img src={mainImage} alt={`${tour.destination} – Hauptbild der Busreise`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
           </div>
 
@@ -243,7 +243,7 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
               className="relative cursor-pointer group overflow-hidden"
               onClick={() => openLightbox(i + 1)}
             >
-              <img src={img} alt={`${tour.destination} ${i + 2}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <img src={img} alt={`${tour.destination} – Impression ${i + 2} der Reise`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
 
               {/* "Show all photos" overlay on last image */}
@@ -422,7 +422,7 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
           <div className="relative">
             <img
               src={allImages[lightboxIndex] || heroImage}
-              alt={`${tour.destination} Foto ${lightboxIndex + 1}`}
+              alt={`${tour.destination} – Reisefoto ${lightboxIndex + 1} in Großansicht`}
               className="w-full max-h-[80vh] object-contain"
             />
             <Button

@@ -102,7 +102,7 @@ const WeekendTripsPage = () => {
         {/* Hero */}
         <section className="relative overflow-hidden py-20 lg:py-28 bg-secondary">
           <div className="absolute inset-0">
-            <img src={weekendHero} alt="Wochenendtrips durch Europa" width={1920} height={1080} className="w-full h-full object-cover" />
+            <img src={weekendHero} alt="Panorama einer europäischen Stadt – Wochenendtrips mit dem Reisebus" width={1920} height={1080} className="w-full h-full object-cover" />
             <AiBadge />
             <div className="absolute inset-0 bg-gradient-to-r from-secondary/95 via-secondary/80 to-secondary/40" />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.2),transparent_70%)]" />
@@ -213,7 +213,7 @@ const WeekendTripsPage = () => {
                       <div className="relative h-52 overflow-hidden">
                         <img
                           src={trip.image_url || "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80"}
-                          alt={`Wochenendtrip nach ${trip.destination}`}
+                          alt={`Wochenendtrip nach ${trip.destination} – Stadtansicht`}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           loading="lazy"
                         />

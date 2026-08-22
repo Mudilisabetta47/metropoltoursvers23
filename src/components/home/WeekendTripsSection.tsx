@@ -133,7 +133,7 @@ const WeekendTripsSection = () => {
               <div className="aspect-[4/5] relative">
                 <img
                   src={trip.image_url || "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400&q=80"}
-                  alt={`Wochenendtrip nach ${trip.destination}`}
+                  alt={`Wochenendtrip nach ${trip.destination} – Stadtansicht`}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
                 />
