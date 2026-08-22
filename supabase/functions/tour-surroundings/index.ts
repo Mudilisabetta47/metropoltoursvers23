@@ -77,7 +77,27 @@ Deno.serve(async (req) => {
 out center;`;
 
     const cacheKey = `${lat.toFixed(3)},${lon.toFixed(3)}`;
+    const SB_URL = Deno.env.get("SUPABASE_URL")!;
+    const SB_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const restHeaders = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, "Content-Type": "application/json" };
+
     let op: any = memCache.get(cacheKey)?.data ?? null;
+
+    if (!op) {
+      // Persistenter DB-Cache (30 Tage)
+      try {
+        const r = await fetch(
+          `${SB_URL}/rest/v1/surroundings_cache?select=payload,updated_at&cache_key=eq.${encodeURIComponent(cacheKey)}&limit=1`,
+          { headers: restHeaders },
+        );
+        const rows = await r.json().catch(() => []);
+        const row = Array.isArray(rows) ? rows[0] : null;
+        if (row && Date.now() - new Date(row.updated_at).getTime() < 30 * 24 * 3600 * 1000) {
+          op = row.payload;
+          memCache.set(cacheKey, { data: op, ts: Date.now() });
+        }
+      } catch (_) { /* Cache optional */ }
+    }
 
     if (!op) {
       const attempts = ENDPOINTS.map((url) =>
@@ -93,14 +113,21 @@ out center;`;
             if (!res.ok) throw new Error(`status ${res.status}`);
             const json = await res.json();
             if (!Array.isArray(json?.elements) || json.elements.length === 0) throw new Error("empty");
-            console.log("mirror ok", url, json.elements.length);
             return json;
           })
           .catch((e) => { console.log("mirror fail", url, String(e)); throw e; })
       );
       op = await Promise.any(attempts).catch(() => null);
-      if (op) memCache.set(cacheKey, { data: op, ts: Date.now() });
+      if (op) {
+        memCache.set(cacheKey, { data: op, ts: Date.now() });
+        fetch(`${SB_URL}/rest/v1/surroundings_cache?on_conflict=cache_key`, {
+          method: "POST",
+          headers: { ...restHeaders, Prefer: "resolution=merge-duplicates" },
+          body: JSON.stringify({ cache_key: cacheKey, lat, lon, payload: op, updated_at: new Date().toISOString() }),
+        }).catch(() => {});
+      }
     }
+
 
 
 
