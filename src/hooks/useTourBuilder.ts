@@ -132,6 +132,10 @@ export interface ExtendedPackageTour {
   destination: string;
   location: string;
   country: string;
+  hotel_name?: string | null;
+  hotel_address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   duration_days: number;
   price_from: number;
   image_url: string | null;
