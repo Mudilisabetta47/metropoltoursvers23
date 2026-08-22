@@ -175,18 +175,19 @@ out center;`;
       if (seen.has(key)) continue;
       seen.add(key);
       const distanceKm = haversine(lat, lon, eLat, eLon);
+      const pos = { lat: eLat as number, lon: eLon as number };
 
       if (t.aeroway === "aerodrome") {
-        next.airports.push({ name, kind: "Flughafen", distanceKm });
+        next.airports.push({ name, kind: "Flughafen", distanceKm, ...pos });
       } else if (t.railway === "station") {
-        next.transit.push({ name, kind: "Bahnhof", distanceKm });
+        next.transit.push({ name, kind: "Bahnhof", distanceKm, ...pos });
       } else if (t.highway === "bus_stop") {
-        next.transit.push({ name, kind: "Bus", distanceKm });
+        next.transit.push({ name, kind: "Bus", distanceKm, ...pos });
       } else if (t.amenity === "restaurant" || t.amenity === "cafe") {
-        next.food.push({ name, kind: t.amenity === "cafe" ? "Café" : "Restaurant", distanceKm });
+        next.food.push({ name, kind: t.amenity === "cafe" ? "Café" : "Restaurant", distanceKm, ...pos });
       } else if (t.natural) {
         const kind = t.natural === "beach" ? "Strand" : t.natural === "peak" ? "Gipfel" : "Wald";
-        next.nature.push({ name, kind, distanceKm });
+        next.nature.push({ name, kind, distanceKm, ...pos });
       } else {
         const kind =
           t.tourism === "museum"
@@ -196,7 +197,7 @@ out center;`;
             : t.historic
             ? "Sehenswürdigkeit"
             : "Attraktion";
-        next.attractions.push({ name, kind, distanceKm });
+        next.attractions.push({ name, kind, distanceKm, ...pos });
       }
     }
 
