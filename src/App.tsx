@@ -21,6 +21,7 @@ const CheckoutPage = lazy(() => import("./pages/CheckoutPage"));
 const ServicePage = lazy(() => import("./pages/ServicePage"));
 
 const BusreisenPage = lazy(() => import("./pages/BusreisenPage"));
+const PackageTourDetailPage = lazy(() => import("./pages/PackageTourDetailPage"));
 const ReisenPage = lazy(() => import("./pages/ReisenPage"));
 
 const BusinessServicesPage = lazy(() => import("./pages/BusinessServicesPage"));
@@ -209,8 +210,8 @@ const App = () => (
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/widerruf" element={<WiderrufPage />} />
               <Route path="/karriere" element={<KarrierePage />} />
-              <Route path="/pauschalreisen/:tourId" element={<Navigate to="/business" replace />} />
-              <Route path="/reisen/:tourId" element={<Navigate to="/business" replace />} />
+              <Route path="/pauschalreisen/:tourId" element={<PackageTourDetailPage />} />
+              <Route path="/reisen/:tourId" element={<PackageTourDetailPage />} />
               <Route path="/reisen/checkout" element={<TourCheckoutPage />} />
               <Route path="/tour-checkout" element={<TourCheckoutPage />} />
               <Route path="/admin" element={<AdminRedirect />} />
