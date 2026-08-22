@@ -14,6 +14,7 @@ import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import { ExtendedPackageTour, TourDate, TourTariff } from "@/hooks/useTourBuilder";
 import { isTourBookable, TOUR_NOT_BOOKABLE_TITLE, TOUR_NOT_BOOKABLE_TEXT } from "@/lib/tourAvailability";
+import TourInquiryDialog from "@/components/tours/TourInquiryDialog";
 
 interface TourStickySidebarProps {
   tour: ExtendedPackageTour;
