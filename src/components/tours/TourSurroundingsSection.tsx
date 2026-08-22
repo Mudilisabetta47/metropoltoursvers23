@@ -267,7 +267,7 @@ const TourSurroundingsSection = ({ destination, location, country }: Props) => {
     groups.attractions.length + groups.food.length + groups.nature.length +
     groups.transit.length + groups.airports.length > 0;
 
-  if (!loading && !hasAny) return null;
+  if (!loading && !hasAny && visible) return <div ref={containerRef} className="hidden" />;
 
   const List = ({
     title,
@@ -298,7 +298,7 @@ const TourSurroundingsSection = ({ destination, location, country }: Props) => {
   };
 
   return (
-    <section className="bg-card border border-border rounded-xl p-6 scroll-mt-36">
+    <section ref={containerRef} className="bg-card border border-border rounded-xl p-6 scroll-mt-36">
       <div className="flex items-start justify-between gap-4 mb-1">
         <h2 className="text-2xl font-bold text-foreground">Umgebung</h2>
       </div>
@@ -315,8 +315,15 @@ const TourSurroundingsSection = ({ destination, location, country }: Props) => {
 
 
       {loading ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground py-6">
-          <Loader2 className="w-4 h-4 animate-spin" /> Umgebung wird geladen…
+        <div className="mt-4 grid md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-4" aria-busy="true">
+          {Array.from({ length: 3 }).map((_, col) => (
+            <div key={col} className="space-y-3">
+              <div className="h-5 w-40 rounded bg-muted animate-pulse" />
+              {Array.from({ length: 4 }).map((__, i) => (
+                <div key={i} className="h-4 w-full rounded bg-muted/70 animate-pulse" />
+              ))}
+            </div>
+          ))}
         </div>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-10 mt-4">
