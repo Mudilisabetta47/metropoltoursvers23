@@ -74,53 +74,196 @@ const AdminDashboard = () => {
   const [period, setPeriod] = useState("month");
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [counts, setCounts] = useState({
-    bookingsToday: 23, revenueMonth: 184_320, openInquiries: 14,
-    activeTrips: 7, readyBuses: 11, totalBuses: 14, openPayments: 9,
-    openPaymentsAmount: 18_640, complaints: 3, nextDepartures: demoDepartures.length,
+    bookingsToday: 0, revenueMonth: 0, openInquiries: 0,
+    activeTrips: 0, readyBuses: 0, totalBuses: 0, openPayments: 0,
+    openPaymentsAmount: 0, complaints: 0, nextDepartures: 0,
   });
+  const [departures, setDepartures] = useState<DepartureRow[]>([]);
+  const [recentBookings, setRecentBookings] = useState<BookingRow[]>([]);
+  const [inquiries, setInquiries] = useState<InquiryRow[]>([]);
+  const [maintenance, setMaintenance] = useState<MaintenanceRow[]>([]);
+  const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
+  const [drivers, setDrivers] = useState<DriverRow[]>([]);
+  const [incidents, setIncidents] = useState<IncidentRow[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // attempt to fetch real numbers, fall back to demo
-  useEffect(() => {
-    (async () => {
-      try {
-        const today = new Date(); today.setHours(0, 0, 0, 0);
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-        const [b, inq, comp, buses] = await Promise.all([
-          supabase.from("bookings").select("id, price_paid, created_at, status", { count: "exact" })
-            .gte("created_at", today.toISOString()),
-          supabase.from("package_tour_inquiries").select("id", { count: "exact", head: true })
-            .eq("status", "new"),
-          supabase.from("complaints").select("id", { count: "exact", head: true })
-            .in("status", ["open", "in_progress"]),
-          supabase.from("buses").select("id, status"),
-        ]);
-        const revRows = await supabase.from("bookings").select("price_paid")
-          .gte("created_at", monthStart.toISOString()).in("status", ["confirmed", "completed"]);
-        const rev = (revRows.data ?? []).reduce((s, r: any) => s + Number(r.price_paid || 0), 0);
+  const loadLiveData = useMemo(() => async () => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const in24h = new Date(Date.now() + 24 * 3600 * 1000);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-        setCounts((c) => ({
-          ...c,
-          bookingsToday: b.count ?? c.bookingsToday,
-          openInquiries: inq.count ?? c.openInquiries,
-          complaints: comp.count ?? c.complaints,
-          totalBuses: buses.data?.length ?? c.totalBuses,
-          readyBuses: (buses.data ?? []).filter((x: any) => x.status === "active").length || c.readyBuses,
-          revenueMonth: rev || c.revenueMonth,
-        }));
-      } catch { /* keep demo */ }
-    })();
+    const [
+      lineBookings, tourBookings, inqRes, compRes, busesRes,
+      tripsRes, maintRes, invRes, incRes, driverRes,
+    ] = await Promise.all([
+      supabase.from("bookings")
+        .select("id, ticket_number, booking_number, passenger_first_name, passenger_last_name, price_paid, status, created_at, trip_id")
+        .order("created_at", { ascending: false }).limit(30),
+      supabase.from("tour_bookings")
+        .select("id, booking_number, contact_first_name, contact_last_name, participants, total_price, status, created_at, tour_id, package_tours(destination, title)")
+        .order("created_at", { ascending: false }).limit(30),
+      supabase.from("package_tour_inquiries")
+        .select("id, inquiry_number, first_name, last_name, destination, participants, departure_date, status, created_at")
+        .order("created_at", { ascending: false }).limit(8),
+      supabase.from("complaints").select("id", { count: "exact", head: true }).in("status", ["open", "in_progress"]),
+      supabase.from("buses").select("id, status, license_plate"),
+      supabase.from("line_trips")
+        .select("id, planned_departure, status, delay_minutes, bus_id, driver_id, bus_lines(name), buses(license_plate, total_seats)")
+        .gte("planned_departure", today.toISOString())
+        .lte("planned_departure", in24h.toISOString())
+        .order("planned_departure", { ascending: true }).limit(8),
+      supabase.from("fleet_maintenance")
+        .select("id, current_km, tuev_date, uvv_date, next_inspection_date, buses(license_plate)")
+        .order("tuev_date", { ascending: true }).limit(6),
+      supabase.from("tour_invoices")
+        .select("id, invoice_number, amount, status, issued_at, tour_bookings(contact_first_name, contact_last_name)")
+        .neq("status", "paid").order("issued_at", { ascending: true }).limit(6),
+      supabase.from("incidents")
+        .select("id, title, type, severity, status, description, created_at")
+        .neq("status", "resolved").order("created_at", { ascending: false }).limit(6),
+      supabase.from("driver_status").select("user_id, status, note, updated_at").limit(10),
+    ]);
+
+    // --- KPIs ---
+    const lb = lineBookings.data ?? [];
+    const tb = tourBookings.data ?? [];
+    const bookingsToday =
+      lb.filter((b: any) => new Date(b.created_at) >= today).length +
+      tb.filter((b: any) => new Date(b.created_at) >= today).length;
+    const revenueMonth =
+      lb.filter((b: any) => new Date(b.created_at) >= monthStart && ["confirmed", "completed"].includes(b.status))
+        .reduce((s: number, b: any) => s + Number(b.price_paid || 0), 0) +
+      tb.filter((b: any) => new Date(b.created_at) >= monthStart && ["confirmed", "paid", "completed"].includes(b.status))
+        .reduce((s: number, b: any) => s + Number(b.total_price || 0), 0);
+    const openInvoices = invRes.data ?? [];
+
+    setCounts({
+      bookingsToday,
+      revenueMonth,
+      openInquiries: (inqRes.data ?? []).filter((q: any) => ["new", "open"].includes(q.status)).length,
+      activeTrips: (tripsRes.data ?? []).filter((t: any) => ["running", "delayed", "boarding"].includes(t.status)).length,
+      readyBuses: (busesRes.data ?? []).filter((b: any) => b.status === "active").length,
+      totalBuses: busesRes.data?.length ?? 0,
+      openPayments: openInvoices.length,
+      openPaymentsAmount: openInvoices.reduce((s: number, i: any) => s + Number(i.amount || 0), 0),
+      complaints: compRes.count ?? 0,
+      nextDepartures: (tripsRes.data ?? []).length,
+    });
+
+    // --- Lists ---
+    setDepartures((tripsRes.data ?? []).map((t: any) => ({
+      id: t.id,
+      time: new Date(t.planned_departure),
+      route: t.bus_lines?.name ?? "Linienfahrt",
+      bus: t.buses?.license_plate ?? "—",
+      driver: t.driver_id ? "zugewiesen" : "offen",
+      pax: 0,
+      cap: t.buses?.total_seats ?? 0,
+      status: t.status === "delayed" ? "scheduled" : (t.status ?? "scheduled"),
+    })));
+
+    const merged: BookingRow[] = [
+      ...lb.map((b: any) => ({
+        key: `l-${b.id}`,
+        id: b.ticket_number || b.booking_number || "—",
+        customer: `${b.passenger_last_name ?? ""}, ${b.passenger_first_name ?? ""}`.replace(/^, |, $/, "") || "—",
+        route: "Linienfahrt",
+        pax: 1,
+        price: Number(b.price_paid || 0),
+        status: b.status,
+      })),
+      ...tb.map((b: any) => ({
+        key: `t-${b.id}`,
+        id: b.booking_number || "—",
+        customer: `${b.contact_last_name ?? ""}, ${b.contact_first_name ?? ""}`.replace(/^, |, $/, "") || "—",
+        route: b.package_tours?.destination || b.package_tours?.title || "Pauschalreise",
+        pax: Number(b.participants || 1),
+        price: Number(b.total_price || 0),
+        status: b.status,
+      })),
+    ].slice(0, 8);
+    setRecentBookings(merged);
+
+    setInquiries((inqRes.data ?? []).map((q: any) => ({
+      id: q.id,
+      customer: `${q.last_name ?? ""}, ${q.first_name ?? ""}`.replace(/^, |, $/, "") || "—",
+      subject: q.destination || q.inquiry_number,
+      date: q.departure_date ? new Date(q.departure_date) : null,
+      pax: Number(q.participants || 0),
+      prio: Number(q.participants || 0) >= 40 ? "hoch" : Number(q.participants || 0) >= 15 ? "mittel" : "niedrig",
+      source: q.status === "new" ? "Neu" : q.status,
+    })));
+
+    setMaintenance((maintRes.data ?? []).map((m: any) => {
+      const due = m.tuev_date ? new Date(m.tuev_date) : m.next_inspection_date ? new Date(m.next_inspection_date) : new Date();
+      const days = Math.round((+due - Date.now()) / 86400000);
+      return {
+        bus: m.buses?.license_plate ?? "—",
+        typ: m.tuev_date ? "TÜV / HU" : "Inspektion",
+        faellig: due,
+        km: Number(m.current_km || 0),
+        status: days < 7 ? "kritisch" : days < 30 ? "warnung" : "planbar",
+      };
+    }));
+
+    setInvoices(openInvoices.map((i: any) => ({
+      id: i.invoice_number,
+      kunde: `${i.tour_bookings?.contact_last_name ?? ""}, ${i.tour_bookings?.contact_first_name ?? ""}`.replace(/^, |, $/, "") || "—",
+      betrag: Number(i.amount || 0),
+      faellig: i.issued_at ? new Date(i.issued_at) : null,
+      status: i.status === "overdue" ? "überfällig" : "offen",
+    })));
+
+    setIncidents((incRes.data ?? []).map((i: any) => ({
+      id: i.id.slice(0, 8).toUpperCase(),
+      typ: i.title || i.type,
+      bus: i.type ?? "—",
+      ort: i.description?.slice(0, 40) ?? "—",
+      prio: i.severity === "critical" || i.severity === "high" ? "hoch" : i.severity === "medium" ? "mittel" : "niedrig",
+    })));
+
+    const driverIds = (driverRes.data ?? []).map((d: any) => d.user_id);
+    let names: Record<string, string> = {};
+    if (driverIds.length) {
+      const { data: profs } = await supabase.from("profiles").select("user_id, first_name, last_name").in("user_id", driverIds);
+      names = Object.fromEntries((profs ?? []).map((p: any) => [p.user_id, `${p.last_name ?? ""}, ${p.first_name ?? ""}`.replace(/^, |, $/, "")]));
+    }
+    setDrivers((driverRes.data ?? []).map((d: any) => ({
+      name: names[d.user_id] || "Fahrer",
+      status: d.status ?? "unbekannt",
+      tour: d.note ?? "—",
+      lenkzeit: 0,
+      max: 9,
+    })));
+
+    setLastUpdate(new Date());
+    setLoading(false);
   }, []);
 
+  useEffect(() => {
+    loadLiveData().catch(() => setLoading(false));
+    // Live: neue Buchungen sofort erkennen
+    const channel = supabase
+      .channel("cockpit-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => loadLiveData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "tour_bookings" }, () => loadLiveData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "package_tour_inquiries" }, () => loadLiveData())
+      .subscribe();
+    const iv = setInterval(() => loadLiveData().catch(() => {}), 60_000);
+    return () => { supabase.removeChannel(channel); clearInterval(iv); };
+  }, [loadLiveData]);
+
   const kpis: Kpi[] = useMemo(() => [
-    { label: "Buchungen heute",   value: num(counts.bookingsToday), delta: +12, icon: Receipt,  accent: "from-emerald-500/20 to-emerald-500/0", onClick: () => navigate("/admin/bookings") },
-    { label: "Umsatz Monat",      value: eur(counts.revenueMonth),  delta: +8,  icon: TrendingUp, accent: "from-sky-500/20 to-sky-500/0",         onClick: () => navigate("/admin/finances") },
-    { label: "Offene Anfragen",   value: num(counts.openInquiries), sub: "5 priorisiert", icon: Mail, accent: "from-amber-500/20 to-amber-500/0", onClick: () => navigate("/admin/inquiries") },
+    { label: "Buchungen heute",   value: num(counts.bookingsToday), icon: Receipt,  accent: "from-emerald-500/20 to-emerald-500/0", onClick: () => navigate("/admin/bookings") },
+    { label: "Umsatz Monat",      value: eur(counts.revenueMonth),  icon: TrendingUp, accent: "from-sky-500/20 to-sky-500/0",         onClick: () => navigate("/admin/finances") },
+    { label: "Offene Anfragen",   value: num(counts.openInquiries), icon: Mail, accent: "from-amber-500/20 to-amber-500/0", onClick: () => navigate("/admin/inquiries") },
     { label: "Aktive Fahrten",    value: num(counts.activeTrips),   sub: "live",          icon: Activity, accent: "from-emerald-500/20 to-emerald-500/0", onClick: () => navigate("/admin/dispatch") },
-    { label: "Einsatzbereite Busse", value: `${counts.readyBuses}/${counts.totalBuses}`, sub: "3 in Werkstatt", icon: Bus, accent: "from-sky-500/20 to-sky-500/0", onClick: () => navigate("/admin/buses") },
+    { label: "Einsatzbereite Busse", value: `${counts.readyBuses}/${counts.totalBuses}`, icon: Bus, accent: "from-sky-500/20 to-sky-500/0", onClick: () => navigate("/admin/buses") },
     { label: "Offene Zahlungen",  value: eur(counts.openPaymentsAmount), sub: `${counts.openPayments} Rechnungen`, icon: Euro, accent: "from-amber-500/20 to-amber-500/0", onClick: () => navigate("/admin/finances") },
-    { label: "Reklamationen",     value: num(counts.complaints),    sub: "1 eskaliert",   icon: AlertTriangle, accent: "from-red-500/20 to-red-500/0", onClick: () => navigate("/admin/complaints") },
+    { label: "Reklamationen",     value: num(counts.complaints),    icon: AlertTriangle, accent: "from-red-500/20 to-red-500/0", onClick: () => navigate("/admin/complaints") },
     { label: "Nächste Abfahrten", value: num(counts.nextDepartures),sub: "in 24 h",       icon: Clock, accent: "from-violet-500/20 to-violet-500/0", onClick: () => navigate("/admin/departures") },
   ], [counts, navigate]);
+
 
   const quickActions = [
     { label: "Buchung erstellen", icon: Plus,          onClick: () => navigate("/admin/bookings?new=1"), tone: "primary" },
