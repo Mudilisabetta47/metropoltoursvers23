@@ -328,7 +328,7 @@ const ReisenPage = () => {
       <main className="flex-1 pt-16 lg:pt-20">
         {/* ============== EDITORIAL HERO ============== */}
         <section className="relative h-[78vh] min-h-[560px] max-h-[820px] overflow-hidden">
-          <img src={editorialHero} alt="Premium Reisebus an der Adria-Küste"
+          <img src={reisenHeroBus.url} alt="METROPOL TOURS Reisebus bei Nacht in den Bergen"
             className="absolute inset-0 w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/30 to-black/70" />
           <AiBadge className="bottom-4 right-4" />
