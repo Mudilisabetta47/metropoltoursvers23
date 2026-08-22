@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
     <!-- Header -->
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px;">
       <div>
-        <img src="https://www.metours.de/__l5e/assets-v1/95335110-18be-4c69-a1fb-0ae06b73123b/metropol-logo.png" alt="METROPOL TOURS GmbH" width="220" style="display:block;height:auto;max-height:60px;" />
+        <img src="https://www.metours.de/brand/metropol-logo.png" alt="METROPOL TOURS GmbH" width="220" style="display:block;height:auto;max-height:60px;" />
         <p style="margin:4px 0 0;font-size:11px;color:#6b7280;">Reiseveranstalter · Busreisen · Pauschalreisen</p>
       </div>
       <div style="text-align:right;">
@@ -183,7 +183,7 @@ Deno.serve(async (req) => {
     <!-- Footer -->
     <div style="font-size:10px;color:#9ca3af;text-align:center;line-height:1.6;">
       Metropol Tours · Reiseveranstalter<br/>
-      E-Mail: kundenservice@metours.de · Tel: +49 (0) 123 456 789<br/>
+      E-Mail: kundenservice@metours.de · Tel: +49 511 80781106<br/>
       Dieses Angebot ist freibleibend und unverbindlich.
     </div>
   </div>

@@ -39,19 +39,19 @@ const BANK = {
 
 const COMPANY = {
   name: "METROPOL TOURS GmbH",
-  address: "Musterstraße 1, 20095 Hamburg",
-  phone: "+49 176 47144200",
+  address: "Rudolf-Diesel-Weg 8, 30419 Hannover",
+  phone: "+49 511 80781106",
   email: "kundenservice@metours.de",
-  ustId: "DE123456789",
-  steuerNr: "12/345/67890",
-  hrb: "HRB 12345",
+  ustId: "",
+  steuerNr: "",
+  hrb: "HRB 222247, AG Hannover",
   web: "metours.de",
 };
 
 // SVG Logo for METROPOL TOURS (Bus icon + text)
-const LOGO_SVG = `<img src="https://www.metours.de/__l5e/assets-v1/b3795491-7fcc-4d33-9886-c04b2cb7be83/metropol-logo-light.png" alt="METROPOL TOURS GmbH" width="240" style="display:block;height:auto;max-height:56px;" />`;
+const LOGO_SVG = `<img src="https://www.metours.de/brand/metropol-logo-light.png" alt="METROPOL TOURS GmbH" width="240" style="display:block;height:auto;max-height:56px;" />`;
 
-const LOGO_SVG_DARK = `<img src="https://www.metours.de/__l5e/assets-v1/95335110-18be-4c69-a1fb-0ae06b73123b/metropol-logo.png" alt="METROPOL TOURS GmbH" width="240" style="display:block;height:auto;max-height:56px;" />`;
+const LOGO_SVG_DARK = `<img src="https://www.metours.de/brand/metropol-logo.png" alt="METROPOL TOURS GmbH" width="240" style="display:block;height:auto;max-height:56px;" />`;
 
 // Professional base styles
 const baseStyles = `
@@ -291,7 +291,7 @@ function generateConfirmation(booking: any, tour: any, date: any, tariff: any, p
       <span>${COMPANY.name}</span><span>·</span>
       <span>${COMPANY.address}</span><span>·</span>
       <span>${COMPANY.hrb}</span><span>·</span>
-      <span>USt-IdNr.: ${COMPANY.ustId}</span>
+      ${COMPANY.ustId ? `<span>USt-IdNr.: ${COMPANY.ustId}</span>` : ""}
     </div>
     <div style="margin-top:4px;">AGB: ${COMPANY.web}/terms · Datenschutz: ${COMPANY.web}/privacy</div>
   </div>
@@ -319,8 +319,7 @@ function generateInvoice(booking: any, tour: any, date: any, tariff: any, pickup
       </div>
       <div class="header-meta">
         ${COMPANY.address}<br>
-        USt-IdNr.: ${COMPANY.ustId}<br>
-        Steuernr.: ${COMPANY.steuerNr}
+        ${COMPANY.ustId ? `USt-IdNr.: ${COMPANY.ustId}<br>` : ""}${COMPANY.steuerNr ? `Steuernr.: ${COMPANY.steuerNr}` : ""}
       </div>
     </div>
   </div>
@@ -414,7 +413,7 @@ function generateInvoice(booking: any, tour: any, date: any, tariff: any, pickup
       <span>${COMPANY.name}</span><span>·</span>
       <span>${COMPANY.address}</span><span>·</span>
       <span>${COMPANY.hrb}</span><span>·</span>
-      <span>USt-IdNr.: ${COMPANY.ustId}</span>
+      ${COMPANY.ustId ? `<span>USt-IdNr.: ${COMPANY.ustId}</span>` : ""}
     </div>
     <div style="margin-top:4px;">${COMPANY.web} · ${COMPANY.email} · ${COMPANY.phone}</div>
   </div>

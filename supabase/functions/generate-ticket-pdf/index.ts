@@ -376,7 +376,7 @@ const handler = async (req: Request): Promise<Response> => {
 <body>
   <div class="ticket">
     <div class="header">
-      <img src="https://www.metours.de/__l5e/assets-v1/b3795491-7fcc-4d33-9886-c04b2cb7be83/metropol-logo-light.png" alt="${companyName} Logo" style="display:block;margin:0 auto 8px;width:200px;max-width:70%;height:auto;" />
+      <img src="https://www.metours.de/brand/metropol-logo-light.png" alt="${companyName} Logo" style="display:block;margin:0 auto 8px;width:200px;max-width:70%;height:auto;" />
       <div class="brand" style="font-size:13px;letter-spacing:3px;opacity:.85;">${companyName}</div>
       <div class="subtitle">🚌 Elektronisches Ticket</div>
       <div class="tnr">${safeTicketNumber}</div>
