@@ -95,9 +95,22 @@ const PackageTourDetailPage = () => {
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [geo, setGeo] = useState<{ lat: number; lon: number; label: string } | null>(null);
 
-  const geoQuery = dbTour ? `${dbTour.location || ""} ${dbTour.destination || ""}`.trim() : "";
+  const anyTour = dbTour as any;
+  const hotelLat = Number(anyTour?.latitude);
+  const hotelLon = Number(anyTour?.longitude);
+  const hasHotelCoords = Number.isFinite(hotelLat) && Number.isFinite(hotelLon);
+
+  // Genaueste verfügbare Adresse: Hoteladresse > Ort + Ziel
+  const geoQuery = dbTour
+    ? (anyTour?.hotel_address as string | null) ||
+      `${dbTour.location || ""} ${dbTour.destination || ""}`.trim()
+    : "";
 
   useEffect(() => {
+    if (hasHotelCoords) {
+      setGeo({ lat: hotelLat, lon: hotelLon, label: (anyTour?.hotel_address as string) || geoQuery });
+      return;
+    }
     if (!geoQuery) return;
     let active = true;
     fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(geoQuery)}`)
@@ -108,7 +121,7 @@ const PackageTourDetailPage = () => {
       })
       .catch(() => undefined);
     return () => { active = false; };
-  }, [geoQuery]);
+  }, [geoQuery, hasHotelCoords, hotelLat, hotelLon]);
 
 
   const getImageSrc = (tour: PackageTour) => {
