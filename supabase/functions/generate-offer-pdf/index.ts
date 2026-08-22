@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
     <!-- Header -->
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px;">
       <div>
-        <h1 style="margin:0;font-size:28px;font-weight:800;color:#059669;">METROPOL TOURS</h1>
+        <img src="https://www.metours.de/__l5e/assets-v1/95335110-18be-4c69-a1fb-0ae06b73123b/metropol-logo.png" alt="METROPOL TOURS GmbH" width="220" style="display:block;height:auto;max-height:60px;" />
         <p style="margin:4px 0 0;font-size:11px;color:#6b7280;">Reiseveranstalter · Busreisen · Pauschalreisen</p>
       </div>
       <div style="text-align:right;">
