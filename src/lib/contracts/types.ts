@@ -125,7 +125,7 @@ export const EMPTY_COMPANY: CompanyData = {
   commercial_register: "",
   tax_number: "",
   vat_id: "",
-  logo_url: "",
+  logo_url: "https://www.metours.de/__l5e/assets-v1/95335110-18be-4c69-a1fb-0ae06b73123b/metropol-logo.png",
   signature_url: "",
   city: "Hannover",
 };
