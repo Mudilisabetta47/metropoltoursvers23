@@ -59,3 +59,7 @@ project_id = "wberoibxqpffhnyvjnci"
     verify_jwt = false
   [functions.advisor-monthly-report]
     verify_jwt = true
+  [functions.create-bus-payment]
+    verify_jwt = false
+  [functions.verify-bus-payment]
+    verify_jwt = false
