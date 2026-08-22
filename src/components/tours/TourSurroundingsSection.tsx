@@ -80,37 +80,25 @@ interface Props {
   country?: string | null;
 }
 
-const TourSurroundingsSection = ({ destination, location, country }: Props) => {
-  const [loading, setLoading] = useState(true);
-  const [groups, setGroups] = useState<Groups>(EMPTY);
-  const [center, setCenter] = useState<{ lat: number; lon: number } | null>(null);
+const loadSurroundings = async (query: string): Promise<CacheEntry | null> => {
+  const cached = readCache(query);
+  if (cached) return cached;
+  const running = inflight.get(query);
+  if (running) return running;
 
-  const query = useMemo(
-    () => [location, destination, country].filter(Boolean).join(", "),
-    [location, destination, country]
-  );
+  const task = (async (): Promise<CacheEntry | null> => {
+    const geoRes = await fetchWithTimeout(
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`,
+      { headers: { Accept: "application/json" } },
+      6000
+    );
+    const geo = await geoRes.json();
+    if (!Array.isArray(geo) || geo.length === 0) return null;
+    const lat = parseFloat(geo[0].lat);
+    const lon = parseFloat(geo[0].lon);
 
-  useEffect(() => {
-    if (!query) return;
-    let cancelled = false;
-    setLoading(true);
-    setGroups(EMPTY);
-
-    (async () => {
-      try {
-        const geoRes = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`,
-          { headers: { Accept: "application/json" } }
-        );
-        const geo = await geoRes.json();
-        if (!Array.isArray(geo) || geo.length === 0) throw new Error("no geocode");
-        const lat = parseFloat(geo[0].lat);
-        const lon = parseFloat(geo[0].lon);
-        if (cancelled) return;
-        setCenter({ lat, lon });
-
-        const overpass = `
-[out:json][timeout:25];
+    const overpass = `
+[out:json][timeout:10];
 (
   node(around:5000,${lat},${lon})["tourism"~"^(attraction|museum|viewpoint|theme_park|zoo)$"]["name"];
   node(around:5000,${lat},${lon})["historic"~"^(castle|monument|ruins)$"]["name"];
@@ -122,101 +110,158 @@ const TourSurroundingsSection = ({ destination, location, country }: Props) => {
 );
 out center;`;
 
-        const endpoints = [
-          "https://overpass-api.de/api/interpreter",
-          "https://overpass.kumi.systems/api/interpreter",
-          "https://overpass.osm.ch/api/interpreter",
-          "https://overpass.private.coffee/api/interpreter",
-        ];
-        let op: any = null;
-        for (const url of endpoints) {
-          try {
-            const ctrl = new AbortController();
-            const timer = setTimeout(() => ctrl.abort(), 20000);
-            const res = await fetch(url, { method: "POST", body: overpass, signal: ctrl.signal });
-            clearTimeout(timer);
-            if (!res.ok) continue;
-            op = await res.json();
-            if (op) break;
-          } catch {
-            // try next endpoint
-          }
-        }
-        if (cancelled || !op) return;
+    const endpoints = [
+      "https://overpass.kumi.systems/api/interpreter",
+      "https://overpass-api.de/api/interpreter",
+      "https://overpass.osm.ch/api/interpreter",
+      "https://overpass.private.coffee/api/interpreter",
+    ];
 
+    // Alle Spiegel parallel anfragen – der schnellste gewinnt
+    let op: any = null;
+    try {
+      op = await Promise.any(
+        endpoints.map(async (url) => {
+          const res = await fetchWithTimeout(url, { method: "POST", body: overpass }, 9000);
+          if (!res.ok) throw new Error(String(res.status));
+          const json = await res.json();
+          if (!json?.elements) throw new Error("empty");
+          return json;
+        })
+      );
+    } catch {
+      op = null;
+    }
 
+    const center = { lat, lon };
+    if (!op) return { groups: EMPTY, center, ts: Date.now() };
 
-        const next: Groups = { attractions: [], food: [], nature: [], transit: [], airports: [] };
-        const seen = new Set<string>();
+    const next: Groups = { attractions: [], food: [], nature: [], transit: [], airports: [] };
+    const seen = new Set<string>();
 
-        for (const el of op.elements || []) {
-          const t = el.tags || {};
-          const name: string | undefined = t.name;
-          const eLat = el.lat ?? el.center?.lat;
-          const eLon = el.lon ?? el.center?.lon;
-          if (!name || eLat == null || eLon == null) continue;
-          const key = `${name}-${t.amenity || t.tourism || t.natural || t.aeroway || t.railway || t.highway}`;
-          if (seen.has(key)) continue;
-          seen.add(key);
-          const distanceKm = haversine(lat, lon, eLat, eLon);
+    for (const el of op.elements || []) {
+      const t = el.tags || {};
+      const name: string | undefined = t.name;
+      const eLat = el.lat ?? el.center?.lat;
+      const eLon = el.lon ?? el.center?.lon;
+      if (!name || eLat == null || eLon == null) continue;
+      const key = `${name}-${t.amenity || t.tourism || t.natural || t.aeroway || t.railway || t.highway}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const distanceKm = haversine(lat, lon, eLat, eLon);
 
-          if (t.aeroway === "aerodrome") {
-            next.airports.push({ name, kind: "Flughafen", distanceKm });
-          } else if (t.railway === "station") {
-            next.transit.push({ name, kind: "Bahnhof", distanceKm });
-          } else if (t.highway === "bus_stop") {
-            next.transit.push({ name, kind: "Bus", distanceKm });
-          } else if (t.amenity === "restaurant" || t.amenity === "cafe") {
-            next.food.push({ name, kind: t.amenity === "cafe" ? "Café" : "Restaurant", distanceKm });
-          } else if (t.natural) {
-            const kind = t.natural === "beach" ? "Strand" : t.natural === "peak" ? "Gipfel" : "Wald";
-            next.nature.push({ name, kind, distanceKm });
-          } else {
-            const kind =
-              t.tourism === "museum"
-                ? "Museum"
-                : t.tourism === "viewpoint"
-                ? "Aussichtspunkt"
-                : t.historic
-                ? "Sehenswürdigkeit"
-                : "Attraktion";
-            next.attractions.push({ name, kind, distanceKm });
-          }
-        }
-
-        const sortTrim = (arr: Poi[], n: number) =>
-          arr.sort((a, b) => a.distanceKm - b.distanceKm).slice(0, n);
-
-        const rank: Record<string, number> = { Museum: 0, Attraktion: 0, Aussichtspunkt: 1, Sehenswürdigkeit: 2 };
-        const attractions = next.attractions
-          .sort((a, b) => (rank[a.kind] ?? 3) - (rank[b.kind] ?? 3) || a.distanceKm - b.distanceKm)
-          .slice(0, 10)
-          .sort((a, b) => a.distanceKm - b.distanceKm);
-
-        const transit = [
-          ...sortTrim(next.transit.filter((t) => t.kind === "Bahnhof"), 3),
-          ...sortTrim(next.transit.filter((t) => t.kind !== "Bahnhof"), 3),
-        ];
-
-        setGroups({
-          attractions,
-          food: sortTrim(next.food, 6),
-          nature: sortTrim(next.nature, 5),
-          transit,
-
-          airports: sortTrim(next.airports, 3),
-        });
-      } catch {
-        if (!cancelled) setGroups(EMPTY);
-      } finally {
-        if (!cancelled) setLoading(false);
+      if (t.aeroway === "aerodrome") {
+        next.airports.push({ name, kind: "Flughafen", distanceKm });
+      } else if (t.railway === "station") {
+        next.transit.push({ name, kind: "Bahnhof", distanceKm });
+      } else if (t.highway === "bus_stop") {
+        next.transit.push({ name, kind: "Bus", distanceKm });
+      } else if (t.amenity === "restaurant" || t.amenity === "cafe") {
+        next.food.push({ name, kind: t.amenity === "cafe" ? "Café" : "Restaurant", distanceKm });
+      } else if (t.natural) {
+        const kind = t.natural === "beach" ? "Strand" : t.natural === "peak" ? "Gipfel" : "Wald";
+        next.nature.push({ name, kind, distanceKm });
+      } else {
+        const kind =
+          t.tourism === "museum"
+            ? "Museum"
+            : t.tourism === "viewpoint"
+            ? "Aussichtspunkt"
+            : t.historic
+            ? "Sehenswürdigkeit"
+            : "Attraktion";
+        next.attractions.push({ name, kind, distanceKm });
       }
-    })();
+    }
+
+    const sortTrim = (arr: Poi[], n: number) => arr.sort((a, b) => a.distanceKm - b.distanceKm).slice(0, n);
+    const rank: Record<string, number> = { Museum: 0, Attraktion: 0, Aussichtspunkt: 1, Sehenswürdigkeit: 2 };
+
+    const groups: Groups = {
+      attractions: next.attractions
+        .sort((a, b) => (rank[a.kind] ?? 3) - (rank[b.kind] ?? 3) || a.distanceKm - b.distanceKm)
+        .slice(0, 10)
+        .sort((a, b) => a.distanceKm - b.distanceKm),
+      food: sortTrim(next.food, 6),
+      nature: sortTrim(next.nature, 5),
+      transit: [
+        ...sortTrim(next.transit.filter((t) => t.kind === "Bahnhof"), 3),
+        ...sortTrim(next.transit.filter((t) => t.kind !== "Bahnhof"), 3),
+      ],
+      airports: sortTrim(next.airports, 3),
+    };
+
+    const entry: CacheEntry = { groups, center, ts: Date.now() };
+    writeCache(query, entry);
+    return entry;
+  })().finally(() => inflight.delete(query));
+
+  inflight.set(query, task);
+  return task;
+};
+
+const TourSurroundingsSection = ({ destination, location, country }: Props) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [visible, setVisible] = useState(false);
+
+  const query = useMemo(
+    () => [location, destination, country].filter(Boolean).join(", "),
+    [location, destination, country]
+  );
+
+  const cached = query ? readCache(query) : null;
+  const [loading, setLoading] = useState(!cached);
+  const [groups, setGroups] = useState<Groups>(cached?.groups ?? EMPTY);
+  const [center, setCenter] = useState<{ lat: number; lon: number } | null>(cached?.center ?? null);
+
+  // Erst laden, wenn der Abschnitt in Sichtweite kommt
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || visible) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setVisible(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: "600px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [visible]);
+
+  useEffect(() => {
+    if (!query) return;
+    const hit = readCache(query);
+    if (hit) {
+      setGroups(hit.groups);
+      setCenter(hit.center);
+      setLoading(false);
+      return;
+    }
+    if (!visible) return;
+
+    let cancelled = false;
+    setLoading(true);
+    loadSurroundings(query)
+      .then((entry) => {
+        if (cancelled) return;
+        setGroups(entry?.groups ?? EMPTY);
+        setCenter(entry?.center ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setGroups(EMPTY);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [query]);
+  }, [query, visible]);
+
 
   const hasAny =
     groups.attractions.length + groups.food.length + groups.nature.length +
