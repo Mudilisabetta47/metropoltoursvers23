@@ -374,7 +374,7 @@ const AdminDashboard = () => {
               <CardTitle className="text-white text-base flex items-center gap-2">
                 <Radio className="h-4 w-4 text-[#00CC36] animate-pulse" /> Live-Betrieb
               </CardTitle>
-              <p className="text-xs text-zinc-500 mt-0.5">Heute geplante Fahrten · {demoDepartures.length} Abfahrten</p>
+              <p className="text-xs text-zinc-500 mt-0.5">Heute geplante Fahrten · {departures.length} Abfahrten</p>
             </div>
             <Tabs defaultValue="abfahrten" className="w-auto">
               <TabsList className="bg-white/5 border border-white/10 h-8">
@@ -397,7 +397,7 @@ const AdminDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {demoDepartures.map((d, i) => {
+                {departures.map((d, i) => {
                   const pct = Math.round((d.pax / d.cap) * 100);
                   return (
                     <TableRow key={i} className="border-white/5 hover:bg-white/[0.03]">
@@ -439,15 +439,15 @@ const AdminDashboard = () => {
             <p className="text-xs text-zinc-500">Verfügbarkeit & Lenkzeiten heute</p>
           </CardHeader>
           <CardContent className="space-y-2">
-            {demoDrivers.map((d) => {
+            {drivers.map((d) => {
               const pct = (d.lenkzeit / d.max) * 100;
               const tone = d.status === "im Einsatz" ? "text-emerald-300"
                 : d.status === "verfügbar" ? "text-sky-300"
                 : d.status === "krank" ? "text-red-300" : "text-zinc-400";
               return (
-                <div key={d.name} className="flex items-center gap-3 rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
+                <div key={`${d.name}-${d.tour}`} className="flex items-center gap-3 rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
                   <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#00CC36]/30 to-sky-500/20 flex items-center justify-center text-xs font-semibold text-white">
-                    {d.name.split(",")[0][0]}{d.name.split(", ")[1]?.[0]}
+                    {(d.name.split(",")[0]?.[0] ?? "F")}{d.name.split(", ")[1]?.[0] ?? ""}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
@@ -473,7 +473,7 @@ const AdminDashboard = () => {
               <CardTitle className="text-white text-base flex items-center gap-2">
                 <Receipt className="h-4 w-4 text-[#00CC36]" /> Offene Buchungen
               </CardTitle>
-              <p className="text-xs text-zinc-500">Letzte 24 h · {demoBookings.length} Vorgänge</p>
+              <p className="text-xs text-zinc-500">Letzte 24 h · {recentBookings.length} Vorgänge</p>
             </div>
             <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white" onClick={() => navigate("/admin/bookings")}>
               Alle anzeigen <ChevronRight className="h-3 w-3 ml-1" />
@@ -492,8 +492,8 @@ const AdminDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {demoBookings.map((b) => (
-                  <TableRow key={b.id} className="border-white/5 hover:bg-white/[0.03] cursor-pointer">
+                {recentBookings.map((b) => (
+                  <TableRow key={b.key} className="border-white/5 hover:bg-white/[0.03] cursor-pointer">
                     <TableCell className="font-mono text-[11px] text-zinc-400">{b.id}</TableCell>
                     <TableCell className="text-zinc-100 text-sm">{b.customer}</TableCell>
                     <TableCell className="text-zinc-300 text-sm">{b.route}</TableCell>
@@ -513,10 +513,10 @@ const AdminDashboard = () => {
             <CardTitle className="text-white text-base flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-400" /> Offene Vorfälle
             </CardTitle>
-            <p className="text-xs text-zinc-500">{demoIncidents.length} aktiv · 1 hoch</p>
+            <p className="text-xs text-zinc-500">{incidents.length} aktiv</p>
           </CardHeader>
           <CardContent className="space-y-2">
-            {demoIncidents.map((i) => (
+            {incidents.map((i) => (
               <div key={i.id} className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-mono text-zinc-500">{i.id}</span>
@@ -557,7 +557,7 @@ const AdminDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {demoInquiries.map((q) => (
+                {inquiries.map((q) => (
                   <TableRow key={q.id} className="border-white/5 hover:bg-white/[0.03] cursor-pointer">
                     <TableCell className="text-zinc-100 text-sm">
                       {q.customer}
@@ -565,7 +565,7 @@ const AdminDashboard = () => {
                     </TableCell>
                     <TableCell className="text-zinc-300 text-sm">
                       {q.subject}
-                      <div className="text-[10px] text-zinc-500">{format(q.date, "dd.MM.yyyy", { locale: de })}</div>
+                      <div className="text-[10px] text-zinc-500">{q.date ? format(q.date, "dd.MM.yyyy", { locale: de }) : "offen"}</div>
                     </TableCell>
                     <TableCell className="text-right text-zinc-300 tabular-nums">{q.pax}</TableCell>
                     <TableCell><Badge variant="outline" className={chip[q.prio]}>{q.prio}</Badge></TableCell>
@@ -597,14 +597,14 @@ const AdminDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {demoMaintenance.map((m) => (
-                  <TableRow key={m.bus} className="border-white/5 hover:bg-white/[0.03]">
+                {maintenance.map((m) => (
+                  <TableRow key={`${m.bus}-${m.typ}`} className="border-white/5 hover:bg-white/[0.03]">
                     <TableCell className="text-zinc-100 text-sm">
                       {m.bus}
                       <div className="text-[10px] text-zinc-500 tabular-nums flex items-center gap-1"><Gauge className="h-3 w-3" />{num(m.km)} km</div>
                     </TableCell>
                     <TableCell className="text-zinc-300 text-sm">{m.typ}</TableCell>
-                    <TableCell className="text-zinc-300 text-sm tabular-nums">{format(m.fällig, "dd.MM.")}</TableCell>
+                    <TableCell className="text-zinc-300 text-sm tabular-nums">{format(m.faellig, "dd.MM.")}</TableCell>
                     <TableCell><Badge variant="outline" className={chip[m.status]}>{m.status}</Badge></TableCell>
                   </TableRow>
                 ))}
@@ -634,11 +634,11 @@ const AdminDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {demoInvoices.map((i) => (
+                {invoices.map((i) => (
                   <TableRow key={i.id} className="border-white/5 hover:bg-white/[0.03]">
                     <TableCell className="font-mono text-[11px] text-zinc-400">{i.id}</TableCell>
                     <TableCell className="text-zinc-100 text-sm">{i.kunde}
-                      <div className="text-[10px] text-zinc-500">fällig {format(i.fällig, "dd.MM.yyyy")}</div>
+                      <div className="text-[10px] text-zinc-500">{i.faellig ? `Rechnung ${format(i.faellig, "dd.MM.yyyy")}` : ""}</div>
                     </TableCell>
                     <TableCell className="text-right text-zinc-100 tabular-nums">{eur(i.betrag)}</TableCell>
                     <TableCell><Badge variant="outline" className={chip[i.status]}>{i.status}</Badge></TableCell>
