@@ -284,6 +284,23 @@ const ReisenPage = () => {
       const ranges = selectedDurations.map(k => DURATION_CHIPS.find(c => c.key === k)!);
       result = result.filter(t => ranges.some(r => t.duration_days >= r.min && t.duration_days <= r.max));
     }
+    if (selectedMonths.length > 0) {
+      result = result.filter(t => {
+        if (!t.departure_date) return false;
+        const key = format(parseISO(t.departure_date), "yyyy-MM");
+        return selectedMonths.includes(key);
+      });
+    }
+    if (selectedCities.length > 0) {
+      result = result.filter(t => selectedCities.includes(t.location?.trim().toLowerCase() || ""));
+    }
+    if (selectedServices.length > 0) {
+      result = result.filter(t =>
+        selectedServices.every(key =>
+          (t.included_services || []).some(s => s.toLowerCase().replace(/[^\w\s]/g, "").trim() === key)
+        )
+      );
+    }
     result = result.filter(t => t.price_from >= priceRange[0] && t.price_from <= priceRange[1]);
     if (onlyAvailable) {
       result = result.filter(t => (t.max_participants || 50) - (t.current_participants || 0) > 0);
@@ -296,16 +313,7 @@ const ReisenPage = () => {
       default: result.sort((a, b) => (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0)); break;
     }
     return result;
-  }, [tours, travelTab, searchQuery, sortBy, activeCategory, selectedDurations, priceRange, onlyAvailable]);
-
-  // Vergangene Termine getrennt anzeigen (Referenzen: "wir sind schon gefahren")
-  const isPast = (t: typeof tours[number]) =>
-    !!t.departure_date && new Date(t.departure_date).getTime() < new Date().setHours(0, 0, 0, 0);
-  const upcomingTours = useMemo(() => filteredTours.filter(t => !isPast(t)), [filteredTours]);
-  const pastTours = useMemo(
-    () => filteredTours.filter(isPast).sort((a, b) => new Date(b.departure_date).getTime() - new Date(a.departure_date).getTime()),
-    [filteredTours]
-  );
+  }, [tours, travelTab, searchQuery, sortBy, activeCategory, selectedDurations, selectedMonths, selectedCities, selectedServices, priceRange, onlyAvailable]);
 
   const activeFilterCount = [
 
