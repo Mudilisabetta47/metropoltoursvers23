@@ -140,7 +140,7 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
                     <BadgeCheck className="w-3 h-3" /> Top-Empfehlung
                   </Badge>
                 )}
-                {tour.discount_percent && tour.discount_percent > 0 && (
+                {!!tour.discount_percent && tour.discount_percent > 0 && (
                   <Badge variant="destructive" className="text-xs">−{tour.discount_percent}% Frühbucher</Badge>
                 )}
                 {tour.category && (

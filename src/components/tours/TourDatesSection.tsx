@@ -163,7 +163,7 @@ const TourDatesSection = ({ dates, selectedDate, onSelectDate }: TourDatesSectio
                   </div>
                   <div className="md:col-span-2">
                     <p className="text-lg font-bold text-primary">ab {date.price_basic.toFixed(0)} €</p>
-                    {date.early_bird_discount_percent && date.early_bird_discount_percent > 0 && (
+                    {!!date.early_bird_discount_percent && date.early_bird_discount_percent > 0 && (
                       <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 mt-1">
                         -{date.early_bird_discount_percent}% Frühbucher
                       </Badge>
