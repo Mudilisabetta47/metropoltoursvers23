@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
-import { MapPin, Share2, Heart, ChevronRight, Clock, Bus, Hotel, Coffee, Images, X, ChevronLeft as ChevronLeftIcon, Sun, ShieldCheck, Lock, BadgeCheck, Wallet, Phone } from "lucide-react";
+import { MapPin, Heart, ChevronRight, Clock, Bus, Hotel, Coffee, Images, X, ChevronLeft as ChevronLeftIcon, Sun, ShieldCheck, Lock, BadgeCheck, Wallet, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ExtendedPackageTour } from "@/hooks/useTourBuilder";
+import MapboxLocationMap from "@/components/maps/MapboxLocationMap";
+import ShareButton from "@/components/common/ShareButton";
+
 
 interface TourHeroSectionProps {
   tour: ExtendedPackageTour;
@@ -24,7 +27,7 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
     .filter(Boolean)
     .join(", ");
   const mapQuery = encodeURIComponent(queryString);
-  const osmFullUrl = `https://www.openstreetmap.org/search?query=${mapQuery}`;
+  
 
   // Geocoded coords (lat/lon) – wenn vorhanden zoomen wir präzise
   const [coords, setCoords] = useState<{ lat: number; lon: number; bbox?: [number, number, number, number] } | null>(null);
@@ -74,20 +77,8 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
     return () => { cancelled = true; };
   }, [mapOpen, coords, queryString, tour.destination, tour.location, tour.country]);
 
-  // Map-URL: bei bekannten Koordinaten präzise bbox + Marker, sonst Freitextsuche-Fallback
-  const osmEmbedUrl = (() => {
-    if (coords) {
-      const marker = `&marker=${coords.lat}%2C${coords.lon}`;
-      if (coords.bbox) {
-        const [w, s, e, n] = coords.bbox;
-        return `https://www.openstreetmap.org/export/embed.html?bbox=${w}%2C${s}%2C${e}%2C${n}&layer=mapnik${marker}`;
-      }
-      // Fallback: ~0.05° Box um den Punkt (≈ Stadtzoom)
-      const d = 0.04;
-      return `https://www.openstreetmap.org/export/embed.html?bbox=${coords.lon - d}%2C${coords.lat - d}%2C${coords.lon + d}%2C${coords.lat + d}&layer=mapnik${marker}`;
-    }
-    return `https://www.openstreetmap.org/export/embed.html?layer=mapnik&search=${mapQuery}`;
-  })();
+  void geocoding;
+
 
   // Build gallery from available images
   const allImages: string[] = [];
@@ -203,9 +194,11 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
             {/* Actions + Rating */}
             <div className="flex items-center gap-3 shrink-0">
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="gap-1.5">
-                  <Share2 className="w-4 h-4" /> Teilen
-                </Button>
+                <ShareButton
+                  title={`${tour.destination} – Metropol Tours`}
+                  text={`Schau dir diese Busreise nach ${tour.destination} an:`}
+                />
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -387,7 +380,7 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
         </div>
       </div>
 
-      {/* Map Dialog – zeigt Reiseziel auf OpenStreetMap */}
+      {/* Map Dialog – zeigt Reiseziel auf Mapbox */}
       <Dialog open={mapOpen} onOpenChange={setMapOpen}>
         <DialogContent className="max-w-4xl p-0 overflow-hidden">
           <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-card">
@@ -401,7 +394,7 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
               </div>
             </div>
             <a
-              href={osmFullUrl}
+              href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-primary hover:underline font-medium shrink-0 ml-3"
@@ -409,23 +402,19 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
               In Karte öffnen ↗
             </a>
           </div>
-          <div className="relative">
-            {geocoding && !coords && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/60 backdrop-blur-sm">
-                <span className="text-xs text-muted-foreground">Standort wird ermittelt …</span>
-              </div>
-            )}
-            <iframe
-              key={osmEmbedUrl}
-              title={`Karte ${tour.destination}`}
-              src={osmEmbedUrl}
-              className="w-full h-[70vh] border-0"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
+          {mapOpen && (
+            <MapboxLocationMap
+              query={queryString}
+              lat={coords?.lat}
+              lon={coords?.lon}
+              zoom={11}
+              label={tour.destination}
+              className="w-full h-[70vh]"
             />
-          </div>
+          )}
         </DialogContent>
       </Dialog>
+
 
       {/* Lightbox Dialog */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>

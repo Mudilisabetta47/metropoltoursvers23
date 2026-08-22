@@ -18,6 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
+import MapboxLocationMap from "@/components/maps/MapboxLocationMap";
+
 import { useAuth } from "@/hooks/useAuth";
 import { usePackageTour, PackageTour } from "@/hooks/useCMS";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
@@ -590,11 +592,12 @@ const PackageTourDetailPage = () => {
                     <div className="grid md:grid-cols-2 gap-4">
                       <div className="rounded-xl overflow-hidden border border-border bg-muted min-h-[260px]">
                         {geo ? (
-                          <iframe
-                            title={`Karte ${dbTour.destination}`}
+                          <MapboxLocationMap
+                            lat={geo.lat}
+                            lon={geo.lon}
+                            zoom={11}
+                            label={dbTour.destination}
                             className="w-full h-full min-h-[260px]"
-                            loading="lazy"
-                            src={`https://www.openstreetmap.org/export/embed.html?bbox=${geo.lon - 0.12}%2C${geo.lat - 0.08}%2C${geo.lon + 0.12}%2C${geo.lat + 0.08}&layer=mapnik&marker=${geo.lat}%2C${geo.lon}`}
                           />
                         ) : (
                           <div className="w-full h-full min-h-[260px] flex items-center justify-center text-sm text-muted-foreground">
@@ -602,6 +605,7 @@ const PackageTourDetailPage = () => {
                           </div>
                         )}
                       </div>
+
                       <div className="space-y-3">
                         <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/50">
                           <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
@@ -626,7 +630,7 @@ const PackageTourDetailPage = () => {
                         </div>
                         {geo && (
                           <a
-                            href={`https://www.openstreetmap.org/?mlat=${geo.lat}&mlon=${geo.lon}#map=11/${geo.lat}/${geo.lon}`}
+                            href={`https://www.google.com/maps/search/?api=1&query=${geo.lat},${geo.lon}`}
                             target="_blank"
                             rel="noreferrer noopener"
                             className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"

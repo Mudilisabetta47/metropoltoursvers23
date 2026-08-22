@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, FerrisWheel, Utensils, Mountain, TrainFront, Plane, ExternalLink } from "lucide-react";
+import { Loader2, FerrisWheel, Utensils, Mountain, TrainFront, Plane } from "lucide-react";
+import MapboxLocationMap from "@/components/maps/MapboxLocationMap";
+
 
 interface Poi {
   name: string;
@@ -216,15 +218,16 @@ out center;`;
         <h2 className="text-2xl font-bold text-foreground">Umgebung</h2>
       </div>
       {center && (
-        <a
-          href={`https://www.openstreetmap.org/?mlat=${center.lat}&mlon=${center.lon}#map=14/${center.lat}/${center.lon}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-6"
-        >
-          Karte anzeigen <ExternalLink className="w-3.5 h-3.5" />
-        </a>
+        <div className="mt-4 mb-6 rounded-xl overflow-hidden border border-border">
+          <MapboxLocationMap
+            lat={center.lat}
+            lon={center.lon}
+            zoom={12}
+            className="w-full h-[280px] md:h-[340px]"
+          />
+        </div>
       )}
+
 
       {loading ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground py-6">

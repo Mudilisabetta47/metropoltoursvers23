@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
-  Loader2, ChevronLeft, ChevronRight, MapPin, Share2, Heart,
+  Loader2, ChevronLeft, ChevronRight, MapPin, Heart,
   Calendar, Clock, Users, Bus, ArrowRight, Star, Wifi, Plug,
   Armchair, Check, X, TrendingUp, Minus, Plus
 } from "lucide-react";
@@ -16,6 +16,8 @@ import Footer from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/seo/SEO";
 import { breadcrumbJsonLd } from "@/lib/seo";
+import ShareButton from "@/components/common/ShareButton";
+
 
 interface BookableDeparture {
   id: string;
@@ -230,9 +232,13 @@ const WeekendTripDetailPage = () => {
 
             {/* Action Buttons */}
             <div className="absolute top-4 right-4 flex items-center gap-2">
-              <Button variant="secondary" size="sm" className="bg-card/90 backdrop-blur hover:bg-card shadow-lg gap-2">
-                <Share2 className="w-4 h-4" /><span className="hidden sm:inline">Teilen</span>
-              </Button>
+              <ShareButton
+                variant="secondary"
+                title={`${trip.destination} – Metropol Tours`}
+                text={`Schau dir diesen Wochenendtrip an: ${trip.destination}`}
+                className="bg-card/90 backdrop-blur hover:bg-card shadow-lg gap-2"
+              />
+
               <Button variant="secondary" size="sm" className="bg-card/90 backdrop-blur hover:bg-card shadow-lg gap-2">
                 <Heart className="w-4 h-4" /><span className="hidden sm:inline">Merken</span>
               </Button>
