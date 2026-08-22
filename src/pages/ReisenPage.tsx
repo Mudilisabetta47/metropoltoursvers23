@@ -329,47 +329,13 @@ const ReisenPage = () => {
             </p>
 
             {/* SMART SEARCH BAR */}
-            <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/40 p-2 sm:p-2.5 max-w-3xl">
-              <div className="flex flex-col sm:flex-row gap-2 items-stretch">
-                <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-                  <PopoverTrigger asChild>
-                    <div className="flex-1 relative cursor-text">
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Wohin möchten Sie? z. B. Kroatien, Paris, Adria…"
-                        value={searchQuery}
-                        onChange={(e) => { setSearchQuery(e.target.value); setSearchOpen(true); }}
-                        onFocus={() => setSearchOpen(true)}
-                        className="pl-11 h-12 border-0 bg-transparent text-foreground text-sm focus-visible:ring-0 shadow-none"
-                      />
-                    </div>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
-                    <Command shouldFilter={false}>
-                      <CommandList>
-                        <CommandEmpty>Keine Reise gefunden.</CommandEmpty>
-                        <CommandGroup heading={searchQuery ? "Treffer" : "Beliebte Ziele"}>
-                          {searchSuggestions.map(s => (
-                            <CommandItem key={s.id} value={s.label}
-                              onSelect={() => { setSearchOpen(false); navigate(`/reisen/${s.slug || s.id}`); }}
-                              className="cursor-pointer">
-                              <MapPin className="w-3.5 h-3.5 mr-2 text-primary" />
-                              <div className="flex-1">
-                                <div className="text-sm font-medium">{s.label}</div>
-                                <div className="text-xs text-muted-foreground">{s.sub}</div>
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-                <Button onClick={scrollToCatalog} className="h-12 px-7 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shrink-0">
-                  <Search className="w-4 h-4 mr-2" /> Reisen finden
-                </Button>
-              </div>
-            </div>
+            <TravelSearchBar
+              tours={searchTours}
+              query={searchQuery}
+              onQueryChange={setSearchQuery}
+              onSearch={scrollToCatalog}
+            />
+
 
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-white/80">
               <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-primary" /> Sofortbestätigung</span>
