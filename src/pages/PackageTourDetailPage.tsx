@@ -574,11 +574,76 @@ const PackageTourDetailPage = () => {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Umgebung / Lage */}
+                <Card id="umgebung" className="border border-border rounded-2xl overflow-hidden scroll-mt-24">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2">
+                      <MapPin className="w-5 h-5 text-primary" />
+                      Lage & Umgebung
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="rounded-xl overflow-hidden border border-border bg-muted min-h-[260px]">
+                        {geo ? (
+                          <iframe
+                            title={`Karte ${dbTour.destination}`}
+                            className="w-full h-full min-h-[260px]"
+                            loading="lazy"
+                            src={`https://www.openstreetmap.org/export/embed.html?bbox=${geo.lon - 0.12}%2C${geo.lat - 0.08}%2C${geo.lon + 0.12}%2C${geo.lat + 0.08}&layer=mapnik&marker=${geo.lat}%2C${geo.lon}`}
+                          />
+                        ) : (
+                          <div className="w-full h-full min-h-[260px] flex items-center justify-center text-sm text-muted-foreground">
+                            Karte wird geladen …
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/50">
+                          <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                          <div>
+                            <div className="text-sm font-medium">Reiseziel</div>
+                            <div className="text-sm text-muted-foreground">{geo?.label || dbTour.location}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/50">
+                          <Bus className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                          <div>
+                            <div className="text-sm font-medium">Anreise</div>
+                            <div className="text-sm text-muted-foreground">Bequem im Fernreisebus – Zustiege in Hannover, Bremen und Hamburg auf Anfrage.</div>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/50">
+                          <Hotel className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                          <div>
+                            <div className="text-sm font-medium">Unterkunft</div>
+                            <div className="text-sm text-muted-foreground">Ausgewählte Hotels in zentraler Lage – Details im persönlichen Angebot.</div>
+                          </div>
+                        </div>
+                        {geo && (
+                          <a
+                            href={`https://www.openstreetmap.org/?mlat=${geo.lat}&mlon=${geo.lon}#map=11/${geo.lat}/${geo.lon}`}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                          >
+                            Größere Karte anzeigen <ArrowRight className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          Entfernungen sind Näherungswerte und können abweichen.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
 
               {/* Right Column - Booking Form */}
-              <div className="lg:col-span-1">
+              <div id="anfrage" className="lg:col-span-1 scroll-mt-24">
+
                 <div className="sticky top-24">
                   <Card className="border-primary/20">
                     <CardHeader className="bg-primary/5 border-b">
