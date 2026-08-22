@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, FerrisWheel, Utensils, Mountain, TrainFront, Plane } from "lucide-react";
+import { FerrisWheel, Utensils, Mountain, TrainFront, Plane } from "lucide-react";
 import MapboxLocationMap from "@/components/maps/MapboxLocationMap";
 
 
