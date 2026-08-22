@@ -131,9 +131,10 @@ const Header = () => {
       >
         <div className="container mx-auto px-4">
           <div className={cn("flex items-center justify-between transition-all duration-300", isScrolled ? "h-14 lg:h-16" : "h-16 lg:h-20")}>
-            <Link to="/" className="group">
-              <Logo size={isScrolled ? 'sm' : 'md'} />
+            <Link to="/" className="group flex items-center shrink-0">
+              <Logo size={isScrolled ? 'sm' : 'md'} className="max-w-none" />
             </Link>
+
 
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center gap-2">
