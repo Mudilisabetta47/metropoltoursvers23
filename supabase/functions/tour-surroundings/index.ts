@@ -68,24 +68,32 @@ Deno.serve(async (req) => {
 );
 out center;`;
 
-    let op: any = null;
-    for (const url of ENDPOINTS) {
-      try {
-        const res = await fetchWithTimeout(url, {
+    const cacheKey = `${lat.toFixed(3)},${lon.toFixed(3)}`;
+    let op: any = memCache.get(cacheKey)?.data ?? null;
+
+    if (!op) {
+      const attempts = ENDPOINTS.map((url) =>
+        fetchWithTimeout(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
             "User-Agent": "MetropolTours/1.0 (info@metours.de)",
           },
           body: `data=${encodeURIComponent(overpass)}`,
-        }, 25000);
-        if (!res.ok) { console.log("mirror fail", url, res.status); continue; }
-        const json = await res.json().catch(() => null);
-        console.log("mirror ok", url, Array.isArray(json?.elements) ? json.elements.length : "no-elements");
-        if (Array.isArray(json?.elements) && json.elements.length > 0) { op = json; break; }
-      } catch (e) { console.log("mirror error", url, String(e)); }
-
+        }, 15000)
+          .then(async (res) => {
+            if (!res.ok) throw new Error(`status ${res.status}`);
+            const json = await res.json();
+            if (!Array.isArray(json?.elements) || json.elements.length === 0) throw new Error("empty");
+            console.log("mirror ok", url, json.elements.length);
+            return json;
+          })
+          .catch((e) => { console.log("mirror fail", url, String(e)); throw e; })
+      );
+      op = await Promise.any(attempts).catch(() => null);
+      if (op) memCache.set(cacheKey, { data: op, ts: Date.now() });
     }
+
 
 
     if (!op) {
