@@ -766,14 +766,18 @@ export type Database = {
           is_test: boolean
           luggage: Json
           origin_stop_id: string
+          paid_at: string | null
           passenger_email: string
           passenger_first_name: string
           passenger_last_name: string
           passenger_phone: string | null
           payment_method: string | null
+          payment_reference: string | null
+          payment_status: string
           price_paid: number
           seat_id: string
           status: Database["public"]["Enums"]["booking_status"]
+          stripe_session_id: string | null
           ticket_number: string
           trip_id: string
           updated_at: string
@@ -789,14 +793,18 @@ export type Database = {
           is_test?: boolean
           luggage?: Json
           origin_stop_id: string
+          paid_at?: string | null
           passenger_email: string
           passenger_first_name: string
           passenger_last_name: string
           passenger_phone?: string | null
           payment_method?: string | null
+          payment_reference?: string | null
+          payment_status?: string
           price_paid: number
           seat_id: string
           status?: Database["public"]["Enums"]["booking_status"]
+          stripe_session_id?: string | null
           ticket_number: string
           trip_id: string
           updated_at?: string
@@ -812,14 +820,18 @@ export type Database = {
           is_test?: boolean
           luggage?: Json
           origin_stop_id?: string
+          paid_at?: string | null
           passenger_email?: string
           passenger_first_name?: string
           passenger_last_name?: string
           passenger_phone?: string | null
           payment_method?: string | null
+          payment_reference?: string | null
+          payment_status?: string
           price_paid?: number
           seat_id?: string
           status?: Database["public"]["Enums"]["booking_status"]
+          stripe_session_id?: string | null
           ticket_number?: string
           trip_id?: string
           updated_at?: string
