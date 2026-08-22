@@ -28,7 +28,7 @@ const Header = () => {
   const navLinks = [
     { name: "Startseite", path: "/" },
     { name: "Wochenendtrips", path: "/wochenendtrips" },
-    { name: "Pauschalreisen", path: "/reisen", badge: "Bald" },
+    { name: "Pauschalreisen", path: "/reisen" },
     { name: "Gruppenanfrage", path: "/business" },
     { name: "Hilfe & Kontakt", path: "/service" },
     { name: "Meine Reisen", path: "/bookings" },
