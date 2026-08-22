@@ -628,7 +628,7 @@ const PackageTourDetailPage = () => {
                         </div>
                         {geo && (
                           <a
-                            href={`https://www.openstreetmap.org/?mlat=${geo.lat}&mlon=${geo.lon}#map=11/${geo.lat}/${geo.lon}`}
+                            href={`https://www.google.com/maps/search/?api=1&query=${geo.lat},${geo.lon}`}
                             target="_blank"
                             rel="noreferrer noopener"
                             className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
