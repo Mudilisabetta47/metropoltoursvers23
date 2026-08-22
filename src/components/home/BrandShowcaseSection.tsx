@@ -72,7 +72,7 @@ const BrandShowcaseSection = () => {
               >
                 <img
                   src={c.img}
-                  alt={c.title}
+                  alt={`${c.title} – METROPOL TOURS Reiseerlebnis`}
                   loading="lazy"
                   width={1280}
                   height={720}

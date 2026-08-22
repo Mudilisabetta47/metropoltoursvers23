@@ -406,7 +406,7 @@ const ReisenPage = () => {
                 <button key={theme.key}
                   onClick={() => { setActiveCategory(theme.key); scrollToCatalog(); }}
                   className="group relative aspect-[4/5] overflow-hidden rounded-3xl text-left">
-                  <img src={theme.image} alt={theme.label}
+                  <img src={theme.image} alt={`${theme.label} – Reisethema für Busreisen`}
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
                   <AiBadge className="top-3 right-3 bottom-auto" />
@@ -545,7 +545,7 @@ const ReisenPage = () => {
                         {/* Image */}
                         <div className="relative aspect-[16/11] overflow-hidden cursor-pointer"
                           onClick={() => navigate(`/reisen/${tour.slug || tour.id}`)}>
-                          <img src={heroSrc} alt={tour.destination}
+                          <img src={heroSrc} alt={`Pauschalreise nach ${tour.destination} mit dem Reisebus`}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                           {!heroSrc.startsWith("http") && <AiBadge className="top-4 right-4 bottom-auto" />}
@@ -658,7 +658,7 @@ const ReisenPage = () => {
                           className="group bg-card rounded-2xl overflow-hidden border border-border hover:border-foreground/20 hover:shadow-[0_20px_50px_-20px_rgba(0,0,0,0.25)] transition-all duration-500 flex flex-col">
                           <div className="relative aspect-[16/11] overflow-hidden cursor-pointer"
                             onClick={() => navigate(`/reisen/${tour.slug || tour.id}`)}>
-                            <img src={heroSrc} alt={tour.destination} loading="lazy"
+                            <img src={heroSrc} alt={`Pauschalreise nach ${tour.destination} mit dem Reisebus`} loading="lazy"
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                             {!heroSrc.startsWith("http") && <AiBadge className="top-4 right-4 bottom-auto" />}

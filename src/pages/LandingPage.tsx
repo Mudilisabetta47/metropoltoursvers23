@@ -119,9 +119,10 @@ export function LandingView({ content }: { content: LandingContent }) {
           <div className="absolute inset-0">
             <img
               src={hero}
-              alt={content.heroAlt}
+              alt={`${content.heroAlt} – METROPOL TOURS Reisebus`}
               className="w-full h-full object-cover"
               loading="eager"
+              decoding="async"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/40" />
           </div>
