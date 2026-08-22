@@ -81,13 +81,16 @@ const TourSurroundingsSection = ({ destination, location, country }: Props) => {
 out center;`;
 
         const endpoints = [
-          "https://overpass.kumi.systems/api/interpreter",
           "https://overpass-api.de/api/interpreter",
+          "https://overpass.kumi.systems/api/interpreter",
         ];
         let op: any = null;
         for (const url of endpoints) {
           try {
-            const res = await fetch(url, { method: "POST", body: overpass });
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), 40000);
+            const res = await fetch(url, { method: "POST", body: overpass, signal: ctrl.signal });
+            clearTimeout(timer);
             if (!res.ok) continue;
             op = await res.json();
             if (op?.elements?.length) break;
@@ -96,6 +99,7 @@ out center;`;
           }
         }
         if (cancelled || !op) return;
+
 
 
         const next: Groups = { attractions: [], food: [], nature: [], transit: [], airports: [] };
