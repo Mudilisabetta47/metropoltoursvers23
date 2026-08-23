@@ -138,6 +138,7 @@ const menuSections: MenuSection[] = [
     items: [
       { path: "/admin/mailbox", label: "Postfach", icon: Inbox, allowedRoles: MANAGEMENT },
       { path: "/admin/templates", label: "E-Mail-Vorlagen", icon: Mail, allowedRoles: MANAGEMENT },
+      { path: "/admin/email-logs", label: "E-Mail Protokoll", icon: Mail, allowedRoles: MANAGEMENT },
       { path: "/admin/cms", label: "Inhalte (CMS)", icon: BookOpen, allowedRoles: MANAGEMENT },
       { path: "/admin/jobs", label: "Stellenangebote", icon: Briefcase, allowedRoles: ADMIN_ONLY },
     ],
