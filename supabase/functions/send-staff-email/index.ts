@@ -1,6 +1,7 @@
 // Versand von E-Mails aus dem Backend durch Mitarbeitende (Kunden, Bewerber, allgemein).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { sendMail, FROM_BOOKING, FROM_JOBS, FROM_SERVICE, REPLY_TO } from "../_shared/mailer.ts";
+import { emailLayout } from "../_shared/email-brand.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,20 +26,11 @@ function wrap(bodyText: string, signatureName?: string) {
   const paragraphs = escapeHtml(bodyText).split(/\n{2,}/)
     .map((p) => `<p style="margin:0 0 14px;white-space:pre-wrap">${p.replace(/\n/g, "<br/>")}</p>`)
     .join("");
-  return `<div style="font-family:Arial,Helvetica,sans-serif;color:#111;line-height:1.6;max-width:640px;margin:0 auto">
-    <div style="background:#0f1218;padding:18px 22px;border-radius:10px 10px 0 0">
-      <span style="color:#00CC36;font-weight:700;letter-spacing:.5px">METROPOL TOURS</span>
-    </div>
-    <div style="border:1px solid #e8e8e8;border-top:0;padding:24px 22px;border-radius:0 0 10px 10px;background:#fff">
-      ${paragraphs}
-      <hr style="border:none;border-top:1px solid #eee;margin:22px 0"/>
-      <p style="margin:0;font-size:12px;color:#666">
-        ${signatureName ? `${escapeHtml(signatureName)}<br/>` : ""}
-        METROPOL TOURS GmbH · Rudolf-Diesel-Weg 8 · 30419 Hannover<br/>
-        Tel. +49 511 80781106 · ${REPLY_TO} · www.metours.de
-      </p>
-    </div>
-  </div>`;
+  return emailLayout({
+    title: "METROPOL TOURS",
+    content: `${paragraphs}
+      ${signatureName ? `<p style="margin:22px 0 0;font-size:13px;color:#41524a;">Freundliche Grüße<br/><strong>${escapeHtml(signatureName)}</strong><br/>METROPOL TOURS GmbH</p>` : ""}`,
+  });
 }
 
 Deno.serve(async (req) => {

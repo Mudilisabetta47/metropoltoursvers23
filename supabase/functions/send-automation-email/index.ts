@@ -1,3 +1,4 @@
+import { emailHeader, emailFooter, qrTicketBlock } from "../_shared/email-brand.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -92,20 +93,16 @@ serve(async (req) => {
     const green = "#00CC36";
 
     const header = `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;padding:0;">
-        <div style="background:${green};padding:20px;text-align:center;">
-          <h1 style="color:#fff;margin:0;font-size:22px;">METROPOL TOURS</h1>
-        </div>
-        <div style="padding:24px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef1ef;padding:22px 10px;font-family:Arial,sans-serif;">
+      <tr><td align="center"><table role="presentation" width="620" cellpadding="0" cellspacing="0" style="width:100%;max-width:620px;">
+      <tr><td>${emailHeader()}</td></tr>
+      <tr><td style="background:#fff;padding:26px 24px;">
     `;
     const footer = `
-          <hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
-          <p style="color:#999;font-size:11px;text-align:center;">
-            METROPOL TOURS Reiseorganisation<br/>
-            Buchungsnummer: ${booking.booking_number}
-          </p>
-        </div>
-      </div>
+      <p style="color:#8a978d;font-size:11px;margin-top:22px;">Buchungsnummer: ${booking.booking_number}</p>
+      </td></tr>
+      <tr><td>${emailFooter()}</td></tr>
+      </table></td></tr></table>
     `;
 
     switch (email_type) {
@@ -114,6 +111,7 @@ serve(async (req) => {
         htmlBody = `${header}
           <h2 style="color:#333;">Hallo ${name},</h2>
           <p style="color:#555;line-height:1.6;">vielen Dank für Ihre Buchung! Hier Ihre Buchungsdetails:</p>
+          ${qrTicketBlock(booking.booking_number)}
           <div style="background:#f8f8f8;border-radius:8px;padding:16px;margin:16px 0;">
             <table style="width:100%;font-size:14px;color:#444;">
               <tr><td style="padding:4px 0;font-weight:bold;">Reiseziel:</td><td>${tour?.destination}</td></tr>
