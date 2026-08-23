@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
-import { CalendarDays, ChevronRight, MailCheck, RefreshCw, Ticket, WifiOff } from "lucide-react";
+import { CalendarDays, ChevronRight, CreditCard, MailCheck, RefreshCw, Ticket, Users, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -62,7 +62,7 @@ export default function AppMyTrips() {
         {loading && [0, 1].map((i) => <Skeleton key={i} className="h-32 rounded-3xl" />)}
 
         {!loading && trips.length === 0 && (
-          <div className="rounded-3xl border border-border/60 bg-card p-5 text-center">
+          <div className="rounded-2xl border border-border bg-card p-5 text-center">
             <Ticket className="mx-auto h-8 w-8 text-primary" />
             <h2 className="mt-3 text-base font-semibold">Noch keine Buchung hinterlegt</h2>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -99,7 +99,7 @@ function TripCard({ trip }: { trip: MyTrip }) {
   return (
     <Link
       to={`/app/ticket/${trip.booking_number}`}
-      className="block overflow-hidden rounded-3xl border border-border/60 bg-card shadow-[0_6px_24px_-18px_rgba(0,0,0,0.4)]"
+      className="block overflow-hidden rounded-2xl border border-border bg-card shadow-card"
     >
       {trip.tour?.hero_image_url && (
         <img
@@ -127,6 +127,7 @@ function TripCard({ trip }: { trip: MyTrip }) {
             ? ` – ${format(parseISO(trip.tour_date.return_date), "dd. MMM yyyy", { locale: de })}`
             : ""}
         </p>
+        <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg bg-muted/50 p-2.5 text-xs"><span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-primary" />{trip.participants} Reisende</span><span className="flex items-center justify-end gap-1.5 font-semibold"><CreditCard className="h-3.5 w-3.5 text-primary" />{trip.total_price.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}</span></div>
         <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-3">
           <span className="font-mono text-xs text-muted-foreground">{trip.booking_number}</span>
           <span className="flex items-center text-sm font-medium text-primary">

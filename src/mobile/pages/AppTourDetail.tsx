@@ -3,21 +3,30 @@ import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
+  Armchair,
   BedDouble,
+  Bus,
   CalendarDays,
   Check,
   ChevronRight,
   Clock,
   Info,
+  Lock,
   MapPin,
+  Minus,
   Plus,
+  ShieldCheck,
+  Star,
   Users,
+  Wifi,
+  Zap,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
   isTourBookable,
@@ -32,6 +41,8 @@ export default function AppTourDetail() {
   const navigate = useNavigate();
   const { data: tour, isLoading } = useMobileTour(tourId);
   const [dateId, setDateId] = useState<string | null>(null);
+  const [tariffId, setTariffId] = useState<string | null>(null);
+  const [participants, setParticipants] = useState(2);
 
   const dates = tour?.tour_dates ?? [];
   const selected = useMemo(
@@ -40,11 +51,14 @@ export default function AppTourDetail() {
   );
   const left = seatsLeft(selected);
   const bookable = tour ? isTourBookable(tour) : false;
+  const tariffs = tour?.tariffs ?? [];
+  const selectedTariff = tariffs.find((tariff: any) => tariff.id === tariffId) ?? tariffs.find((tariff: any) => tariff.is_recommended) ?? tariffs[0] ?? null;
+  const pricePerPerson = (selected?.price_basic ?? tour?.price_from ?? 0) + Number(selectedTariff?.price_modifier ?? 0);
 
   if (isLoading) {
     return (
       <div className="space-y-4 p-5">
-        <Skeleton className="h-64 rounded-3xl" />
+        <Skeleton className="h-64 rounded-2xl" />
         <Skeleton className="h-6 w-2/3" />
         <Skeleton className="h-24" />
       </div>
@@ -68,9 +82,10 @@ export default function AppTourDetail() {
 
   const startCheckout = () => {
     // Bestehende, serverseitig abgesicherte Buchungsstrecke wiederverwenden.
-    const search = new URLSearchParams({ tourId: tour.id });
-    if (selected) search.set("dateId", selected.id);
-    navigate(`/tour-checkout?${search.toString()}`);
+    const search = new URLSearchParams({ tour: tour.id, pax: participants.toString() });
+    if (selected) search.set("date", selected.id);
+    if (selectedTariff) search.set("tariff", selectedTariff.id);
+    navigate(`/reisen/checkout?${search.toString()}`);
   };
 
   return (
@@ -99,10 +114,12 @@ export default function AppTourDetail() {
         </button>
       </div>
 
-      <div className="-mt-8 space-y-6 px-5">
+      <div className="-mt-8 space-y-7 px-5">
         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex flex-wrap items-center gap-2">
+            <Badge>Pauschalreise</Badge>
             {tour.category ? <Badge variant="secondary">{tour.category}</Badge> : null}
+            <span className="flex items-center gap-1 text-sm font-semibold text-accent"><Star className="h-4 w-4 fill-current" /> 4.8</span>
             {!bookable && <Badge variant="outline">Demnächst buchbar</Badge>}
           </div>
           <h1 className="mt-2 text-[28px] font-bold leading-tight tracking-tight">
@@ -131,6 +148,13 @@ export default function AppTourDetail() {
           />
         </div>
 
+        <div className="grid grid-cols-2 gap-2 rounded-xl border border-border bg-card p-3">
+          <Trust icon={ShieldCheck} title="Reisesicherung" detail="Insolvenzschutz inkl." />
+          <Trust icon={Lock} title="Sichere Zahlung" detail="SSL & DSGVO" />
+          <Trust icon={Zap} title="Sofortbestätigung" detail="Direkt per E-Mail" />
+          <Trust icon={Check} title="Bestpreis" detail="Keine versteckten Kosten" />
+        </div>
+
         {/* Termine */}
         {dates.length > 0 && (
           <Block title="Reisetermine">
@@ -143,7 +167,7 @@ export default function AppTourDetail() {
                     key={d.id}
                     onClick={() => setDateId(d.id)}
                     className={cn(
-                      "flex w-full items-center justify-between rounded-2xl border p-3.5 text-left transition-colors",
+                      "flex min-h-16 w-full items-center justify-between rounded-xl border p-3.5 text-left transition-colors",
                       active ? "border-primary bg-primary/5" : "border-border bg-card",
                     )}
                   >
@@ -177,9 +201,23 @@ export default function AppTourDetail() {
           </Block>
         )}
 
+        {(tour.highlights ?? tour.tags ?? []).length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {(tour.highlights ?? tour.tags ?? []).map((highlight: string) => <Badge key={highlight} variant="secondary">#{highlight.replace(/^#/, "")}</Badge>)}
+          </div>
+        )}
+
+        {(tour.itinerary ?? []).length > 0 && (
+          <Block title="Reiseverlauf">
+            <div className="space-y-2">
+              {(tour.itinerary ?? []).map((day) => <div key={`${day.day}-${day.title}`} className="flex gap-3 rounded-xl bg-muted/50 p-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground">{day.day}</span><div><p className="text-sm font-semibold">{day.title}</p><p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{day.description}</p></div></div>)}
+            </div>
+          </Block>
+        )}
+
         {tour.hotel_name && (
           <Block title="Unterkunft">
-            <div className="flex gap-3 rounded-2xl border border-border/60 bg-card p-4">
+            <div className="flex gap-3 rounded-xl border border-border bg-card p-4">
               <BedDouble className="h-5 w-5 shrink-0 text-primary" />
               <div>
                 <p className="text-sm font-semibold">{tour.hotel_name}</p>
@@ -197,7 +235,7 @@ export default function AppTourDetail() {
               {tour.pickups.map((p: any) => (
                 <div
                   key={p.id}
-                  className="flex items-center justify-between rounded-2xl border border-border/60 bg-card p-3.5"
+                  className="flex items-center justify-between rounded-xl border border-border bg-card p-3.5"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">
@@ -244,13 +282,28 @@ export default function AppTourDetail() {
           </Block>
         )}
 
+        <Block title="Reisekomfort">
+          <div className="grid grid-cols-2 gap-2 rounded-xl border border-primary/20 bg-primary/5 p-4">
+            <Comfort icon={Wifi} label="WLAN" /><Comfort icon={Zap} label="Steckdosen" /><Comfort icon={Armchair} label="Komfortsitze" /><Comfort icon={Bus} label="Premium-Reisebus" />
+          </div>
+        </Block>
+
+        {tariffs.length > 0 && (
+          <Block title="Dein Angebot">
+            <div className="space-y-4 rounded-xl border border-primary/20 bg-card p-4">
+              <div><p className="mb-1.5 text-xs font-semibold text-muted-foreground">Tarif</p><Select value={selectedTariff?.id ?? ""} onValueChange={setTariffId}><SelectTrigger className="h-12 rounded-lg"><SelectValue placeholder="Tarif wählen" /></SelectTrigger><SelectContent>{tariffs.map((tariff: any) => <SelectItem key={tariff.id} value={tariff.id}>{tariff.name}{tariff.is_recommended ? " · Empfohlen" : ""}</SelectItem>)}</SelectContent></Select></div>
+              <div className="flex min-h-12 items-center gap-3"><Users className="h-5 w-5 text-primary" /><span className="flex-1 text-sm font-semibold">{participants} Reisende</span><Button size="icon" variant="outline" className="h-10 w-10" onClick={() => setParticipants(Math.max(1, participants - 1))} disabled={participants <= 1}><Minus className="h-4 w-4" /></Button><Button size="icon" variant="outline" className="h-10 w-10" onClick={() => setParticipants(Math.min(left ?? 20, participants + 1))} disabled={left != null && participants >= left}><Plus className="h-4 w-4" /></Button></div>
+            </div>
+          </Block>
+        )}
+
         {tour.extras?.length > 0 && (
           <Block title="Zusatzleistungen">
             <div className="space-y-2">
               {tour.extras.map((e: any) => (
                 <div
                   key={e.id}
-                  className="flex items-center justify-between rounded-2xl border border-border/60 bg-card p-3.5"
+                  className="flex items-center justify-between rounded-xl border border-border bg-card p-3.5"
                 >
                   <div className="flex min-w-0 items-center gap-2.5">
                     <Plus className="h-4 w-4 shrink-0 text-primary" />
@@ -270,7 +323,7 @@ export default function AppTourDetail() {
 
         {(tour.documents_required || tour.insurance_info) && (
           <Block title="Wichtige Hinweise">
-            <div className="space-y-3 rounded-2xl border border-border/60 bg-muted/40 p-4">
+            <div className="space-y-3 rounded-xl border border-border bg-muted/40 p-4">
               {tour.documents_required && (
                 <p className="flex gap-2.5 text-sm text-muted-foreground">
                   <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
@@ -288,7 +341,7 @@ export default function AppTourDetail() {
         )}
 
         {!bookable && (
-          <div className="rounded-2xl border border-border bg-muted/40 p-4">
+          <div className="rounded-xl border border-border bg-muted/40 p-4">
             <p className="text-sm font-semibold">{TOUR_NOT_BOOKABLE_TITLE}</p>
             <p className="mt-1 text-xs text-muted-foreground">{TOUR_NOT_BOOKABLE_TEXT}</p>
           </div>
@@ -303,12 +356,12 @@ export default function AppTourDetail() {
           <div className="min-w-0">
             <p className="text-[11px] text-muted-foreground">ab pro Person</p>
             <p className="text-lg font-bold leading-tight">
-              {money(selected?.price_basic ?? tour.price_from)}
+               {money(pricePerPerson)}
             </p>
           </div>
           <Button
-            className="ml-auto h-12 flex-1 rounded-2xl text-base"
-            disabled={!bookable}
+             className="ml-auto h-12 flex-1 rounded-xl text-base"
+             disabled={!bookable || !selected || (tariffs.length > 0 && !selectedTariff)}
             onClick={startCheckout}
           >
             {bookable ? "Jetzt buchen" : "Nicht buchbar"}
@@ -330,12 +383,20 @@ function Fact({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border/60 bg-card p-3 text-center">
+    <div className="rounded-xl border border-border bg-card p-3 text-center">
       <Icon className="mx-auto h-4 w-4 text-primary" />
       <p className="mt-1.5 text-[11px] text-muted-foreground">{label}</p>
       <p className="text-sm font-semibold leading-tight">{value}</p>
     </div>
   );
+}
+
+function Trust({ icon: Icon, title, detail }: { icon: React.ComponentType<{ className?: string }>; title: string; detail: string }) {
+  return <div className="flex min-w-0 items-center gap-2"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10"><Icon className="h-4 w-4 text-primary" /></span><span className="min-w-0"><span className="block text-xs font-semibold leading-tight">{title}</span><span className="block text-[10px] leading-tight text-muted-foreground">{detail}</span></span></div>;
+}
+
+function Comfort({ icon: Icon, label }: { icon: React.ComponentType<{ className?: string }>; label: string }) {
+  return <span className="flex min-h-10 items-center gap-2 text-sm"><Icon className="h-4 w-4 text-primary" />{label}</span>;
 }
 
 function Block({ title, children }: { title: string; children: React.ReactNode }) {

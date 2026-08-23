@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CalendarDays, MapPin, Users } from "lucide-react";
+import { Bus, CalendarDays, Coffee, Hotel, MapPin, Star, Users } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
@@ -30,50 +30,51 @@ export function TourCardMobile({
 
   if (variant === "hero") {
     return (
-      <motion.div whileTap={{ scale: 0.97 }} className="w-[78vw] max-w-[320px] shrink-0">
+      <motion.article whileTap={{ scale: 0.985 }} className="w-[84vw] max-w-[350px] shrink-0 snap-start overflow-hidden rounded-2xl border border-border bg-card shadow-card">
         <Link to={href} className="block">
-          <div className="relative aspect-[3/4] overflow-hidden rounded-3xl shadow-[0_18px_40px_-18px_rgba(0,0,0,0.45)]">
+          <div className="relative aspect-[16/11] overflow-hidden">
             <img
               src={img}
               alt={`Busreise nach ${tour.destination}${tour.country ? `, ${tour.country}` : ""}`}
               className="h-full w-full object-cover"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-              {tour.category && (
-                <span className="mb-2 inline-block rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide backdrop-blur">
-                  {tour.category}
-                </span>
-              )}
-              <h3 className="text-xl font-bold leading-tight">{tour.destination}</h3>
-              <p className="mt-0.5 text-xs text-white/80">
-                {tour.duration_days ? `${tour.duration_days} Tage` : ""}
-                {tour.country ? ` · ${tour.country}` : ""}
-              </p>
-              <p className="mt-2 text-sm font-semibold">
-                ab {money(tour.price_from ?? next?.price_basic)}
-              </p>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+            <div className="absolute left-3 top-3 flex flex-col gap-1.5">
+              {tour.is_featured && <Badge className="text-[10px] uppercase">★ Bestseller</Badge>}
+              {!!tour.discount_percent && tour.discount_percent > 0 && <Badge variant="destructive" className="text-[10px]">−{tour.discount_percent}%</Badge>}
+            </div>
+            <div className="absolute inset-x-3 bottom-3 flex items-center justify-between text-xs font-medium text-primary-foreground">
+              <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{tour.country || tour.location}</span>
+              {left != null && left <= 10 && left > 0 && <span className="rounded-full bg-accent px-2 py-1 text-accent-foreground">Nur noch {left}</span>}
+            </div>
+          </div>
+          <div className="p-4">
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase text-muted-foreground">
+              <span>{tour.location || tour.country}</span><span>·</span><span>{tour.duration_days ? `${tour.duration_days} Tage` : "Reise"}</span><span>·</span><span className="flex items-center text-accent"><Star className="h-3 w-3 fill-current" /> 4.8</span>
+            </p>
+            <h3 className="mt-2 text-xl font-bold leading-tight">{tour.destination}</h3>
+            {tour.short_description && <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{tour.short_description}</p>}
+            <div className="mt-3 flex gap-3 text-xs text-muted-foreground"><span className="flex items-center gap-1"><Hotel className="h-3.5 w-3.5 text-primary" />Hotel</span><span className="flex items-center gap-1"><Coffee className="h-3.5 w-3.5 text-primary" />Frühstück</span><span className="flex items-center gap-1"><Bus className="h-3.5 w-3.5 text-primary" />Reisebus</span></div>
+            <div className="mt-4 flex items-end justify-between border-t border-border pt-3">
+              <div><p className="text-[10px] uppercase text-muted-foreground">{next ? `Ab ${format(parseISO(next.departure_date), "dd. MMM", { locale: de })}` : "Auf Anfrage"}</p><p className="text-lg font-bold text-primary">ab {money(tour.price_from ?? next?.price_basic)}</p></div>
+              <span className="text-sm font-semibold text-primary">Details ansehen</span>
             </div>
           </div>
         </Link>
-      </motion.div>
+      </motion.article>
     );
   }
 
   return (
-    <motion.div whileTap={{ scale: 0.98 }}>
+    <motion.article whileTap={{ scale: 0.985 }}>
       <Link
         to={href}
-        className="flex gap-3 rounded-3xl border border-border/60 bg-card p-3 shadow-[0_6px_24px_-16px_rgba(0,0,0,0.35)]"
+        className="block overflow-hidden rounded-2xl border border-border bg-card shadow-card"
       >
-        <img
-          src={img}
-          alt={`Reise nach ${tour.destination}`}
-          className="h-24 w-24 shrink-0 rounded-2xl object-cover"
-          loading="lazy"
-        />
-        <div className="min-w-0 flex-1">
+        <div className="flex gap-3 p-3">
+          <img src={img} alt={`Reise nach ${tour.destination}`} className="h-28 w-28 shrink-0 rounded-xl object-cover" loading="lazy" />
+          <div className="min-w-0 flex-1 py-0.5">
           <div className="flex items-start justify-between gap-2">
             <h3 className="truncate text-base font-semibold leading-tight">{tour.destination}</h3>
             {!bookable && (
@@ -93,7 +94,7 @@ export function TourCardMobile({
               {tour.duration_days ? ` · ${tour.duration_days} Tage` : ""}
             </p>
           )}
-          <div className="mt-2 flex items-end justify-between">
+           <div className="mt-3 flex items-end justify-between">
             <span className="text-sm font-bold text-primary">
               ab {money(tour.price_from ?? next?.price_basic)}
             </span>
@@ -108,9 +109,10 @@ export function TourCardMobile({
                 {left === 0 ? "ausgebucht" : `${left} frei`}
               </span>
             )}
+           </div>
           </div>
         </div>
       </Link>
-    </motion.div>
+    </motion.article>
   );
 }

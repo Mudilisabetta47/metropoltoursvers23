@@ -27,6 +27,8 @@ export interface MobileTour {
   image_url: string | null;
   gallery_images: string[] | null;
   highlights: string[] | null;
+  tags: string[] | null;
+  itinerary: Array<{ day: number; title: string; description: string }> | null;
   included_services: string[] | null;
   hotel_name: string | null;
   hotel_address: string | null;
@@ -40,7 +42,7 @@ export interface MobileTour {
 }
 
 const TOUR_FIELDS =
-  "id, slug, destination, location, country, category, short_description, description, duration_days, price_from, hero_image_url, image_url, gallery_images, highlights, included_services, hotel_name, hotel_address, discount_percent, is_featured, is_active, publish_status, documents_required, insurance_info";
+  "id, slug, destination, location, country, category, short_description, description, duration_days, price_from, hero_image_url, image_url, gallery_images, highlights, tags, itinerary, included_services, hotel_name, hotel_address, discount_percent, is_featured, is_active, publish_status, documents_required, insurance_info";
 
 const DATE_FIELDS =
   "id, departure_date, return_date, price_basic, total_seats, booked_seats, status, is_active";
@@ -78,22 +80,23 @@ export function useMobileTour(tourId?: string) {
     enabled: Boolean(tourId),
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
+      if (!tourId) return null;
       const isUuid =
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tourId!);
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tourId);
 
       // Zuerst über den SEO-Slug, sonst über die UUID (bestehende Lookup-Strategie).
       let query = supabase
         .from("package_tours")
         .select(`${TOUR_FIELDS}, tour_dates(${DATE_FIELDS})`)
         .limit(1);
-      query = isUuid ? query.eq("id", tourId!) : query.eq("slug", tourId!);
+      query = isUuid ? query.eq("id", tourId) : query.eq("slug", tourId);
 
       let { data: tour } = await query.maybeSingle();
       if (!tour && isUuid) {
         const fallback = await supabase
           .from("package_tours")
           .select(`${TOUR_FIELDS}, tour_dates(${DATE_FIELDS})`)
-          .eq("slug", tourId!)
+          .eq("slug", tourId)
           .maybeSingle();
         tour = fallback.data;
       }
@@ -110,7 +113,7 @@ export function useMobileTour(tourId?: string) {
           .order("sort_order"),
         supabase
           .from("tour_tariffs")
-          .select("id, name, price_modifier, included_features, is_recommended, sort_order")
+          .select("id, name, slug, price_modifier, included_features, is_recommended, suitcase_included, suitcase_weight_kg, sort_order")
           .eq("tour_id", id)
           .eq("is_active", true)
           .order("sort_order"),

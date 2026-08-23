@@ -7,6 +7,7 @@ import { ArrowLeft, Download, FileText, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { LogoLight } from "@/components/brand/Logo";
 import { useMyTrips } from "@/mobile/hooks/useMyTrips";
 import { deviceStore, APP_STORE_KEYS } from "@/mobile/lib/native";
 
@@ -66,9 +67,10 @@ export default function AppTicket() {
       </div>
 
       <div className="px-5">
-        <div className="overflow-hidden rounded-[28px] bg-background text-foreground shadow-2xl">
+        <div className="overflow-hidden rounded-2xl border border-secondary-foreground/10 bg-background text-foreground shadow-elevated">
           <div className="bg-primary px-5 py-4 text-primary-foreground">
-            <p className="text-[11px] uppercase tracking-widest opacity-80">METROPOL TOURS</p>
+            <LogoLight size="sm" className="mb-3" />
+            <p className="text-[11px] uppercase opacity-80">Digitales Reiseticket</p>
             <p className="text-lg font-bold leading-tight">
               {trip?.tour?.destination ?? "Busreise"}
             </p>
@@ -79,7 +81,7 @@ export default function AppTicket() {
               <img
                 src={qr}
                 alt={`QR-Code für Buchung ${bookingNumber}`}
-                className="h-56 w-56 rounded-2xl bg-white p-2"
+                className="h-56 w-56 rounded-xl bg-background p-2"
               />
             ) : (
               <Skeleton className="h-56 w-56 rounded-2xl" />
@@ -136,7 +138,7 @@ export default function AppTicket() {
         {(trip?.invoices ?? []).length > 0 && (
           <div className="mt-5 space-y-2">
             <h2 className="text-sm font-semibold">Dokumente</h2>
-            {trip!.invoices.map((inv) => (
+            {trip?.invoices.map((inv) => (
               <div
                 key={inv.invoice_number}
                 className="flex items-center justify-between rounded-2xl bg-white/5 p-3.5"
@@ -148,7 +150,7 @@ export default function AppTicket() {
                 <Button
                   size="sm"
                   variant="secondary"
-                  onClick={() => navigate(`/meine-buchungen?booking=${trip!.booking_number}`)}
+                  onClick={() => trip && navigate(`/meine-buchungen?booking=${trip.booking_number}`)}
                 >
                   <Download className="mr-1.5 h-3.5 w-3.5" /> Öffnen
                 </Button>
