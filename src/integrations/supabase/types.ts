@@ -757,12 +757,22 @@ export type Database = {
       }
       bookings: {
         Row: {
+          billing_city: string | null
+          billing_company: string | null
+          billing_country: string | null
+          billing_first_name: string | null
+          billing_house_number: string | null
+          billing_last_name: string | null
+          billing_street: string | null
+          billing_zip: string | null
           booked_by_agent_id: string | null
           booking_number: string | null
+          contact_date_of_birth: string | null
           created_at: string
           destination_stop_id: string
           extras: Json | null
           id: string
+          invoice_address: Json | null
           is_test: boolean
           luggage: Json
           origin_stop_id: string
@@ -774,6 +784,8 @@ export type Database = {
           payment_method: string | null
           payment_reference: string | null
           payment_status: string
+          paypal_capture_id: string | null
+          paypal_order_id: string | null
           price_paid: number
           seat_id: string
           status: Database["public"]["Enums"]["booking_status"]
@@ -784,12 +796,22 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          billing_city?: string | null
+          billing_company?: string | null
+          billing_country?: string | null
+          billing_first_name?: string | null
+          billing_house_number?: string | null
+          billing_last_name?: string | null
+          billing_street?: string | null
+          billing_zip?: string | null
           booked_by_agent_id?: string | null
           booking_number?: string | null
+          contact_date_of_birth?: string | null
           created_at?: string
           destination_stop_id: string
           extras?: Json | null
           id?: string
+          invoice_address?: Json | null
           is_test?: boolean
           luggage?: Json
           origin_stop_id: string
@@ -801,6 +823,8 @@ export type Database = {
           payment_method?: string | null
           payment_reference?: string | null
           payment_status?: string
+          paypal_capture_id?: string | null
+          paypal_order_id?: string | null
           price_paid: number
           seat_id: string
           status?: Database["public"]["Enums"]["booking_status"]
@@ -811,12 +835,22 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          billing_city?: string | null
+          billing_company?: string | null
+          billing_country?: string | null
+          billing_first_name?: string | null
+          billing_house_number?: string | null
+          billing_last_name?: string | null
+          billing_street?: string | null
+          billing_zip?: string | null
           booked_by_agent_id?: string | null
           booking_number?: string | null
+          contact_date_of_birth?: string | null
           created_at?: string
           destination_stop_id?: string
           extras?: Json | null
           id?: string
+          invoice_address?: Json | null
           is_test?: boolean
           luggage?: Json
           origin_stop_id?: string
@@ -828,6 +862,8 @@ export type Database = {
           payment_method?: string | null
           payment_reference?: string | null
           payment_status?: string
+          paypal_capture_id?: string | null
+          paypal_order_id?: string | null
           price_paid?: number
           seat_id?: string
           status?: Database["public"]["Enums"]["booking_status"]
@@ -5690,8 +5726,17 @@ export type Database = {
       tour_bookings: {
         Row: {
           base_price: number
+          billing_city: string | null
+          billing_company: string | null
+          billing_country: string | null
+          billing_first_name: string | null
+          billing_house_number: string | null
+          billing_last_name: string | null
+          billing_street: string | null
+          billing_zip: string | null
           booking_number: string
           booking_type: string
+          contact_date_of_birth: string | null
           contact_email: string
           contact_first_name: string
           contact_last_name: string
@@ -5702,12 +5747,16 @@ export type Database = {
           discount_code: string | null
           id: string
           internal_notes: string | null
+          invoice_address: Json | null
           luggage_addons: Json | null
           paid_at: string | null
           participants: number
           passenger_details: Json
           payment_method: string | null
           payment_reference: string | null
+          payment_status: string
+          paypal_capture_id: string | null
+          paypal_order_id: string | null
           pickup_stop_id: string | null
           pickup_surcharge: number
           status: string
@@ -5722,8 +5771,17 @@ export type Database = {
         }
         Insert: {
           base_price: number
-          booking_number?: string
+          billing_city?: string | null
+          billing_company?: string | null
+          billing_country?: string | null
+          billing_first_name?: string | null
+          billing_house_number?: string | null
+          billing_last_name?: string | null
+          billing_street?: string | null
+          billing_zip?: string | null
+          booking_number: string
           booking_type?: string
+          contact_date_of_birth?: string | null
           contact_email: string
           contact_first_name: string
           contact_last_name: string
@@ -5734,12 +5792,16 @@ export type Database = {
           discount_code?: string | null
           id?: string
           internal_notes?: string | null
+          invoice_address?: Json | null
           luggage_addons?: Json | null
           paid_at?: string | null
           participants?: number
           passenger_details?: Json
           payment_method?: string | null
           payment_reference?: string | null
+          payment_status?: string
+          paypal_capture_id?: string | null
+          paypal_order_id?: string | null
           pickup_stop_id?: string | null
           pickup_surcharge?: number
           status?: string
@@ -5754,8 +5816,17 @@ export type Database = {
         }
         Update: {
           base_price?: number
+          billing_city?: string | null
+          billing_company?: string | null
+          billing_country?: string | null
+          billing_first_name?: string | null
+          billing_house_number?: string | null
+          billing_last_name?: string | null
+          billing_street?: string | null
+          billing_zip?: string | null
           booking_number?: string
           booking_type?: string
+          contact_date_of_birth?: string | null
           contact_email?: string
           contact_first_name?: string
           contact_last_name?: string
@@ -5766,12 +5837,16 @@ export type Database = {
           discount_code?: string | null
           id?: string
           internal_notes?: string | null
+          invoice_address?: Json | null
           luggage_addons?: Json | null
           paid_at?: string | null
           participants?: number
           passenger_details?: Json
           payment_method?: string | null
           payment_reference?: string | null
+          payment_status?: string
+          paypal_capture_id?: string | null
+          paypal_order_id?: string | null
           pickup_stop_id?: string | null
           pickup_surcharge?: number
           status?: string
@@ -7773,6 +7848,7 @@ export type Database = {
         }
         Returns: number
       }
+      next_booking_number: { Args: never; Returns: string }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
