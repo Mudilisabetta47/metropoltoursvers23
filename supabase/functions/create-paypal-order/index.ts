@@ -188,7 +188,8 @@ serve(async (req) => {
         intent: "CAPTURE",
         purchase_units: [
           {
-            reference_id: bookingId,
+            reference_id: booking.booking_number || bookingId,
+            invoice_id: `${booking.booking_number || bookingId}-${Date.now()}`,
             description: `Metropol Tours – ${tourName} (${booking.participants} Teilnehmer)`,
             custom_id: booking.booking_number,
             amount: {
@@ -238,7 +239,12 @@ serve(async (req) => {
     // Store PayPal order ID on booking
     await supabaseAdmin
       .from("tour_bookings")
-      .update({ payment_reference: `paypal:${order.id}` })
+      .update({
+        payment_reference: `paypal:${order.id}`,
+        paypal_order_id: order.id,
+        payment_method: "paypal",
+        payment_status: "pending",
+      })
       .eq("id", bookingId);
 
     await supabaseAdmin.from("payment_audit_log").insert({

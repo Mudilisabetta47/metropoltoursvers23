@@ -42,7 +42,24 @@ interface PassengerInfo {
   lastName: string;
   email: string;
   phone: string;
+  dateOfBirth: string;
 }
+
+interface BillingAddress {
+  company: string;
+  firstName: string;
+  lastName: string;
+  street: string;
+  houseNumber: string;
+  zip: string;
+  city: string;
+  country: string;
+}
+
+const EMPTY_BILLING: BillingAddress = {
+  company: "", firstName: "", lastName: "", street: "",
+  houseNumber: "", zip: "", city: "", country: "Deutschland",
+};
 
 interface PickupStop {
   id: string;
@@ -92,6 +109,8 @@ const TourCheckoutPage = () => {
   const [passengerInfo, setPassengerInfo] = useState<PassengerInfo[]>([]);
   const [selectedExtras, setSelectedExtras] = useState<Record<string, number>>({});
   const [selectedAddons, setSelectedAddons] = useState<Record<string, number>>({});
+  const [billing, setBilling] = useState<BillingAddress>(EMPTY_BILLING);
+  const [billingSameAsContact, setBillingSameAsContact] = useState(true);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("paypal");
   const [agreePrivacy, setAgreePrivacy] = useState(false);
@@ -173,7 +192,7 @@ const TourCheckoutPage = () => {
 
   useEffect(() => {
     setPassengerInfo(
-      Array(participants).fill(null).map((_, i) => passengerInfo[i] || { firstName: "", lastName: "", email: "", phone: "" })
+      Array(participants).fill(null).map((_, i) => passengerInfo[i] || { firstName: "", lastName: "", email: "", phone: "", dateOfBirth: "" })
     );
   }, [participants]);
 
@@ -272,6 +291,12 @@ const TourCheckoutPage = () => {
   ];
   const currentStepIndex = steps.findIndex((s) => s.key === currentStep);
 
+  const effectiveBilling = (): BillingAddress => (
+    billingSameAsContact
+      ? { ...billing, firstName: billing.firstName || passengerInfo[0]?.firstName || "", lastName: billing.lastName || passengerInfo[0]?.lastName || "" }
+      : billing
+  );
+
   const handleNextStep = async () => {
     if (currentStep === "summary") {
       if (!selectedDate || !selectedTariff) { toast.error("Bitte wählen Sie Termin und Tarif aus"); return; }
@@ -279,8 +304,18 @@ const TourCheckoutPage = () => {
       if (participants > availableSeats) { toast.error(`Nur noch ${availableSeats} Plätze verfügbar`); return; }
       setCurrentStep("passengers"); window.scrollTo({ top: 0, behavior: "smooth" });
     } else if (currentStep === "passengers") {
-      const isValid = passengerInfo.every((p) => p.firstName && p.lastName && p.email);
-      if (!isValid) { toast.error("Bitte füllen Sie alle Pflichtfelder aus"); return; }
+      const isValid = passengerInfo.every((p) => p.firstName && p.lastName && p.email && p.dateOfBirth);
+      if (!isValid) { toast.error("Bitte füllen Sie alle Pflichtfelder inkl. Geburtsdatum aus"); return; }
+      const invalidDob = passengerInfo.find((p) => {
+        const d = new Date(p.dateOfBirth);
+        return Number.isNaN(d.getTime()) || d > new Date() || d < new Date("1900-01-01");
+      });
+      if (invalidDob) { toast.error("Bitte geben Sie ein gültiges Geburtsdatum an"); return; }
+      const b = effectiveBilling();
+      if (!b.firstName || !b.lastName || !b.street || !b.zip || !b.city || !b.country) {
+        toast.error("Bitte vervollständigen Sie die Rechnungsadresse"); return;
+      }
+      if (!/^[0-9A-Za-z \-]{4,10}$/.test(b.zip)) { toast.error("Bitte geben Sie eine gültige PLZ an"); return; }
       setCurrentStep("payment"); window.scrollTo({ top: 0, behavior: "smooth" });
     } else if (currentStep === "payment") {
       if (!agreeTerms) { toast.error("Bitte akzeptieren Sie die AGB"); return; }
@@ -303,25 +338,42 @@ const TourCheckoutPage = () => {
         setIsProcessing(false);
         return;
       }
-      const bookingNum = `MT-${Date.now().toString(36).toUpperCase()}`;
-      const passengerDetails = passengerInfo.map((p, i) => ({ index: i + 1, firstName: p.firstName, lastName: p.lastName, email: p.email, phone: p.phone }));
+      const passengerDetails = passengerInfo.map((p, i) => ({ index: i + 1, firstName: p.firstName, lastName: p.lastName, email: p.email, phone: p.phone, dateOfBirth: p.dateOfBirth }));
+      const bill = effectiveBilling();
       const luggageAddonsData = Object.entries(selectedAddons).filter(([_, qty]) => qty > 0).map(([addonId, qty]) => {
         const addon = luggageAddons.find((a) => a.id === addonId);
         return { addon_id: addonId, name: addon?.name || "", quantity: qty, price_each: addon?.price || 0, total: (addon?.price || 0) * qty };
       });
       const consentTimestamp = new Date().toISOString();
-      const { data: bookingData, error: bookingError } = await supabase.from("tour_bookings").insert({
-        booking_number: bookingNum, tour_id: tourId, tour_date_id: selectedDate!.id,
+      const bookingPayload = {
+        tour_id: tourId, tour_date_id: selectedDate!.id,
         tariff_id: selectedTariff!.id, pickup_stop_id: selectedPickupStop?.id || null,
         user_id: user?.id || null, participants, passenger_details: passengerDetails,
         contact_first_name: passengerInfo[0].firstName, contact_last_name: passengerInfo[0].lastName,
         contact_email: passengerInfo[0].email, contact_phone: passengerInfo[0].phone || null,
+        contact_date_of_birth: passengerInfo[0].dateOfBirth || null,
+        billing_company: bill.company || null, billing_first_name: bill.firstName,
+        billing_last_name: bill.lastName, billing_street: bill.street,
+        billing_house_number: bill.houseNumber || null, billing_zip: bill.zip,
+        billing_city: bill.city, billing_country: bill.country,
+        invoice_address: {
+          company: bill.company, first_name: bill.firstName, last_name: bill.lastName,
+          street: bill.street, house_number: bill.houseNumber, zip: bill.zip,
+          city: bill.city, country: bill.country,
+        },
+        payment_status: "pending",
         base_price: pricePerPerson, pickup_surcharge: pickupSurcharge * participants,
         luggage_addons: luggageAddonsData, total_price: totalPrice,
         discount_code: appliedCoupon?.code || null, discount_amount: discountAmount || null,
         payment_method: selectedPaymentMethod, status: "pending", booking_type: "direct",
         customer_notes: JSON.stringify({ consent_agb: consentTimestamp, consent_privacy: consentTimestamp, consent_travel_info: agreeTravelInfo ? consentTimestamp : null }),
-      }).select("id, booking_number").single();
+      };
+      const { data: bookingData, error: bookingError } = await supabase
+        .from("tour_bookings")
+        // booking_number is generated server-side by a DB trigger (MT-YYYY-000000)
+        .insert(bookingPayload as never)
+        .select("id, booking_number")
+        .single();
       if (bookingError) throw bookingError;
 
       const { data: seatsReserved, error: seatsError } = await supabase.rpc("reserve_tour_seats", { p_tour_date_id: selectedDate!.id, p_seats: participants });
@@ -760,9 +812,72 @@ const TourCheckoutPage = () => {
                                 <Label className="text-sm font-medium">Telefon</Label>
                                 <Input type="tel" value={passenger.phone} onChange={(e) => updatePassenger(index, "phone", e.target.value)} placeholder="+49 170 1234567" className="h-11" autoComplete="tel" />
                               </div>
+                              <div className="space-y-1.5">
+                                <Label className="text-sm font-medium">Geburtsdatum *</Label>
+                                <Input
+                                  type="date"
+                                  value={passenger.dateOfBirth}
+                                  onChange={(e) => updatePassenger(index, "dateOfBirth", e.target.value)}
+                                  max={new Date().toISOString().slice(0, 10)}
+                                  min="1900-01-01"
+                                  className="h-11"
+                                  autoComplete="bday"
+                                />
+                              </div>
                             </div>
                           </motion.div>
                         ))}
+                      </CardContent>
+                    </Card>
+
+                    {/* Rechnungsadresse */}
+                    <Card className="border-border/60 shadow-sm mt-5">
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <FileText className="w-5 h-5 text-primary" />
+                          Rechnungsadresse
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground mt-1">Diese Adresse erscheint auf Ihrer Rechnung.</p>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <label className="flex items-center gap-3 text-sm text-foreground cursor-pointer">
+                          <Checkbox checked={billingSameAsContact} onCheckedChange={(v) => setBillingSameAsContact(!!v)} />
+                          Name des Hauptkontakts übernehmen
+                        </label>
+                        <div className="grid sm:grid-cols-2 gap-4">
+                          <div className="space-y-1.5 sm:col-span-2">
+                            <Label className="text-sm font-medium">Firma (optional)</Label>
+                            <Input value={billing.company} onChange={(e) => setBilling({ ...billing, company: e.target.value })} className="h-11" autoComplete="organization" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-sm font-medium">Vorname *</Label>
+                            <Input value={billingSameAsContact ? (billing.firstName || passengerInfo[0]?.firstName || "") : billing.firstName} onChange={(e) => setBilling({ ...billing, firstName: e.target.value })} className="h-11" autoComplete="billing given-name" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-sm font-medium">Nachname *</Label>
+                            <Input value={billingSameAsContact ? (billing.lastName || passengerInfo[0]?.lastName || "") : billing.lastName} onChange={(e) => setBilling({ ...billing, lastName: e.target.value })} className="h-11" autoComplete="billing family-name" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-sm font-medium">Straße *</Label>
+                            <Input value={billing.street} onChange={(e) => setBilling({ ...billing, street: e.target.value })} placeholder="Musterstraße" className="h-11" autoComplete="billing address-line1" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-sm font-medium">Hausnummer</Label>
+                            <Input value={billing.houseNumber} onChange={(e) => setBilling({ ...billing, houseNumber: e.target.value })} placeholder="12a" className="h-11" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-sm font-medium">PLZ *</Label>
+                            <Input value={billing.zip} onChange={(e) => setBilling({ ...billing, zip: e.target.value })} placeholder="30419" className="h-11" autoComplete="billing postal-code" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-sm font-medium">Ort *</Label>
+                            <Input value={billing.city} onChange={(e) => setBilling({ ...billing, city: e.target.value })} placeholder="Hannover" className="h-11" autoComplete="billing address-level2" />
+                          </div>
+                          <div className="space-y-1.5 sm:col-span-2">
+                            <Label className="text-sm font-medium">Land *</Label>
+                            <Input value={billing.country} onChange={(e) => setBilling({ ...billing, country: e.target.value })} className="h-11" autoComplete="billing country-name" />
+                          </div>
+                        </div>
                       </CardContent>
                     </Card>
                   </motion.div>

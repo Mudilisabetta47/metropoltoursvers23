@@ -307,6 +307,17 @@ function generateInvoice(booking: any, tour: any, date: any, tariff: any, pickup
   const netPrice = booking.total_price / 1.19;
   const vatAmount = booking.total_price - netPrice;
   const luggageAddons = Array.isArray(booking.luggage_addons) ? booking.luggage_addons : [];
+  const inv = (booking.invoice_address && typeof booking.invoice_address === "object") ? booking.invoice_address : null;
+  const billing = {
+    company: inv?.company ?? booking.billing_company ?? "",
+    firstName: inv?.first_name ?? booking.billing_first_name ?? booking.contact_first_name ?? "",
+    lastName: inv?.last_name ?? booking.billing_last_name ?? booking.contact_last_name ?? "",
+    street: inv?.street ?? booking.billing_street ?? "",
+    houseNumber: inv?.house_number ?? booking.billing_house_number ?? "",
+    zip: inv?.zip ?? booking.billing_zip ?? "",
+    city: inv?.city ?? booking.billing_city ?? "",
+    country: inv?.country ?? booking.billing_country ?? "",
+  };
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Rechnung ${invoiceNumber}</title>
 <style>${baseStyles}</style></head><body>
@@ -327,8 +338,12 @@ function generateInvoice(booking: any, tour: any, date: any, tariff: any, pickup
     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:32px; padding-bottom:20px; border-bottom:1px solid #eee;">
       <div>
         <div style="font-size:10px; color:#999; text-transform:uppercase; letter-spacing:1px; font-weight:600;">Rechnungsempfänger</div>
-        <div style="font-size:16px; font-weight:700; margin-top:4px;">${escapeHtml(booking.contact_first_name)} ${escapeHtml(booking.contact_last_name)}</div>
-        <div style="font-size:13px; color:#666; margin-top:2px;">${escapeHtml(booking.contact_email)}</div>
+        <div style="font-size:16px; font-weight:700; margin-top:4px;">${escapeHtml(billing.company || `${billing.firstName} ${billing.lastName}`)}</div>
+        ${billing.company ? `<div style="font-size:13px; color:#444;">${escapeHtml(billing.firstName)} ${escapeHtml(billing.lastName)}</div>` : ''}
+        ${billing.street ? `<div style="font-size:13px; color:#444; margin-top:2px;">${escapeHtml(billing.street)} ${escapeHtml(billing.houseNumber)}</div>` : ''}
+        ${billing.zip || billing.city ? `<div style="font-size:13px; color:#444;">${escapeHtml(billing.zip)} ${escapeHtml(billing.city)}</div>` : ''}
+        ${billing.country ? `<div style="font-size:13px; color:#444;">${escapeHtml(billing.country)}</div>` : ''}
+        <div style="font-size:13px; color:#666; margin-top:6px;">${escapeHtml(booking.contact_email)}</div>
         ${booking.contact_phone ? `<div style="font-size:13px; color:#666;">${escapeHtml(booking.contact_phone)}</div>` : ''}
       </div>
       <div style="text-align:right;">
@@ -637,15 +652,22 @@ const handler = async (req: Request): Promise<Response> => {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey);
-    const { data: claimsData, error: claimsErr } = await supabaseAuth.auth.getClaims(
-      authHeader.replace("Bearer ", "")
-    );
-    const userId = claimsData?.claims?.sub || null;
-    if (claimsErr || !userId) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const bearer = authHeader.replace("Bearer ", "").trim();
+    // Internal service calls (e.g. transactional e-mails) use the service role key
+    const isServiceCall = bearer === supabaseServiceKey;
+
+    let userId: string | null = null;
+    let callerEmail: string | null = null;
+    if (!isServiceCall) {
+      const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey);
+      const { data: userData, error: userErr } = await supabaseAuth.auth.getUser(bearer);
+      userId = userData?.user?.id ?? null;
+      callerEmail = userData?.user?.email?.toLowerCase() ?? null;
+      if (userErr || !userId) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -661,11 +683,15 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // AuthZ: must own booking OR be admin/office/agent
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    // AuthZ: service call OR must own booking (by user id or contact e-mail) OR be admin/office/agent
+    const { data: roles } = userId
+      ? await supabase.from("user_roles").select("role").eq("user_id", userId)
+      : { data: [] as any[] };
     const isStaff = roles?.some((r: any) => ["admin", "office", "agent"].includes(r.role));
-    const isOwner = booking.user_id && booking.user_id === userId;
-    if (!isOwner && !isStaff) {
+    const isOwner =
+      (booking.user_id && booking.user_id === userId) ||
+      (!!callerEmail && String(booking.contact_email ?? "").toLowerCase() === callerEmail);
+    if (!isServiceCall && !isOwner && !isStaff) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
