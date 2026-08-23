@@ -230,7 +230,10 @@ serve(async (req) => {
       .update({
         status: "confirmed",
         payment_method: "paypal",
+        payment_status: "paid",
         payment_reference: captureId || `paypal:${orderId}`,
+        paypal_order_id: orderId,
+        paypal_capture_id: captureId || null,
         paid_at: new Date().toISOString(),
       })
       .eq("id", bookingId)
