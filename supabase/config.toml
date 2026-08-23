@@ -66,3 +66,11 @@ project_id = "wberoibxqpffhnyvjnci"
   [functions.send-staff-email]
     verify_jwt = false
 
+  [functions.generate-invoice-pdf]
+    verify_jwt = false
+  [functions.request-booking-access]
+    verify_jwt = false
+  [functions.my-bookings]
+    verify_jwt = false
+  [functions.booking-self-service]
+    verify_jwt = false
