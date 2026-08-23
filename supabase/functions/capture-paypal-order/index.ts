@@ -44,6 +44,80 @@ async function getPayPalAccessToken(): Promise<string> {
   return data.access_token;
 }
 
+
+// ── Helpers: invoice attachment, billing block, failure mail ──
+function billingHtml(b: any): string {
+  const inv = (b?.invoice_address && typeof b.invoice_address === "object") ? b.invoice_address : {};
+  const line = [
+    inv.company ?? b?.billing_company,
+    [inv.first_name ?? b?.billing_first_name, inv.last_name ?? b?.billing_last_name].filter(Boolean).join(" "),
+    [inv.street ?? b?.billing_street, inv.house_number ?? b?.billing_house_number].filter(Boolean).join(" "),
+    [inv.zip ?? b?.billing_zip, inv.city ?? b?.billing_city].filter(Boolean).join(" "),
+    inv.country ?? b?.billing_country,
+  ].filter((v: unknown) => !!v && String(v).trim().length > 0);
+  if (line.length === 0) return "";
+  return `<div class="booking-box"><div style="font-weight:700;margin-bottom:6px;">Rechnungsadresse</div>${
+    line.map((l: string) => `<div>${escapeHtml(String(l))}</div>`).join("")
+  }</div>`;
+}
+
+async function buildInvoiceAttachment(bookingId: string, bookingNumber: string) {
+  try {
+    const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-tour-documents`;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}`, apikey: serviceKey },
+      body: JSON.stringify({ bookingId, documentType: "invoice" }),
+    });
+    if (!res.ok) {
+      console.error("invoice generation failed", res.status, (await res.text()).slice(0, 300));
+      return undefined;
+    }
+    const data = await res.json();
+    const html = data?.documents?.invoice;
+    if (!html) return undefined;
+    const bytes = new TextEncoder().encode(html);
+    let bin = "";
+    bytes.forEach((b) => { bin += String.fromCharCode(b); });
+    return [{ filename: `Rechnung-${bookingNumber}.html`, content: btoa(bin) }];
+  } catch (e) {
+    console.error("invoice attachment error", e);
+    return undefined;
+  }
+}
+
+async function sendPaymentFailedEmail(supabaseAdmin: any, bookingId: string) {
+  try {
+    const resendKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendKey) return;
+    const { data: b } = await supabaseAdmin
+      .from("tour_bookings")
+      .select("booking_number, contact_email, contact_first_name, contact_last_name, total_price")
+      .eq("id", bookingId)
+      .single();
+    if (!b?.contact_email) return;
+    const resend = new Resend(resendKey);
+    await resend.emails.send({
+      from: "METROPOL TOURS <booking@app.metours.de>",
+      to: [b.contact_email],
+      reply_to: "kundenservice@metours.de",
+      subject: `Zahlung fehlgeschlagen – Buchung ${escapeHtml(b.booking_number)}`,
+      html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#333">
+        <h2 style="color:#b91c1c">Zahlung konnte nicht abgeschlossen werden</h2>
+        <p>Hallo ${escapeHtml(b.contact_first_name)} ${escapeHtml(b.contact_last_name)},</p>
+        <p>leider konnte Ihre PayPal-Zahlung für die Buchung <strong>${escapeHtml(b.booking_number)}</strong>
+        über ${Number(b.total_price ?? 0).toFixed(2)} € nicht abgeschlossen werden.</p>
+        <p>Ihre Buchung ist weiterhin reserviert. Bitte starten Sie den Zahlvorgang erneut oder
+        kontaktieren Sie uns unter kundenservice@metours.de bzw. +49 511 80781106.</p>
+        <p>Ihr METROPOL TOURS Team</p>
+      </div>`,
+    });
+  } catch (e) {
+    console.error("payment failed email error", e);
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -187,6 +261,12 @@ serve(async (req) => {
     });
     const captureData = await captureRes.json();
     if (captureData.status !== "COMPLETED") {
+      await supabaseAdmin
+        .from("tour_bookings")
+        .update({ payment_status: "failed", paypal_order_id: orderId })
+        .eq("id", orderBookingId)
+        .is("paid_at", null);
+      await sendPaymentFailedEmail(supabaseAdmin, orderBookingId);
       await audit({
         booking_id: orderBookingId,
         result_status: "failure",
@@ -210,6 +290,11 @@ serve(async (req) => {
     const capturedCurrency = capture?.amount?.currency_code;
 
     if (capturedCurrency !== "EUR" || Math.abs(capturedAmount - expectedAmount) > 0.01) {
+      await supabaseAdmin
+        .from("tour_bookings")
+        .update({ payment_status: "failed" })
+        .eq("id", bookingId)
+        .is("paid_at", null);
       await audit({
         booking_id: bookingId,
         capture_id: captureId,
@@ -283,9 +368,13 @@ serve(async (req) => {
         const safeDest = escapeHtml(tour?.destination || "");
         const safeBookingNum = escapeHtml(updatedBooking.booking_number);
 
+        const attachments = await buildInvoiceAttachment(updatedBooking.id, updatedBooking.booking_number);
+
         await resend.emails.send({
           from: "METROPOL TOURS <booking@app.metours.de>",
           to: [updatedBooking.contact_email],
+          bcc: ["info@metours.de"],
+          attachments,
           subject: `Buchungsbestätigung ${safeBookingNum} – ${safeDest}`,
           html: `<!DOCTYPE html><html><head><meta charset="utf-8">
 <style>
@@ -323,7 +412,10 @@ serve(async (req) => {
       <div class="detail-row"><span class="label">Tarif</span><span class="value">${escapeHtml(tariff?.name || "")}</span></div>
       <div class="detail-row"><span class="label">Teilnehmer</span><span class="value">${updatedBooking.participants}</span></div>
       ${pickup ? `<div class="detail-row"><span class="label">Zustieg</span><span class="value">${escapeHtml(pickup.city)} – ${pickup.departure_time?.slice(0, 5)} Uhr</span></div>` : ""}
+      <div class="detail-row"><span class="label">Zahlungsart</span><span class="value">PayPal</span></div>
+      <div class="detail-row"><span class="label">Zahlungsstatus</span><span class="value">Bezahlt</span></div>
     </div>
+    ${billingHtml(updatedBooking)}
     <div class="total">Gesamtpreis: ${updatedBooking.total_price.toFixed(2)} €</div>
     <p style="margin-top:20px;">Ihre vollständigen Reiseunterlagen erhalten Sie ca. 7 Tage vor Abreise per E-Mail.</p>
     <p>Bitte erscheinen Sie mindestens <strong>15 Minuten vor Abfahrt</strong> am Treffpunkt.</p>
