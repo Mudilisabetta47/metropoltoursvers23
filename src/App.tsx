@@ -47,6 +47,13 @@ const MobileAppLayout = () => (
     <Outlet />
   </MobileAppShell>
 );
+
+/** Chat-Widget der Website nicht über der Mobile-App-Navigation anzeigen. */
+const GlobalChatWidget = () => {
+  const { pathname } = useLocation();
+  if (pathname === "/app" || pathname.startsWith("/app/")) return null;
+  return <TravelAdvisorChat />;
+};
 const AdminInquiriesPage = lazy(() => import("./pages/AdminInquiriesPage"));
 const AdminInquiryDetail = lazy(() => import("./pages/AdminInquiryDetail"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
@@ -322,7 +329,7 @@ const App = () => (
             </Routes>
             </PublicGate>
           </Suspense>
-          <TravelAdvisorChat />
+          <GlobalChatWidget />
         </BrowserRouter>
         <CookieBanner />
       </TooltipProvider>
