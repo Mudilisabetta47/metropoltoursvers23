@@ -1,18 +1,41 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
+const devServerUrl = process.env.CAPACITOR_DEV_SERVER_URL;
+
 const config: CapacitorConfig = {
   appId: 'app.lovable.a97d4e9208ce43758235171e4e8e16a2',
   appName: 'METROPOL TOURS',
   webDir: 'dist',
-  server: {
-    url: 'https://a97d4e92-08ce-4375-8235-171e4e8e16a2.lovableproject.com?forceHideBadge=true',
-    cleartext: true,
-  },
+  ...(devServerUrl
+    ? { server: { url: devServerUrl, cleartext: devServerUrl.startsWith('http://') } }
+    : {}),
   ios: {
-    contentInset: 'always',
+    contentInset: 'never',
+    scrollEnabled: true,
+    backgroundColor: '#FFFFFF',
   },
-  android: {
-    backgroundColor: '#0f1218',
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 1200,
+      launchAutoHide: true,
+      backgroundColor: '#0F1218',
+      showSpinner: false,
+      iosSpinnerStyle: 'small',
+    },
+    StatusBar: {
+      style: 'DARK',
+      backgroundColor: '#FFFFFF',
+      overlaysWebView: true,
+    },
+    Keyboard: {
+      resize: 'native',
+      style: 'light',
+      resizeOnFullScreen: true,
+    },
+    SafeArea: {
+      statusBarStyle: 'DARK',
+      navigationBarStyle: 'LIGHT',
+    },
   },
 };
 

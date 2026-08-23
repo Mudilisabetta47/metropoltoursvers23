@@ -3,13 +3,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import QRCode from "qrcode";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
-import { ArrowLeft, Download, FileText, Users } from "lucide-react";
+import { ArrowLeft, Download, FileText, Share2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { LogoLight } from "@/components/brand/Logo";
 import { useMyTrips } from "@/mobile/hooks/useMyTrips";
-import { deviceStore, APP_STORE_KEYS } from "@/mobile/lib/native";
+import { deviceStore, APP_STORE_KEYS, openNativeUrl, shareNative } from "@/mobile/lib/native";
+import { WalletPassButton } from "@/components/bookings/WalletPassButton";
 
 export default function AppTicket() {
   const { bookingNumber } = useParams();
@@ -132,6 +133,24 @@ export default function AppTicket() {
                 {trip.status === "cancelled" ? "Storniert – nicht gültig" : "Gültiges Ticket"}
               </Badge>
             )}
+            {trip && (
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <WalletPassButton
+                  bookingId={trip.id}
+                  ticketNumber={trip.booking_number}
+                  customerEmail={trip.contact_email ?? undefined}
+                  bookingType="tour"
+                  className="w-full"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void shareNative("METROPOL TOURS Ticket", `Buchung ${trip.booking_number}`, `${window.location.origin}/app/ticket/${trip.booking_number}`)}
+                >
+                  <Share2 className="mr-1.5 h-4 w-4" /> Teilen
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -150,7 +169,7 @@ export default function AppTicket() {
                 <Button
                   size="sm"
                   variant="secondary"
-                  onClick={() => trip && navigate(`/meine-buchungen?booking=${trip.booking_number}`)}
+                  onClick={() => trip && void openNativeUrl(`https://app.metours.de/meine-buchungen?booking=${encodeURIComponent(trip.booking_number)}`)}
                 >
                   <Download className="mr-1.5 h-3.5 w-3.5" /> Öffnen
                 </Button>

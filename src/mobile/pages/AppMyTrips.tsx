@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { MobileHeader } from "@/mobile/MobileAppShell";
 import { useMyTrips, requestGuestAccess, MyTrip } from "@/mobile/hooks/useMyTrips";
+import { nativeHaptic } from "@/mobile/lib/native";
 
 const statusLabel: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   confirmed: { label: "Bestätigt", variant: "default" },
@@ -46,7 +47,7 @@ export default function AppMyTrips() {
         title="Meine Reisen"
         subtitle={offline ? "Offline gespeicherte Tickets" : "Buchungen, Tickets & Rechnungen"}
         right={
-          <button onClick={reload} aria-label="Aktualisieren" className="p-2 text-muted-foreground">
+          <button onClick={() => { void nativeHaptic("light"); void reload(); }} aria-label="Aktualisieren" className="p-2 text-muted-foreground">
             <RefreshCw className="h-5 w-5" />
           </button>
         }
