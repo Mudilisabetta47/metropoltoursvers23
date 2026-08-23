@@ -112,7 +112,7 @@ export function useMobileTour(tourId?: string) {
           .order("sort_order"),
         supabase
           .from("tour_tariffs")
-          .select("id, name, price_modifier, included_features, is_recommended, sort_order")
+          .select("id, name, slug, price_modifier, included_features, is_recommended, suitcase_included, suitcase_weight_kg, sort_order")
           .eq("tour_id", id)
           .eq("is_active", true)
           .order("sort_order"),

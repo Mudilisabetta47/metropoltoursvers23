@@ -1,7 +1,7 @@
 import { useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, Ticket } from "lucide-react";
+import { ArrowRight, Ticket } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import { LogoLight } from "@/components/brand/Logo";
@@ -21,7 +21,6 @@ const fade = {
 };
 
 export default function AppHome() {
-  const navigate = useNavigate();
   const { data: tours, isLoading } = useMobileTours();
   const { trips } = useMyTrips();
 

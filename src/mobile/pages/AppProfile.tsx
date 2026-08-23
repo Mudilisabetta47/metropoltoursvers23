@@ -63,7 +63,7 @@ export default function AppProfile() {
       <MobileHeader title="Profil" subtitle="Konto, Hilfe & Rechtliches" />
 
       <div className="px-5 pt-4">
-        <div className="flex items-center gap-4 rounded-3xl border border-border/60 bg-card p-4">
+        <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 shadow-card">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
             <UserIcon className="h-6 w-6 text-primary" />
           </div>
@@ -76,7 +76,7 @@ export default function AppProfile() {
         </div>
 
         {!user && (
-          <div className="mt-4 space-y-3 rounded-3xl border border-border/60 bg-card p-4">
+          <div className="mt-4 space-y-3 rounded-2xl border border-border bg-card p-4">
             <p className="text-sm font-semibold">Anmelden oder Buchung abrufen</p>
             <Button className="h-12 w-full rounded-2xl" onClick={() => navigate("/auth")}>
               Mit Konto anmelden
@@ -103,14 +103,14 @@ export default function AppProfile() {
           </div>
         )}
 
-        <div className="mt-5 overflow-hidden rounded-3xl border border-border/60 bg-card">
+        <div className="mt-5 overflow-hidden rounded-2xl border border-border bg-card">
           <Row to="/app/meine-reisen" icon={FileText} label="Meine Buchungen & Tickets" />
           <Row href="mailto:info@app.metours.de" icon={Mail} label="Kontakt per E-Mail" />
           <Row href="tel:+4951199999999" icon={Phone} label="Telefonische Beratung" />
           <Row to="/service" icon={HelpCircle} label="Hilfe & Service" />
         </div>
 
-        <div className="mt-4 overflow-hidden rounded-3xl border border-border/60 bg-card">
+        <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-card">
           <Row to="/terms" icon={FileText} label="AGB" />
           <Row to="/privacy" icon={Shield} label="Datenschutz" />
           <Row to="/widerruf" icon={FileText} label="Widerrufsbelehrung" />
@@ -157,7 +157,7 @@ function Row({
       {inner}
     </a>
   ) : (
-    <Link to={to!} className={cls}>
+    <Link to={to ?? "/app"} className={cls}>
       {inner}
     </Link>
   );
