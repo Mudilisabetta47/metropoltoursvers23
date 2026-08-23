@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 const FROM = 'Metropol Tours <buchung@app.metours.de>';
-const FALLBACK_TO = 'kundenservice@metours.de';
+const FALLBACK_TO = 'kundenservice@app.metours.de';
 const ALWAYS_CC = ['info@metours.de'];
 
 interface Payload {

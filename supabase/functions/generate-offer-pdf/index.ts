@@ -183,7 +183,7 @@ Deno.serve(async (req) => {
     <!-- Footer -->
     <div style="font-size:10px;color:#9ca3af;text-align:center;line-height:1.6;">
       Metropol Tours · Reiseveranstalter<br/>
-      E-Mail: kundenservice@metours.de · Tel: +49 511 80781106<br/>
+      E-Mail: kundenservice@app.metours.de · Tel: +49 511 80781106<br/>
       Dieses Angebot ist freibleibend und unverbindlich.
     </div>
   </div>
