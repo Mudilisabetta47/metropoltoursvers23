@@ -217,51 +217,87 @@ const AdminMailbox = () => {
   };
 
   const handleSendCompose = async () => {
-    if (!compose.to || !compose.subject) {
-      toast({ title: "Bitte Empfänger und Betreff ausfüllen", variant: "destructive" });
+    if (!compose.to || !compose.subject || !compose.body.trim()) {
+      toast({ title: "Empfänger, Betreff und Nachricht ausfüllen", variant: "destructive" });
       return;
     }
-    await (supabase as any).from("admin_mailbox").insert({
-      folder: "sent",
-      subject: compose.subject,
-      body: compose.body,
-      recipient_email: compose.to,
-      sender_name: "Metropol Tours",
-      sender_email: "kundenservice@metours.de",
-      source_type: "manual",
-      is_read: true,
-    });
-    setCompose({ to: "", subject: "", body: "" });
-    setComposeOpen(false);
-    fetchAll();
-    toast({ title: "Nachricht gesendet" });
+    setSending(true);
+    try {
+      const messageId = await sendViaMailService({
+        to: compose.to,
+        subject: compose.subject,
+        body: compose.body,
+        sender: compose.sender,
+        context: compose.context,
+      });
+      await (supabase as any).from("admin_mailbox").insert({
+        folder: "sent",
+        subject: compose.subject,
+        body: compose.body,
+        recipient_email: compose.to,
+        sender_name: "Metropol Tours",
+        sender_email: compose.sender === "jobs" ? "jobs@app.metours.de" : "kundenservice@app.metours.de",
+        source_type: compose.context,
+        is_read: true,
+        tags: [`msg:${messageId}`],
+      });
+      setCompose({ to: "", subject: "", body: "", sender: "service", context: "manual" });
+      setComposeOpen(false);
+      fetchAll();
+      toast({ title: "E-Mail versendet", description: `Zustellung an ${compose.to} übergeben.` });
+    } catch (e: any) {
+      toast({ title: "Versand fehlgeschlagen", description: e.message, variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleReply = async () => {
-    if (!selectedMail || !replyBody) return;
-    await (supabase as any).from("admin_mailbox").update({
-      replied_at: new Date().toISOString(),
-      reply_body: replyBody,
-    }).eq("id", selectedMail.id);
+    if (!selectedMail || !replyBody.trim()) return;
+    if (!selectedMail.sender_email) {
+      toast({ title: "Keine Absenderadresse hinterlegt", variant: "destructive" });
+      return;
+    }
+    setSending(true);
+    try {
+      const messageId = await sendViaMailService({
+        to: selectedMail.sender_email,
+        subject: `Re: ${selectedMail.subject}`,
+        body: replyBody,
+        sender: "service",
+        context: "reply",
+      });
 
-    await (supabase as any).from("admin_mailbox").insert({
-      folder: "sent",
-      subject: `Re: ${selectedMail.subject}`,
-      body: replyBody,
-      recipient_email: selectedMail.sender_email,
-      recipient_name: selectedMail.sender_name,
-      sender_name: "Metropol Tours",
-      sender_email: "kundenservice@metours.de",
-      source_type: "reply",
-      source_id: selectedMail.id,
-      is_read: true,
-    });
+      await (supabase as any).from("admin_mailbox").update({
+        replied_at: new Date().toISOString(),
+        reply_body: replyBody,
+      }).eq("id", selectedMail.id);
 
-    setReplyBody("");
-    setReplyOpen(false);
-    fetchAll();
-    toast({ title: "Antwort gesendet" });
+      await (supabase as any).from("admin_mailbox").insert({
+        folder: "sent",
+        subject: `Re: ${selectedMail.subject}`,
+        body: replyBody,
+        recipient_email: selectedMail.sender_email,
+        recipient_name: selectedMail.sender_name,
+        sender_name: "Metropol Tours",
+        sender_email: "kundenservice@app.metours.de",
+        source_type: "reply",
+        source_id: selectedMail.id,
+        is_read: true,
+        tags: [`msg:${messageId}`],
+      });
+
+      setReplyBody("");
+      setReplyOpen(false);
+      fetchAll();
+      toast({ title: "Antwort versendet" });
+    } catch (e: any) {
+      toast({ title: "Versand fehlgeschlagen", description: e.message, variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
   };
+
 
   const handleSaveTemplate = async () => {
     if (!newTemplate.name || !newTemplate.subject) {
