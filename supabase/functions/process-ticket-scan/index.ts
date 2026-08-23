@@ -229,6 +229,105 @@ Deno.serve(async (req) => {
       }
     }
 
+    // 5b. Fallback: Pauschalreise-/Tour-Buchung per Buchungsnummer (MT-YYYY-XXXXXX)
+    if (!resolvedTicket) {
+      const bookingNumber = qrPayload.toUpperCase();
+      const { data: tourBooking } = await supabase
+        .from("tour_bookings")
+        .select(
+          "id, booking_number, contact_first_name, contact_last_name, contact_phone, participants, status, payment_status, total_price, tour_date_id, tour_dates(departure_date, return_date, package_tours(destination, title))",
+        )
+        .eq("booking_number", bookingNumber)
+        .maybeSingle();
+
+      if (tourBooking) {
+        const cancelled = ["cancelled", "storniert", "refunded"].includes(
+          String(tourBooking.status ?? "").toLowerCase(),
+        );
+        const td: any = tourBooking.tour_dates;
+        const tripInfo = {
+          route: td?.package_tours?.destination || td?.package_tours?.title || "Pauschalreise",
+          date: td?.departure_date ?? null,
+          time: null,
+        };
+        const passengerInfo = {
+          name: `${tourBooking.contact_first_name ?? ""} ${tourBooking.contact_last_name ?? ""}`.trim(),
+          phone: tourBooking.contact_phone ?? null,
+          seat: null,
+          price: tourBooking.total_price,
+          participants: tourBooking.participants,
+        };
+
+        if (cancelled) {
+          await supabase.from("scan_logs").insert({
+            user_id: userId,
+            qr_payload: qrPayload,
+            result: "invalid",
+            message: "Buchung storniert",
+          });
+          return new Response(
+            JSON.stringify({ result: "invalid", message: "Buchung storniert", color: "red", passenger: passengerInfo, trip: tripInfo }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        const { data: previous } = await supabase
+          .from("scan_logs")
+          .select("id, scan_time")
+          .eq("qr_payload", bookingNumber)
+          .eq("result", "checked_in")
+          .order("scan_time", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (previous) {
+          await supabase.from("scan_logs").insert({
+            user_id: userId,
+            qr_payload: bookingNumber,
+            result: "already_checked_in",
+            message: "Bereits eingecheckt",
+          });
+          return new Response(
+            JSON.stringify({
+              result: "already_checked_in",
+              message: "Bereits eingecheckt",
+              color: "yellow",
+              checked_in_at: previous.scan_time,
+              passenger: passengerInfo,
+              trip: tripInfo,
+            }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        await supabase.from("scan_logs").insert({
+          user_id: userId,
+          qr_payload: bookingNumber,
+          result: "checked_in",
+          message: "Erfolgreich eingecheckt (Pauschalreise)",
+        });
+        await supabase.from("scanner_events").insert({
+          scanner_user_id: userId,
+          ticket_number: bookingNumber,
+          result: "valid",
+          scan_type: "check_in",
+        });
+
+        return new Response(
+          JSON.stringify({
+            result: "checked_in",
+            message: "Ticket gültig – eingecheckt ✓",
+            color: "green",
+            ticket: { qr_payload: bookingNumber, checked_in_at: new Date().toISOString() },
+            passenger: passengerInfo,
+            trip: tripInfo,
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
+
     if (!resolvedTicket) {
       await supabase.from("scan_logs").insert({
         user_id: userId,

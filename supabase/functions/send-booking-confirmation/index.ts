@@ -1,3 +1,4 @@
+import { qrTicketBlock, emailFooter, LOGO_URL } from "../_shared/email-brand.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
@@ -95,7 +96,7 @@ const BUS_GIF = "https://media.giphy.com/media/3o7btNa0RUYa5E7iiQ/giphy.gif";
 const TRAVEL_GIF = "https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif";
 
 // Inline SVG Logo as base64 data URI for email compatibility
-const LOGO_BASE64 = "https://www.metours.de/brand/metropol-logo-light.png";
+const LOGO_BASE64 = LOGO_URL;
 
 function buildCustomerEmailHtml(booking: any, tour: any, date: any, tariff: any, pickup: any): string {
   const safeFirst = escapeHtml(booking.contact_first_name);
@@ -433,6 +434,8 @@ function buildCustomerEmailHtml(booking: any, tour: any, date: any, tariff: any,
       </td></tr>
     </table>
 
+    ${qrTicketBlock(booking.booking_number)}
+
     <!-- CTA BUTTON -->
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
       <tr><td align="center">
@@ -515,7 +518,12 @@ function buildCustomerEmailHtml(booking: any, tour: any, date: any, tariff: any,
       ${COMPANY.phone} · ${COMPANY.email} · ${COMPANY.web}
     </p>
     <p style="margin:0; font-size:10px; color:rgba(255,255,255,0.3); margin-top:8px;">
-      © ${new Date().getFullYear()} METROPOL TOURS · <a href="https://app.metours.de/terms" style="color:rgba(255,255,255,0.4); text-decoration:underline;">AGB</a> · <a href="https://app.metours.de/privacy" style="color:rgba(255,255,255,0.4); text-decoration:underline;">Datenschutz</a> · <a href="https://app.metours.de/impressum" style="color:rgba(255,255,255,0.4); text-decoration:underline;">Impressum</a>
+      © ${new Date().getFullYear()} METROPOL TOURS · <a href="https://app.metours.de/terms" style="color:rgba(255,255,255,0.55); text-decoration:underline;">AGB</a> · <a href="https://app.metours.de/privacy" style="color:rgba(255,255,255,0.55); text-decoration:underline;">Datenschutz</a> · <a href="https://app.metours.de/impressum" style="color:rgba(255,255,255,0.55); text-decoration:underline;">Impressum</a>
+    </p>
+    <p style="margin:12px 0 0;">
+      <a href="https://www.instagram.com/metropoltours" style="display:inline-block;margin:0 7px;"><img src="https://cdn.simpleicons.org/instagram/ffffff" alt="Instagram" width="20" height="20" style="display:inline-block;" /></a>
+      <a href="https://www.tiktok.com/@metropoltours" style="display:inline-block;margin:0 7px;"><img src="https://cdn.simpleicons.org/tiktok/ffffff" alt="TikTok" width="20" height="20" style="display:inline-block;" /></a>
+      <a href="https://www.facebook.com/metropoltours" style="display:inline-block;margin:0 7px;"><img src="https://cdn.simpleicons.org/facebook/ffffff" alt="Facebook" width="20" height="20" style="display:inline-block;" /></a>
     </p>
   </td></tr>
 

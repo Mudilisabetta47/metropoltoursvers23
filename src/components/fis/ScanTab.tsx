@@ -93,10 +93,18 @@ const ScanTab = ({ userId }: { userId: string }) => {
 
   const startCamera = async () => {
     if (cameraStarting) return;
+    if (!window.isSecureContext) {
+      toast.error("Kamera benötigt eine sichere HTTPS-Verbindung. Bitte https://app.metours.de öffnen.");
+      return;
+    }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error("Dieser Browser unterstützt keinen Kamerazugriff. Bitte Chrome oder Safari verwenden.");
+      return;
+    }
     setCameraStarting(true);
     setCameraActive(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } } });
       stream.getTracks().forEach((t) => t.stop());
       await new Promise((r) => setTimeout(r, 300));
 
@@ -108,35 +116,55 @@ const ScanTab = ({ userId }: { userId: string }) => {
       }
       if (!document.getElementById(CONTAINER_ID)) throw new Error("Scanner-Container nicht gefunden");
 
-      const scanner = new Html5Qrcode(CONTAINER_ID, { verbose: false });
+      const scanner = new Html5Qrcode(CONTAINER_ID, {
+        verbose: false,
+        useBarCodeDetectorIfSupported: true,
+      } as any);
       scannerRef.current = scanner;
-      await scanner.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decoded) => {
-          scanner
-            .stop()
-            .then(() => {
-              setCameraActive(false);
-              process(decoded);
-            })
-            .catch(() => {});
+
+      const onDecoded = (decoded: string) => {
+        scanner
+          .stop()
+          .then(() => {
+            setCameraActive(false);
+            process(decoded);
+          })
+          .catch(() => process(decoded));
+      };
+      const config = {
+        fps: 12,
+        qrbox: (w: number, h: number) => {
+          const size = Math.floor(Math.min(w, h) * 0.75);
+          return { width: size, height: size };
         },
-        () => {}
-      );
+        aspectRatio: 1.0,
+      } as any;
+
+      try {
+        await scanner.start({ facingMode: { exact: "environment" } } as any, config, onDecoded, () => {});
+      } catch {
+        // Fallback: irgendeine verfügbare Kamera (z. B. Laptop / Frontkamera)
+        const cameras = await Html5Qrcode.getCameras();
+        if (!cameras?.length) throw new Error("Keine Kamera gefunden.");
+        const back = cameras.find((c) => /back|rear|environment|rück/i.test(c.label)) ?? cameras[cameras.length - 1];
+        await scanner.start(back.id, config, onDecoded, () => {});
+      }
     } catch (err: any) {
       setCameraActive(false);
       toast.error(
         err?.name === "NotAllowedError"
-          ? "Bitte Kamerazugriff erlauben und Seite neu laden."
-          : err?.name === "NotFoundError"
-          ? "Keine Kamera gefunden."
+          ? "Kamerazugriff wurde blockiert. Bitte in den Browser-Einstellungen erlauben und Seite neu laden."
+          : err?.name === "NotFoundError" || err?.name === "OverconstrainedError"
+          ? "Keine passende Kamera gefunden."
+          : err?.name === "NotReadableError"
+          ? "Kamera wird bereits von einer anderen App verwendet. Bitte andere Apps schließen."
           : err?.message || "Kamera konnte nicht gestartet werden"
       );
     } finally {
       setCameraStarting(false);
     }
   };
+
 
   const stopCamera = async () => {
     try {

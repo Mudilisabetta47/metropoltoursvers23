@@ -1,3 +1,4 @@
+import { emailLayout } from "../_shared/email-brand.ts";
 // Benachrichtigt erste wartende Person bei freiem Platz (E-Mail + Push)
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
@@ -54,15 +55,18 @@ serve(async (req) => {
             from: "Metropol Tours <booking@app.metours.de>",
             to: [entry.email],
             subject: "🎉 Dein Wartelisten-Platz ist frei – jetzt zuschlagen",
-            html: `
-              <div style="font-family:system-ui;max-width:560px;margin:0 auto;padding:24px;background:#0f1218;color:#fff;border-radius:16px">
-                <h1 style="color:#00CC36">Platz frei!</h1>
+            html: emailLayout({
+              title: "Platz frei!",
+              preheader: "Dein Wartelisten-Platz ist frei geworden",
+              subtitle: "Warteliste",
+              content: `
+                <h2 style="color:#0f1218;margin:0 0 12px;">Platz frei!</h2>
                 <p>Hallo ${entry.first_name ?? ""},</p>
-                <p>für deine gewünschte Reise ist gerade <strong>${entry.pax} Platz/Plätze</strong> frei geworden.</p>
+                <p>für deine gewünschte Reise sind gerade <strong>${entry.pax} Platz/Plätze</strong> frei geworden.</p>
                 <p>Du hast <strong>24 Stunden</strong> Zeit, um zu buchen, bevor wir die nächste Person auf der Liste benachrichtigen.</p>
-                <a href="https://app.metours.de/buchen?from_waitlist=${entry.id}" style="display:inline-block;background:#00CC36;color:#000;padding:14px 28px;border-radius:10px;text-decoration:none;font-weight:bold;margin-top:16px">Jetzt buchen</a>
-                <p style="color:#888;font-size:12px;margin-top:24px">Du erhältst diese Mail, weil du dich auf die Warteliste gesetzt hast.</p>
-              </div>`,
+                <p style="text-align:center;margin:26px 0;"><a href="https://app.metours.de/buchen?from_waitlist=${entry.id}" style="display:inline-block;background:#00CC36;color:#fff;padding:14px 28px;border-radius:10px;text-decoration:none;font-weight:bold;">Jetzt buchen</a></p>
+                <p style="color:#8a978d;font-size:12px;">Du erhältst diese Mail, weil du dich auf die Warteliste gesetzt hast.</p>`,
+            }),
           }),
         }).catch(e => console.error("waitlist email", e));
       }

@@ -1,3 +1,4 @@
+import { emailLayout } from "../_shared/email-brand.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
 import { sendMail, FROM_SERVICE } from "../_shared/mailer.ts";
@@ -67,21 +68,18 @@ serve(async (req) => {
         to: normalized,
         subject: "Ihre Buchungsübersicht bei METROPOL TOURS",
         template: "booking_access_link",
-        html: `
-          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
-            <div style="background:#00CC36;padding:22px;text-align:center;">
-              <h1 style="color:#fff;margin:0;font-size:20px;">METROPOL TOURS</h1>
-            </div>
-            <div style="padding:26px;color:#333;line-height:1.6;">
-              <h2 style="font-size:19px;margin:0 0 12px;">Ihre Buchungen im Überblick</h2>
-              <p>Über den folgenden Link sehen Sie alle Buchungen zu dieser E-Mail-Adresse – inklusive Buchungsnummer, Status und Rechnungsdownload.</p>
-              <p style="text-align:center;margin:26px 0;">
-                <a href="${link}" style="background:#00CC36;color:#fff;padding:14px 30px;border-radius:8px;text-decoration:none;font-weight:700;display:inline-block;">Meine Buchungen öffnen</a>
-              </p>
-              <p style="font-size:13px;color:#777;">Der Link ist 60 Minuten gültig. Falls Sie diese E-Mail nicht angefordert haben, können Sie sie ignorieren.</p>
-              <p style="font-size:12px;color:#999;">Fragen? <a href="mailto:kundenservice@app.metours.de" style="color:#00CC36;">kundenservice@app.metours.de</a></p>
-            </div>
-          </div>`,
+        html: emailLayout({
+          title: "Ihre Buchungsübersicht",
+          preheader: "Zugangslink zu Ihren Buchungen bei METROPOL TOURS",
+          subtitle: "Meine Buchungen",
+          content: `
+            <h2 style="font-size:19px;margin:0 0 12px;color:#0f1218;">Ihre Buchungen im Überblick</h2>
+            <p>Über den folgenden Link sehen Sie alle Buchungen zu dieser E-Mail-Adresse – inklusive Buchungsnummer, Status und Rechnungsdownload.</p>
+            <p style="text-align:center;margin:26px 0;">
+              <a href="${link}" style="background:#00CC36;color:#fff;padding:14px 30px;border-radius:8px;text-decoration:none;font-weight:700;display:inline-block;">Meine Buchungen öffnen</a>
+            </p>
+            <p style="font-size:13px;color:#777;">Der Link ist 60 Minuten gültig. Falls Sie diese E-Mail nicht angefordert haben, können Sie sie ignorieren.</p>`,
+        })
       });
     }
 
