@@ -726,8 +726,8 @@ const AdminMailbox = () => {
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setComposeOpen(false)} className="text-zinc-400">Abbrechen</Button>
-            <Button onClick={handleSendCompose} className="bg-emerald-600 hover:bg-emerald-700 gap-2">
-              <Send className="w-4 h-4" />Senden
+            <Button onClick={handleSendCompose} disabled={sending} className="bg-emerald-600 hover:bg-emerald-700 gap-2">
+              <Send className="w-4 h-4" />{sending ? "Sende..." : "Senden"}
             </Button>
           </DialogFooter>
         </DialogContent>
