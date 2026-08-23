@@ -27,6 +27,14 @@ const eur = (n: number) =>
 
 const num = (n: number) => new Intl.NumberFormat("de-DE").format(n);
 
+// Safe date formatter – never crash the whole dashboard on an invalid/missing date
+const fmt = (d: Date | string | null | undefined, pattern: string, opts?: Parameters<typeof format>[2]) => {
+  if (!d) return "—";
+  const date = d instanceof Date ? d : new Date(d);
+  if (Number.isNaN(date.getTime())) return "—";
+  try { return format(date, pattern, opts); } catch { return "—"; }
+};
+
 // ----- Live data types (no demo data – everything comes from the backend) -----
 const now = new Date();
 
@@ -292,7 +300,7 @@ const AdminDashboard = () => {
             <div className="flex items-baseline gap-3">
               <h1 className="text-xl font-semibold text-white tracking-tight">Übersicht</h1>
               <span className="text-xs text-zinc-500">
-                {format(lastUpdate, "EEEE, d. MMMM yyyy · HH:mm", { locale: de })} Uhr
+                {fmt(lastUpdate, "EEEE, d. MMMM yyyy · HH:mm", { locale: de })} Uhr
               </span>
             </div>
           </div>
@@ -402,7 +410,7 @@ const AdminDashboard = () => {
                   return (
                     <TableRow key={i} className="border-white/5 hover:bg-white/[0.03]">
                       <TableCell className="text-zinc-200 tabular-nums">
-                        <div className="font-medium">{format(d.time, "HH:mm")}</div>
+                        <div className="font-medium">{fmt(d.time, "HH:mm")}</div>
                         <div className="text-[10px] text-zinc-500">in {Math.round((+d.time - +now) / 60000)} min</div>
                       </TableCell>
                       <TableCell className="text-zinc-200">
@@ -565,7 +573,7 @@ const AdminDashboard = () => {
                     </TableCell>
                     <TableCell className="text-zinc-300 text-sm">
                       {q.subject}
-                      <div className="text-[10px] text-zinc-500">{q.date ? format(q.date, "dd.MM.yyyy", { locale: de }) : "offen"}</div>
+                      <div className="text-[10px] text-zinc-500">{q.date ? fmt(q.date, "dd.MM.yyyy", { locale: de }) : "offen"}</div>
                     </TableCell>
                     <TableCell className="text-right text-zinc-300 tabular-nums">{q.pax}</TableCell>
                     <TableCell><Badge variant="outline" className={chip[q.prio]}>{q.prio}</Badge></TableCell>
@@ -604,7 +612,7 @@ const AdminDashboard = () => {
                       <div className="text-[10px] text-zinc-500 tabular-nums flex items-center gap-1"><Gauge className="h-3 w-3" />{num(m.km)} km</div>
                     </TableCell>
                     <TableCell className="text-zinc-300 text-sm">{m.typ}</TableCell>
-                    <TableCell className="text-zinc-300 text-sm tabular-nums">{format(m.faellig, "dd.MM.")}</TableCell>
+                    <TableCell className="text-zinc-300 text-sm tabular-nums">{fmt(m.faellig, "dd.MM.")}</TableCell>
                     <TableCell><Badge variant="outline" className={chip[m.status]}>{m.status}</Badge></TableCell>
                   </TableRow>
                 ))}
@@ -638,7 +646,7 @@ const AdminDashboard = () => {
                   <TableRow key={i.id} className="border-white/5 hover:bg-white/[0.03]">
                     <TableCell className="font-mono text-[11px] text-zinc-400">{i.id}</TableCell>
                     <TableCell className="text-zinc-100 text-sm">{i.kunde}
-                      <div className="text-[10px] text-zinc-500">{i.faellig ? `Rechnung ${format(i.faellig, "dd.MM.yyyy")}` : ""}</div>
+                      <div className="text-[10px] text-zinc-500">{i.faellig ? `Rechnung ${fmt(i.faellig, "dd.MM.yyyy")}` : ""}</div>
                     </TableCell>
                     <TableCell className="text-right text-zinc-100 tabular-nums">{eur(i.betrag)}</TableCell>
                     <TableCell><Badge variant="outline" className={chip[i.status]}>{i.status}</Badge></TableCell>
@@ -681,7 +689,7 @@ const AdminDashboard = () => {
       <div className="mt-6 flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500 border-t border-white/5 pt-3">
         <span>Eingeloggt als <span className="text-zinc-300">{user?.email ?? "—"}</span></span>
         <span className="flex items-center gap-2">
-          <Timer className="h-3 w-3" /> Letzter Sync {format(lastUpdate, "HH:mm:ss")}
+          <Timer className="h-3 w-3" /> Letzter Sync {fmt(lastUpdate, "HH:mm:ss")}
           <span className="text-zinc-700">·</span>
           <Fuel className="h-3 w-3" /> {counts.totalBuses} Fahrzeuge im Bestand
           <span className="text-zinc-700">·</span>
