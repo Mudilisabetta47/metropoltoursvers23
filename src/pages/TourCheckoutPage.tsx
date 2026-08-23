@@ -192,7 +192,7 @@ const TourCheckoutPage = () => {
 
   useEffect(() => {
     setPassengerInfo(
-      Array(participants).fill(null).map((_, i) => passengerInfo[i] || { firstName: "", lastName: "", email: "", phone: "" })
+      Array(participants).fill(null).map((_, i) => passengerInfo[i] || { firstName: "", lastName: "", email: "", phone: "", dateOfBirth: "" })
     );
   }, [participants]);
 
