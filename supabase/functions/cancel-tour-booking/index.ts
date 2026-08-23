@@ -192,7 +192,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           from: "METROPOL TOURS <booking@app.metours.de>",
-          to: ["kundenservice@app.metours.de", "kundenservice@app.metours.de"],
+          to: ["kundenservice@metours.de"],
           subject: `⚠️ Stornierung: ${booking.booking_number} – ${tour?.destination}`,
           html: `<p>Buchung <strong>${booking.booking_number}</strong> wurde von ${user.email} storniert.</p>
                  <p>Kunde: ${booking.contact_first_name} ${booking.contact_last_name} (${booking.contact_email})</p>

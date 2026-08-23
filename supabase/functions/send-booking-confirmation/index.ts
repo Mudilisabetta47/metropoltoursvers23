@@ -43,7 +43,7 @@ const COMPANY = {
   hrb: "HRB 222247, AG Hannover",
 };
 
-const ADMIN_EMAILS = ["info@metours.de", "buchung@metours.de", "kundenservice@app.metours.de"];
+const ADMIN_EMAILS = ["info@metours.de", "buchung@metours.de", "kundenservice@metours.de"];
 
 // Protokolliert jeden Versand und legt die Buchung im Backend-Posteingang ab
 async function logEmail(
