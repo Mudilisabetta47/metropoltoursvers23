@@ -502,7 +502,13 @@ const AdminMailbox = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      setCompose({ to: selectedApp.email, subject: `Re: Ihre Bewerbung`, body: "" });
+                      setCompose({
+                        to: selectedApp.email,
+                        subject: `Ihre Bewerbung bei Metropol Tours`,
+                        body: `Guten Tag ${selectedApp.first_name} ${selectedApp.last_name},\n\nvielen Dank für Ihre Bewerbung bei Metropol Tours.\n\n`,
+                        sender: "jobs",
+                        context: "application",
+                      });
                       setComposeOpen(true);
                     }}
                     className="border-[#2a3040] text-zinc-300 h-8 text-xs gap-1"
