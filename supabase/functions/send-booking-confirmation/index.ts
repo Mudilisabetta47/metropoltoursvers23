@@ -37,7 +37,7 @@ const COMPANY = {
   name: "METROPOL TOURS GmbH",
   address: "Rudolf-Diesel-Weg 8, 30419 Hannover",
   phone: "+49 511 80781106",
-  email: "kundenservice@metours.de",
+  email: "kundenservice@app.metours.de",
   web: "metours.de",
   ustId: "",
   hrb: "HRB 222247, AG Hannover",

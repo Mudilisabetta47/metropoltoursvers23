@@ -40,7 +40,7 @@ function buildEmail(opts: {
       </p>
     </td></tr>
     <tr><td style="background:#0f1218;color:#9ca3af;padding:16px 24px;font-size:12px;text-align:center">
-      METROPOL TOURS GmbH · kundenservice@metours.de · www.metours.de
+      METROPOL TOURS GmbH · kundenservice@app.metours.de · www.metours.de
     </td></tr>
   </table></body></html>`;
 }
@@ -86,7 +86,7 @@ serve(async (req) => {
       try {
         await resend.emails.send({
           from: "METROPOL TOURS GmbH <kundenservice@app.metours.de>",
-          reply_to: "kundenservice@metours.de",
+          reply_to: "kundenservice@app.metours.de",
           to: [r.email],
           subject: `Verspätung +${reg.current_delay_min} Min · Fahrt ${trip_uid}`,
           html: buildEmail({

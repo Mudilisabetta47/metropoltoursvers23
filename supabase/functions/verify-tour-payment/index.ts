@@ -138,7 +138,7 @@ serve(async (req) => {
     <p>Ihr METROPOL TOURS Team</p>
   </div>
   <div class="footer">
-    <p>Bei Fragen: kundenservice@metours.de | Tel: +49 511 80781106</p>
+    <p>Bei Fragen: kundenservice@app.metours.de | Tel: +49 511 80781106</p>
     <p>© ${new Date().getFullYear()} METROPOL TOURS – Komfortabel reisen</p>
   </div>
 </div></body></html>`,

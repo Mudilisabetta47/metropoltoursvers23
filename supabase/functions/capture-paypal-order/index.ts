@@ -101,7 +101,7 @@ async function sendPaymentFailedEmail(supabaseAdmin: any, bookingId: string) {
     await resend.emails.send({
       from: "METROPOL TOURS <booking@app.metours.de>",
       to: [b.contact_email],
-      reply_to: "kundenservice@metours.de",
+      reply_to: "kundenservice@app.metours.de",
       subject: `Zahlung fehlgeschlagen – Buchung ${escapeHtml(b.booking_number)}`,
       html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#333">
         <h2 style="color:#b91c1c">Zahlung konnte nicht abgeschlossen werden</h2>
@@ -109,7 +109,7 @@ async function sendPaymentFailedEmail(supabaseAdmin: any, bookingId: string) {
         <p>leider konnte Ihre PayPal-Zahlung für die Buchung <strong>${escapeHtml(b.booking_number)}</strong>
         über ${Number(b.total_price ?? 0).toFixed(2)} € nicht abgeschlossen werden.</p>
         <p>Ihre Buchung ist weiterhin reserviert. Bitte starten Sie den Zahlvorgang erneut oder
-        kontaktieren Sie uns unter kundenservice@metours.de bzw. +49 511 80781106.</p>
+        kontaktieren Sie uns unter kundenservice@app.metours.de bzw. +49 511 80781106.</p>
         <p>Ihr METROPOL TOURS Team</p>
       </div>`,
     });
@@ -423,7 +423,7 @@ serve(async (req) => {
     <p>Ihr METROPOL TOURS Team</p>
   </div>
   <div class="footer">
-    <p>Bei Fragen: kundenservice@metours.de | Tel: +49 511 80781106</p>
+    <p>Bei Fragen: kundenservice@app.metours.de | Tel: +49 511 80781106</p>
     <p>© ${new Date().getFullYear()} METROPOL TOURS – Komfortabel reisen</p>
   </div>
 </div></body></html>`,
