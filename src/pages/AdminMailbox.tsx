@@ -102,9 +102,25 @@ const AdminMailbox = () => {
   const [composeOpen, setComposeOpen] = useState(false);
   const [replyOpen, setReplyOpen] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
-  const [compose, setCompose] = useState({ to: "", subject: "", body: "" });
+  const [compose, setCompose] = useState({ to: "", subject: "", body: "", sender: "service", context: "manual" });
   const [replyBody, setReplyBody] = useState("");
+  const [sending, setSending] = useState(false);
   const [newTemplate, setNewTemplate] = useState({ name: "", subject: "", body: "", category: "general" });
+
+  /** Versendet die E-Mail wirklich über den Mail-Service. Wirft bei Fehler. */
+  const sendViaMailService = async (payload: {
+    to: string; subject: string; body: string; sender?: string; context?: string;
+  }): Promise<string> => {
+    const { data, error } = await supabase.functions.invoke("send-staff-email", { body: payload });
+    if (error) {
+      let detail = error.message;
+      try { detail = await (error as any).context?.text?.() ?? detail; } catch { /* ignore */ }
+      throw new Error(detail);
+    }
+    if (!(data as any)?.ok) throw new Error((data as any)?.error ?? "Versand fehlgeschlagen");
+    return (data as any).message_id as string;
+  };
+
 
   const fetchAll = async () => {
     setLoading(true);
