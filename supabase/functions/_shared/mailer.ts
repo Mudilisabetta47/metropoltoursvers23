@@ -7,7 +7,7 @@ export const FROM_BOOKING = `METROPOL TOURS GmbH <booking@${SENDER_DOMAIN}>`;
 export const FROM_SERVICE = `METROPOL TOURS GmbH <kundenservice@${SENDER_DOMAIN}>`;
 export const FROM_JOBS = `METROPOL TOURS GmbH – Personal <jobs@${SENDER_DOMAIN}>`;
 export const FROM_SYSTEM = `METROPOL TOURS System <booking@${SENDER_DOMAIN}>`;
-export const REPLY_TO = "kundenservice@metours.de";
+export const REPLY_TO = `kundenservice@${SENDER_DOMAIN}`;
 
 export interface MailAttachment {
   filename: string;
