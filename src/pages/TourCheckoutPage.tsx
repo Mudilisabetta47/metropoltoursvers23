@@ -345,7 +345,7 @@ const TourCheckoutPage = () => {
         return { addon_id: addonId, name: addon?.name || "", quantity: qty, price_each: addon?.price || 0, total: (addon?.price || 0) * qty };
       });
       const consentTimestamp = new Date().toISOString();
-      const { data: bookingData, error: bookingError } = await supabase.from("tour_bookings").insert({
+      const bookingPayload = {
         tour_id: tourId, tour_date_id: selectedDate!.id,
         tariff_id: selectedTariff!.id, pickup_stop_id: selectedPickupStop?.id || null,
         user_id: user?.id || null, participants, passenger_details: passengerDetails,
@@ -367,7 +367,13 @@ const TourCheckoutPage = () => {
         discount_code: appliedCoupon?.code || null, discount_amount: discountAmount || null,
         payment_method: selectedPaymentMethod, status: "pending", booking_type: "direct",
         customer_notes: JSON.stringify({ consent_agb: consentTimestamp, consent_privacy: consentTimestamp, consent_travel_info: agreeTravelInfo ? consentTimestamp : null }),
-      }).select("id, booking_number").single();
+      };
+      const { data: bookingData, error: bookingError } = await supabase
+        .from("tour_bookings")
+        // booking_number is generated server-side by a DB trigger (MT-YYYY-000000)
+        .insert(bookingPayload as never)
+        .select("id, booking_number")
+        .single();
       if (bookingError) throw bookingError;
 
       const { data: seatsReserved, error: seatsError } = await supabase.rpc("reserve_tour_seats", { p_tour_date_id: selectedDate!.id, p_seats: participants });
