@@ -55,6 +55,7 @@ serve(async (req) => {
       .from("tour_bookings")
       .update({
         status: "confirmed",
+        payment_status: "paid",
         payment_method: "stripe",
         payment_reference: session.payment_intent as string,
         stripe_payment_intent_id: session.payment_intent as string,
