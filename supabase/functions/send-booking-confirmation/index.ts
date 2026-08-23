@@ -436,7 +436,7 @@ function buildCustomerEmailHtml(booking: any, tour: any, date: any, tariff: any,
     <!-- CTA BUTTON -->
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
       <tr><td align="center">
-        <a href="https://metours.de/bookings" style="display:inline-block; background:linear-gradient(135deg, #00CC36, #00a82d); color:white; padding:14px 36px; border-radius:10px; font-size:14px; font-weight:700; text-decoration:none; letter-spacing:0.3px;">
+        <a href="https://app.metours.de/meine-buchungen?ref=${safeBookingNum}" style="display:inline-block; background:linear-gradient(135deg, #00CC36, #00a82d); color:white; padding:14px 36px; border-radius:10px; font-size:14px; font-weight:700; text-decoration:none; letter-spacing:0.3px;">
           Meine Buchung ansehen →
         </a>
       </td></tr>
@@ -515,7 +515,7 @@ function buildCustomerEmailHtml(booking: any, tour: any, date: any, tariff: any,
       ${COMPANY.phone} · ${COMPANY.email} · ${COMPANY.web}
     </p>
     <p style="margin:0; font-size:10px; color:rgba(255,255,255,0.3); margin-top:8px;">
-      © ${new Date().getFullYear()} METROPOL TOURS · <a href="https://metours.de/terms" style="color:rgba(255,255,255,0.4); text-decoration:underline;">AGB</a> · <a href="https://metours.de/privacy" style="color:rgba(255,255,255,0.4); text-decoration:underline;">Datenschutz</a> · <a href="https://metours.de/impressum" style="color:rgba(255,255,255,0.4); text-decoration:underline;">Impressum</a>
+      © ${new Date().getFullYear()} METROPOL TOURS · <a href="https://app.metours.de/terms" style="color:rgba(255,255,255,0.4); text-decoration:underline;">AGB</a> · <a href="https://app.metours.de/privacy" style="color:rgba(255,255,255,0.4); text-decoration:underline;">Datenschutz</a> · <a href="https://app.metours.de/impressum" style="color:rgba(255,255,255,0.4); text-decoration:underline;">Impressum</a>
     </p>
   </td></tr>
 

@@ -698,6 +698,33 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_access_tokens: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       booking_changes: {
         Row: {
           actor_id: string | null
@@ -751,6 +778,71 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings_agent_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_status_events: {
+        Row: {
+          actor_email: string | null
+          actor_id: string | null
+          amount: number | null
+          booking_id: string
+          booking_number: string | null
+          created_at: string
+          currency: string | null
+          event_type: string
+          id: string
+          metadata: Json
+          new_status: string | null
+          note: string | null
+          old_status: string | null
+          provider: string | null
+          reference: string | null
+          source: string
+        }
+        Insert: {
+          actor_email?: string | null
+          actor_id?: string | null
+          amount?: number | null
+          booking_id: string
+          booking_number?: string | null
+          created_at?: string
+          currency?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json
+          new_status?: string | null
+          note?: string | null
+          old_status?: string | null
+          provider?: string | null
+          reference?: string | null
+          source?: string
+        }
+        Update: {
+          actor_email?: string | null
+          actor_id?: string | null
+          amount?: number | null
+          booking_id?: string
+          booking_number?: string | null
+          created_at?: string
+          currency?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json
+          new_status?: string | null
+          note?: string | null
+          old_status?: string | null
+          provider?: string | null
+          reference?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_status_events_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "tour_bookings"
             referencedColumns: ["id"]
           },
         ]
@@ -6234,48 +6326,66 @@ export type Database = {
       tour_invoices: {
         Row: {
           amount: number
+          billing_address: Json | null
           booking_id: string
+          booking_number: string | null
           cancelled_at: string | null
           created_at: string
+          currency: string
           id: string
           invoice_number: string
+          invoice_type: string
           issued_at: string | null
           net_amount: number
           notes: string | null
           paid_at: string | null
+          pdf_path: string | null
           status: string
           tax_amount: number
           tax_rate: number
+          updated_at: string
         }
         Insert: {
           amount: number
+          billing_address?: Json | null
           booking_id: string
+          booking_number?: string | null
           cancelled_at?: string | null
           created_at?: string
+          currency?: string
           id?: string
           invoice_number: string
+          invoice_type?: string
           issued_at?: string | null
           net_amount?: number
           notes?: string | null
           paid_at?: string | null
+          pdf_path?: string | null
           status?: string
           tax_amount?: number
           tax_rate?: number
+          updated_at?: string
         }
         Update: {
           amount?: number
+          billing_address?: Json | null
           booking_id?: string
+          booking_number?: string | null
           cancelled_at?: string | null
           created_at?: string
+          currency?: string
           id?: string
           invoice_number?: string
+          invoice_type?: string
           issued_at?: string | null
           net_amount?: number
           notes?: string | null
           paid_at?: string | null
+          pdf_path?: string | null
           status?: string
           tax_amount?: number
           tax_rate?: number
+          updated_at?: string
         }
         Relationships: [
           {
