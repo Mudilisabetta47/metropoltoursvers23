@@ -27,6 +27,8 @@ export interface MobileTour {
   image_url: string | null;
   gallery_images: string[] | null;
   highlights: string[] | null;
+  tags: string[] | null;
+  itinerary: Array<{ day: number; title: string; description: string }> | null;
   included_services: string[] | null;
   hotel_name: string | null;
   hotel_address: string | null;
@@ -40,7 +42,7 @@ export interface MobileTour {
 }
 
 const TOUR_FIELDS =
-  "id, slug, destination, location, country, category, short_description, description, duration_days, price_from, hero_image_url, image_url, gallery_images, highlights, included_services, hotel_name, hotel_address, discount_percent, is_featured, is_active, publish_status, documents_required, insurance_info";
+  "id, slug, destination, location, country, category, short_description, description, duration_days, price_from, hero_image_url, image_url, gallery_images, highlights, tags, itinerary, included_services, hotel_name, hotel_address, discount_percent, is_featured, is_active, publish_status, documents_required, insurance_info";
 
 const DATE_FIELDS =
   "id, departure_date, return_date, price_basic, total_seats, booked_seats, status, is_active";

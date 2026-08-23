@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Search, Sparkles, Ticket } from "lucide-react";
+import { ArrowRight, Sparkles, Ticket } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import { LogoLight } from "@/components/brand/Logo";
@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useMobileTours } from "@/mobile/hooks/useMobileTours";
 import { useMyTrips } from "@/mobile/hooks/useMyTrips";
 import { TourCardMobile, money } from "@/mobile/components/TourCardMobile";
+import { MobileTourSearch } from "@/mobile/components/MobileTourSearch";
 
 const fade = {
   hidden: { opacity: 0, y: 18 },
@@ -62,7 +63,7 @@ export default function AppHome() {
   return (
     <div className="pb-6">
       {/* Hero */}
-      <section className="relative h-[62vh] min-h-[420px] w-full overflow-hidden">
+      <section className="relative h-[68vh] min-h-[500px] max-h-[680px] w-full overflow-hidden">
         <img
           src={heroImage}
           alt="Busreise mit METROPOL TOURS – Panoramabus auf Europareise"
@@ -74,7 +75,7 @@ export default function AppHome() {
           style={{ paddingTop: "calc(env(safe-area-inset-top) + 1rem)" }}
         >
           <LogoLight size="sm" />
-          <div>
+          <div className="pb-2">
             <motion.h1
               variants={fade}
               initial="hidden"
@@ -93,61 +94,25 @@ export default function AppHome() {
               Handverlesene Busreisen durch Europa – komfortabel, sicher und persönlich begleitet.
             </motion.p>
 
-            <motion.button
+            <motion.div
               variants={fade}
               custom={2}
               initial="hidden"
               animate="show"
-              onClick={() => navigate("/app/reisen")}
-              className="mt-6 flex w-full items-center gap-3 rounded-2xl bg-white/95 px-4 py-3.5 text-left shadow-xl backdrop-blur active:scale-[0.98]"
+              className="mt-6"
             >
-              <Search className="h-5 w-5 text-primary" />
-              <span className="text-sm font-medium text-foreground/70">
-                Wohin soll es gehen?
-              </span>
-            </motion.button>
+              <MobileTourSearch tours={tours ?? []} />
+            </motion.div>
           </div>
         </div>
       </section>
-
-      {/* Bevorstehende Reise */}
-      {upcoming && (
-        <section className="-mt-6 px-5">
-          <Link
-            to={`/app/ticket/${upcoming.booking_number}`}
-            className="relative block overflow-hidden rounded-3xl bg-secondary p-4 text-secondary-foreground shadow-xl"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/20">
-                <Ticket className="h-5 w-5 text-primary" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] uppercase tracking-wide text-secondary-foreground/60">
-                  Deine nächste Reise
-                </p>
-                <p className="truncate text-base font-semibold">
-                  {upcoming.tour?.destination ?? "Reise"}
-                </p>
-                <p className="text-xs text-secondary-foreground/70">
-                  {upcoming.tour_date?.departure_date
-                    ? format(parseISO(upcoming.tour_date.departure_date), "EEEE, dd. MMMM yyyy", {
-                        locale: de,
-                      })
-                    : upcoming.booking_number}
-                </p>
-              </div>
-              <ArrowRight className="h-5 w-5 shrink-0 opacity-70" />
-            </div>
-          </Link>
-        </section>
-      )}
 
       {/* Empfehlungen */}
       <Section title="Empfohlene Reisen" action={{ label: "Alle", to: "/app/reisen" }}>
         {isLoading ? (
           <div className="flex gap-3 overflow-hidden px-5">
             {[0, 1].map((i) => (
-              <Skeleton key={i} className="aspect-[3/4] w-[78vw] max-w-[320px] rounded-3xl" />
+              <Skeleton key={i} className="aspect-[16/15] w-[84vw] max-w-[350px] rounded-2xl" />
             ))}
           </div>
         ) : (
@@ -191,15 +156,26 @@ export default function AppHome() {
         </Section>
       )}
 
+      {upcoming && (
+        <Section title="Deine nächste Reise">
+          <div className="px-5">
+            <Link to={`/app/ticket/${upcoming.booking_number}`} className="block overflow-hidden rounded-2xl border border-primary/30 bg-secondary p-4 text-secondary-foreground shadow-card active:scale-[0.99]">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/20"><Ticket className="h-5 w-5 text-primary" /></div>
+                <div className="min-w-0 flex-1"><p className="text-[11px] uppercase text-secondary-foreground/60">Bevorstehende Buchung</p><p className="truncate text-base font-semibold">{upcoming.tour?.destination ?? "Reise"}</p><p className="text-xs text-secondary-foreground/70">{upcoming.tour_date?.departure_date ? format(parseISO(upcoming.tour_date.departure_date), "EEEE, dd. MMMM yyyy", { locale: de }) : upcoming.booking_number}</p></div>
+                <ArrowRight className="h-5 w-5 shrink-0 text-primary" />
+              </div>
+            </Link>
+          </div>
+        </Section>
+      )}
+
       {/* Angebote */}
       {offers.length > 0 && (
         <Section title="Aktuelle Angebote">
           <div className="space-y-3 px-5">
             {offers.map((t) => (
               <div key={t.id} className="relative">
-                <span className="absolute -top-1 right-2 z-10 flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-accent-foreground shadow">
-                  <Sparkles className="h-3 w-3" />-{t.discount_percent}%
-                </span>
                 <TourCardMobile tour={t} />
               </div>
             ))}
@@ -211,7 +187,7 @@ export default function AppHome() {
       <Section title="Alle Reisen" action={{ label: "Mehr", to: "/app/reisen" }}>
         <div className="space-y-3 px-5">
           {isLoading
-            ? [0, 1, 2].map((i) => <Skeleton key={i} className="h-28 rounded-3xl" />)
+            ? [0, 1, 2].map((i) => <Skeleton key={i} className="h-36 rounded-2xl" />)
             : (tours ?? []).slice(0, 5).map((t) => <TourCardMobile key={t.id} tour={t} />)}
         </div>
       </Section>
