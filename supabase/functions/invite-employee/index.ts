@@ -1,3 +1,4 @@
+import { emailHeader, emailFooter } from "../_shared/email-brand.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -140,11 +141,8 @@ serve(async (req) => {
                   ${role === 'driver' ? '<li>Fahrten einsehen & Check-in durchführen</li>' : ''}
                 </ul>
               </div>
-              <p style="color: #999; font-size: 12px; margin-top: 32px; text-align: center;">
-                METROPOL TOURS Reiseorganisation
-              </p>
             </div>
-          `,
+          ` + emailFooter(),
         }),
       });
     }
