@@ -114,11 +114,8 @@ serve(async (req) => {
           from: "METROPOL TOURS <booking@app.metours.de>",
           to: [email.trim()],
           subject: `Einladung als ${roleLabels[role]} – METROPOL TOURS`,
-          html: `
+          html: emailHeader("Team-Einladung") + `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; background: #ffffff;">
-              <div style="text-align: center; margin-bottom: 24px;">
-                <h1 style="color: #00CC36; font-size: 24px; margin: 0;">METROPOL TOURS</h1>
-              </div>
               <h2 style="color: #1a1a1a; font-size: 20px;">Willkommen im Team!</h2>
               <p style="color: #444; font-size: 16px; line-height: 1.6;">
                 Sie wurden als <strong>${roleLabels[role]}</strong> bei METROPOL TOURS eingeladen.
