@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { CartProvider } from "@/hooks/useCart";
 import ComingSoonPage from "./pages/ComingSoonPage";
@@ -33,6 +33,27 @@ const TermsPage = lazy(() => import("./pages/TermsPage"));
 const WiderrufPage = lazy(() => import("./pages/WiderrufPage"));
 const TourDetailPage = lazy(() => import("./components/tours/TourDetailPage"));
 const TourCheckoutPage = lazy(() => import("./pages/TourCheckoutPage"));
+// Mobile Kunden-App (Capacitor / /app)
+const MobileAppShell = lazy(() => import("./mobile/MobileAppShell"));
+const AppHome = lazy(() => import("./mobile/pages/AppHome"));
+const AppTours = lazy(() => import("./mobile/pages/AppTours"));
+const AppTourDetail = lazy(() => import("./mobile/pages/AppTourDetail"));
+const AppMyTrips = lazy(() => import("./mobile/pages/AppMyTrips"));
+const AppTicket = lazy(() => import("./mobile/pages/AppTicket"));
+const AppProfile = lazy(() => import("./mobile/pages/AppProfile"));
+
+const MobileAppLayout = () => (
+  <MobileAppShell>
+    <Outlet />
+  </MobileAppShell>
+);
+
+/** Chat-Widget der Website nicht über der Mobile-App-Navigation anzeigen. */
+const GlobalChatWidget = () => {
+  const { pathname } = useLocation();
+  if (pathname === "/app" || pathname.startsWith("/app/")) return null;
+  return <TravelAdvisorChat />;
+};
 const AdminInquiriesPage = lazy(() => import("./pages/AdminInquiriesPage"));
 const AdminInquiryDetail = lazy(() => import("./pages/AdminInquiryDetail"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
@@ -213,6 +234,17 @@ const App = () => (
               <Route path="/reisen/:tourId" element={<TourDetailPage />} />
               <Route path="/reisen/checkout" element={<TourCheckoutPage />} />
               <Route path="/tour-checkout" element={<TourCheckoutPage />} />
+
+              {/* Mobile Kunden-App */}
+              <Route path="/app" element={<MobileAppLayout />}>
+                <Route index element={<AppHome />} />
+                <Route path="reisen" element={<AppTours />} />
+                <Route path="reisen/:tourId" element={<AppTourDetail />} />
+                <Route path="meine-reisen" element={<AppMyTrips />} />
+                <Route path="ticket/:bookingNumber" element={<AppTicket />} />
+                <Route path="profil" element={<AppProfile />} />
+              </Route>
+
               <Route path="/admin" element={<AdminRedirect />} />
               <Route path="/admin/copilot" element={<AdminCopilot />} />
               <Route path="/admin/copilot-audit" element={<AdminCopilotAudit />} />
@@ -297,7 +329,7 @@ const App = () => (
             </Routes>
             </PublicGate>
           </Suspense>
-          <TravelAdvisorChat />
+          <GlobalChatWidget />
         </BrowserRouter>
         <CookieBanner />
       </TooltipProvider>
