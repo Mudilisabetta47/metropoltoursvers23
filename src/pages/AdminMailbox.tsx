@@ -759,8 +759,8 @@ const AdminMailbox = () => {
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setReplyOpen(false)} className="text-zinc-400">Abbrechen</Button>
-            <Button onClick={handleReply} className="bg-emerald-600 hover:bg-emerald-700 gap-2">
-              <Send className="w-4 h-4" />Antwort senden
+            <Button onClick={handleReply} disabled={sending} className="bg-emerald-600 hover:bg-emerald-700 gap-2">
+              <Send className="w-4 h-4" />{sending ? "Sende..." : "Antwort senden"}
             </Button>
           </DialogFooter>
         </DialogContent>
