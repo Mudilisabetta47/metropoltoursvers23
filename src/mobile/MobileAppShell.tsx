@@ -15,7 +15,7 @@ export function MobileAppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
 
   return (
-    <div className="min-h-[100dvh] bg-background text-foreground">
+    <div className="min-h-[100dvh] max-w-full overflow-x-hidden bg-background text-foreground">
       <AnimatePresence mode="wait">
         <motion.main
           key={location.pathname}
@@ -23,7 +23,7 @@ export function MobileAppShell({ children }: { children: ReactNode }) {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-          className="pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
+          className="min-w-0 pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
         >
           {children}
         </motion.main>
@@ -42,7 +42,7 @@ export function MobileAppShell({ children }: { children: ReactNode }) {
                 end={end}
                 className={({ isActive }) =>
                   cn(
-                    "relative flex flex-col items-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-medium transition-colors",
+                    "relative flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-[11px] font-medium transition-colors",
                     isActive ? "text-primary" : "text-muted-foreground",
                   )
                 }
@@ -52,7 +52,7 @@ export function MobileAppShell({ children }: { children: ReactNode }) {
                     {isActive && (
                       <motion.span
                         layoutId="tab-pill"
-                        className="absolute inset-0 rounded-2xl bg-primary/10"
+                        className="absolute inset-0 rounded-xl bg-primary/10"
                         transition={{ type: "spring", stiffness: 420, damping: 34 }}
                       />
                     )}

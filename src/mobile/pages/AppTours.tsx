@@ -66,7 +66,7 @@ export default function AppTours() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Ziel, Land oder Stichwort"
-            className="h-12 rounded-2xl pl-10 pr-10"
+            className="h-12 rounded-xl pl-10 pr-10"
             inputMode="search"
           />
           {q && (
@@ -135,7 +135,7 @@ function Chip({
     <button
       onClick={onClick}
       className={cn(
-        "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
+        "min-h-10 shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
         active
           ? "border-primary bg-primary text-primary-foreground"
           : "border-border bg-card text-muted-foreground",

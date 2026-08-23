@@ -133,7 +133,7 @@ export default function AppHome() {
               <Link
                 key={d.country}
                 to={`/app/reisen?q=${encodeURIComponent(d.country)}`}
-                className="relative h-24 w-36 shrink-0 overflow-hidden rounded-2xl"
+                className="relative h-28 w-40 shrink-0 overflow-hidden rounded-xl border border-border"
               >
                 {d.image ? (
                   <img
