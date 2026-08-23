@@ -63,3 +63,6 @@ project_id = "wberoibxqpffhnyvjnci"
     verify_jwt = false
   [functions.verify-bus-payment]
     verify_jwt = false
+  [functions.send-staff-email]
+    verify_jwt = false
+

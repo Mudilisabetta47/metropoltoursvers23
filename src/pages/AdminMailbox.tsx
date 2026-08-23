@@ -102,9 +102,25 @@ const AdminMailbox = () => {
   const [composeOpen, setComposeOpen] = useState(false);
   const [replyOpen, setReplyOpen] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
-  const [compose, setCompose] = useState({ to: "", subject: "", body: "" });
+  const [compose, setCompose] = useState({ to: "", subject: "", body: "", sender: "service", context: "manual" });
   const [replyBody, setReplyBody] = useState("");
+  const [sending, setSending] = useState(false);
   const [newTemplate, setNewTemplate] = useState({ name: "", subject: "", body: "", category: "general" });
+
+  /** Versendet die E-Mail wirklich über den Mail-Service. Wirft bei Fehler. */
+  const sendViaMailService = async (payload: {
+    to: string; subject: string; body: string; sender?: string; context?: string;
+  }): Promise<string> => {
+    const { data, error } = await supabase.functions.invoke("send-staff-email", { body: payload });
+    if (error) {
+      let detail = error.message;
+      try { detail = await (error as any).context?.text?.() ?? detail; } catch { /* ignore */ }
+      throw new Error(detail);
+    }
+    if (!(data as any)?.ok) throw new Error((data as any)?.error ?? "Versand fehlgeschlagen");
+    return (data as any).message_id as string;
+  };
+
 
   const fetchAll = async () => {
     setLoading(true);
@@ -201,51 +217,87 @@ const AdminMailbox = () => {
   };
 
   const handleSendCompose = async () => {
-    if (!compose.to || !compose.subject) {
-      toast({ title: "Bitte Empfänger und Betreff ausfüllen", variant: "destructive" });
+    if (!compose.to || !compose.subject || !compose.body.trim()) {
+      toast({ title: "Empfänger, Betreff und Nachricht ausfüllen", variant: "destructive" });
       return;
     }
-    await (supabase as any).from("admin_mailbox").insert({
-      folder: "sent",
-      subject: compose.subject,
-      body: compose.body,
-      recipient_email: compose.to,
-      sender_name: "Metropol Tours",
-      sender_email: "kundenservice@metours.de",
-      source_type: "manual",
-      is_read: true,
-    });
-    setCompose({ to: "", subject: "", body: "" });
-    setComposeOpen(false);
-    fetchAll();
-    toast({ title: "Nachricht gesendet" });
+    setSending(true);
+    try {
+      const messageId = await sendViaMailService({
+        to: compose.to,
+        subject: compose.subject,
+        body: compose.body,
+        sender: compose.sender,
+        context: compose.context,
+      });
+      await (supabase as any).from("admin_mailbox").insert({
+        folder: "sent",
+        subject: compose.subject,
+        body: compose.body,
+        recipient_email: compose.to,
+        sender_name: "Metropol Tours",
+        sender_email: compose.sender === "jobs" ? "jobs@app.metours.de" : "kundenservice@app.metours.de",
+        source_type: compose.context,
+        is_read: true,
+        tags: [`msg:${messageId}`],
+      });
+      setCompose({ to: "", subject: "", body: "", sender: "service", context: "manual" });
+      setComposeOpen(false);
+      fetchAll();
+      toast({ title: "E-Mail versendet", description: `Zustellung an ${compose.to} übergeben.` });
+    } catch (e: any) {
+      toast({ title: "Versand fehlgeschlagen", description: e.message, variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleReply = async () => {
-    if (!selectedMail || !replyBody) return;
-    await (supabase as any).from("admin_mailbox").update({
-      replied_at: new Date().toISOString(),
-      reply_body: replyBody,
-    }).eq("id", selectedMail.id);
+    if (!selectedMail || !replyBody.trim()) return;
+    if (!selectedMail.sender_email) {
+      toast({ title: "Keine Absenderadresse hinterlegt", variant: "destructive" });
+      return;
+    }
+    setSending(true);
+    try {
+      const messageId = await sendViaMailService({
+        to: selectedMail.sender_email,
+        subject: `Re: ${selectedMail.subject}`,
+        body: replyBody,
+        sender: "service",
+        context: "reply",
+      });
 
-    await (supabase as any).from("admin_mailbox").insert({
-      folder: "sent",
-      subject: `Re: ${selectedMail.subject}`,
-      body: replyBody,
-      recipient_email: selectedMail.sender_email,
-      recipient_name: selectedMail.sender_name,
-      sender_name: "Metropol Tours",
-      sender_email: "kundenservice@metours.de",
-      source_type: "reply",
-      source_id: selectedMail.id,
-      is_read: true,
-    });
+      await (supabase as any).from("admin_mailbox").update({
+        replied_at: new Date().toISOString(),
+        reply_body: replyBody,
+      }).eq("id", selectedMail.id);
 
-    setReplyBody("");
-    setReplyOpen(false);
-    fetchAll();
-    toast({ title: "Antwort gesendet" });
+      await (supabase as any).from("admin_mailbox").insert({
+        folder: "sent",
+        subject: `Re: ${selectedMail.subject}`,
+        body: replyBody,
+        recipient_email: selectedMail.sender_email,
+        recipient_name: selectedMail.sender_name,
+        sender_name: "Metropol Tours",
+        sender_email: "kundenservice@app.metours.de",
+        source_type: "reply",
+        source_id: selectedMail.id,
+        is_read: true,
+        tags: [`msg:${messageId}`],
+      });
+
+      setReplyBody("");
+      setReplyOpen(false);
+      fetchAll();
+      toast({ title: "Antwort versendet" });
+    } catch (e: any) {
+      toast({ title: "Versand fehlgeschlagen", description: e.message, variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
   };
+
 
   const handleSaveTemplate = async () => {
     if (!newTemplate.name || !newTemplate.subject) {
@@ -450,7 +502,13 @@ const AdminMailbox = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      setCompose({ to: selectedApp.email, subject: `Re: Ihre Bewerbung`, body: "" });
+                      setCompose({
+                        to: selectedApp.email,
+                        subject: `Ihre Bewerbung bei Metropol Tours`,
+                        body: `Guten Tag ${selectedApp.first_name} ${selectedApp.last_name},\n\nvielen Dank für Ihre Bewerbung bei Metropol Tours.\n\n`,
+                        sender: "jobs",
+                        context: "application",
+                      });
                       setComposeOpen(true);
                     }}
                     className="border-[#2a3040] text-zinc-300 h-8 text-xs gap-1"
@@ -668,8 +726,8 @@ const AdminMailbox = () => {
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setComposeOpen(false)} className="text-zinc-400">Abbrechen</Button>
-            <Button onClick={handleSendCompose} className="bg-emerald-600 hover:bg-emerald-700 gap-2">
-              <Send className="w-4 h-4" />Senden
+            <Button onClick={handleSendCompose} disabled={sending} className="bg-emerald-600 hover:bg-emerald-700 gap-2">
+              <Send className="w-4 h-4" />{sending ? "Sende..." : "Senden"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -701,8 +759,8 @@ const AdminMailbox = () => {
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setReplyOpen(false)} className="text-zinc-400">Abbrechen</Button>
-            <Button onClick={handleReply} className="bg-emerald-600 hover:bg-emerald-700 gap-2">
-              <Send className="w-4 h-4" />Antwort senden
+            <Button onClick={handleReply} disabled={sending} className="bg-emerald-600 hover:bg-emerald-700 gap-2">
+              <Send className="w-4 h-4" />{sending ? "Sende..." : "Antwort senden"}
             </Button>
           </DialogFooter>
         </DialogContent>
