@@ -85,7 +85,8 @@ serve(async (req) => {
     for (const r of dedup) {
       try {
         await resend.emails.send({
-          from: "METROPOL TOURS <kundenservice@metours.de>",
+          from: "METROPOL TOURS GmbH <kundenservice@app.metours.de>",
+          reply_to: "kundenservice@metours.de",
           to: [r.email],
           subject: `Verspätung +${reg.current_delay_min} Min · Fahrt ${trip_uid}`,
           html: buildEmail({
