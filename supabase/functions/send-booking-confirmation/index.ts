@@ -436,7 +436,7 @@ function buildCustomerEmailHtml(booking: any, tour: any, date: any, tariff: any,
     <!-- CTA BUTTON -->
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
       <tr><td align="center">
-        <a href="https://app.metours.de/meine-buchungen" style="display:inline-block; background:linear-gradient(135deg, #00CC36, #00a82d); color:white; padding:14px 36px; border-radius:10px; font-size:14px; font-weight:700; text-decoration:none; letter-spacing:0.3px;">
+        <a href="https://app.metours.de/meine-buchungen?ref=${safeBookingNum}" style="display:inline-block; background:linear-gradient(135deg, #00CC36, #00a82d); color:white; padding:14px 36px; border-radius:10px; font-size:14px; font-weight:700; text-decoration:none; letter-spacing:0.3px;">
           Meine Buchung ansehen →
         </a>
       </td></tr>
