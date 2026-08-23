@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { CartProvider } from "@/hooks/useCart";
 import ComingSoonPage from "./pages/ComingSoonPage";
@@ -41,6 +41,12 @@ const AppTourDetail = lazy(() => import("./mobile/pages/AppTourDetail"));
 const AppMyTrips = lazy(() => import("./mobile/pages/AppMyTrips"));
 const AppTicket = lazy(() => import("./mobile/pages/AppTicket"));
 const AppProfile = lazy(() => import("./mobile/pages/AppProfile"));
+
+const MobileAppLayout = () => (
+  <MobileAppShell>
+    <Outlet />
+  </MobileAppShell>
+);
 const AdminInquiriesPage = lazy(() => import("./pages/AdminInquiriesPage"));
 const AdminInquiryDetail = lazy(() => import("./pages/AdminInquiryDetail"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
