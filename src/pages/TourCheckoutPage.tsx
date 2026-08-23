@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { PaymentBrandLogos } from "@/components/checkout/PaymentBrandLogos";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
@@ -896,8 +897,8 @@ const TourCheckoutPage = () => {
                       </CardHeader>
                       <CardContent className="space-y-3">
                         {([
-                          { key: "stripe" as PaymentMethod, icon: CreditCard, label: "Kreditkarte", desc: "Visa, Mastercard, American Express", badge: "Sofort" },
-                          { key: "paypal" as PaymentMethod, icon: Wallet, label: "PayPal", desc: "Schnell & sicher mit PayPal bezahlen", badge: "Sofort" },
+                          { key: "stripe" as PaymentMethod, icon: CreditCard, label: "Kreditkarte", desc: "Visa · Mastercard · American Express", badge: "Sofort", brands: ["visa", "mastercard", "amex"] as const },
+                          { key: "paypal" as PaymentMethod, icon: Wallet, label: "PayPal", desc: "Schnell & sicher mit PayPal bezahlen", badge: "Sofort", brands: ["paypal"] as const },
                         ]).map((method) => (
                           <motion.div
                             key={method.key}
@@ -912,18 +913,20 @@ const TourCheckoutPage = () => {
                             )}
                           >
                             <div className={cn(
-                              "w-12 h-12 rounded-xl flex items-center justify-center transition-colors",
+                              "w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-colors",
                               selectedPaymentMethod === method.key ? "bg-primary/10" : "bg-muted"
                             )}>
                               <method.icon className={cn("w-6 h-6", selectedPaymentMethod === method.key ? "text-primary" : "text-muted-foreground")} />
                             </div>
-                            <div className="flex-1">
+                            <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
                                 <p className="font-semibold text-foreground">{method.label}</p>
                                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{method.badge}</Badge>
                               </div>
                               <p className="text-sm text-muted-foreground">{method.desc}</p>
+                              <PaymentBrandLogos brands={[...method.brands]} className="mt-2" />
                             </div>
+
                             <div className={cn(
                               "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0",
                               selectedPaymentMethod === method.key ? "border-primary" : "border-muted-foreground/30"

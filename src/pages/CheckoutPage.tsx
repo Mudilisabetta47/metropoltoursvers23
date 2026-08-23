@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { PaymentBrandLogos } from "@/components/checkout/PaymentBrandLogos";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -693,8 +694,8 @@ const CheckoutPage = () => {
                   
                   <div className="space-y-4 mb-8">
                     {[
-                      { id: "card", label: "Kredit-/Debitkarte", icon: <CreditCard className="w-5 h-5" /> },
-                      { id: "paypal", label: "PayPal", icon: <span className="text-sm font-bold">PP</span> },
+                      { id: "card", label: "Kredit-/Debitkarte", sub: "Visa · Mastercard · American Express", icon: <CreditCard className="w-5 h-5" />, brands: ["visa", "mastercard", "amex"] as const },
+                      { id: "paypal", label: "PayPal", sub: "Schnell & sicher mit PayPal bezahlen", icon: <CreditCard className="w-5 h-5" />, brands: ["paypal"] as const },
                     ].map((method) => (
 
                       <div
@@ -708,14 +709,19 @@ const CheckoutPage = () => {
                         )}
                       >
                         <div className={cn(
-                          "w-10 h-10 rounded-lg flex items-center justify-center",
+                          "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
                           paymentMethod === method.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                         )}>
                           {method.icon}
                         </div>
-                        <span className="font-medium text-foreground">{method.label}</span>
+                        <div className="flex-1 min-w-0">
+                          <span className="font-medium text-foreground block">{method.label}</span>
+                          <span className="text-sm text-muted-foreground">{method.sub}</span>
+                          <PaymentBrandLogos brands={[...method.brands]} className="mt-2" />
+                        </div>
                       </div>
                     ))}
+
                   </div>
 
                   <div className="space-y-4 p-4 bg-muted/50 rounded-xl text-sm text-muted-foreground">
