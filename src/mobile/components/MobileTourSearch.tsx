@@ -12,6 +12,7 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import type { MobileTour } from "@/mobile/hooks/useMobileTours";
+import { nativeHaptic } from "@/mobile/lib/native";
 
 const matchesTour = (tour: MobileTour, term: string) =>
   [tour.destination, tour.country, tour.location, tour.category, tour.short_description]
@@ -71,6 +72,7 @@ export function MobileTourSearch({ tours }: { tours: MobileTour[] }) {
                 key={tour.id}
                 type="button"
                 onClick={() => {
+                  void nativeHaptic("light");
                   setOpen(false);
                   navigate(`/app/reisen/${tour.slug || tour.id}`);
                 }}

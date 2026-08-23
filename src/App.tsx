@@ -12,6 +12,8 @@ import TravelAdvisorChat from "./components/chat/TravelAdvisorChat";
 import AnalyticsLoader from "./components/AnalyticsLoader";
 import NoIndexRoutes from "./components/NoIndexRoutes";
 import { ScrollToTop } from "./components/ScrollToTop";
+import NativeAppBridge from "./mobile/NativeAppBridge";
+import { isNativeApp } from "./mobile/lib/native";
 import { landingSlugs } from "./content/landing";
 
 // Lazy-loaded pages for code splitting
@@ -47,6 +49,8 @@ const MobileAppLayout = () => (
     <Outlet />
   </MobileAppShell>
 );
+
+const NativeEntry = () => (isNativeApp() ? <Navigate to="/app" replace /> : <Index />);
 
 /** Chat-Widget der Website nicht über der Mobile-App-Navigation anzeigen. */
 const GlobalChatWidget = () => {
@@ -192,6 +196,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <NativeAppBridge />
           <ScrollToTop />
           <BackendHostRedirect />
           <NoIndexRoutes />
@@ -199,7 +204,7 @@ const App = () => (
           <Suspense fallback={<PageLoader />}>
             <PublicGate>
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<NativeEntry />} />
               <Route path="/shop" element={<ShopPage />} />
               <Route path="/shop/produkt/:slug" element={<ShopProductPage />} />
               <Route path="/shop/warenkorb" element={<ShopCartPage />} />

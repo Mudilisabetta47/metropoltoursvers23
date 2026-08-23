@@ -3,6 +3,8 @@ import { NavLink, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Compass, Map, Ticket, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { nativeHaptic } from "@/mobile/lib/native";
+import { NativePullToRefresh } from "@/mobile/components/NativePullToRefresh";
 
 const TABS = [
   { to: "/app", label: "Entdecken", icon: Compass, end: true },
@@ -25,7 +27,7 @@ export function MobileAppShell({ children }: { children: ReactNode }) {
           transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
           className="min-w-0 pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
         >
-          {children}
+          <NativePullToRefresh>{children}</NativePullToRefresh>
         </motion.main>
       </AnimatePresence>
 
@@ -40,6 +42,7 @@ export function MobileAppShell({ children }: { children: ReactNode }) {
               <NavLink
                 to={to}
                 end={end}
+                onClick={() => void nativeHaptic()}
                 className={({ isActive }) =>
                   cn(
                     "relative flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-[11px] font-medium transition-colors",
