@@ -105,7 +105,7 @@ export function TourCardMobile({
                 )}
               >
                 <Users className="h-3 w-3" />
-                {left} frei
+                {left === 0 ? "ausgebucht" : `${left} frei`}
               </span>
             )}
           </div>
