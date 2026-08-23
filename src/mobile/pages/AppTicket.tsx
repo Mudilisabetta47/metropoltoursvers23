@@ -138,7 +138,7 @@ export default function AppTicket() {
         {(trip?.invoices ?? []).length > 0 && (
           <div className="mt-5 space-y-2">
             <h2 className="text-sm font-semibold">Dokumente</h2>
-            {trip!.invoices.map((inv) => (
+            {trip?.invoices.map((inv) => (
               <div
                 key={inv.invoice_number}
                 className="flex items-center justify-between rounded-2xl bg-white/5 p-3.5"
@@ -150,7 +150,7 @@ export default function AppTicket() {
                 <Button
                   size="sm"
                   variant="secondary"
-                  onClick={() => navigate(`/meine-buchungen?booking=${trip!.booking_number}`)}
+                  onClick={() => trip && navigate(`/meine-buchungen?booking=${trip.booking_number}`)}
                 >
                   <Download className="mr-1.5 h-3.5 w-3.5" /> Öffnen
                 </Button>

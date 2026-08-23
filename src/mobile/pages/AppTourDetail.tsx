@@ -58,7 +58,7 @@ export default function AppTourDetail() {
   if (isLoading) {
     return (
       <div className="space-y-4 p-5">
-        <Skeleton className="h-64 rounded-3xl" />
+        <Skeleton className="h-64 rounded-2xl" />
         <Skeleton className="h-6 w-2/3" />
         <Skeleton className="h-24" />
       </div>
@@ -167,7 +167,7 @@ export default function AppTourDetail() {
                     key={d.id}
                     onClick={() => setDateId(d.id)}
                     className={cn(
-                      "flex w-full items-center justify-between rounded-2xl border p-3.5 text-left transition-colors",
+                      "flex min-h-16 w-full items-center justify-between rounded-xl border p-3.5 text-left transition-colors",
                       active ? "border-primary bg-primary/5" : "border-border bg-card",
                     )}
                   >
@@ -217,7 +217,7 @@ export default function AppTourDetail() {
 
         {tour.hotel_name && (
           <Block title="Unterkunft">
-            <div className="flex gap-3 rounded-2xl border border-border/60 bg-card p-4">
+            <div className="flex gap-3 rounded-xl border border-border bg-card p-4">
               <BedDouble className="h-5 w-5 shrink-0 text-primary" />
               <div>
                 <p className="text-sm font-semibold">{tour.hotel_name}</p>
@@ -235,7 +235,7 @@ export default function AppTourDetail() {
               {tour.pickups.map((p: any) => (
                 <div
                   key={p.id}
-                  className="flex items-center justify-between rounded-2xl border border-border/60 bg-card p-3.5"
+                  className="flex items-center justify-between rounded-xl border border-border bg-card p-3.5"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">
@@ -303,7 +303,7 @@ export default function AppTourDetail() {
               {tour.extras.map((e: any) => (
                 <div
                   key={e.id}
-                  className="flex items-center justify-between rounded-2xl border border-border/60 bg-card p-3.5"
+                  className="flex items-center justify-between rounded-xl border border-border bg-card p-3.5"
                 >
                   <div className="flex min-w-0 items-center gap-2.5">
                     <Plus className="h-4 w-4 shrink-0 text-primary" />
@@ -323,7 +323,7 @@ export default function AppTourDetail() {
 
         {(tour.documents_required || tour.insurance_info) && (
           <Block title="Wichtige Hinweise">
-            <div className="space-y-3 rounded-2xl border border-border/60 bg-muted/40 p-4">
+            <div className="space-y-3 rounded-xl border border-border bg-muted/40 p-4">
               {tour.documents_required && (
                 <p className="flex gap-2.5 text-sm text-muted-foreground">
                   <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
@@ -341,7 +341,7 @@ export default function AppTourDetail() {
         )}
 
         {!bookable && (
-          <div className="rounded-2xl border border-border bg-muted/40 p-4">
+          <div className="rounded-xl border border-border bg-muted/40 p-4">
             <p className="text-sm font-semibold">{TOUR_NOT_BOOKABLE_TITLE}</p>
             <p className="mt-1 text-xs text-muted-foreground">{TOUR_NOT_BOOKABLE_TEXT}</p>
           </div>

@@ -80,22 +80,23 @@ export function useMobileTour(tourId?: string) {
     enabled: Boolean(tourId),
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
+      if (!tourId) return null;
       const isUuid =
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tourId!);
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tourId);
 
       // Zuerst über den SEO-Slug, sonst über die UUID (bestehende Lookup-Strategie).
       let query = supabase
         .from("package_tours")
         .select(`${TOUR_FIELDS}, tour_dates(${DATE_FIELDS})`)
         .limit(1);
-      query = isUuid ? query.eq("id", tourId!) : query.eq("slug", tourId!);
+      query = isUuid ? query.eq("id", tourId) : query.eq("slug", tourId);
 
       let { data: tour } = await query.maybeSingle();
       if (!tour && isUuid) {
         const fallback = await supabase
           .from("package_tours")
           .select(`${TOUR_FIELDS}, tour_dates(${DATE_FIELDS})`)
-          .eq("slug", tourId!)
+          .eq("slug", tourId)
           .maybeSingle();
         tour = fallback.data;
       }
