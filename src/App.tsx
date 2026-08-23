@@ -221,6 +221,17 @@ const App = () => (
               <Route path="/reisen/:tourId" element={<TourDetailPage />} />
               <Route path="/reisen/checkout" element={<TourCheckoutPage />} />
               <Route path="/tour-checkout" element={<TourCheckoutPage />} />
+
+              {/* Mobile Kunden-App */}
+              <Route path="/app" element={<MobileAppLayout />}>
+                <Route index element={<AppHome />} />
+                <Route path="reisen" element={<AppTours />} />
+                <Route path="reisen/:tourId" element={<AppTourDetail />} />
+                <Route path="meine-reisen" element={<AppMyTrips />} />
+                <Route path="ticket/:bookingNumber" element={<AppTicket />} />
+                <Route path="profil" element={<AppProfile />} />
+              </Route>
+
               <Route path="/admin" element={<AdminRedirect />} />
               <Route path="/admin/copilot" element={<AdminCopilot />} />
               <Route path="/admin/copilot-audit" element={<AdminCopilotAudit />} />
