@@ -33,6 +33,14 @@ const TermsPage = lazy(() => import("./pages/TermsPage"));
 const WiderrufPage = lazy(() => import("./pages/WiderrufPage"));
 const TourDetailPage = lazy(() => import("./components/tours/TourDetailPage"));
 const TourCheckoutPage = lazy(() => import("./pages/TourCheckoutPage"));
+// Mobile Kunden-App (Capacitor / /app)
+const MobileAppShell = lazy(() => import("./mobile/MobileAppShell"));
+const AppHome = lazy(() => import("./mobile/pages/AppHome"));
+const AppTours = lazy(() => import("./mobile/pages/AppTours"));
+const AppTourDetail = lazy(() => import("./mobile/pages/AppTourDetail"));
+const AppMyTrips = lazy(() => import("./mobile/pages/AppMyTrips"));
+const AppTicket = lazy(() => import("./mobile/pages/AppTicket"));
+const AppProfile = lazy(() => import("./mobile/pages/AppProfile"));
 const AdminInquiriesPage = lazy(() => import("./pages/AdminInquiriesPage"));
 const AdminInquiryDetail = lazy(() => import("./pages/AdminInquiryDetail"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));

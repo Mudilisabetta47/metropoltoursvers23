@@ -107,7 +107,7 @@ export default function AppProfile() {
           <Row to="/app/meine-reisen" icon={FileText} label="Meine Buchungen & Tickets" />
           <Row href="mailto:info@app.metours.de" icon={Mail} label="Kontakt per E-Mail" />
           <Row href="tel:+4951199999999" icon={Phone} label="Telefonische Beratung" />
-          <Row to="/kontakt" icon={HelpCircle} label="Hilfe & Kontaktformular" />
+          <Row to="/service" icon={HelpCircle} label="Hilfe & Service" />
         </div>
 
         <div className="mt-4 overflow-hidden rounded-3xl border border-border/60 bg-card">
