@@ -136,6 +136,11 @@
     <priority>0.2</priority>
   </url>
   <url>
+    <loc>https://www.metours.de/wochenendtrips/amsterdam</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://www.metours.de/wochenendtrips/prag</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -146,17 +151,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.metours.de/wochenendtrips/amsterdam</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://www.metours.de/wochenendtrips/paris</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://www.metours.de/wochenendtrips/novalja</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
