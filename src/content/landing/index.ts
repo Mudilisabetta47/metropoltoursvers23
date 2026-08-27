@@ -7,6 +7,7 @@ import {
   busMietenBremen,
   reisebusMietenBremen,
   busvermietungBremen,
+  busMietenHamburg,
 } from "./standorte";
 import {
   busMieten,
@@ -30,6 +31,7 @@ export const landingPages: LandingContent[] = [
   busMietenBremen,
   reisebusMietenBremen,
   busvermietungBremen,
+  busMietenHamburg,
   reisebusMitFahrer,
   gruppenreisen,
   schulfahrten,

@@ -63,7 +63,7 @@ export interface LandingContent {
   /** Interne Verlinkung. */
   links: LandingLink[];
   /** Ort für LocalBusiness-Schema, falls Standortseite. */
-  locality?: "Hannover" | "Bremen";
+  locality?: "Hannover" | "Bremen" | "Hamburg";
   ctaTitle: string;
   ctaText: string;
 }
