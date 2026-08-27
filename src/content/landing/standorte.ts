@@ -632,3 +632,119 @@ export const busvermietungBremen: LandingContent = {
   ctaTitle: "Angebot für Bremen erhalten",
   ctaText: "Schildern Sie Ihren Bedarf – Sie bekommen Festpreis und Konditionen schriftlich.",
 };
+
+export const busMietenHamburg: LandingContent = {
+  slug: "bus-mieten-hamburg",
+  seoTitle: "Bus mieten Hamburg – Reisebus mit Fahrer",
+  seoDescription:
+    "Bus mieten in Hamburg: Kleinbus, Midibus oder Reisebus mit Fahrer für Ausflüge, Firmenfahrten, Hafenrundfahrten und Transfers. Festpreis anfragen – Antwort meist am selben Werktag.",
+  h1: "Bus mieten in Hamburg",
+  heroKicker: "Abholung in ganz Hamburg und im Umland",
+  heroText:
+    "Von der HafenCity bis Harburg, vom Flughafen Fuhlsbüttel bis zur Elbphilharmonie: Wir stellen Ihnen in Hamburg einen Bus mit Fahrer bereit – für Tagesausflüge an die Küste, Firmenfahrten, Messebesuche und Gruppentransfers.",
+  heroImage: "premiumBus",
+  heroAlt: "Reisebus von Metropol Tours an der Elbe in Hamburg",
+  heroFacts: ["Ostsee und Nordsee als Tagesziel", "Kleinbus bis Fernreisebus", "Festpreis inklusive Fahrer"],
+  locality: "Hamburg",
+  why: [
+    {
+      title: "Ortskenntnis im Hamburger Verkehr",
+      text: "Elbtunnel, Köhlbrandbrücke und die Zufahrten zu den Messehallen sind zu Stoßzeiten unberechenbar. Wir kalkulieren Fahrzeiten anhand realer Erfahrungswerte, nicht nach Routenplaner.",
+    },
+    {
+      title: "Haltemöglichkeiten, die funktionieren",
+      text: "In der Innenstadt darf ein Reisebus längst nicht überall halten. Wir stimmen Ein- und Ausstiege vorab ab – etwa an den Landungsbrücken, am ZOB oder am Hotel.",
+    },
+    {
+      title: "Küste in kurzer Zeit",
+      text: "Lübeck, Timmendorfer Strand, Cuxhaven und die Lüneburger Heide sind ab Hamburg bequeme Tagesziele – ideal für Betriebsausflüge und Vereinsfahrten.",
+    },
+    {
+      title: "Feste Ansprechperson",
+      text: "Von der Anfrage bis zur Rechnung betreut Sie dieselbe Person aus unserer Disposition. Kein Portal, kein Weiterverkauf Ihrer Anfrage.",
+    },
+  ],
+  sections: [
+    {
+      h2: "Bus mieten in Hamburg: typische Einsätze",
+      body: [
+        "Hamburg ist Messe-, Kongress- und Kreuzfahrtstadt zugleich. Entsprechend unterschiedlich fallen die Anfragen aus: Shuttleverkehr zwischen Hotel und Messegelände, Transfers vom Cruise Center Steinwerder zum Flughafen, Betriebsausflüge in die Heide oder Klassenfahrten mit Programm im Hafen.",
+        "Weil Parkraum in Innenstadtnähe knapp und teuer ist, lohnt sich ein gemieteter Bus schon ab etwa 20 Personen. Die Gruppe kommt geschlossen an, das Gepäck bleibt im Fahrzeug und Sie sparen sich die Parkplatzsuche in St. Pauli oder rund um die Alster.",
+      ],
+      blocks: [
+        {
+          h3: "Beliebte Abholorte in Hamburg",
+          text: "Hauptbahnhof und ZOB, Landungsbrücken, HafenCity und Elbphilharmonie, Messegelände und CCH, Flughafen Hamburg, Cruise Center Altona und Steinwerder sowie Schulen, Hotels und Firmenstandorte in Altona, Eimsbüttel, Wandsbek, Bergedorf und Harburg.",
+        },
+        {
+          h3: "Beliebte Ziele ab Hamburg",
+          text: "Lübeck und Travemünde, Timmendorfer Strand, Sylt-Anschluss über Niebüll, Cuxhaven, Lüneburger Heide, Bremen, Hannover, Berlin sowie Kopenhagen und Amsterdam für Mehrtagesfahrten.",
+        },
+      ],
+    },
+    {
+      h2: "Preise für Mietbusse ab Hamburg",
+      body: [
+        "Die wichtigsten Kostenfaktoren sind Einsatzdauer, gefahrene Kilometer und Fahrzeuggröße. Eine Halbtagsfahrt innerhalb Hamburgs liegt deshalb deutlich unter einer Tagesfahrt an die Ostsee. Sie erhalten von uns immer einen Festpreis inklusive Fahrer, Maut und gesetzlicher Pausen.",
+        "Unter der Woche – vor allem Dienstag bis Donnerstag – ist die Auslastung geringer und die Angebote fallen günstiger aus. Rund um Hafengeburtstag, Kreuzfahrttage und große Messen empfehlen wir mehrere Wochen Vorlauf.",
+      ],
+    },
+  ],
+  fleet: [
+    { name: "Kleinbus", seats: "8–19 Sitze", text: "Für Transfers zum Flughafen Hamburg und kleine Gruppen mit Gepäck." },
+    { name: "Midibus", seats: "20–35 Sitze", text: "Wendig genug für enge Straßen in Altona, Ottensen und der Innenstadt." },
+    { name: "Reisebus", seats: "48–57 Sitze", text: "Der Klassiker für Vereins-, Klassen- und Firmenfahrten mit WC und WLAN." },
+    { name: "Fernreisebus", seats: "50–59 Sitze", text: "Für Mehrtagesfahrten Richtung Skandinavien, Berlin oder Amsterdam." },
+  ],
+  occasions: [
+    { title: "Messe & Kongress", text: "Pendelverkehr zwischen Hotels, Messegelände und CCH – auch im getakteten Shuttlebetrieb." },
+    { title: "Kreuzfahrt-Transfers", text: "Abholung am Cruise Center und Weiterfahrt zum Flughafen, Bahnhof oder Hotel." },
+    { title: "Betriebsausflug & Firmenevent", text: "Fahrten an die Ostsee, in die Heide oder zum Teamevent im Umland inklusive später Rückfahrt." },
+    { title: "Klassen- und Studienfahrten", text: "Hafenrundfahrt, Miniatur Wunderland und Speicherstadt mit Bus als Basisfahrzeug." },
+  ],
+  process: [
+    { title: "1. Anfrage", text: "Datum, Abholort in Hamburg, Ziel und Personenzahl genügen." },
+    { title: "2. Angebot", text: "Festpreis inklusive Fahrer, Kilometern und Maut per E-Mail." },
+    { title: "3. Buchung", text: "Ihre Freigabe genügt, die Auftragsbestätigung folgt sofort." },
+    { title: "4. Fahrt", text: "Fahrerkontakt vorab, pünktliche Abholung am vereinbarten Ort." },
+  ],
+  area: {
+    intro: "Wir holen Sie in Hamburg und im gesamten Umland ab:",
+    cities: [
+      "Hamburg-Mitte",
+      "Altona",
+      "HafenCity",
+      "Eimsbüttel",
+      "Wandsbek",
+      "Harburg",
+      "Bergedorf",
+      "Norderstedt",
+      "Pinneberg",
+      "Lüneburg",
+    ],
+  },
+  advantages: [
+    "Festpreis inklusive Fahrer, Maut und Kilometern",
+    "Ostsee und Nordsee in ein bis zwei Stunden erreichbar",
+    "Abholung an jeder befahrbaren Adresse in Hamburg",
+    "Fahrzeuge von 8 bis 79 Plätzen",
+    "Günstigere Konditionen unter der Woche",
+    "Rechnung für Firmen, Schulen und Vereine",
+  ],
+  faqs: [
+    { q: "Holen Sie auch in Norderstedt, Pinneberg oder Lüneburg ab?", a: "Ja, das gesamte Hamburger Umland gehört zu unserem Einsatzgebiet. Die Anfahrt ist im Festpreis enthalten." },
+    { q: "Darf der Bus in der Hamburger Innenstadt halten?", a: "An vielen Stellen ja, aber nicht überall. Wir prüfen die Adresse vorab und schlagen bei Bedarf eine zulässige Halteposition in Laufweite vor." },
+    { q: "Wie lange dauert eine Fahrt von Hamburg an die Ostsee?", a: "Nach Lübeck rund eine Stunde, nach Timmendorfer Strand etwa eineinhalb Stunden, nach Cuxhaven rund zwei Stunden – jeweils ohne Berufsverkehr." },
+    { q: "Können Sie einen Transfer vom Kreuzfahrtterminal übernehmen?", a: "Ja. Wir fahren die Cruise Center in Altona, Steinwerder und der HafenCity an und planen Puffer für verspätete Ausschiffungen ein." },
+    { q: "Wie kurzfristig kann ich einen Bus in Hamburg mieten?", a: "Kurzfristige Anfragen sind oft möglich. Für Messetermine, den Hafengeburtstag und Ferienzeiten empfehlen wir mehrere Wochen Vorlauf." },
+  ],
+  links: [
+    { label: "Reisebus mit Fahrer", path: "/reisebus-mit-fahrer", text: "Ausstattung, Ablauf und Konditionen im Überblick." },
+    { label: "Flughafentransfer", path: "/flughafentransfer", text: "Gruppentransfer zum Flughafen Hamburg." },
+    { label: "Bus mieten Bremen", path: "/bus-mieten-bremen", text: "Unser zweiter Standort im Nordwesten." },
+    { label: "Ausflugsfahrten", path: "/ausflugsfahrten", text: "Tagesziele ab Hamburg und Norddeutschland." },
+    { label: "Bus mieten", path: "/bus-mieten", text: "Alle Standorte und Leistungen der Busvermietung." },
+  ],
+  ctaTitle: "Bus in Hamburg anfragen",
+  ctaText: "Abholort, Datum und Personenzahl genügen – wir melden uns mit einem Festpreis.",
+};

@@ -38,6 +38,7 @@ const staticEntries: SitemapEntry[] = [
   { path: "/busvermietung-hannover", changefreq: "monthly", priority: "0.8" },
   { path: "/bus-mieten-bremen", changefreq: "monthly", priority: "0.8" },
   { path: "/reisebus-mieten-bremen", changefreq: "monthly", priority: "0.8" },
+  { path: "/bus-mieten-hamburg", changefreq: "monthly", priority: "0.8" },
   { path: "/busvermietung-bremen", changefreq: "monthly", priority: "0.8" },
   { path: "/reisebus-mit-fahrer", changefreq: "monthly", priority: "0.8" },
   { path: "/gruppenreisen", changefreq: "monthly", priority: "0.8" },
