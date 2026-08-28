@@ -10,7 +10,7 @@ export const BRAND_SUFFIX = " | Metropol Tours";
 
 export const COMPANY = {
   legalName: "METROPOL TOURS GmbH",
-  email: "info@metours.de",
+  email: "kundenservice@metours.de",
   phone: "+49 511 80781106",
   city: "Hannover",
   country: "DE",

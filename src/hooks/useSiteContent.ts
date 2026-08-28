@@ -74,7 +74,7 @@ export function useContactInfo() {
   return {
     isLoading,
     phone: metaString("phone", "+49 511 80781106"),
-    email: metaString("email", "info@metours.de"),
+    email: metaString("email", "kundenservice@metours.de"),
     address: metaString("address", "Hannover, Deutschland"),
     openingHours: metaString("opening_hours", "Mo–Fr: 8–20 Uhr, Sa–So: geschlossen"),
     instagram: metaString("instagram", "https://instagram.com/metropoltours"),

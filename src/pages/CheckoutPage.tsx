@@ -334,7 +334,7 @@ const CheckoutPage = () => {
       setCurrentStep("payment");
     } else if (currentStep === "payment") {
       if (agbAvailable === false) {
-        toast.error("Buchung derzeit nicht möglich: Es sind noch keine AGB veröffentlicht. Bitte kontaktieren Sie uns unter info@metours.de.");
+        toast.error("Buchung derzeit nicht möglich: Es sind noch keine AGB veröffentlicht. Bitte kontaktieren Sie uns unter kundenservice@metours.de.");
         return;
       }
       if (!agreeTerms) {
@@ -738,7 +738,7 @@ const CheckoutPage = () => {
                   {agbAvailable === false && (
                     <div className="mt-6 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
                       Buchung derzeit nicht möglich – die AGB werden gerade finalisiert. Bitte melden Sie sich unter{' '}
-                      <a href="mailto:info@metours.de" className="underline">info@metours.de</a>.
+                      <a href="mailto:kundenservice@metours.de" className="underline">kundenservice@metours.de</a>.
                     </div>
                   )}
                   <div className="mt-8 flex items-start gap-3">

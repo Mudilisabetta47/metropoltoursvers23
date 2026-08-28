@@ -108,7 +108,7 @@ const EmergencyButton = ({ userId }: { userId: string }) => {
               </div>
 
               <a
-                href="tel:+4951112345678"
+                href="tel:+4951180781106"
                 className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-semibold border border-white/10 transition"
               >
                 <PhoneCall className="w-4 h-4 text-emerald-400" />

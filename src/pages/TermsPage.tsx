@@ -49,7 +49,7 @@ export default function TermsPage() {
                   <p className="text-muted-foreground">
                     Unsere Allgemeinen Geschäftsbedingungen sind noch nicht veröffentlicht. Buchungen sind
                     aktuell nur nach vorheriger Rücksprache möglich. Bitte kontaktieren Sie uns unter{' '}
-                    <a href="mailto:info@metours.de" className="text-primary hover:underline">info@metours.de</a>.
+                    <a href="mailto:kundenservice@metours.de" className="text-primary hover:underline">kundenservice@metours.de</a>.
                   </p>
                 </div>
               </div>

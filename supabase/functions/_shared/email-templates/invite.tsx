@@ -51,7 +51,7 @@ export const InviteEmail = ({ confirmationUrl }: InviteEmailProps) => (
             Hauptbahnhof Hannover · 30159 Hannover · Deutschland
           </Text>
           <Text style={brandFooterText}>
-            <Link href="tel:+4951112345678" style={footerLink}>+49 511 1234 5678</Link>
+            <Link href="tel:+4951180781106" style={footerLink}>+49 511 80781106</Link>
             {' · '}
             <Link href="mailto:kundenservice@app.metours.de" style={footerLink}>kundenservice@app.metours.de</Link>
           </Text>

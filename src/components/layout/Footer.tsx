@@ -116,12 +116,12 @@ const Footer = () => {
             {/* Contact Info */}
             <div className="flex flex-col gap-3 text-sm text-muted-foreground mb-6">
               <a 
-                href="mailto:info@metours.de" 
+                href="mailto:kundenservice@metours.de" 
                 className="flex items-center gap-2 hover:text-primary transition-colors"
                 aria-label="E-Mail an METROPOL TOURS"
               >
                 <Mail className="w-4 h-4" />
-                info@metours.de
+                kundenservice@metours.de
               </a>
               <a 
                 href="tel:+4951180781106" 
