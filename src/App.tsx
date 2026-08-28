@@ -121,6 +121,8 @@ const AdminLineTrips = lazy(() => import("./pages/AdminLineTrips"));
 const TrackTripPage = lazy(() => import("./pages/TrackTripPage"));
 const TrackTripLandingPage = lazy(() => import("./pages/TrackTripLandingPage"));
 const AdminTrips = lazy(() => import("./pages/AdminTrips"));
+const AdminCharterTrips = lazy(() => import("./pages/AdminCharterTrips"));
+const AdminCharterTripDetail = lazy(() => import("./pages/AdminCharterTripDetail"));
 const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 const AdminCopilot = lazy(() => import("./pages/AdminCopilot"));
 const AdminCopilotAudit = lazy(() => import("./pages/AdminCopilotAudit"));
