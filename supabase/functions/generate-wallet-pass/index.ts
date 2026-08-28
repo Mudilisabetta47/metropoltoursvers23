@@ -29,7 +29,7 @@ function formatDateDE(d: any): string {
   try {
     const dt = typeof d === "string" ? new Date(d) : d;
     if (isNaN(dt.getTime())) return String(d);
-    return dt.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+    return dt.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" });
   } catch { return String(d); }
 }
 function formatTimeDE(t: any): string {
