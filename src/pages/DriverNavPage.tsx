@@ -65,8 +65,11 @@ const DriverNavPage = () => {
   const [bus, setBus] = useState<any>(null);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [sheetTab, setSheetTab] = useState<SheetTab | null>(null);
+  const [manualTarget, setManualTarget] = useState<{ lat: number; lng: number } | null>(null);
   const lastSpoken = useRef<string>("");
   const lastPush = useRef<number>(0);
+  const lastDutySpoken = useRef<string>("");
   const mapRef = useRef<any>(null);
 
   const activeOrder: DispatchOrder | undefined = useMemo(
@@ -74,6 +77,13 @@ const DriverNavPage = () => {
     [orders],
   );
   const incoming = activeOrder?.status === "sent" ? activeOrder : undefined;
+
+  const { stops, tolls, nextStop, markArrival, markDeparture, reload: reloadStops } =
+    useOrderStops(activeOrder?.id);
+  const { compliance, today: dutyToday, startDriving, stopDriving, setMultiDriver } =
+    useDrivingTime(user?.id);
+  const delayMinutes = activeOrder?.delay_minutes ?? 0;
+
 
   // Online/Offline
   useEffect(() => {
