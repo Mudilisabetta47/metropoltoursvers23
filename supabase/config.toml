@@ -25,8 +25,6 @@ project_id = "wberoibxqpffhnyvjnci"
     verify_jwt = false
   [functions.process-email-automations]
     verify_jwt = false
-  [functions.process-email-queue]
-    verify_jwt = true
   [functions.process-ticket-scan]
     verify_jwt = false
   [functions.send-automation-email]
