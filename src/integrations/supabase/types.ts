@@ -2395,6 +2395,7 @@ export type Database = {
       }
       driver_duty_log: {
         Row: {
+          block_seconds: number
           break_seconds: number
           created_at: string
           driver_user_id: string
@@ -2411,6 +2412,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          block_seconds?: number
           break_seconds?: number
           created_at?: string
           driver_user_id: string
@@ -2427,6 +2429,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          block_seconds?: number
           break_seconds?: number
           created_at?: string
           driver_user_id?: string
