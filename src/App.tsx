@@ -251,6 +251,8 @@ const App = () => (
                 <Route path="reisen" element={<AppTours />} />
                 <Route path="reisen/:tourId" element={<AppTourDetail />} />
                 <Route path="meine-reisen" element={<AppMyTrips />} />
+                <Route path="tickets" element={<AppMyTickets />} />
+                <Route path="checkout" element={<AppCheckout />} />
                 <Route path="ticket/:bookingNumber" element={<AppTicket />} />
                 <Route path="profil" element={<AppProfile />} />
               </Route>
