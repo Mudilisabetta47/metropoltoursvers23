@@ -138,10 +138,72 @@ const TripsTab = ({ userId }: { userId: string }) => {
 };
 
 const TripDetailSheet = ({ trip, onClose }: { trip: Trip; onClose: () => void }) => {
+  const [schedule, setSchedule] = useState<any[]>([]);
+  const [tripRow, setTripRow] = useState<any>(trip.trip || null);
+  const [gpsOn, setGpsOn] = useState(false);
+  const watchRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!trip.assigned_trip_id) return;
+    supabase
+      .from("trip_schedule_stops")
+      .select("*")
+      .eq("trip_id", trip.assigned_trip_id)
+      .order("sort_order")
+      .then(({ data }) => setSchedule(data || []));
+  }, [trip.assigned_trip_id]);
+
+  useEffect(() => () => {
+    if (watchRef.current !== null) navigator.geolocation.clearWatch(watchRef.current);
+  }, []);
+
+  const startGps = () => {
+    if (!navigator.geolocation || !trip.assigned_trip_id) return;
+    watchRef.current = navigator.geolocation.watchPosition(
+      async (pos) => {
+        await (supabase as any).from("bus_positions_live").upsert(
+          {
+            trip_id: trip.assigned_trip_id,
+            bus_id: trip.assigned_bus_id,
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            speed_kmh: pos.coords.speed ? pos.coords.speed * 3.6 : 0,
+            heading: pos.coords.heading ?? null,
+            status: "running",
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "trip_id" }
+        );
+      },
+      () => toast.error("GPS nicht verfügbar"),
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 }
+    );
+    setGpsOn(true);
+  };
+
+  const stopGps = () => {
+    if (watchRef.current !== null) navigator.geolocation.clearWatch(watchRef.current);
+    watchRef.current = null;
+    setGpsOn(false);
+  };
+
+  const setStatus = async (status: "running" | "completed") => {
+    if (!trip.assigned_trip_id) return;
+    const patch: any = { status };
+    if (status === "running") patch.started_at = new Date().toISOString();
+    if (status === "completed") patch.ended_at = new Date().toISOString();
+    const { error } = await (supabase as any).from("trips").update(patch).eq("id", trip.assigned_trip_id);
+    if (error) { toast.error(error.message); return; }
+    setTripRow((t: any) => ({ ...(t || {}), ...patch }));
+    if (status === "running") { startGps(); toast.success("Fahrt gestartet – GPS aktiv"); }
+    else { stopGps(); toast.success("Fahrt beendet"); }
+  };
+
   const openMaps = () => {
     const q = trip.route?.name || trip.dispatch_location || "";
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(q)}`, "_blank");
   };
+
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
