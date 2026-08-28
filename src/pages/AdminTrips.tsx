@@ -62,7 +62,7 @@ export default function AdminTrips() {
   const [events, setEvents] = useState<DelayEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterRange, setFilterRange] = useState<"today" | "tomorrow" | "week" | "all">("week");
-  const [filterType, setFilterType] = useState<"all" | "line_trip" | "package_tour_date">("all");
+  const [filterType, setFilterType] = useState<"all" | "line_trip" | "package_tour_date" | "charter_trip">("all");
   const [filterDelay, setFilterDelay] = useState(false);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<TripRow | null>(null);
