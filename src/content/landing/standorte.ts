@@ -745,6 +745,180 @@ export const busMietenHamburg: LandingContent = {
     { label: "Ausflugsfahrten", path: "/ausflugsfahrten", text: "Tagesziele ab Hamburg und Norddeutschland." },
     { label: "Bus mieten", path: "/bus-mieten", text: "Alle Standorte und Leistungen der Busvermietung." },
   ],
-  ctaTitle: "Bus in Hamburg anfragen",
+ctaTitle: "Bus in Hamburg anfragen",
   ctaText: "Abholort, Datum und Personenzahl genügen – wir melden uns mit einem Festpreis.",
+};
+
+export const reisebusMietenHamburg: LandingContent = {
+  slug: "reisebus-mieten-hamburg",
+  seoTitle: "Reisebus mieten Hamburg – Komfortbusse für Gruppen",
+  seoDescription:
+    "Reisebus mieten in Hamburg für Vereinsreisen, Klassenfahrten und Mehrtagestouren. Komfortbusse mit WC, WLAN und Bordküche inklusive Fahrer. Angebot anfragen.",
+  h1: "Reisebus mieten in Hamburg",
+  heroKicker: "Mehrtagesfahrten ab der Hansestadt",
+  heroText:
+    "Für Reisen, die länger dauern als ein Tag: Unsere Komfortbusse ab Hamburg bringen Ihre Gruppe entspannt an die Ostsee, nach Berlin, Skandinavien oder in die Alpen.",
+  heroImage: "journey",
+  heroAlt: "Reisebus von Metropol Tours auf einer Mehrtagesfahrt ab Hamburg",
+  heroFacts: ["Komfortbestuhlung", "Gepäckraum für 7 Tage", "Fahrerteam auf Langstrecke"],
+  locality: "Hamburg",
+  why: [
+    { title: "Anschluss an die Nord-Süd-Achsen", text: "Über die A7, A1 und A24 sind Kiel, Berlin, Hannover, Bremen und Dänemark ohne Umwege erreichbar – das spart Fahrzeit und Kosten." },
+    { title: "Komfort für lange Etappen", text: "Verstellbare Sitze, Klimaanlage, Bord-WC und Kaffeemaschine gehören bei unseren Fernbussen zur Standardausstattung." },
+    { title: "Planung mit realistischen Zeiten", text: "Elbtunnel, Hamburger Elbbrücken und Stauzeiten rechnen wir real ein. Ankunftszeiten in unserem Fahrplan sind belastbar." },
+    { title: "Erfahrung mit Gruppenreisen", text: "Vereine, Schulen und Chöre aus Hamburg fahren regelmäßig mit uns – inklusive Instrumenten, Trikots oder Sportgeräten." },
+  ],
+  sections: [
+    {
+      h2: "Mehrtagesreisen ab Hamburg richtig planen",
+      body: [
+        "Bei einer Reise über mehrere Tage ist der Bus mehr als ein Transportmittel: Er ist Ihr Basisfahrzeug vor Ort. Deshalb klären wir vorab, welche Ausflüge am Zielort geplant sind, ob der Bus am Hotel parken kann und wie die Lenkzeiten des Fahrers zum Programm passen.",
+        "Für Ziele in Skandinavien planen wir Fährverbindungen ab Puttgarden, Rostock oder Kiel ein, für Alpenziele die Mautstrecken in Österreich. Beide Kostenblöcke sind Teil des Festpreises, damit Ihre Kalkulation stabil bleibt.",
+      ],
+      blocks: [
+        { h3: "Beliebte Mehrtagesziele ab Hamburg", text: "Berlin, Ostsee, Kopenhagen, Amsterdam, Dresden, Prag, Sylt, Gardasee, Südtirol, Paris." },
+        { h3: "Was Gruppen häufig unterschätzen", text: "Gepäckvolumen bei Skifreizeiten, Parkgebühren in Innenstädten und die Zeit, die ein Ein- und Ausstieg mit 50 Personen tatsächlich braucht." },
+      ],
+    },
+    {
+      h2: "Reisebus statt Bahn: wann sich das rechnet",
+      body: [
+        "Ab rund 25 Mitreisenden ist der Reisebus in den meisten Fällen günstiger als Gruppentickets im Fernverkehr – und deutlich flexibler, weil Sie Abfahrtszeit, Zwischenstopps und Zielorte selbst bestimmen.",
+        "Dazu kommt der praktische Vorteil: keine Umstiege, kein Gepäckschleppen, keine getrennten Sitzplätze. Gerade bei Schul- und Seniorengruppen aus Hamburg ist das der ausschlaggebende Punkt.",
+      ],
+    },
+  ],
+  fleet: [
+    { name: "Fernreisebus", seats: "50–59 Sitze", text: "Komfortklasse mit WC, Bordküche und großem Gepäckraum." },
+    { name: "Komfort-Reisebus", seats: "48–53 Sitze", text: "Reduzierte Bestuhlung für mehr Beinfreiheit." },
+    { name: "Midibus", seats: "20–35 Sitze", text: "Für kleinere Reisegruppen und Ziele mit enger Zufahrt." },
+    { name: "Doppelstockbus", seats: "bis 79 Sitze", text: "Auf Anfrage für sehr große Reisegruppen." },
+  ],
+  occasions: [
+    { title: "Vereinsreisen", text: "Jahresfahrt, Turnier oder Trainingslager mit Ausrüstungstransport." },
+    { title: "Klassen- und Studienfahrten", text: "Mehrtägige Fahrten mit Programm, Bus bleibt vor Ort." },
+    { title: "Chor- und Musikreisen", text: "Sicherer Transport von Instrumenten und Technik." },
+    { title: "Senioren- und Kirchengruppen", text: "Ruhige Etappen mit vielen Pausen und Einstiegshilfe." },
+  ],
+  process: [
+    { title: "1. Reiseziel nennen", text: "Ziel, Zeitraum, Personenzahl und geplantes Programm." },
+    { title: "2. Etappenplanung", text: "Wir stimmen Route, Pausen und Ankunftszeiten mit Ihnen ab." },
+    { title: "3. Festpreisangebot", text: "Inklusive Maut, Fähre, Fahrerkosten und Übernachtung des Fahrers." },
+    { title: "4. Reise", text: "Fahrerkontakt vorab, Disposition während der Reise erreichbar." },
+  ],
+  area: {
+    intro: "Startpunkt Hamburg, Zusteige auf der Strecke möglich. Typische Reiserichtungen:",
+    cities: ["Berlin", "Ostsee", "Lübeck", "Kopenhagen", "Hannover", "Bremen", "Sylt", "Prag", "Südtirol", "Amsterdam"],
+  },
+  advantages: [
+    "Komfortbusse mit WC und Bordküche",
+    "Bus steht am Zielort zur Verfügung",
+    "Fähr- und Mautkosten im Festpreis",
+    "Fahrerteam bei langen Etappen",
+    "Zusteige entlang der Route kostenfrei",
+    "Erfahrung mit Sport- und Musikgepäck",
+  ],
+  faqs: [
+    { q: "Wie viele Kilometer schafft der Bus an einem Tag?", a: "Realistisch sind rund 600 bis 700 Kilometer mit einem Fahrer inklusive Pausen. Darüber hinaus planen wir ein Fahrerteam ein." },
+    { q: "Können wir eigenes Catering mitnehmen?", a: "Ja. Kühlmöglichkeiten sind im Fernbus vorhanden; bitte verzichten Sie auf Glasflaschen." },
+    { q: "Wie viel Gepäck passt in den Bus?", a: "Bei einem Fernreisebus rechnen Sie mit etwa einem großen Koffer plus Handgepäck pro Person. Für mehr Volumen planen wir einen Anhänger ein." },
+    { q: "Ist eine Anzahlung nötig?", a: "Bei Mehrtagesreisen erheben wir üblicherweise eine Anzahlung; der Restbetrag wird nach der Reise per Rechnung fällig." },
+    { q: "Was passiert bei Krankheit des Fahrers?", a: "Wir stellen Ersatz aus dem eigenen Fahrerpool. Die Reise wird dadurch nicht abgesagt." },
+  ],
+  links: [
+    { label: "Bus mieten Hamburg", path: "/bus-mieten-hamburg", text: "Tagesfahrten und Transfers ab Hamburg." },
+    { label: "Busvermietung Hamburg", path: "/busvermietung-hamburg", text: "Konditionen und Fuhrpark im Detail." },
+    { label: "Gruppenreisen", path: "/gruppenreisen", text: "Komplette Gruppenreisen mit Hotel und Programm." },
+    { label: "Schulfahrten", path: "/schulfahrten", text: "Klassenfahrten sicher und günstig organisieren." },
+    { label: "Reisebus mit Fahrer", path: "/reisebus-mit-fahrer", text: "Wie Lenkzeiten und Fahrerplanung funktionieren." },
+  ],
+  ctaTitle: "Reisebus ab Hamburg anfragen",
+  ctaText: "Nennen Sie Ziel und Zeitraum – wir planen die Etappen und schicken Ihnen ein Festpreisangebot.",
+};
+
+export const busvermietungHamburg: LandingContent = {
+  slug: "busvermietung-hamburg",
+  seoTitle: "Busvermietung Hamburg – Preise, Flotte, Konditionen",
+  seoDescription:
+    "Busvermietung Hamburg: Fuhrpark, Ausstattung, Stornofristen und Festpreise transparent erklärt. Bus mit Fahrer für Gruppen jetzt unverbindlich anfragen.",
+  h1: "Busvermietung in Hamburg",
+  heroKicker: "Transparente Konditionen im Norden",
+  heroText:
+    "Was kostet ein Bus, was ist enthalten, wie lange kann ich stornieren? Diese Seite beantwortet die praktischen Fragen zur Busvermietung in Hamburg – ohne Kleingedrucktes.",
+  heroImage: "heroBus",
+  heroAlt: "Reisebusse von Metropol Tours in Hamburg bereit zur Abfahrt",
+  heroFacts: ["Festpreis statt Kilometerabrechnung", "Storno gestaffelt und schriftlich", "Zahlungsziel für Firmenkunden"],
+  locality: "Hamburg",
+  why: [
+    { title: "Ein Preis, alle Leistungen", text: "Fahrer, Kraftstoff, Maut, Versicherung und Reinigung stecken im Angebot. Es gibt keine Kilometerpauschale, die nachträglich abgerechnet wird." },
+    { title: "Verbindliche Fristen", text: "Stornofristen und Zahlungsziele stehen im Angebot – Sie müssen nicht in den AGB suchen." },
+    { title: "Regionale Verfügbarkeit", text: "Weil wir in Hamburg und im Umland regelmäßig fahren, können wir auch kurzfristige Anfragen aus der Region oft bedienen." },
+    { title: "Für Firmen und Institutionen", text: "Sammelrechnung, Kostenstellen und Rahmenverträge sind selbstverständlich möglich." },
+  ],
+  sections: [
+    {
+      h2: "Konditionen der Busvermietung in Hamburg",
+      body: [
+        "Wir vermieten ausschließlich mit Fahrer. Sie buchen also eine Beförderungsleistung und keine reine Fahrzeugmiete – das ist für Sie einfacher, weil Versicherung, Konzession, Lenkzeitenkontrolle und Wartung vollständig bei uns liegen.",
+        "Der Mietzeitraum startet am vereinbarten Abholort in Hamburg und endet mit der Rückkehr. Wartezeiten am Zielort sind eingeplant. Kommt es vor Ort zu Programmänderungen, prüfen wir kurzfristig, ob die Lenkzeit des Fahrers die Verlängerung zulässt.",
+      ],
+      blocks: [
+        { h3: "Stornofristen", text: "Bis 30 Tage vor Fahrt in der Regel kostenfrei, danach gestaffelt nach Zeitpunkt. Ihre konkreten Fristen stehen im Angebot." },
+        { h3: "Zahlungsmodalitäten", text: "Firmen, Schulen, Vereine und Kommunen erhalten Rechnung mit Zahlungsziel; bei Mehrtagesfahrten fällt eine Anzahlung an." },
+      ],
+    },
+    {
+      h2: "Welche Fahrzeuge stehen in Hamburg zur Verfügung?",
+      body: [
+        "Unsere Flotte reicht vom 8-Sitzer bis zum Doppelstockbus mit 79 Plätzen. Für die Hamburger Innenstadt und Ziele mit enger Zufahrt empfehlen wir Midibusse; für Küstenausflüge und Mehrtagesreisen den klassischen Reisebus oder die Fernklasse.",
+        "Sonderausstattungen wie Rollstuhlplätze, Fahrradanhänger oder erhöhter Gepäckraum sind verfügbar, aber begrenzt. Melden Sie solche Anforderungen bitte früh an, damit wir das passende Fahrzeug reservieren können.",
+      ],
+    },
+  ],
+  fleet: [
+    { name: "Kleinbus", seats: "8–19 Sitze", text: "Transfers zum Flughafen Hamburg, kleine Delegationen." },
+    { name: "Midibus", seats: "20–35 Sitze", text: "Innerstädtische Einsätze und Ausflüge ins Umland." },
+    { name: "Reisebus", seats: "48–57 Sitze", text: "Standard für Gruppen- und Vereinsfahrten." },
+    { name: "Doppelstockbus", seats: "bis 79 Sitze", text: "Auf Anfrage für Großveranstaltungen." },
+  ],
+  occasions: [
+    { title: "Messen & Events", text: "Shuttle zu den Messehallen und zum CCH im Pendelbetrieb." },
+    { title: "Werksverkehr", text: "Regelmäßige Schicht- und Standorttransporte im Rahmenvertrag." },
+    { title: "Schulen & Hochschulen", text: "Exkursionen und Praxistage mit Sammelrechnung." },
+    { title: "Vereine", text: "Auswärtsfahrten mit Platz für Ausrüstung und Fangruppen." },
+  ],
+  process: [
+    { title: "1. Bedarf schildern", text: "Einzelfahrt oder wiederkehrender Bedarf, mit oder ohne Standzeit." },
+    { title: "2. Angebot inkl. Konditionen", text: "Festpreis, Leistungen und Fristen schriftlich und nachvollziehbar." },
+    { title: "3. Auftrag erteilen", text: "Kurze Freigabe per E-Mail genügt." },
+    { title: "4. Fahrt & Rechnung", text: "Durchführung wie vereinbart, Rechnung mit Ihrer Kostenstelle." },
+  ],
+  area: {
+    intro: "Bereitstellung ab Hamburg, Einsätze im gesamten Norden und darüber hinaus:",
+    cities: ["Hamburg", "Norderstedt", "Ahrensburg", "Reinbek", "Pinneberg", "Wedel", "Lüneburg", "Stade", "Buxtehude", "Lübeck"],
+  },
+  advantages: [
+    "Vermietung immer mit eigenem Fahrpersonal",
+    "Festpreis ohne Nachberechnung",
+    "Schriftliche Storno- und Zahlungsbedingungen",
+    "Rahmenverträge für wiederkehrende Fahrten",
+    "Fahrzeuge von 8 bis 79 Plätzen",
+    "Kurzfristige Verfügbarkeit im Norden",
+  ],
+  faqs: [
+    { q: "Kann ich einen Bus ohne Fahrer mieten?", a: "Nein, wir vermieten grundsätzlich mit Fahrer. Das schließt Versicherung, Wartung und Lenkzeitenkontrolle ein." },
+    { q: "Gilt der Preis auch bei Stau im Elbtunnel?", a: "Ja, der Festpreis bleibt bestehen. Nur bei erheblichen Programmänderungen vor Ort sprechen wir zusätzliche Stunden ab." },
+    { q: "Erhalten wir eine Rechnung mit ausgewiesener Umsatzsteuer?", a: "Ja. Die Rechnung enthält alle steuerlich notwendigen Angaben und kann auf Ihre Kostenstelle ausgestellt werden." },
+    { q: "Wie früh sollte ich in der Saison anfragen?", a: "Für Mai bis September und rund um den Hafengeburtstag empfehlen wir vier bis acht Wochen Vorlauf." },
+    { q: "Sind Nachtfahrten möglich?", a: "Ja, im Rahmen der gesetzlichen Lenk- und Ruhezeiten. Bei sehr späten Rückfahrten planen wir gegebenenfalls einen zweiten Fahrer ein." },
+  ],
+  links: [
+    { label: "Bus mieten Hamburg", path: "/bus-mieten-hamburg", text: "Schnellster Weg zum Angebot für Hamburg." },
+    { label: "Reisebus mieten Hamburg", path: "/reisebus-mieten-hamburg", text: "Komfortbusse für Mehrtagesfahrten." },
+    { label: "Shuttle-Service", path: "/shuttle-service", text: "Pendelverkehr für Events und Firmen." },
+    { label: "Bus Charter", path: "/bus-charter", text: "Charterlösungen für Veranstalter und Agenturen." },
+    { label: "Bus mieten", path: "/bus-mieten", text: "Übersicht über alle Standorte und Leistungen." },
+  ],
+  ctaTitle: "Angebot für Hamburg erhalten",
+  ctaText: "Schildern Sie Ihren Bedarf – Sie bekommen Festpreis und Konditionen schriftlich.",
 };

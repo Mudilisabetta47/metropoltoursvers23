@@ -6,8 +6,10 @@ import {
   busvermietungHannover,
   busMietenBremen,
   reisebusMietenBremen,
-  busvermietungBremen,
+busvermietungBremen,
   busMietenHamburg,
+  reisebusMietenHamburg,
+  busvermietungHamburg,
 } from "./standorte";
 import {
   busMieten,
@@ -30,8 +32,10 @@ export const landingPages: LandingContent[] = [
   busvermietungHannover,
   busMietenBremen,
   reisebusMietenBremen,
-  busvermietungBremen,
+busvermietungBremen,
   busMietenHamburg,
+  reisebusMietenHamburg,
+  busvermietungHamburg,
   reisebusMitFahrer,
   gruppenreisen,
   schulfahrten,
