@@ -11,6 +11,7 @@ import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/brand/Logo";
+import CharterTripTracker from "@/components/tracking/CharterTripTracker";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 export default function TrackTripPage() {
