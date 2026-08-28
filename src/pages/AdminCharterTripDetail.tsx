@@ -405,7 +405,7 @@ export default function AdminCharterTripDetail() {
                 <div className="text-xs text-zinc-400 space-y-1">
                   <div>Position: {Number(position.lat).toFixed(5)}, {Number(position.lng).toFixed(5)}</div>
                   {position.speed_kmh != null && <div>Geschwindigkeit: {Math.round(position.speed_kmh)} km/h</div>}
-                  {position.recorded_at && <div>Letztes Update: {format(new Date(position.recorded_at), "dd.MM.yyyy HH:mm:ss", { locale: de })}</div>}
+                  {position.updated_at && <div>Letztes Update: {format(new Date(position.updated_at), "dd.MM.yyyy HH:mm:ss", { locale: de })}</div>}
                 </div>
               )}
               {trackingUrl && (
