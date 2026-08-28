@@ -109,20 +109,81 @@ function sha1Hex(data: Uint8Array) {
   return md.digest().toHex();
 }
 
+// Secrets können als reines Base64, als PEM-Block oder mit \n / Whitespace kommen.
+// Ohne Normalisierung landet Müll in asn1.fromDer → "Only 8, 16, 24, or 32 bits supported: N".
+function normalizeBase64(raw: string): string {
+  let s = (raw ?? "").trim();
+  s = s.replace(/\\n/g, "\n");
+  if (s.includes("-----BEGIN")) {
+    s = s.replace(/-----BEGIN[^-]+-----/g, "").replace(/-----END[^-]+-----/g, "");
+  }
+  s = s.replace(/\s+/g, "");
+  // URL-safe Base64 tolerieren
+  s = s.replace(/-/g, "+").replace(/_/g, "/");
+  const pad = s.length % 4;
+  if (pad === 2) s += "==";
+  else if (pad === 3) s += "=";
+  else if (pad === 1) throw new Error("Base64-Wert ist unvollständig (ungültige Länge)");
+  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(s)) throw new Error("Wert enthält ungültige Base64-Zeichen");
+  return s;
+}
+
+function base64ToBinaryString(raw: string, label: string): string {
+  let b64: string;
+  try {
+    b64 = normalizeBase64(raw);
+  } catch (e: any) {
+    throw new Error(`${label}: ${e.message}`);
+  }
+  try {
+    return atob(b64);
+  } catch {
+    throw new Error(`${label}: Base64 konnte nicht dekodiert werden`);
+  }
+}
+
+function loadWwdrCertificate(): any {
+  const raw = (WWDR_PEM ?? "").trim().replace(/\\n/g, "\n");
+  if (raw.includes("-----BEGIN CERTIFICATE-----")) {
+    return forge.pki.certificateFromPem(raw);
+  }
+  // .cer-Datei als Base64 (DER) hinterlegt
+  const der = base64ToBinaryString(raw, "APPLE_WWDR_PEM");
+  return forge.pki.certificateFromAsn1(forge.asn1.fromDer(der));
+}
+
 function signManifest(manifest: Uint8Array): Uint8Array {
-  const p12Der = forge.util.decode64(P12_B64);
-  const p12Asn1 = forge.asn1.fromDer(p12Der);
-  const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, P12_PASS || "");
+  const p12Der = base64ToBinaryString(P12_B64, "APPLE_PASS_CERT_P12");
+  if (p12Der.charCodeAt(0) !== 0x30) {
+    throw new Error("APPLE_PASS_CERT_P12 ist keine gültige .p12/PKCS#12-Datei (Base64 der Binärdatei erwartet)");
+  }
+  let p12: any;
+  try {
+    const p12Asn1 = forge.asn1.fromDer(p12Der);
+    p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, P12_PASS || "");
+  } catch (e: any) {
+    throw new Error(`.p12 konnte nicht gelesen werden (falsches Passwort oder beschädigte Datei): ${e?.message ?? e}`);
+  }
+
   let cert: any = null;
   let key: any = null;
+  const certs: any[] = [];
   for (const safeContents of p12.safeContents) {
     for (const bag of safeContents.safeBags) {
-      if (bag.type === forge.pki.oids.certBag && bag.cert && !cert) cert = bag.cert;
+      if (bag.cert) certs.push(bag.cert);
       if ((bag.type === forge.pki.oids.pkcs8ShroudedKeyBag || bag.type === forge.pki.oids.keyBag) && bag.key) key = bag.key;
     }
   }
+  if (key) {
+    const modulus = key.n?.toString(16);
+    cert = certs.find((c) => c.publicKey?.n?.toString(16) === modulus) ?? null;
+  }
+  if (!cert) {
+    cert = certs.find((c) => String(c.subject?.getField("CN")?.value ?? "").includes("Pass Type ID")) ?? certs[0] ?? null;
+  }
   if (!cert || !key) throw new Error("Pass-Zertifikat oder privater Schlüssel konnte nicht aus der .p12 gelesen werden");
-  const wwdr = forge.pki.certificateFromPem(WWDR_PEM);
+
+  const wwdr = loadWwdrCertificate();
 
   const p7 = forge.pkcs7.createSignedData();
   p7.content = forge.util.createBuffer(bytesToBinary(manifest));
@@ -135,13 +196,14 @@ function signManifest(manifest: Uint8Array): Uint8Array {
     authenticatedAttributes: [
       { type: forge.pki.oids.contentType, value: forge.pki.oids.data },
       { type: forge.pki.oids.messageDigest },
-      { type: forge.pki.oids.signingTime, value: new Date().toISOString() },
+      { type: forge.pki.oids.signingTime, value: new Date() },
     ],
   });
   p7.sign({ detached: true });
   const der = forge.asn1.toDer(p7.toAsn1()).getBytes();
   return binaryToBytes(der);
 }
+
 
 // ---------- Bilder ----------
 let imageCache: Record<string, Uint8Array> | null = null;
