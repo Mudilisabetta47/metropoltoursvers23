@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { MapPin, Clock, Bus, Users, Phone, ExternalLink, ChevronRight, User, Accessibility, Luggage, Star } from "lucide-react";
+import { MapPin, Clock, Bus, Users, Phone, ExternalLink, ChevronRight, User, Accessibility, Luggage, Star, Play, Square, Radio, CalendarClock } from "lucide-react";
 import { format, isToday, isTomorrow } from "date-fns";
 import { de } from "date-fns/locale";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { STOP_TYPE_LABELS } from "@/lib/charterTrips";
 
 interface Trip {
   id: string;
