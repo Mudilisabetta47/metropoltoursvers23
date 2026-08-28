@@ -112,6 +112,11 @@ export default function TrackTripPage() {
     return <div className="min-h-screen bg-white"><div className="h-2 bg-emerald-500" /><div className="p-8"><Skeleton className="h-96 w-full" /></div></div>;
   }
 
+  if (charterId) {
+    return <CharterTripTracker tripId={charterId} registry={registry} />;
+  }
+
+
   if (!trip) {
     return (
       <div className="min-h-screen bg-white">
