@@ -129,11 +129,25 @@ function normalizeBase64(raw: string): string {
 }
 
 function base64ToBinaryString(raw: string, label: string): string {
+  const src = (raw ?? "").trim();
+  // Fall A: Wert wurde als Rohbinär (latin1) hinterlegt -> direkt verwenden
+  if (src.charCodeAt(0) === 0x30 && /[\x00-\x08\x0e-\x1f\x80-\xff]/.test(src)) return src;
+  // Fall B: Hex-String
+  const hex = src.replace(/\s+/g, "");
+  if (/^[0-9a-fA-F]+$/.test(hex) && hex.length % 2 === 0 && hex.length > 64 && hex.slice(0, 2) === "30") {
+    let out = "";
+    for (let i = 0; i < hex.length; i += 2) out += String.fromCharCode(parseInt(hex.slice(i, i + 2), 16));
+    return out;
+  }
+  // Fall C: Base64 (ggf. PEM-verpackt)
   let b64: string;
   try {
-    b64 = normalizeBase64(raw);
+    b64 = normalizeBase64(src);
   } catch (e: any) {
-    throw new Error(`${label}: ${e.message}`);
+    const invalid = [...new Set(src.replace(/[A-Za-z0-9+/=\s-]/g, "").split(""))]
+      .map((c) => c.charCodeAt(0)).slice(0, 10);
+    console.error(`${label} ungültig`, { length: src.length, invalidCharCodes: invalid });
+    throw new Error(`${label}: ${e.message} (Länge ${src.length}, ungültige Zeichencodes: ${invalid.join(",")})`);
   }
   try {
     return atob(b64);
@@ -141,6 +155,7 @@ function base64ToBinaryString(raw: string, label: string): string {
     throw new Error(`${label}: Base64 konnte nicht dekodiert werden`);
   }
 }
+
 
 function loadWwdrCertificate(): any {
   const raw = (WWDR_PEM ?? "").trim().replace(/\\n/g, "\n");
