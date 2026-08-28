@@ -66,12 +66,12 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.metours.de/bus-mieten-hamburg</loc>
+    <loc>https://www.metours.de/reisebus-mieten-bremen</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.metours.de/reisebus-mieten-bremen</loc>
+    <loc>https://www.metours.de/bus-mieten-hamburg</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -146,12 +146,12 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.metours.de/wochenendtrips/prag</loc>
+    <loc>https://www.metours.de/wochenendtrips/kopenhagen</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.metours.de/wochenendtrips/kopenhagen</loc>
+    <loc>https://www.metours.de/wochenendtrips/prag</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
