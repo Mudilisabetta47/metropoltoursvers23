@@ -235,7 +235,7 @@ async function loadImages(): Promise<Record<string, Uint8Array>> {
   const out: Record<string, Uint8Array> = {};
   let logo: Uint8Array | null = null;
   try {
-    const res = await fetch(`${SITE_URL}/brand/metropol-logo-light.png`);
+    const res = await fetch(`${SITE_URL}/brand/metropol-logo-white.png`);
     if (res.ok) {
       const buf = new Uint8Array(await res.arrayBuffer());
       if (isPng(buf)) logo = buf;
