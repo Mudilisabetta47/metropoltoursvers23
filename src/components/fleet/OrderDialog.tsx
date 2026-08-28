@@ -90,6 +90,9 @@ const AddressField = ({ label, token, value, onChange }: AddressFieldProps) => {
 };
 
 const emptyAddr = { name: "", address: "", lat: null as number | null, lng: null as number | null };
+/** Zwischenhalt inkl. Planzeit und Art – wird als echte Haltestelle an den Fahrer übergeben. */
+const emptyStop = { ...emptyAddr, time: "", type: "stop", dwell: 5 };
+type StopDraft = typeof emptyStop;
 
 interface OrderDialogProps {
   open: boolean;
