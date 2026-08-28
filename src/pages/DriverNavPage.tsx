@@ -591,7 +591,7 @@ const DriverNavPage = () => {
       </div>
 
       {/* Kennzahlen */}
-      <div className="shrink-0 grid grid-cols-3 gap-px bg-zinc-800">
+      <div className="shrink-0 grid grid-cols-4 gap-px bg-zinc-800">
         <div className="bg-zinc-900 p-2.5 text-center">
           <p className="text-[10px] text-zinc-400 flex items-center justify-center gap-1"><Gauge className="w-3 h-3" />Rest</p>
           <p className="text-lg font-bold text-white">{remainingKm != null ? formatKm(remainingKm) : "–"}</p>
@@ -602,8 +602,39 @@ const DriverNavPage = () => {
         </div>
         <div className="bg-zinc-900 p-2.5 text-center">
           <p className="text-[10px] text-zinc-400">Ankunft</p>
-          <p className="text-lg font-bold text-emerald-400">{remainingMin != null ? etaFrom(remainingMin) : "–"}</p>
+          <p className="text-lg font-bold text-emerald-400">
+            {remainingMin != null ? etaFrom(remainingMin + delayMinutes) : "–"}
+          </p>
         </div>
+        <button className="bg-zinc-900 p-2.5 text-center" onClick={() => setSheetTab("duty")}>
+          <p className="text-[10px] text-zinc-400 flex items-center justify-center gap-1"><Hourglass className="w-3 h-3" />Bis Pause</p>
+          <p className={cn(
+            "text-lg font-bold",
+            compliance.level === "critical" ? "text-red-400" : compliance.level === "warn" ? "text-amber-300" : "text-white",
+          )}>
+            {compliance.state === "break" ? formatHm(compliance.currentBreakSeconds) : formatHm(compliance.secondsToBreak)}
+          </p>
+        </button>
+      </div>
+
+      {/* Schnellzugriffe */}
+      <div className="shrink-0 grid grid-cols-4 gap-2 px-3 pt-3 bg-zinc-900">
+        <Button variant="outline" className="h-12 flex-col gap-0.5 text-[11px]" onClick={() => setSheetTab("stops")}>
+          <ListOrdered className="w-4 h-4" /> Halte
+        </Button>
+        <Button variant="outline" className="h-12 flex-col gap-0.5 text-[11px]" onClick={() => setSheetTab("tolls")}>
+          <Coins className="w-4 h-4" /> Maut
+        </Button>
+        <Button
+          variant="outline"
+          className={cn("h-12 flex-col gap-0.5 text-[11px]", delayMinutes > 0 && "border-amber-500 text-amber-300")}
+          onClick={() => setSheetTab("delay")}
+        >
+          <Timer className="w-4 h-4" /> Verspätung
+        </Button>
+        <Button variant="outline" className="h-12 flex-col gap-0.5 text-[11px]" onClick={() => setSheetTab("event")}>
+          <AlertTriangle className="w-4 h-4" /> Ereignis
+        </Button>
       </div>
 
       {/* Aktionsleiste */}
@@ -622,9 +653,56 @@ const DriverNavPage = () => {
         </Button>
       </div>
 
+      {/* Halte, Maut, Verspätung, Ereignisse und Lenkzeiten */}
+      <Sheet open={sheetTab !== null} onOpenChange={(o) => !o && setSheetTab(null)}>
+        <SheetContent side="bottom" className="bg-[#0f1218] border-zinc-800 h-[85vh] overflow-y-auto">
+          <SheetHeader className="text-left">
+            <SheetTitle className="text-white">Fahrtinformationen</SheetTitle>
+          </SheetHeader>
+          <Tabs value={sheetTab ?? "stops"} onValueChange={(v) => setSheetTab(v as SheetTab)} className="mt-3">
+            <TabsList className="grid grid-cols-5 bg-zinc-900 h-auto">
+              <TabsTrigger value="stops" className="text-xs py-2">Halte</TabsTrigger>
+              <TabsTrigger value="tolls" className="text-xs py-2">Maut</TabsTrigger>
+              <TabsTrigger value="delay" className="text-xs py-2">Verspätung</TabsTrigger>
+              <TabsTrigger value="event" className="text-xs py-2">Ereignis</TabsTrigger>
+              <TabsTrigger value="duty" className="text-xs py-2">Lenkzeit</TabsTrigger>
+            </TabsList>
+            <TabsContent value="stops" className="mt-4">
+              <StopsPanel
+                stops={stops}
+                delayMinutes={delayMinutes}
+                onArrive={stopArrive}
+                onDepart={stopDepart}
+                onNavigate={navigateToStop}
+                busy={busy}
+              />
+            </TabsContent>
+            <TabsContent value="tolls" className="mt-4">
+              <TollPanel tolls={tolls} dataAvailable={activeOrder?.toll_data_available ?? null} />
+            </TabsContent>
+            <TabsContent value="delay" className="mt-4">
+              <DelaySheet currentDelay={delayMinutes} onSubmit={submitDelay} busy={busy} />
+            </TabsContent>
+            <TabsContent value="event" className="mt-4">
+              <EventSheet onSubmit={submitEvent} busy={busy} />
+            </TabsContent>
+            <TabsContent value="duty" className="mt-4">
+              <DrivingTimePanel
+                compliance={compliance}
+                multiDriver={!!dutyToday?.multi_driver}
+                onToggleMultiDriver={(v) => setMultiDriver(v)}
+                onStartBreak={() => act(async () => { await stopDriving({ startBreak: true }); await logEvent("break_start"); })}
+                onEndBreak={() => act(async () => { await startDriving(); await logEvent("break_end"); })}
+              />
+            </TabsContent>
+          </Tabs>
+        </SheetContent>
+      </Sheet>
+
       <div className="shrink-0 bg-zinc-950 px-3 py-1.5 text-center">
         <Link to="/admin/driver" className="text-[11px] text-zinc-500">← Zurück zum Fahrer-Cockpit (FIS)</Link>
       </div>
+
     </div>
   );
 };
