@@ -252,6 +252,11 @@ export default function AdminTrips() {
                       <Link to={`/verfolge/${encodeURIComponent(t.trip_uid)}`} target="_blank">
                         <Button size="sm" variant="ghost" className="text-zinc-400 hover:text-white"><ExternalLink className="w-3 h-3 mr-1" />Verfolgen</Button>
                       </Link>
+                      {t.source_type === "charter_trip" && (
+                        <Link to={`/admin/fahrten/${t.source_id}`}>
+                          <Button size="sm" variant="ghost" className="text-zinc-400 hover:text-white">Details</Button>
+                        </Link>
+                      )}
                       <Button size="sm" onClick={() => openEdit(t)} className={t.current_delay_min > 0 ? "bg-red-600 hover:bg-red-700" : "bg-emerald-600 hover:bg-emerald-700"}>
                         <Bell className="w-3 h-3 mr-1" />Verspätung melden
                       </Button>
