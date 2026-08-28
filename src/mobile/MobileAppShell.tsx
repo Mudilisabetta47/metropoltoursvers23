@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Compass, Map, Ticket, User } from "lucide-react";
+import { Compass, Map, Ticket, User, Luggage } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { nativeHaptic } from "@/mobile/lib/native";
 import { NativePullToRefresh } from "@/mobile/components/NativePullToRefresh";
@@ -9,7 +9,8 @@ import { NativePullToRefresh } from "@/mobile/components/NativePullToRefresh";
 const TABS = [
   { to: "/app", label: "Entdecken", icon: Compass, end: true },
   { to: "/app/reisen", label: "Reisen", icon: Map },
-  { to: "/app/meine-reisen", label: "Meine Reisen", icon: Ticket },
+  { to: "/app/tickets", label: "Tickets", icon: Ticket },
+  { to: "/app/meine-reisen", label: "Buchungen", icon: Luggage },
   { to: "/app/profil", label: "Profil", icon: User },
 ];
 
