@@ -323,6 +323,8 @@ const App = () => (
              <Route path="/admin/lines" element={<AdminLines />} />
              <Route path="/admin/line-trips" element={<AdminLineTrips />} />
              <Route path="/admin/trips" element={<AdminTrips />} />
+             <Route path="/admin/fahrten" element={<AdminCharterTrips />} />
+             <Route path="/admin/fahrten/:tripId" element={<AdminCharterTripDetail />} />
               <Route path="/verfolge" element={<TrackTripLandingPage />} />
               <Route path="/verfolge/:tripNumber" element={<TrackTripPage />} />
               <Route path="/fahrer/navi" element={<DriverNavPage />} />
