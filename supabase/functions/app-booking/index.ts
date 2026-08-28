@@ -60,7 +60,103 @@ serve(async (req) => {
     const db = admin();
 
     /* ---------------------------------------------------------- CREATE */
+    /* ----------------------------------------------------- CREATE TOUR */
+    if (action === "create" && str(body?.type, 20) === "tour") {
+      const tourId = str(body?.tourId, 40);
+      const tourDateId = str(body?.tourDateId, 40);
+      const tariffId = str(body?.tariffId, 40);
+      const pickupStopId = str(body?.pickupStopId, 40);
+      const participants = Math.max(1, Math.min(20, Number(body?.participants) || 1));
+      const passengers = Array.isArray(body?.passengers) ? body.passengers.slice(0, 20) : [];
+
+      if (![tourId, tourDateId, tariffId].every((id) => UUID.test(id))) {
+        return json({ error: "Ungültige Reiseauswahl" }, 400);
+      }
+      if (passengers.length !== participants) {
+        return json({ error: "Bitte alle Reisenden erfassen" }, 400);
+      }
+
+      const cleanPassengers = passengers.map((p: any) => ({
+        first_name: str(p?.firstName, 80),
+        last_name: str(p?.lastName, 80),
+        date_of_birth: str(p?.dateOfBirth, 10) || null,
+      }));
+      if (cleanPassengers.some((p) => !p.first_name || !p.last_name || !p.date_of_birth)) {
+        return json({ error: "Bitte Name und Geburtsdatum aller Reisenden angeben" }, 400);
+      }
+
+      const [{ data: tourDate }, { data: tariff }, { data: pickup }] = await Promise.all([
+        db.from("tour_dates").select("*").eq("id", tourDateId).eq("tour_id", tourId).maybeSingle(),
+        db.from("tour_tariffs").select("*").eq("id", tariffId).eq("tour_id", tourId).maybeSingle(),
+        UUID.test(pickupStopId)
+          ? db.from("tour_pickup_stops").select("id, surcharge").eq("id", pickupStopId).maybeSingle()
+          : Promise.resolve({ data: null } as any),
+      ]);
+      if (!tourDate || !tariff) return json({ error: "Reisetermin nicht gefunden" }, 404);
+
+      const basePrice =
+        tariff.slug === "smart"
+          ? tourDate.price_smart ?? tourDate.price_basic
+          : tariff.slug === "flex"
+            ? tourDate.price_flex ?? tourDate.price_basic
+            : tariff.slug === "business"
+              ? tourDate.price_business ?? tourDate.price_basic
+              : tourDate.price_basic;
+      const perPerson = Number(basePrice ?? 0) + Number(tariff.price_modifier ?? 0);
+      const surcharge = Number(pickup?.surcharge ?? 0);
+      const total = Number(((perPerson + surcharge) * participants).toFixed(2));
+      if (!(total > 0)) return json({ error: "Preis konnte nicht ermittelt werden" }, 400);
+
+      const { data: reserved, error: reserveErr } = await db.rpc("reserve_tour_seats", {
+        p_tour_date_id: tourDateId,
+        p_seats: participants,
+      });
+      if (reserveErr) throw reserveErr;
+      if (!reserved) return json({ error: "Nicht genügend freie Plätze" }, 409);
+
+      const contactEmail = str(body?.contactEmail, 160).toLowerCase() || user.email || "";
+      const { data: bookingNumber, error: bnErr } = await db.rpc("next_booking_number");
+      if (bnErr) throw bnErr;
+
+      const { data: tourBooking, error: tbErr } = await db
+        .from("tour_bookings")
+        .insert({
+          booking_number: bookingNumber,
+          tour_id: tourId,
+          tour_date_id: tourDateId,
+          tariff_id: tariffId,
+          pickup_stop_id: UUID.test(pickupStopId) ? pickupStopId : null,
+          user_id: user.id,
+          participants,
+          passenger_details: cleanPassengers,
+          contact_first_name: cleanPassengers[0].first_name,
+          contact_last_name: cleanPassengers[0].last_name,
+          contact_email: contactEmail,
+          contact_phone: str(body?.contactPhone, 40) || null,
+          base_price: perPerson,
+          pickup_surcharge: surcharge,
+          total_price: total,
+          status: "pending",
+          payment_status: "unpaid",
+          payment_method: "stripe",
+          booking_type: "app",
+        })
+        .select("id, booking_number, total_price")
+        .single();
+      if (tbErr) throw tbErr;
+
+      return json({
+        type: "tour",
+        bookingNumber: tourBooking.booking_number,
+        bookingIds: [tourBooking.id],
+        unitPrice: perPerson + surcharge,
+        total,
+      });
+    }
+
+    /* ---------------------------------------------------------- CREATE */
     if (action === "create") {
+
       const tripId = str(body?.tripId, 40);
       const originStopId = str(body?.originStopId, 40);
       const destinationStopId = str(body?.destinationStopId, 40);
