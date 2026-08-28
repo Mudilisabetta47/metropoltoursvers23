@@ -2,6 +2,14 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type TripCategory = "line" | "charter" | "private" | "group" | "special" | "maiden";
 
+export const CHARTER_SOURCE_TYPES = [
+  "charter_trip",
+  "private_trip",
+  "group_trip",
+  "special_trip",
+  "maiden_trip",
+];
+
 export const TRIP_CATEGORY_LABELS: Record<string, string> = {
   line: "Linienfahrt",
   charter: "Individuelle Busreise",
@@ -215,8 +223,8 @@ export async function getTripUid(tripId: string): Promise<string | null> {
   const { data } = await supabase
     .from("trip_registry")
     .select("trip_uid")
-    .eq("source_type", "charter_trip")
     .eq("source_id", tripId)
+    .in("source_type", CHARTER_SOURCE_TYPES)
     .maybeSingle();
   return data?.trip_uid || null;
 }

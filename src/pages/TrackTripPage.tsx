@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CHARTER_SOURCE_TYPES } from "@/lib/charterTrips";
 import { useParams, Link } from "react-router-dom";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -43,7 +44,7 @@ export default function TrackTripPage() {
         t = lt;
       }
       // Individuelle Fahrten (Charter/Gruppe/Sonderfahrt) haben eine eigene Ansicht
-      if (reg?.source_type === "charter_trip") {
+      if (reg && CHARTER_SOURCE_TYPES.includes(reg.source_type)) {
         setRegistry(reg);
         setCharterId(reg.source_id);
         setLoading(false);

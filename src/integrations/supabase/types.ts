@@ -7015,6 +7015,7 @@ export type Database = {
           source_id: string
           source_type: string
           status: string
+          trip_category: string | null
           trip_uid: string
           updated_at: string
         }
@@ -7031,6 +7032,7 @@ export type Database = {
           source_id: string
           source_type: string
           status?: string
+          trip_category?: string | null
           trip_uid: string
           updated_at?: string
         }
@@ -7047,10 +7049,19 @@ export type Database = {
           source_id?: string
           source_type?: string
           status?: string
+          trip_category?: string | null
           trip_uid?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "trip_registry_source_type_fkey"
+            columns: ["source_type"]
+            isOneToOne: false
+            referencedRelation: "trip_source_types"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       trip_schedule_stops: {
         Row: {
@@ -7117,6 +7128,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      trip_source_types: {
+        Row: {
+          code: string
+          created_at: string
+          label: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          label: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          label?: string
+        }
+        Relationships: []
       }
       trips: {
         Row: {
