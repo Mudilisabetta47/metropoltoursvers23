@@ -8,8 +8,9 @@ import { LogoLight } from "@/components/brand/Logo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMobileTours } from "@/mobile/hooks/useMobileTours";
 import { useMyTrips } from "@/mobile/hooks/useMyTrips";
-import { TourCardMobile, money } from "@/mobile/components/TourCardMobile";
+import { TourCardMobile } from "@/mobile/components/TourCardMobile";
 import { MobileTourSearch } from "@/mobile/components/MobileTourSearch";
+import { useAppHomeContent } from "@/mobile/hooks/useAppContent";
 
 const fade = {
   hidden: { opacity: 0, y: 18 },
@@ -23,6 +24,7 @@ const fade = {
 export default function AppHome() {
   const { data: tours, isLoading } = useMobileTours();
   const { trips } = useMyTrips();
+  const { content: cms } = useAppHomeContent();
 
   const featured = useMemo(
     () => (tours ?? []).filter((t) => t.is_featured || t.tour_dates?.length).slice(0, 8),
@@ -57,7 +59,10 @@ export default function AppHome() {
   }, [trips]);
 
   const heroImage =
-    featured[0]?.hero_image_url || featured[0]?.image_url || "/brand/metropol-logo.png";
+    cms.heroImageUrl ||
+    featured[0]?.hero_image_url ||
+    featured[0]?.image_url ||
+    "/brand/metropol-logo.png";
 
   return (
     <div className="pb-6">
@@ -81,7 +86,7 @@ export default function AppHome() {
               animate="show"
               className="max-w-[15ch] text-[34px] font-bold leading-[1.06] tracking-tight text-white"
             >
-              Deine nächste Reise beginnt hier.
+              {cms.heroTitle}
             </motion.h1>
             <motion.p
               variants={fade}
@@ -90,7 +95,7 @@ export default function AppHome() {
               animate="show"
               className="mt-3 max-w-[32ch] text-sm text-white/80"
             >
-              Handverlesene Busreisen durch Europa – komfortabel, sicher und persönlich begleitet.
+              {cms.heroSubtitle}
             </motion.p>
 
             <motion.div
@@ -106,8 +111,23 @@ export default function AppHome() {
         </div>
       </section>
 
+      {cms.bannerEnabled && (cms.bannerTitle || cms.bannerText) && (
+        <div className="px-5 pt-5">
+          <Link
+            to={cms.bannerLink || "/app/reisen"}
+            className="block rounded-2xl border border-primary/30 bg-primary/10 p-4 active:scale-[0.99]"
+          >
+            {cms.bannerTitle && <p className="text-sm font-semibold">{cms.bannerTitle}</p>}
+            {cms.bannerText && (
+              <p className="mt-1 text-xs text-muted-foreground">{cms.bannerText}</p>
+            )}
+          </Link>
+        </div>
+      )}
+
       {/* Empfehlungen */}
-      <Section title="Empfohlene Reisen" action={{ label: "Alle", to: "/app/reisen" }}>
+      {cms.showFeatured && (
+      <Section title={cms.sectionFeatured} action={{ label: "Alle", to: "/app/reisen" }}>
         {isLoading ? (
           <div className="flex gap-3 overflow-hidden px-5">
             {[0, 1].map((i) => (
@@ -124,10 +144,11 @@ export default function AppHome() {
           </div>
         )}
       </Section>
+      )}
 
       {/* Beliebte Ziele */}
-      {destinations.length > 0 && (
-        <Section title="Beliebte Reiseziele">
+      {cms.showDestinations && destinations.length > 0 && (
+        <Section title={cms.sectionDestinations}>
           <div className="flex gap-2.5 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {destinations.map((d) => (
               <Link
@@ -170,8 +191,8 @@ export default function AppHome() {
       )}
 
       {/* Angebote */}
-      {offers.length > 0 && (
-        <Section title="Aktuelle Angebote">
+      {cms.showOffers && offers.length > 0 && (
+        <Section title={cms.sectionOffers}>
           <div className="space-y-3 px-5">
             {offers.map((t) => (
               <div key={t.id} className="relative">
@@ -183,13 +204,15 @@ export default function AppHome() {
       )}
 
       {/* Alle Reisen */}
-      <Section title="Alle Reisen" action={{ label: "Mehr", to: "/app/reisen" }}>
+      {cms.showAll && (
+      <Section title={cms.sectionAll} action={{ label: "Mehr", to: "/app/reisen" }}>
         <div className="space-y-3 px-5">
           {isLoading
             ? [0, 1, 2].map((i) => <Skeleton key={i} className="h-36 rounded-2xl" />)
             : (tours ?? []).slice(0, 5).map((t) => <TourCardMobile key={t.id} tour={t} />)}
         </div>
       </Section>
+      )}
 
       {!isLoading && (tours ?? []).length === 0 && (
         <p className="px-5 py-10 text-center text-sm text-muted-foreground">
@@ -198,8 +221,7 @@ export default function AppHome() {
       )}
 
       <p className="px-5 pt-6 text-center text-xs text-muted-foreground">
-        ab-Preise pro Person. Endpreis inkl. Zustieg & Extras im Buchungsschritt.{" "}
-        {money(null) === "auf Anfrage" ? "" : ""}
+        {cms.footerNote}
       </p>
     </div>
   );
