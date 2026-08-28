@@ -36,12 +36,33 @@ export interface RouteStep {
   voiceInstruction?: string;
 }
 
+export interface TollSegment {
+  name: string;
+  countryCode: string | null;
+  lat: number | null;
+  lng: number | null;
+  distanceFromStartKm: number;
+  lengthKm: number;
+}
+
+export interface TollCost {
+  currency: string;
+  cash: number | null;
+  electronic: number | null;
+}
+
 export interface RouteResult {
   distanceKm: number;
   durationMin: number;
   geometry: GeoJSON.LineString;
   steps: RouteStep[];
   maxspeeds: (number | null)[];
+  /** Mautabschnitte laut Routing-Provider (leer, wenn keine Maut auf der Strecke). */
+  tolls: TollSegment[];
+  /** false = Provider liefert fuer diese Route keine Mautinformationen. */
+  tollDataAvailable: boolean;
+  /** Kostenangabe des Providers, sonst null (es wird nichts geschaetzt). */
+  tollCost: TollCost | null;
   fetchedAt: string;
 }
 
