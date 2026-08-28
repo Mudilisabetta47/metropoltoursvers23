@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CHARTER_SOURCE_TYPES } from "@/lib/charterTrips";
 import { useParams, Link } from "react-router-dom";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";

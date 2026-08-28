@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import WalletPassButton from "@/components/bookings/WalletPassButton";
-import { STOP_TYPE_LABELS, TRIP_CATEGORY_LABELS } from "@/lib/charterTrips";
+import { STOP_TYPE_LABELS, TRIP_CATEGORY_LABELS, CHARTER_SOURCE_TYPES } from "@/lib/charterTrips";
 
 export default function AdminCharterTripDetail() {
   const { tripId } = useParams<{ tripId: string }>();
