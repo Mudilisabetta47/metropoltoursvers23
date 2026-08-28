@@ -251,6 +251,51 @@ const TripDetailSheet = ({ trip, onClose }: { trip: Trip; onClose: () => void })
               <Star className="w-4 h-4 text-yellow-400" /> VIP
             </button>
           </div>
+
+          {schedule.length > 0 && (
+            <div className="pt-2">
+              <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-zinc-500 mb-2">
+                <CalendarClock className="w-3.5 h-3.5 text-emerald-400" /> Fahrplan
+              </div>
+              <ol className="relative border-l border-white/10 ml-2 space-y-3">
+                {schedule.map(s => (
+                  <li key={s.id} className="ml-4">
+                    <span className="absolute -left-[5px] w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                    <div className="text-sm text-white">{s.label}</div>
+                    <div className="text-xs text-zinc-500">
+                      {STOP_TYPE_LABELS[s.stop_type] || s.stop_type}
+                      {s.planned_arrival && ` · an ${format(new Date(s.planned_arrival), "dd.MM. HH:mm")}`}
+                      {s.planned_departure && ` · ab ${format(new Date(s.planned_departure), "dd.MM. HH:mm")}`}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+          {trip.assigned_trip_id && (
+            <div className="pt-2 space-y-2">
+              <div className="flex items-center gap-2 text-xs text-zinc-400">
+                <Radio className={cn("w-4 h-4", gpsOn ? "text-emerald-400 animate-pulse" : "text-zinc-600")} />
+                {gpsOn ? "GPS-Tracking aktiv" : "GPS-Tracking inaktiv"}
+              </div>
+              {tripRow?.status !== "running" ? (
+                <button
+                  onClick={() => setStatus("running")}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm"
+                >
+                  <Play className="w-4 h-4" /> Fahrt starten & GPS aktivieren
+                </button>
+              ) : (
+                <button
+                  onClick={() => setStatus("completed")}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold text-sm"
+                >
+                  <Square className="w-4 h-4" /> Fahrt beenden
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="p-4 border-t border-white/5 grid grid-cols-2 gap-2 bg-black/20">
