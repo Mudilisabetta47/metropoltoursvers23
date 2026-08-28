@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Smartphone, Save, RefreshCw, Image as ImageIcon } from "lucide-react";
+import { Save, RefreshCw, Image as ImageIcon } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,27 +83,21 @@ const AdminMobileApp = () => {
   };
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Smartphone className="h-6 w-6 text-primary" />
-            <div>
-              <h1 className="text-xl font-semibold">Mobile App – Startseite</h1>
-              <p className="text-sm text-muted-foreground">
-                Inhalte der METROPOL TOURS App (/app) zentral pflegen – ohne Code.
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={load} disabled={isLoading}>
-              <RefreshCw className="mr-2 h-4 w-4" /> Neu laden
-            </Button>
-            <Button size="sm" onClick={save} disabled={isSaving || isLoading}>
-              <Save className="mr-2 h-4 w-4" /> {isSaving ? "Speichert…" : "Speichern"}
-            </Button>
-          </div>
+    <AdminLayout
+      title="Mobile App – Startseite"
+      subtitle="Inhalte der METROPOL TOURS App (/app) zentral pflegen – ohne Code."
+      actions={
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={load} disabled={isLoading}>
+            <RefreshCw className="mr-2 h-4 w-4" /> Neu laden
+          </Button>
+          <Button size="sm" onClick={save} disabled={isSaving || isLoading}>
+            <Save className="mr-2 h-4 w-4" /> {isSaving ? "Speichert…" : "Speichern"}
+          </Button>
         </div>
+      }
+    >
+      <div className="space-y-6">
 
         <Card>
           <CardHeader>
