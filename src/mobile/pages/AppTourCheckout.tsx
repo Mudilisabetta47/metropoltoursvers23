@@ -80,7 +80,12 @@ export default function AppTourCheckout() {
       setTour(t.data);
       setDates(d.data ?? []);
       setTariffs(ta.data ?? []);
-      setPickups(pu.data ?? []);
+      setPickups(
+        ((pu.data ?? []) as any[])
+          .flatMap((r) => r.tour_pickup_stops ?? [])
+          .filter((s: any) => s.is_active)
+          .map((s: any) => ({ ...s, name: s.location_name ?? s.city })),
+      );
       setLoading(false);
     })();
   }, [tourId]);
