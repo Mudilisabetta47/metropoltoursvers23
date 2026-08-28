@@ -148,21 +148,30 @@ const DriverNavPage = () => {
     return () => navigator.geolocation.clearWatch(watchId);
   }, [user, activeOrder?.id, activeOrder?.status, activeOrder?.bus_id]);
 
-  // Routenberechnung (echte Mapbox Directions mit Traffic)
+  // Routenberechnung (echte Mapbox Directions mit Traffic, inkl. Haltestellen und Maut)
   const computeRoute = useCallback(async () => {
     if (!token || !activeOrder?.destination_lat) return;
     const start = pos ?? (activeOrder.origin_lat != null ? { lat: Number(activeOrder.origin_lat), lng: Number(activeOrder.origin_lng), speed: 0, heading: 0 } : null);
     if (!start) return;
     try {
-      const r = await requestRoute(
-        token,
-        [
-          { lat: start.lat, lng: start.lng },
-          ...(activeOrder.waypoints ?? []).map((w) => ({ lat: Number(w.lat), lng: Number(w.lng) })),
-          { lat: Number(activeOrder.destination_lat), lng: Number(activeOrder.destination_lng) },
-        ],
-        { vehicleProfile: buildVehicleProfile(bus) },
-      );
+      // Offene Zwischenhalte werden als Wegpunkte in der geplanten Reihenfolge angefahren.
+      const openStops = stops
+        .filter((s) => !s.actual_departure && s.lat != null && s.lng != null)
+        .map((s) => ({ lat: Number(s.lat), lng: Number(s.lng) }));
+      const legacyWaypoints = openStops.length
+        ? []
+        : (activeOrder.waypoints ?? []).map((w) => ({ lat: Number(w.lat), lng: Number(w.lng) }));
+
+      const points = manualTarget
+        ? [{ lat: start.lat, lng: start.lng }, manualTarget]
+        : [
+            { lat: start.lat, lng: start.lng },
+            ...openStops,
+            ...legacyWaypoints,
+            { lat: Number(activeOrder.destination_lat), lng: Number(activeOrder.destination_lng) },
+          ];
+
+      const r = await requestRoute(token, points, { vehicleProfile: buildVehicleProfile(bus) });
       setRoute(r);
       setStepIndex(0);
       localStorage.setItem(ROUTE_CACHE_KEY, JSON.stringify({ orderId: activeOrder.id, route: r }));
@@ -171,6 +180,12 @@ const DriverNavPage = () => {
         duration_min: r.durationMin,
         eta: new Date(Date.now() + r.durationMin * 60000).toISOString(),
       }).eq("id", activeOrder.id);
+      try {
+        await saveRouteTolls(activeOrder.id, r.tolls, r.tollCost, r.tollDataAvailable);
+        reloadStops();
+      } catch {
+        /* Mautdaten sind optional – Navigation laeuft weiter */
+      }
     } catch (e: any) {
       // Offline-Fallback: zuletzt berechnete Route aus dem Cache
       const cached = localStorage.getItem(ROUTE_CACHE_KEY);
@@ -180,7 +195,8 @@ const DriverNavPage = () => {
       }
       toast.error("Route konnte nicht berechnet werden");
     }
-  }, [token, activeOrder, pos, bus]);
+  }, [token, activeOrder, pos, bus, stops, manualTarget, reloadStops]);
+
 
   useEffect(() => {
     if (activeOrder && ["accepted", "en_route", "paused"].includes(activeOrder.status) && !route) computeRoute();
