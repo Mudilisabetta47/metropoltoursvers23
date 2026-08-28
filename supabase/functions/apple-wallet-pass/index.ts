@@ -206,23 +206,38 @@ function signManifest(manifest: Uint8Array): Uint8Array {
 
 
 // ---------- Bilder ----------
+// Apple akzeptiert ausschließlich echte PNGs. Ein HTML-Fehlerseiten-Body oder
+// ein SVG würde den Pass ungültig machen -> Signatur prüfen.
+const PNG_MAGIC = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+const isPng = (b: Uint8Array) => b.length > 8 && PNG_MAGIC.every((v, i) => b[i] === v);
+const FALLBACK_ICON_B64 =
+  "iVBORw0KGgoAAAANSUhEUgAAADoAAAA6CAYAAADhu0ooAAAAYUlEQVR4nO3PAQ3AIADAMI4o/Au4p+MCkr1VsD3jXd/4gXk74BSjNUZrjNYYrTFaY7TGaI3RGqM1RmuM1hitMVpjtMZojdEaozVGa4zWGK0xWmO0xmiN0RqjNUZrjNYYrdnz/QJ1Ry/LogAAAABJRU5ErkJggg==";
+const fallbackIcon = () => binaryToBytes(atob(FALLBACK_ICON_B64));
+
 let imageCache: Record<string, Uint8Array> | null = null;
 async function loadImages(): Promise<Record<string, Uint8Array>> {
   if (imageCache) return imageCache;
   const out: Record<string, Uint8Array> = {};
+  let logo: Uint8Array | null = null;
   try {
     const res = await fetch(`${SITE_URL}/brand/metropol-logo.png`);
     if (res.ok) {
       const buf = new Uint8Array(await res.arrayBuffer());
-      out["logo.png"] = buf;
-      out["logo@2x.png"] = buf;
-      out["icon.png"] = buf;
-      out["icon@2x.png"] = buf;
+      if (isPng(buf)) logo = buf;
+      else console.warn("Logo ist kein gültiges PNG – Fallback wird verwendet");
     }
-  } catch (_) { /* ignore */ }
+  } catch (err) {
+    console.warn("Logo konnte nicht geladen werden", err);
+  }
+  const icon = logo ?? fallbackIcon();
+  out["icon.png"] = icon;
+  out["icon@2x.png"] = icon;
+  out["logo.png"] = icon;
+  out["logo@2x.png"] = icon;
   imageCache = out;
   return out;
 }
+
 
 // ---------- Daten ----------
 function fmtDate(d: any) {
