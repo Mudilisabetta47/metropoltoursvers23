@@ -48,6 +48,12 @@ export interface DispatchOrder {
   route_version: number;
   route_updated_at: string | null;
   route_note: string | null;
+  delay_minutes: number;
+  delay_reason: string | null;
+  current_stop_id: string | null;
+  second_driver_user_id: string | null;
+  toll_data_available: boolean | null;
+  is_test: boolean;
 }
 
 

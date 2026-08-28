@@ -36,12 +36,33 @@ export interface RouteStep {
   voiceInstruction?: string;
 }
 
+export interface TollSegment {
+  name: string;
+  countryCode: string | null;
+  lat: number | null;
+  lng: number | null;
+  distanceFromStartKm: number;
+  lengthKm: number;
+}
+
+export interface TollCost {
+  currency: string;
+  cash: number | null;
+  electronic: number | null;
+}
+
 export interface RouteResult {
   distanceKm: number;
   durationMin: number;
   geometry: GeoJSON.LineString;
   steps: RouteStep[];
   maxspeeds: (number | null)[];
+  /** Mautabschnitte laut Routing-Provider (leer, wenn keine Maut auf der Strecke). */
+  tolls: TollSegment[];
+  /** false = Provider liefert fuer diese Route keine Mautinformationen. */
+  tollDataAvailable: boolean;
+  /** Kostenangabe des Providers, sonst null (es wird nichts geschaetzt). */
+  tollCost: TollCost | null;
   fetchedAt: string;
 }
 
@@ -95,6 +116,7 @@ export async function requestRoute(
     voice_instructions: "true",
     banner_instructions: "true",
     voice_units: "metric",
+    compute_toll_cost: "true",
   });
 
   const res = await fetch(`${MAPBOX_BASE}/directions/v5/mapbox/driving-traffic/${coords}?${params}`);
@@ -121,15 +143,86 @@ export async function requestRoute(
     ),
   );
 
+  const toll = extractTolls(route);
+
   return {
     distanceKm: (route.distance ?? 0) / 1000,
     durationMin: Math.round((route.duration ?? 0) / 60),
     geometry: route.geometry,
     steps,
     maxspeeds,
+    tolls: toll.segments,
+    tollDataAvailable: toll.available,
+    tollCost: toll.cost,
     fetchedAt: new Date().toISOString(),
   };
 }
+
+/**
+ * Mautabschnitte aus der Mapbox-Directions-Antwort lesen.
+ * Es werden ausschliesslich Daten uebernommen, die die API tatsaechlich liefert
+ * (`intersections[].classes` enthaelt "toll", `route.toll_costs`).
+ * Fehlen diese Felder, wird `available = false` gemeldet – es werden KEINE
+ * Mautdaten geschaetzt oder erfunden.
+ */
+function extractTolls(route: any): {
+  segments: TollSegment[];
+  available: boolean;
+  cost: TollCost | null;
+} {
+  const legs: any[] = route.legs ?? [];
+  const hasIntersectionData = legs.some((l) =>
+    (l.steps ?? []).some((s: any) => Array.isArray(s.intersections) && s.intersections.length > 0),
+  );
+
+  const segments: TollSegment[] = [];
+  let distanceAcc = 0;
+  let openSegment: TollSegment | null = null;
+
+  for (const leg of legs) {
+    const admins: any[] = leg.admins ?? [];
+    for (const s of leg.steps ?? []) {
+      const intersections: any[] = s.intersections ?? [];
+      const isToll = intersections.some((i) => (i.classes ?? []).includes("toll"));
+      const adminIdx = intersections[0]?.admin_index ?? 0;
+      const country = admins[adminIdx]?.iso_3166_1 ?? null;
+
+      if (isToll) {
+        if (!openSegment || openSegment.countryCode !== country) {
+          openSegment = {
+            name: s.name || s.ref || "Mautpflichtiger Abschnitt",
+            countryCode: country,
+            lat: s.maneuver?.location?.[1] ?? null,
+            lng: s.maneuver?.location?.[0] ?? null,
+            distanceFromStartKm: Math.round((distanceAcc / 1000) * 10) / 10,
+            lengthKm: 0,
+          };
+          segments.push(openSegment);
+        }
+        openSegment.lengthKm += (s.distance ?? 0) / 1000;
+      } else {
+        openSegment = null;
+      }
+      distanceAcc += s.distance ?? 0;
+    }
+  }
+
+  const rawCost = route.toll_costs?.[0];
+  const cost: TollCost | null = rawCost
+    ? {
+        currency: rawCost.currency ?? "EUR",
+        cash: rawCost.payment_methods?.cash ?? null,
+        electronic: rawCost.payment_methods?.etc ?? rawCost.payment_methods?.["etc-x"] ?? null,
+      }
+    : null;
+
+  return {
+    segments: segments.map((s) => ({ ...s, lengthKm: Math.round(s.lengthKm * 10) / 10 })),
+    available: hasIntersectionData,
+    cost,
+  };
+}
+
 
 export async function geocodeAddress(token: string, query: string): Promise<GeocodeResult[]> {
   if (!token || query.trim().length < 3) return [];

@@ -90,6 +90,9 @@ const AddressField = ({ label, token, value, onChange }: AddressFieldProps) => {
 };
 
 const emptyAddr = { name: "", address: "", lat: null as number | null, lng: null as number | null };
+/** Zwischenhalt inkl. Planzeit und Art – wird als echte Haltestelle an den Fahrer übergeben. */
+const emptyStop = { ...emptyAddr, time: "", type: "stop", dwell: 5 };
+type StopDraft = typeof emptyStop;
 
 interface OrderDialogProps {
   open: boolean;
@@ -122,7 +125,7 @@ const OrderDialog = ({
   const [departure, setDeparture] = useState("");
   const [origin, setOrigin] = useState(emptyAddr);
   const [destination, setDestination] = useState(emptyAddr);
-  const [waypoints, setWaypoints] = useState<typeof emptyAddr[]>([]);
+  const [waypoints, setWaypoints] = useState<StopDraft[]>([]);
   const [preview, setPreview] = useState<{ km: number; min: number } | null>(null);
   const [calculating, setCalculating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -166,7 +169,7 @@ const OrderDialog = ({
       const eta =
         preview && dep ? new Date(new Date(dep).getTime() + preview.min * 60000).toISOString() : null;
 
-      const { error } = await db.from("dispatch_orders").insert({
+      const { data: created, error } = await db.from("dispatch_orders").insert({
         title: title.trim(),
         driver_user_id: driverId,
         bus_id: busId || null,
@@ -191,11 +194,43 @@ const OrderDialog = ({
         duration_min: preview?.min ?? null,
         eta,
         created_by: createdBy,
-      });
+      }).select("id").single();
       if (error) throw error;
+
+      // Zwischenhalte und Ziel als echte Haltestellen fuer die Fahrer-Navi anlegen
+      const stopRows = [
+        ...waypoints
+          .filter((w) => w.lat != null)
+          .map((w, i) => ({
+            order_id: created.id,
+            sort_order: i,
+            name: w.name || w.address,
+            address: w.address,
+            lat: w.lat,
+            lng: w.lng,
+            stop_type: w.type,
+            dwell_minutes: Number(w.dwell) || 0,
+            planned_arrival: w.time ? new Date(w.time).toISOString() : null,
+          })),
+        {
+          order_id: created.id,
+          sort_order: waypoints.length,
+          name: destination.name || destination.address,
+          address: destination.address,
+          lat: destination.lat,
+          lng: destination.lng,
+          stop_type: "destination",
+          dwell_minutes: 0,
+          planned_arrival: eta,
+        },
+      ];
+      const { error: stopError } = await db.from("dispatch_order_stops").insert(stopRows);
+      if (stopError) throw stopError;
+
       toast.success("Auftrag an Fahrer gesendet");
       setTitle(""); setCustomer(""); setPhone(""); setNotes(""); setDeparture("");
       setOrigin(emptyAddr); setDestination(emptyAddr); setWaypoints([]); setPreview(null);
+
       onOpenChange(false);
       onCreated();
     } catch (e: any) {
@@ -260,23 +295,64 @@ const OrderDialog = ({
           <AddressField label="Startadresse *" token={token} value={origin} onChange={setOrigin} />
 
           {waypoints.map((w, i) => (
-            <div key={i} className="flex gap-2 items-end">
-              <div className="flex-1">
-                <AddressField
-                  label={`Zwischenstopp ${i + 1}`}
-                  token={token}
-                  value={w}
-                  onChange={(v) => setWaypoints((prev) => prev.map((p, idx) => (idx === i ? v : p)))}
-                />
+            <div key={i} className="rounded-lg border border-zinc-800 p-3 space-y-2">
+              <div className="flex gap-2 items-end">
+                <div className="flex-1">
+                  <AddressField
+                    label={`Halt ${i + 1}`}
+                    token={token}
+                    value={w}
+                    onChange={(v) => setWaypoints((prev) => prev.map((p, idx) => (idx === i ? { ...p, ...v } : p)))}
+                  />
+                </div>
+                <Button variant="ghost" size="icon" className="text-red-400 mb-1" onClick={() => setWaypoints((p) => p.filter((_, idx) => idx !== i))}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
               </div>
-              <Button variant="ghost" size="icon" className="text-red-400 mb-1" onClick={() => setWaypoints((p) => p.filter((_, idx) => idx !== i))}>
-                <Trash2 className="w-4 h-4" />
-              </Button>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-white text-xs">Planankunft</Label>
+                  <Input
+                    type="datetime-local"
+                    value={w.time}
+                    className="bg-white text-black"
+                    onChange={(e) => setWaypoints((prev) => prev.map((p, idx) => (idx === i ? { ...p, time: e.target.value } : p)))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-white text-xs">Art</Label>
+                  <Select
+                    value={w.type}
+                    onValueChange={(v) => setWaypoints((prev) => prev.map((p, idx) => (idx === i ? { ...p, type: v } : p)))}
+                  >
+                    <SelectTrigger className="bg-white text-black"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="stop">Haltestelle</SelectItem>
+                      <SelectItem value="pickup">Zustieg</SelectItem>
+                      <SelectItem value="dropoff">Ausstieg</SelectItem>
+                      <SelectItem value="break">Pausenhalt</SelectItem>
+                      <SelectItem value="border">Grenzübergang</SelectItem>
+                      <SelectItem value="toll">Mautstelle</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-white text-xs">Aufenthalt (min)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={w.dwell}
+                    className="bg-white text-black"
+                    onChange={(e) => setWaypoints((prev) => prev.map((p, idx) => (idx === i ? { ...p, dwell: Number(e.target.value) } : p)))}
+                  />
+                </div>
+              </div>
             </div>
           ))}
-          <Button variant="outline" size="sm" onClick={() => setWaypoints((p) => [...p, { ...emptyAddr }])}>
-            <Plus className="w-4 h-4 mr-1" /> Zwischenstopp hinzufügen
+          <Button variant="outline" size="sm" onClick={() => setWaypoints((p) => [...p, { ...emptyStop }])}>
+            <Plus className="w-4 h-4 mr-1" /> Halt hinzufügen
           </Button>
+
 
           <AddressField label="Zieladresse *" token={token} value={destination} onChange={setDestination} />
 

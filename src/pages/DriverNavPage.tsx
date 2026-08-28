@@ -5,7 +5,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import {
   Navigation, Check, X, Play, Coffee, Flag, AlertTriangle, Volume2, VolumeX,
   MessageSquare, Send, Loader2, MapPin, Gauge, Clock, WifiOff, ArrowUp,
-  CornerUpLeft, CornerUpRight, RotateCcw,
+  CornerUpLeft, CornerUpRight, RotateCcw, ListOrdered, Coins, Timer, Hourglass,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
@@ -13,6 +13,14 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   DispatchOrder, useDispatchMessages, useDriverOrders, updateOrderStatus,
 } from "@/hooks/useFleet";
+import { OrderStop, saveRouteTolls, useOrderStops } from "@/hooks/useOrderStops";
+import { useDrivingTime } from "@/hooks/useDrivingTime";
+import { formatHm } from "@/lib/driving/euDrivingRules";
+import StopsPanel from "@/components/driver/StopsPanel";
+import TollPanel from "@/components/driver/TollPanel";
+import DelaySheet from "@/components/driver/DelaySheet";
+import EventSheet, { DriverEventType } from "@/components/driver/EventSheet";
+import DrivingTimePanel from "@/components/driver/DrivingTimePanel";
 import {
   RouteResult, buildVehicleProfile, distanceToRouteMeters, etaFrom, formatDuration,
   formatKm, haversineMeters, requestRoute, speak, vehicleProfileWarnings,
@@ -20,11 +28,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 const db = supabase as any;
 const ROUTE_CACHE_KEY = "metours_driver_route_cache";
+
+type SheetTab = "stops" | "tolls" | "delay" | "event" | "duty";
 
 const maneuverIcon = (type: string, modifier?: string) => {
   if (type === "arrive") return Flag;
@@ -33,6 +45,7 @@ const maneuverIcon = (type: string, modifier?: string) => {
   if (type === "roundabout" || type === "rotary") return RotateCcw;
   return ArrowUp;
 };
+
 
 const DriverNavPage = () => {
   const location = useLocation();
@@ -52,8 +65,11 @@ const DriverNavPage = () => {
   const [bus, setBus] = useState<any>(null);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [sheetTab, setSheetTab] = useState<SheetTab | null>(null);
+  const [manualTarget, setManualTarget] = useState<{ lat: number; lng: number } | null>(null);
   const lastSpoken = useRef<string>("");
   const lastPush = useRef<number>(0);
+  const lastDutySpoken = useRef<string>("");
   const mapRef = useRef<any>(null);
 
   const activeOrder: DispatchOrder | undefined = useMemo(
@@ -61,6 +77,13 @@ const DriverNavPage = () => {
     [orders],
   );
   const incoming = activeOrder?.status === "sent" ? activeOrder : undefined;
+
+  const { stops, tolls, nextStop, markArrival, markDeparture, reload: reloadStops } =
+    useOrderStops(activeOrder?.id);
+  const { compliance, today: dutyToday, startDriving, stopDriving, setMultiDriver } =
+    useDrivingTime(user?.id);
+  const delayMinutes = activeOrder?.delay_minutes ?? 0;
+
 
   // Online/Offline
   useEffect(() => {
@@ -125,21 +148,30 @@ const DriverNavPage = () => {
     return () => navigator.geolocation.clearWatch(watchId);
   }, [user, activeOrder?.id, activeOrder?.status, activeOrder?.bus_id]);
 
-  // Routenberechnung (echte Mapbox Directions mit Traffic)
+  // Routenberechnung (echte Mapbox Directions mit Traffic, inkl. Haltestellen und Maut)
   const computeRoute = useCallback(async () => {
     if (!token || !activeOrder?.destination_lat) return;
     const start = pos ?? (activeOrder.origin_lat != null ? { lat: Number(activeOrder.origin_lat), lng: Number(activeOrder.origin_lng), speed: 0, heading: 0 } : null);
     if (!start) return;
     try {
-      const r = await requestRoute(
-        token,
-        [
-          { lat: start.lat, lng: start.lng },
-          ...(activeOrder.waypoints ?? []).map((w) => ({ lat: Number(w.lat), lng: Number(w.lng) })),
-          { lat: Number(activeOrder.destination_lat), lng: Number(activeOrder.destination_lng) },
-        ],
-        { vehicleProfile: buildVehicleProfile(bus) },
-      );
+      // Offene Zwischenhalte werden als Wegpunkte in der geplanten Reihenfolge angefahren.
+      const openStops = stops
+        .filter((s) => !s.actual_departure && s.lat != null && s.lng != null)
+        .map((s) => ({ lat: Number(s.lat), lng: Number(s.lng) }));
+      const legacyWaypoints = openStops.length
+        ? []
+        : (activeOrder.waypoints ?? []).map((w) => ({ lat: Number(w.lat), lng: Number(w.lng) }));
+
+      const points = manualTarget
+        ? [{ lat: start.lat, lng: start.lng }, manualTarget]
+        : [
+            { lat: start.lat, lng: start.lng },
+            ...openStops,
+            ...legacyWaypoints,
+            { lat: Number(activeOrder.destination_lat), lng: Number(activeOrder.destination_lng) },
+          ];
+
+      const r = await requestRoute(token, points, { vehicleProfile: buildVehicleProfile(bus) });
       setRoute(r);
       setStepIndex(0);
       localStorage.setItem(ROUTE_CACHE_KEY, JSON.stringify({ orderId: activeOrder.id, route: r }));
@@ -148,6 +180,12 @@ const DriverNavPage = () => {
         duration_min: r.durationMin,
         eta: new Date(Date.now() + r.durationMin * 60000).toISOString(),
       }).eq("id", activeOrder.id);
+      try {
+        await saveRouteTolls(activeOrder.id, r.tolls, r.tollCost, r.tollDataAvailable);
+        reloadStops();
+      } catch {
+        /* Mautdaten sind optional – Navigation laeuft weiter */
+      }
     } catch (e: any) {
       // Offline-Fallback: zuletzt berechnete Route aus dem Cache
       const cached = localStorage.getItem(ROUTE_CACHE_KEY);
@@ -157,7 +195,8 @@ const DriverNavPage = () => {
       }
       toast.error("Route konnte nicht berechnet werden");
     }
-  }, [token, activeOrder, pos, bus]);
+  }, [token, activeOrder, pos, bus, stops, manualTarget, reloadStops]);
+
 
   useEffect(() => {
     if (activeOrder && ["accepted", "en_route", "paused"].includes(activeOrder.status) && !route) computeRoute();
@@ -235,13 +274,43 @@ const DriverNavPage = () => {
     return route.maxspeeds[i] ?? null;
   }, [route, stepIndex]);
 
+  // Lenkzeit-Ansage (nur bei aktiver Navigation, jede Meldung nur einmal)
+  useEffect(() => {
+    if (!navigating || !compliance.announcement) return;
+    if (lastDutySpoken.current === compliance.announcement) return;
+    lastDutySpoken.current = compliance.announcement;
+    speak(compliance.announcement, voice);
+    toast.warning(compliance.announcement, { duration: 10000 });
+  }, [compliance.announcement, navigating, voice]);
+
   const act = async (fn: () => Promise<void>) => {
     setBusy(true);
     try { await fn(); reload(); } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
   };
 
+  /** Fahrtrelevantes Ereignis mit GPS-Stempel protokollieren. */
+  const logEvent = useCallback(
+    async (eventType: string, payload: { reason?: string; note?: string; delay?: number; stopId?: string } = {}) => {
+      if (!user) return;
+      await db.from("driver_events").insert({
+        driver_user_id: user.id,
+        order_id: activeOrder?.id ?? null,
+        stop_id: payload.stopId ?? null,
+        event_type: eventType,
+        delay_minutes: payload.delay ?? null,
+        reason: payload.reason ?? null,
+        note: payload.note?.trim() || null,
+        lat: pos?.lat ?? null,
+        lng: pos?.lng ?? null,
+        speed_kmh: pos ? Math.round(pos.speed) : null,
+      });
+    },
+    [user, activeOrder?.id, pos],
+  );
+
   const acceptOrder = () => activeOrder && act(async () => {
     await updateOrderStatus(activeOrder.id, "accepted");
+    await logEvent("order_accepted");
     toast.success("Auftrag angenommen");
     speak("Auftrag angenommen", voice);
   });
@@ -254,30 +323,90 @@ const DriverNavPage = () => {
 
   const startNav = () => activeOrder && act(async () => {
     await updateOrderStatus(activeOrder.id, "en_route");
+    await startDriving();
     await computeRoute();
+    await logEvent("driving_start");
     setNavigating(true);
     speak("Navigation gestartet", voice);
   });
 
   const pauseNav = () => activeOrder && act(async () => {
     await updateOrderStatus(activeOrder.id, "paused");
+    await stopDriving({ startBreak: true });
+    await logEvent("break_start");
     setNavigating(false);
+    speak("Pause gestartet", voice);
   });
 
   const arrived = () => activeOrder && act(async () => {
     await updateOrderStatus(activeOrder.id, "arrived");
+    await stopDriving();
+    await logEvent("arrived");
     setNavigating(false);
     setRoute(null);
+    setManualTarget(null);
     speak("Ziel erreicht", voice);
     toast.success("Ankunft gemeldet");
   });
 
+  /** Verspätung melden: Auftrag, Ereignisprotokoll und Zentrale in einem Schritt. */
+  const submitDelay = (minutes: number, reason: string, note: string) =>
+    activeOrder && user && act(async () => {
+      await db.from("dispatch_orders")
+        .update({ delay_minutes: minutes, delay_reason: minutes > 0 ? reason : null })
+        .eq("id", activeOrder.id);
+      await logEvent("delay", { delay: minutes, reason, note });
+      await send(
+        minutes > 0
+          ? `⏱️ Verspätung ${minutes} min – ${reason}${note.trim() ? ` (${note.trim()})` : ""}`
+          : "✅ Verspätung aufgeholt, wieder im Plan",
+        user.id,
+        "driver",
+        activeOrder.id,
+      );
+      toast.success(minutes > 0 ? `Verspätung von ${minutes} min gemeldet` : "Als pünktlich gemeldet");
+      setSheetTab(null);
+    });
+
+  const submitEvent = (type: DriverEventType, note: string) =>
+    user && act(async () => {
+      await logEvent(type, { note });
+      if (activeOrder) {
+        await send(`📍 Ereignis: ${type}${note.trim() ? ` – ${note.trim()}` : ""}`, user.id, "driver", activeOrder.id);
+      }
+      toast.success("Ereignis protokolliert");
+      setSheetTab(null);
+    });
+
+  const stopArrive = (stopId: string) =>
+    act(async () => {
+      await markArrival(stopId);
+      await logEvent("stop_arrival", { stopId });
+    });
+
+  const stopDepart = (stopId: string) =>
+    act(async () => {
+      await markDeparture(stopId);
+      await logEvent("stop_departure", { stopId });
+      setRoute(null);
+    });
+
+  const navigateToStop = (stop: OrderStop) => {
+    if (stop.lat == null || stop.lng == null) return;
+    setManualTarget({ lat: Number(stop.lat), lng: Number(stop.lng) });
+    setRoute(null);
+    setSheetTab(null);
+    toast.info(`Neues Zwischenziel: ${stop.name}`);
+  };
+
   const reportProblem = () => activeOrder && user && act(async () => {
     const text = window.prompt("Was ist das Problem?") ?? "";
     if (!text.trim()) return;
+    await logEvent("problem", { note: text });
     await send(`⚠️ PROBLEM: ${text}`, user.id, "driver", activeOrder.id);
     toast.success("Zentrale informiert");
   });
+
 
   const sendChat = async () => {
     if (!chatInput.trim() || !user) return;
@@ -306,6 +435,9 @@ const DriverNavPage = () => {
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {delayMinutes > 0 && (
+            <Badge className="bg-amber-500 text-black font-semibold">+{delayMinutes} min</Badge>
+          )}
           {!online && <Badge className="bg-amber-500/20 text-amber-300"><WifiOff className="w-3 h-3 mr-1" />Offline</Badge>}
           <Button variant="ghost" size="icon" className="text-zinc-300 h-11 w-11" onClick={() => setVoice((v) => !v)}>
             {voice ? <Volume2 className="w-6 h-6" /> : <VolumeX className="w-6 h-6" />}
@@ -318,6 +450,31 @@ const DriverNavPage = () => {
           </Button>
         </div>
       </div>
+
+      {/* Nächster Halt inkl. erwarteter Ankunft */}
+      {nextStop && (
+        <button
+          onClick={() => setSheetTab("stops")}
+          className="shrink-0 w-full text-left bg-zinc-800/80 border-b border-zinc-700 px-4 py-2 flex items-center justify-between gap-3"
+        >
+          <div className="min-w-0">
+            <p className="text-[11px] text-zinc-400">Nächster Halt</p>
+            <p className="text-sm font-semibold text-white truncate">{nextStop.name}</p>
+          </div>
+          <div className="text-right shrink-0">
+            <p className={cn("text-lg font-bold", delayMinutes > 0 ? "text-amber-300" : "text-emerald-400")}>
+              {nextStop.planned_arrival
+                ? new Date(new Date(nextStop.planned_arrival).getTime() + delayMinutes * 60000)
+                    .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })
+                : "–"}
+            </p>
+            <p className="text-[10px] text-zinc-400">
+              {stops.filter((s) => !s.actual_departure).length} von {stops.length} offen
+            </p>
+          </div>
+        </button>
+      )}
+
 
       {/* Neuer Auftrag */}
       {incoming && (
@@ -367,11 +524,35 @@ const DriverNavPage = () => {
                 <Layer id="nav-line" type="line" paint={{ "line-color": "#00CC36", "line-width": 7 }} layout={{ "line-cap": "round", "line-join": "round" }} />
               </Source>
             )}
+            {stops
+              .filter((s) => s.lat != null && s.lng != null)
+              .map((s, i) => (
+                <Marker key={s.id} latitude={Number(s.lat)} longitude={Number(s.lng)} anchor="bottom">
+                  <div
+                    className={cn(
+                      "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 border-zinc-900 shadow-lg",
+                      s.actual_departure ? "bg-zinc-600 text-zinc-300" : "bg-emerald-500 text-black",
+                    )}
+                  >
+                    {i + 1}
+                  </div>
+                </Marker>
+              ))}
+            {tolls
+              .filter((t) => t.lat != null && t.lng != null)
+              .map((t) => (
+                <Marker key={t.id} latitude={Number(t.lat)} longitude={Number(t.lng)} anchor="center">
+                  <div className="w-6 h-6 rounded-full bg-amber-400 border-2 border-zinc-900 flex items-center justify-center">
+                    <Coins className="w-3.5 h-3.5 text-black" />
+                  </div>
+                </Marker>
+              ))}
             {activeOrder?.destination_lat && (
               <Marker latitude={Number(activeOrder.destination_lat)} longitude={Number(activeOrder.destination_lng)} anchor="bottom">
                 <MapPin className="w-9 h-9 text-red-500" fill="#ef4444" />
               </Marker>
             )}
+
             {pos && (
               <Marker latitude={pos.lat} longitude={pos.lng} anchor="center">
                 <div className="w-6 h-6 rounded-full bg-blue-500 border-4 border-white shadow-lg" style={{ transform: `rotate(${pos.heading}deg)` }} />
@@ -434,7 +615,7 @@ const DriverNavPage = () => {
       </div>
 
       {/* Kennzahlen */}
-      <div className="shrink-0 grid grid-cols-3 gap-px bg-zinc-800">
+      <div className="shrink-0 grid grid-cols-4 gap-px bg-zinc-800">
         <div className="bg-zinc-900 p-2.5 text-center">
           <p className="text-[10px] text-zinc-400 flex items-center justify-center gap-1"><Gauge className="w-3 h-3" />Rest</p>
           <p className="text-lg font-bold text-white">{remainingKm != null ? formatKm(remainingKm) : "–"}</p>
@@ -445,8 +626,39 @@ const DriverNavPage = () => {
         </div>
         <div className="bg-zinc-900 p-2.5 text-center">
           <p className="text-[10px] text-zinc-400">Ankunft</p>
-          <p className="text-lg font-bold text-emerald-400">{remainingMin != null ? etaFrom(remainingMin) : "–"}</p>
+          <p className="text-lg font-bold text-emerald-400">
+            {remainingMin != null ? etaFrom(remainingMin + delayMinutes) : "–"}
+          </p>
         </div>
+        <button className="bg-zinc-900 p-2.5 text-center" onClick={() => setSheetTab("duty")}>
+          <p className="text-[10px] text-zinc-400 flex items-center justify-center gap-1"><Hourglass className="w-3 h-3" />Bis Pause</p>
+          <p className={cn(
+            "text-lg font-bold",
+            compliance.level === "critical" ? "text-red-400" : compliance.level === "warn" ? "text-amber-300" : "text-white",
+          )}>
+            {compliance.state === "break" ? formatHm(compliance.currentBreakSeconds) : formatHm(compliance.secondsToBreak)}
+          </p>
+        </button>
+      </div>
+
+      {/* Schnellzugriffe */}
+      <div className="shrink-0 grid grid-cols-4 gap-2 px-3 pt-3 bg-zinc-900">
+        <Button variant="outline" className="h-12 flex-col gap-0.5 text-[11px]" onClick={() => setSheetTab("stops")}>
+          <ListOrdered className="w-4 h-4" /> Halte
+        </Button>
+        <Button variant="outline" className="h-12 flex-col gap-0.5 text-[11px]" onClick={() => setSheetTab("tolls")}>
+          <Coins className="w-4 h-4" /> Maut
+        </Button>
+        <Button
+          variant="outline"
+          className={cn("h-12 flex-col gap-0.5 text-[11px]", delayMinutes > 0 && "border-amber-500 text-amber-300")}
+          onClick={() => setSheetTab("delay")}
+        >
+          <Timer className="w-4 h-4" /> Verspätung
+        </Button>
+        <Button variant="outline" className="h-12 flex-col gap-0.5 text-[11px]" onClick={() => setSheetTab("event")}>
+          <AlertTriangle className="w-4 h-4" /> Ereignis
+        </Button>
       </div>
 
       {/* Aktionsleiste */}
@@ -465,9 +677,56 @@ const DriverNavPage = () => {
         </Button>
       </div>
 
+      {/* Halte, Maut, Verspätung, Ereignisse und Lenkzeiten */}
+      <Sheet open={sheetTab !== null} onOpenChange={(o) => !o && setSheetTab(null)}>
+        <SheetContent side="bottom" className="bg-[#0f1218] border-zinc-800 h-[85vh] overflow-y-auto">
+          <SheetHeader className="text-left">
+            <SheetTitle className="text-white">Fahrtinformationen</SheetTitle>
+          </SheetHeader>
+          <Tabs value={sheetTab ?? "stops"} onValueChange={(v) => setSheetTab(v as SheetTab)} className="mt-3">
+            <TabsList className="grid grid-cols-5 bg-zinc-900 h-auto">
+              <TabsTrigger value="stops" className="text-xs py-2">Halte</TabsTrigger>
+              <TabsTrigger value="tolls" className="text-xs py-2">Maut</TabsTrigger>
+              <TabsTrigger value="delay" className="text-xs py-2">Verspätung</TabsTrigger>
+              <TabsTrigger value="event" className="text-xs py-2">Ereignis</TabsTrigger>
+              <TabsTrigger value="duty" className="text-xs py-2">Lenkzeit</TabsTrigger>
+            </TabsList>
+            <TabsContent value="stops" className="mt-4">
+              <StopsPanel
+                stops={stops}
+                delayMinutes={delayMinutes}
+                onArrive={stopArrive}
+                onDepart={stopDepart}
+                onNavigate={navigateToStop}
+                busy={busy}
+              />
+            </TabsContent>
+            <TabsContent value="tolls" className="mt-4">
+              <TollPanel tolls={tolls} dataAvailable={activeOrder?.toll_data_available ?? null} />
+            </TabsContent>
+            <TabsContent value="delay" className="mt-4">
+              <DelaySheet currentDelay={delayMinutes} onSubmit={submitDelay} busy={busy} />
+            </TabsContent>
+            <TabsContent value="event" className="mt-4">
+              <EventSheet onSubmit={submitEvent} busy={busy} />
+            </TabsContent>
+            <TabsContent value="duty" className="mt-4">
+              <DrivingTimePanel
+                compliance={compliance}
+                multiDriver={!!dutyToday?.multi_driver}
+                onToggleMultiDriver={(v) => setMultiDriver(v)}
+                onStartBreak={() => act(async () => { await stopDriving({ startBreak: true }); await logEvent("break_start"); })}
+                onEndBreak={() => act(async () => { await startDriving(); await logEvent("break_end"); })}
+              />
+            </TabsContent>
+          </Tabs>
+        </SheetContent>
+      </Sheet>
+
       <div className="shrink-0 bg-zinc-950 px-3 py-1.5 text-center">
         <Link to="/admin/driver" className="text-[11px] text-zinc-500">← Zurück zum Fahrer-Cockpit (FIS)</Link>
       </div>
+
     </div>
   );
 };
