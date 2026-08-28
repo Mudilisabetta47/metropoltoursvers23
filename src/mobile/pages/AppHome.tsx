@@ -8,7 +8,7 @@ import { LogoLight } from "@/components/brand/Logo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMobileTours } from "@/mobile/hooks/useMobileTours";
 import { useMyTrips } from "@/mobile/hooks/useMyTrips";
-import { TourCardMobile, money } from "@/mobile/components/TourCardMobile";
+import { TourCardMobile } from "@/mobile/components/TourCardMobile";
 import { MobileTourSearch } from "@/mobile/components/MobileTourSearch";
 import { useAppHomeContent } from "@/mobile/hooks/useAppContent";
 
