@@ -71,7 +71,11 @@ export default function AppTourCheckout() {
           .eq("tour_id", tourId)
           .order("departure_date"),
         supabase.from("tour_tariffs").select("id, name, slug, price_modifier").eq("tour_id", tourId),
-        supabase.from("tour_pickup_stops").select("id, name, city, surcharge").eq("tour_id", tourId).order("name"),
+        supabase
+          .from("tour_routes")
+          .select("id, tour_pickup_stops(id, location_name, city, surcharge, is_active)")
+          .eq("tour_id", tourId)
+          .eq("is_active", true),
       ]);
       setTour(t.data);
       setDates(d.data ?? []);
