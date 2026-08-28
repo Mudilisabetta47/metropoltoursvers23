@@ -49,7 +49,7 @@ export default function AdminCharterTripDetail() {
     setTrip(t);
 
     const [reg, sch, sh, bk, pos] = await Promise.all([
-      supabase.from("trip_registry").select("*").eq("source_type", "charter_trip").eq("source_id", tripId).maybeSingle(),
+      supabase.from("trip_registry").select("*").eq("source_id", tripId).in("source_type", CHARTER_SOURCE_TYPES).maybeSingle(),
       supabase.from("trip_schedule_stops").select("*").eq("trip_id", tripId).order("sort_order"),
       supabase.from("employee_shifts").select("*").eq("assigned_trip_id", tripId).order("shift_start"),
       supabase.from("bookings").select("*, seats(seat_number)").eq("trip_id", tripId).order("created_at"),

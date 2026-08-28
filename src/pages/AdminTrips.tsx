@@ -20,7 +20,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 interface TripRow {
   id: string;
   trip_uid: string;
-  source_type: "line_trip" | "package_tour_date" | "charter_trip";
+  source_type: string;
   source_id: string;
   departure_at: string | null;
   origin: string | null;
@@ -35,12 +35,20 @@ const SOURCE_LABELS: Record<string, string> = {
   line_trip: "Linie",
   package_tour_date: "Pauschal",
   charter_trip: "Individuell",
+  private_trip: "Privat",
+  group_trip: "Gruppe",
+  special_trip: "Sonderfahrt",
+  maiden_trip: "Jungfernfahrt",
 };
 
 const SOURCE_COLORS: Record<string, string> = {
   line_trip: "bg-blue-600",
   package_tour_date: "bg-amber-600",
   charter_trip: "bg-violet-600",
+  private_trip: "bg-violet-600",
+  group_trip: "bg-teal-600",
+  special_trip: "bg-pink-600",
+  maiden_trip: "bg-emerald-600",
 };
 
 interface DelayEvent {
