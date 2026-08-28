@@ -207,6 +207,7 @@ export default function AdminTrips() {
                   <SelectItem value="all">Alle Typen</SelectItem>
                   <SelectItem value="line_trip">Linienfahrten</SelectItem>
                   <SelectItem value="package_tour_date">Pauschalreisen</SelectItem>
+                  <SelectItem value="charter_trip">Individuelle Fahrten</SelectItem>
                 </SelectContent>
               </Select>
               <div className="flex items-center gap-2 px-2">
