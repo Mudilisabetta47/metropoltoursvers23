@@ -62,6 +62,7 @@ const AdminInquiriesPage = lazy(() => import("./pages/AdminInquiriesPage"));
 const AdminInquiryDetail = lazy(() => import("./pages/AdminInquiryDetail"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminCMS = lazy(() => import("./pages/AdminCMS"));
+const AdminMobileApp = lazy(() => import("./pages/AdminMobileApp"));
 const AdminTourBuilder = lazy(() => import("./pages/AdminTourBuilder"));
 const OperationsDashboard = lazy(() => import("./pages/OperationsDashboard"));
 const AdminBookingDetail = lazy(() => import("./pages/AdminBookingDetail"));
