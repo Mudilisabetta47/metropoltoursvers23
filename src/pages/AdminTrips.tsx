@@ -229,8 +229,8 @@ export default function AdminTrips() {
                     <button onClick={() => copy(t.trip_uid)} className="flex items-center gap-1 font-mono text-xs px-2 py-1 rounded bg-zinc-800 text-emerald-300 hover:bg-zinc-700">
                       {t.trip_uid} <Copy className="w-3 h-3" />
                     </button>
-                    <Badge className={t.source_type === "line_trip" ? "bg-blue-600" : "bg-amber-600"}>
-                      {t.source_type === "line_trip" ? "Linie" : "Pauschal"}
+                    <Badge className={SOURCE_COLORS[t.source_type] || "bg-zinc-600"}>
+                      {SOURCE_LABELS[t.source_type] || t.source_type}
                     </Badge>
                     <div className="flex items-center gap-1 text-sm text-zinc-200">
                       <MapPin className="w-3 h-3 text-zinc-500" />
