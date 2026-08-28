@@ -109,20 +109,96 @@ function sha1Hex(data: Uint8Array) {
   return md.digest().toHex();
 }
 
+// Secrets können als reines Base64, als PEM-Block oder mit \n / Whitespace kommen.
+// Ohne Normalisierung landet Müll in asn1.fromDer → "Only 8, 16, 24, or 32 bits supported: N".
+function normalizeBase64(raw: string): string {
+  let s = (raw ?? "").trim();
+  s = s.replace(/\\n/g, "\n");
+  if (s.includes("-----BEGIN")) {
+    s = s.replace(/-----BEGIN[^-]+-----/g, "").replace(/-----END[^-]+-----/g, "");
+  }
+  s = s.replace(/\s+/g, "");
+  // URL-safe Base64 tolerieren
+  s = s.replace(/-/g, "+").replace(/_/g, "/");
+  const pad = s.length % 4;
+  if (pad === 2) s += "==";
+  else if (pad === 3) s += "=";
+  else if (pad === 1) throw new Error("Base64-Wert ist unvollständig (ungültige Länge)");
+  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(s)) throw new Error("Wert enthält ungültige Base64-Zeichen");
+  return s;
+}
+
+function base64ToBinaryString(raw: string, label: string): string {
+  const src = (raw ?? "").trim();
+  // Fall A: Wert wurde als Rohbinär (latin1) hinterlegt -> direkt verwenden
+  if (src.charCodeAt(0) === 0x30 && /[\x00-\x08\x0e-\x1f\x80-\xff]/.test(src)) return src;
+  // Fall B: Hex-String
+  const hex = src.replace(/\s+/g, "");
+  if (/^[0-9a-fA-F]+$/.test(hex) && hex.length % 2 === 0 && hex.length > 64 && hex.slice(0, 2) === "30") {
+    let out = "";
+    for (let i = 0; i < hex.length; i += 2) out += String.fromCharCode(parseInt(hex.slice(i, i + 2), 16));
+    return out;
+  }
+  // Fall C: Base64 (ggf. PEM-verpackt)
+  let b64: string;
+  try {
+    b64 = normalizeBase64(src);
+  } catch (e: any) {
+    const invalid = [...new Set(src.replace(/[A-Za-z0-9+/=\s-]/g, "").split(""))]
+      .map((c) => c.charCodeAt(0)).slice(0, 10);
+    console.error(`${label} ungültig`, { length: src.length, invalidCharCodes: invalid });
+    throw new Error(`${label}: ${e.message} (Länge ${src.length}, ungültige Zeichencodes: ${invalid.join(",")})`);
+  }
+  try {
+    return atob(b64);
+  } catch {
+    throw new Error(`${label}: Base64 konnte nicht dekodiert werden`);
+  }
+}
+
+
+function loadWwdrCertificate(): any {
+  const raw = (WWDR_PEM ?? "").trim().replace(/\\n/g, "\n");
+  if (raw.includes("-----BEGIN CERTIFICATE-----")) {
+    return forge.pki.certificateFromPem(raw);
+  }
+  // .cer-Datei als Base64 (DER) hinterlegt
+  const der = base64ToBinaryString(raw, "APPLE_WWDR_PEM");
+  return forge.pki.certificateFromAsn1(forge.asn1.fromDer(der));
+}
+
 function signManifest(manifest: Uint8Array): Uint8Array {
-  const p12Der = forge.util.decode64(P12_B64);
-  const p12Asn1 = forge.asn1.fromDer(p12Der);
-  const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, P12_PASS || "");
+  const p12Der = base64ToBinaryString(P12_B64, "APPLE_PASS_CERT_P12");
+  if (p12Der.charCodeAt(0) !== 0x30) {
+    throw new Error("APPLE_PASS_CERT_P12 ist keine gültige .p12/PKCS#12-Datei (Base64 der Binärdatei erwartet)");
+  }
+  let p12: any;
+  try {
+    const p12Asn1 = forge.asn1.fromDer(p12Der);
+    p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, P12_PASS || "");
+  } catch (e: any) {
+    throw new Error(`.p12 konnte nicht gelesen werden (falsches Passwort oder beschädigte Datei): ${e?.message ?? e}`);
+  }
+
   let cert: any = null;
   let key: any = null;
+  const certs: any[] = [];
   for (const safeContents of p12.safeContents) {
     for (const bag of safeContents.safeBags) {
-      if (bag.type === forge.pki.oids.certBag && bag.cert && !cert) cert = bag.cert;
+      if (bag.cert) certs.push(bag.cert);
       if ((bag.type === forge.pki.oids.pkcs8ShroudedKeyBag || bag.type === forge.pki.oids.keyBag) && bag.key) key = bag.key;
     }
   }
+  if (key) {
+    const modulus = key.n?.toString(16);
+    cert = certs.find((c) => c.publicKey?.n?.toString(16) === modulus) ?? null;
+  }
+  if (!cert) {
+    cert = certs.find((c) => String(c.subject?.getField("CN")?.value ?? "").includes("Pass Type ID")) ?? certs[0] ?? null;
+  }
   if (!cert || !key) throw new Error("Pass-Zertifikat oder privater Schlüssel konnte nicht aus der .p12 gelesen werden");
-  const wwdr = forge.pki.certificateFromPem(WWDR_PEM);
+
+  const wwdr = loadWwdrCertificate();
 
   const p7 = forge.pkcs7.createSignedData();
   p7.content = forge.util.createBuffer(bytesToBinary(manifest));
@@ -135,7 +211,7 @@ function signManifest(manifest: Uint8Array): Uint8Array {
     authenticatedAttributes: [
       { type: forge.pki.oids.contentType, value: forge.pki.oids.data },
       { type: forge.pki.oids.messageDigest },
-      { type: forge.pki.oids.signingTime, value: new Date().toISOString() },
+      { type: forge.pki.oids.signingTime, value: new Date() },
     ],
   });
   p7.sign({ detached: true });
@@ -143,24 +219,40 @@ function signManifest(manifest: Uint8Array): Uint8Array {
   return binaryToBytes(der);
 }
 
+
 // ---------- Bilder ----------
+// Apple akzeptiert ausschließlich echte PNGs. Ein HTML-Fehlerseiten-Body oder
+// ein SVG würde den Pass ungültig machen -> Signatur prüfen.
+const PNG_MAGIC = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+const isPng = (b: Uint8Array) => b.length > 8 && PNG_MAGIC.every((v, i) => b[i] === v);
+const FALLBACK_ICON_B64 =
+  "iVBORw0KGgoAAAANSUhEUgAAADoAAAA6CAYAAADhu0ooAAAAYUlEQVR4nO3PAQ3AIADAMI4o/Au4p+MCkr1VsD3jXd/4gXk74BSjNUZrjNYYrTFaY7TGaI3RGqM1RmuM1hitMVpjtMZojdEaozVGa4zWGK0xWmO0xmiN0RqjNUZrjNYYrdnz/QJ1Ry/LogAAAABJRU5ErkJggg==";
+const fallbackIcon = () => binaryToBytes(atob(FALLBACK_ICON_B64));
+
 let imageCache: Record<string, Uint8Array> | null = null;
 async function loadImages(): Promise<Record<string, Uint8Array>> {
   if (imageCache) return imageCache;
   const out: Record<string, Uint8Array> = {};
+  let logo: Uint8Array | null = null;
   try {
     const res = await fetch(`${SITE_URL}/brand/metropol-logo.png`);
     if (res.ok) {
       const buf = new Uint8Array(await res.arrayBuffer());
-      out["logo.png"] = buf;
-      out["logo@2x.png"] = buf;
-      out["icon.png"] = buf;
-      out["icon@2x.png"] = buf;
+      if (isPng(buf)) logo = buf;
+      else console.warn("Logo ist kein gültiges PNG – Fallback wird verwendet");
     }
-  } catch (_) { /* ignore */ }
+  } catch (err) {
+    console.warn("Logo konnte nicht geladen werden", err);
+  }
+  const icon = logo ?? fallbackIcon();
+  out["icon.png"] = icon;
+  out["icon@2x.png"] = icon;
+  out["logo.png"] = icon;
+  out["logo@2x.png"] = icon;
   imageCache = out;
   return out;
 }
+
 
 // ---------- Daten ----------
 function fmtDate(d: any) {
