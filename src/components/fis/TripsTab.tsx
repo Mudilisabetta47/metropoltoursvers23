@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { MapPin, Clock, Bus, Users, Phone, ExternalLink, ChevronRight, User, Accessibility, Luggage, Star } from "lucide-react";
+import { MapPin, Clock, Bus, Users, Phone, ExternalLink, ChevronRight, User, Accessibility, Luggage, Star, Play, Square, Radio, CalendarClock } from "lucide-react";
 import { format, isToday, isTomorrow } from "date-fns";
 import { de } from "date-fns/locale";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { STOP_TYPE_LABELS } from "@/lib/charterTrips";
 
 interface Trip {
   id: string;
@@ -138,10 +140,72 @@ const TripsTab = ({ userId }: { userId: string }) => {
 };
 
 const TripDetailSheet = ({ trip, onClose }: { trip: Trip; onClose: () => void }) => {
+  const [schedule, setSchedule] = useState<any[]>([]);
+  const [tripRow, setTripRow] = useState<any>(trip.trip || null);
+  const [gpsOn, setGpsOn] = useState(false);
+  const watchRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!trip.assigned_trip_id) return;
+    supabase
+      .from("trip_schedule_stops")
+      .select("*")
+      .eq("trip_id", trip.assigned_trip_id)
+      .order("sort_order")
+      .then(({ data }) => setSchedule(data || []));
+  }, [trip.assigned_trip_id]);
+
+  useEffect(() => () => {
+    if (watchRef.current !== null) navigator.geolocation.clearWatch(watchRef.current);
+  }, []);
+
+  const startGps = () => {
+    if (!navigator.geolocation || !trip.assigned_trip_id) return;
+    watchRef.current = navigator.geolocation.watchPosition(
+      async (pos) => {
+        await (supabase as any).from("bus_positions_live").upsert(
+          {
+            trip_id: trip.assigned_trip_id,
+            bus_id: trip.assigned_bus_id,
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            speed_kmh: pos.coords.speed ? pos.coords.speed * 3.6 : 0,
+            heading: pos.coords.heading ?? null,
+            status: "running",
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "trip_id" }
+        );
+      },
+      () => toast.error("GPS nicht verfügbar"),
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 }
+    );
+    setGpsOn(true);
+  };
+
+  const stopGps = () => {
+    if (watchRef.current !== null) navigator.geolocation.clearWatch(watchRef.current);
+    watchRef.current = null;
+    setGpsOn(false);
+  };
+
+  const setStatus = async (status: "running" | "completed") => {
+    if (!trip.assigned_trip_id) return;
+    const patch: any = { status };
+    if (status === "running") patch.started_at = new Date().toISOString();
+    if (status === "completed") patch.ended_at = new Date().toISOString();
+    const { error } = await (supabase as any).from("trips").update(patch).eq("id", trip.assigned_trip_id);
+    if (error) { toast.error(error.message); return; }
+    setTripRow((t: any) => ({ ...(t || {}), ...patch }));
+    if (status === "running") { startGps(); toast.success("Fahrt gestartet – GPS aktiv"); }
+    else { stopGps(); toast.success("Fahrt beendet"); }
+  };
+
   const openMaps = () => {
     const q = trip.route?.name || trip.dispatch_location || "";
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(q)}`, "_blank");
   };
+
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -187,6 +251,51 @@ const TripDetailSheet = ({ trip, onClose }: { trip: Trip; onClose: () => void })
               <Star className="w-4 h-4 text-yellow-400" /> VIP
             </button>
           </div>
+
+          {schedule.length > 0 && (
+            <div className="pt-2">
+              <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-zinc-500 mb-2">
+                <CalendarClock className="w-3.5 h-3.5 text-emerald-400" /> Fahrplan
+              </div>
+              <ol className="relative border-l border-white/10 ml-2 space-y-3">
+                {schedule.map(s => (
+                  <li key={s.id} className="ml-4">
+                    <span className="absolute -left-[5px] w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                    <div className="text-sm text-white">{s.label}</div>
+                    <div className="text-xs text-zinc-500">
+                      {STOP_TYPE_LABELS[s.stop_type] || s.stop_type}
+                      {s.planned_arrival && ` · an ${format(new Date(s.planned_arrival), "dd.MM. HH:mm")}`}
+                      {s.planned_departure && ` · ab ${format(new Date(s.planned_departure), "dd.MM. HH:mm")}`}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+          {trip.assigned_trip_id && (
+            <div className="pt-2 space-y-2">
+              <div className="flex items-center gap-2 text-xs text-zinc-400">
+                <Radio className={cn("w-4 h-4", gpsOn ? "text-emerald-400 animate-pulse" : "text-zinc-600")} />
+                {gpsOn ? "GPS-Tracking aktiv" : "GPS-Tracking inaktiv"}
+              </div>
+              {tripRow?.status !== "running" ? (
+                <button
+                  onClick={() => setStatus("running")}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm"
+                >
+                  <Play className="w-4 h-4" /> Fahrt starten & GPS aktivieren
+                </button>
+              ) : (
+                <button
+                  onClick={() => setStatus("completed")}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold text-sm"
+                >
+                  <Square className="w-4 h-4" /> Fahrt beenden
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="p-4 border-t border-white/5 grid grid-cols-2 gap-2 bg-black/20">

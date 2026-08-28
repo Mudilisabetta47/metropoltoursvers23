@@ -121,6 +121,8 @@ const AdminLineTrips = lazy(() => import("./pages/AdminLineTrips"));
 const TrackTripPage = lazy(() => import("./pages/TrackTripPage"));
 const TrackTripLandingPage = lazy(() => import("./pages/TrackTripLandingPage"));
 const AdminTrips = lazy(() => import("./pages/AdminTrips"));
+const AdminCharterTrips = lazy(() => import("./pages/AdminCharterTrips"));
+const AdminCharterTripDetail = lazy(() => import("./pages/AdminCharterTripDetail"));
 const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 const AdminCopilot = lazy(() => import("./pages/AdminCopilot"));
 const AdminCopilotAudit = lazy(() => import("./pages/AdminCopilotAudit"));
@@ -321,6 +323,8 @@ const App = () => (
              <Route path="/admin/lines" element={<AdminLines />} />
              <Route path="/admin/line-trips" element={<AdminLineTrips />} />
              <Route path="/admin/trips" element={<AdminTrips />} />
+             <Route path="/admin/fahrten" element={<AdminCharterTrips />} />
+             <Route path="/admin/fahrten/:tripId" element={<AdminCharterTripDetail />} />
               <Route path="/verfolge" element={<TrackTripLandingPage />} />
               <Route path="/verfolge/:tripNumber" element={<TrackTripPage />} />
               <Route path="/fahrer/navi" element={<DriverNavPage />} />

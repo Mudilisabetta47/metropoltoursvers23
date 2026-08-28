@@ -20,7 +20,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 interface TripRow {
   id: string;
   trip_uid: string;
-  source_type: "line_trip" | "package_tour_date";
+  source_type: "line_trip" | "package_tour_date" | "charter_trip";
   source_id: string;
   departure_at: string | null;
   origin: string | null;
@@ -30,6 +30,18 @@ interface TripRow {
   delay_reason: string | null;
   delay_updated_at: string | null;
 }
+
+const SOURCE_LABELS: Record<string, string> = {
+  line_trip: "Linie",
+  package_tour_date: "Pauschal",
+  charter_trip: "Individuell",
+};
+
+const SOURCE_COLORS: Record<string, string> = {
+  line_trip: "bg-blue-600",
+  package_tour_date: "bg-amber-600",
+  charter_trip: "bg-violet-600",
+};
 
 interface DelayEvent {
   id: string;
@@ -50,7 +62,7 @@ export default function AdminTrips() {
   const [events, setEvents] = useState<DelayEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterRange, setFilterRange] = useState<"today" | "tomorrow" | "week" | "all">("week");
-  const [filterType, setFilterType] = useState<"all" | "line_trip" | "package_tour_date">("all");
+  const [filterType, setFilterType] = useState<"all" | "line_trip" | "package_tour_date" | "charter_trip">("all");
   const [filterDelay, setFilterDelay] = useState(false);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<TripRow | null>(null);
@@ -195,6 +207,7 @@ export default function AdminTrips() {
                   <SelectItem value="all">Alle Typen</SelectItem>
                   <SelectItem value="line_trip">Linienfahrten</SelectItem>
                   <SelectItem value="package_tour_date">Pauschalreisen</SelectItem>
+                  <SelectItem value="charter_trip">Individuelle Fahrten</SelectItem>
                 </SelectContent>
               </Select>
               <div className="flex items-center gap-2 px-2">
@@ -217,8 +230,8 @@ export default function AdminTrips() {
                     <button onClick={() => copy(t.trip_uid)} className="flex items-center gap-1 font-mono text-xs px-2 py-1 rounded bg-zinc-800 text-emerald-300 hover:bg-zinc-700">
                       {t.trip_uid} <Copy className="w-3 h-3" />
                     </button>
-                    <Badge className={t.source_type === "line_trip" ? "bg-blue-600" : "bg-amber-600"}>
-                      {t.source_type === "line_trip" ? "Linie" : "Pauschal"}
+                    <Badge className={SOURCE_COLORS[t.source_type] || "bg-zinc-600"}>
+                      {SOURCE_LABELS[t.source_type] || t.source_type}
                     </Badge>
                     <div className="flex items-center gap-1 text-sm text-zinc-200">
                       <MapPin className="w-3 h-3 text-zinc-500" />
@@ -239,6 +252,11 @@ export default function AdminTrips() {
                       <Link to={`/verfolge/${encodeURIComponent(t.trip_uid)}`} target="_blank">
                         <Button size="sm" variant="ghost" className="text-zinc-400 hover:text-white"><ExternalLink className="w-3 h-3 mr-1" />Verfolgen</Button>
                       </Link>
+                      {t.source_type === "charter_trip" && (
+                        <Link to={`/admin/fahrten/${t.source_id}`}>
+                          <Button size="sm" variant="ghost" className="text-zinc-400 hover:text-white">Details</Button>
+                        </Link>
+                      )}
                       <Button size="sm" onClick={() => openEdit(t)} className={t.current_delay_min > 0 ? "bg-red-600 hover:bg-red-700" : "bg-emerald-600 hover:bg-emerald-700"}>
                         <Bell className="w-3 h-3 mr-1" />Verspätung melden
                       </Button>

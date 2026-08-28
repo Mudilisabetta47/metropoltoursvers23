@@ -4533,7 +4533,9 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean
+          is_charter: boolean
           name: string
+          trip_category: string
           updated_at: string
         }
         Insert: {
@@ -4542,7 +4544,9 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          is_charter?: boolean
           name: string
+          trip_category?: string
           updated_at?: string
         }
         Update: {
@@ -4551,7 +4555,9 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          is_charter?: boolean
           name?: string
+          trip_category?: string
           updated_at?: string
         }
         Relationships: []
@@ -7046,6 +7052,72 @@ export type Database = {
         }
         Relationships: []
       }
+      trip_schedule_stops: {
+        Row: {
+          actual_arrival: string | null
+          actual_departure: string | null
+          created_at: string
+          id: string
+          label: string
+          location: string | null
+          notes: string | null
+          planned_arrival: string | null
+          planned_departure: string | null
+          sort_order: number
+          stop_id: string | null
+          stop_type: string
+          trip_id: string
+          updated_at: string
+        }
+        Insert: {
+          actual_arrival?: string | null
+          actual_departure?: string | null
+          created_at?: string
+          id?: string
+          label: string
+          location?: string | null
+          notes?: string | null
+          planned_arrival?: string | null
+          planned_departure?: string | null
+          sort_order?: number
+          stop_id?: string | null
+          stop_type?: string
+          trip_id: string
+          updated_at?: string
+        }
+        Update: {
+          actual_arrival?: string | null
+          actual_departure?: string | null
+          created_at?: string
+          id?: string
+          label?: string
+          location?: string | null
+          notes?: string | null
+          planned_arrival?: string | null
+          planned_departure?: string | null
+          sort_order?: number
+          stop_id?: string | null
+          stop_type?: string
+          trip_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_schedule_stops_stop_id_fkey"
+            columns: ["stop_id"]
+            isOneToOne: false
+            referencedRelation: "stops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_schedule_stops_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trips: {
         Row: {
           arrival_date: string | null
@@ -7055,9 +7127,20 @@ export type Database = {
           created_at: string
           departure_date: string
           departure_time: string
+          direction: string
+          driver_user_id: string | null
+          ended_at: string | null
+          guide_user_id: string | null
           id: string
+          internal_notes: string | null
           is_active: boolean
+          return_trip_id: string | null
           route_id: string
+          seat_capacity: number | null
+          started_at: string | null
+          status: string
+          title: string | null
+          trip_category: string
           updated_at: string
         }
         Insert: {
@@ -7068,9 +7151,20 @@ export type Database = {
           created_at?: string
           departure_date: string
           departure_time: string
+          direction?: string
+          driver_user_id?: string | null
+          ended_at?: string | null
+          guide_user_id?: string | null
           id?: string
+          internal_notes?: string | null
           is_active?: boolean
+          return_trip_id?: string | null
           route_id: string
+          seat_capacity?: number | null
+          started_at?: string | null
+          status?: string
+          title?: string | null
+          trip_category?: string
           updated_at?: string
         }
         Update: {
@@ -7081,9 +7175,20 @@ export type Database = {
           created_at?: string
           departure_date?: string
           departure_time?: string
+          direction?: string
+          driver_user_id?: string | null
+          ended_at?: string | null
+          guide_user_id?: string | null
           id?: string
+          internal_notes?: string | null
           is_active?: boolean
+          return_trip_id?: string | null
           route_id?: string
+          seat_capacity?: number | null
+          started_at?: string | null
+          status?: string
+          title?: string | null
+          trip_category?: string
           updated_at?: string
         }
         Relationships: [
@@ -7092,6 +7197,13 @@ export type Database = {
             columns: ["bus_id"]
             isOneToOne: false
             referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trips_return_trip_id_fkey"
+            columns: ["return_trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
             referencedColumns: ["id"]
           },
           {
@@ -7897,6 +8009,15 @@ export type Database = {
       }
       cleanup_expired_holds: { Args: never; Returns: number }
       complete_passenger_token: { Args: { p_token: string }; Returns: boolean }
+      create_charter_passengers: {
+        Args: { p_passengers: Json; p_trip_id: string }
+        Returns: {
+          booking_id: string
+          booking_number: string
+          seat_number: string
+          ticket_number: string
+        }[]
+      }
       generate_admin_booking_number: { Args: never; Returns: string }
       generate_booking_number: { Args: never; Returns: string }
       generate_complaint_number: { Args: never; Returns: string }
