@@ -244,11 +244,12 @@ async function loadImages(): Promise<Record<string, Uint8Array>> {
   } catch (err) {
     console.warn("Logo konnte nicht geladen werden", err);
   }
-  const icon = logo ?? fallbackIcon();
+  const icon = fallbackIcon();
+  const brand = logo ?? icon;
   out["icon.png"] = icon;
   out["icon@2x.png"] = icon;
-  out["logo.png"] = icon;
-  out["logo@2x.png"] = icon;
+  out["logo.png"] = brand;
+  out["logo@2x.png"] = brand;
   imageCache = out;
   return out;
 }

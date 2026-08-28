@@ -197,7 +197,7 @@ const TripDetailSheet = ({ trip, onClose }: { trip: Trip; onClose: () => void })
             <ExternalLink className="w-4 h-4" /> Navigation
           </button>
           <a
-            href="tel:+4951112345678"
+            href="tel:+4951180781106"
             className="flex items-center justify-center gap-2 py-3 rounded-lg bg-white/5 hover:bg-white/10 text-white font-semibold text-sm border border-white/10"
           >
             <Phone className="w-4 h-4 text-emerald-400" /> Dispo anrufen

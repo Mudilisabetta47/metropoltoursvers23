@@ -51,7 +51,7 @@ export default function ImprintPage() {
                 <section>
                   <h2 className="text-xl font-semibold text-foreground mb-3">Kontakt</h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    Telefon: +49 511 80781106<br />E-Mail: info@metours.de<br />Website: www.metours.de
+                    Telefon: +49 511 80781106<br />E-Mail: kundenservice@metours.de<br />Website: www.metours.de
                   </p>
                 </section>
                 <section>

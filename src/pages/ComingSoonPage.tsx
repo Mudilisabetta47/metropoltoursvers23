@@ -285,7 +285,7 @@ const ComingSoonPage = () => {
             transition={{ delay: 2, duration: 1 }}
             className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[11px] sm:text-xs uppercase tracking-[0.25em] text-white/35"
           >
-            <span>info@metours.de</span>
+            <span>kundenservice@metours.de</span>
             <span className="hidden sm:inline w-1 h-1 rounded-full bg-white/20" />
             <span>app.metours.de</span>
           </motion.div>
