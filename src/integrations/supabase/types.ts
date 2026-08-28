@@ -2082,6 +2082,130 @@ export type Database = {
           },
         ]
       }
+      dispatch_order_stops: {
+        Row: {
+          actual_arrival: string | null
+          actual_departure: string | null
+          address: string | null
+          created_at: string
+          dwell_minutes: number
+          id: string
+          lat: number | null
+          lng: number | null
+          name: string
+          notes: string | null
+          order_id: string
+          planned_arrival: string | null
+          planned_departure: string | null
+          sort_order: number
+          stop_type: string
+          updated_at: string
+        }
+        Insert: {
+          actual_arrival?: string | null
+          actual_departure?: string | null
+          address?: string | null
+          created_at?: string
+          dwell_minutes?: number
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name: string
+          notes?: string | null
+          order_id: string
+          planned_arrival?: string | null
+          planned_departure?: string | null
+          sort_order?: number
+          stop_type?: string
+          updated_at?: string
+        }
+        Update: {
+          actual_arrival?: string | null
+          actual_departure?: string | null
+          address?: string | null
+          created_at?: string
+          dwell_minutes?: number
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          notes?: string | null
+          order_id?: string
+          planned_arrival?: string | null
+          planned_departure?: string | null
+          sort_order?: number
+          stop_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispatch_order_stops_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dispatch_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dispatch_order_tolls: {
+        Row: {
+          country_code: string | null
+          created_at: string
+          currency: string | null
+          data_source: string
+          distance_from_start_km: number | null
+          expected_cost: number | null
+          id: string
+          is_estimated: boolean
+          lat: number | null
+          lng: number | null
+          name: string
+          order_id: string
+          requires_transponder: boolean | null
+          sort_order: number
+        }
+        Insert: {
+          country_code?: string | null
+          created_at?: string
+          currency?: string | null
+          data_source?: string
+          distance_from_start_km?: number | null
+          expected_cost?: number | null
+          id?: string
+          is_estimated?: boolean
+          lat?: number | null
+          lng?: number | null
+          name: string
+          order_id: string
+          requires_transponder?: boolean | null
+          sort_order?: number
+        }
+        Update: {
+          country_code?: string | null
+          created_at?: string
+          currency?: string | null
+          data_source?: string
+          distance_from_start_km?: number | null
+          expected_cost?: number | null
+          id?: string
+          is_estimated?: boolean
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          order_id?: string
+          requires_transponder?: boolean | null
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispatch_order_tolls_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dispatch_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dispatch_orders: {
         Row: {
           accepted_at: string | null
@@ -2089,8 +2213,11 @@ export type Database = {
           bus_id: string | null
           created_at: string
           created_by: string | null
+          current_stop_id: string | null
           customer_name: string | null
           customer_phone: string | null
+          delay_minutes: number
+          delay_reason: string | null
           departure_at: string | null
           destination_address: string | null
           destination_lat: number | null
@@ -2101,6 +2228,7 @@ export type Database = {
           duration_min: number | null
           eta: string | null
           id: string
+          is_test: boolean
           notes: string | null
           order_number: string
           origin_address: string | null
@@ -2114,9 +2242,11 @@ export type Database = {
           route_note: string | null
           route_updated_at: string | null
           route_version: number
+          second_driver_user_id: string | null
           started_at: string | null
           status: string
           title: string
+          toll_data_available: boolean | null
           updated_at: string
           waypoints: Json
         }
@@ -2126,8 +2256,11 @@ export type Database = {
           bus_id?: string | null
           created_at?: string
           created_by?: string | null
+          current_stop_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          delay_minutes?: number
+          delay_reason?: string | null
           departure_at?: string | null
           destination_address?: string | null
           destination_lat?: number | null
@@ -2138,6 +2271,7 @@ export type Database = {
           duration_min?: number | null
           eta?: string | null
           id?: string
+          is_test?: boolean
           notes?: string | null
           order_number: string
           origin_address?: string | null
@@ -2151,9 +2285,11 @@ export type Database = {
           route_note?: string | null
           route_updated_at?: string | null
           route_version?: number
+          second_driver_user_id?: string | null
           started_at?: string | null
           status?: string
           title: string
+          toll_data_available?: boolean | null
           updated_at?: string
           waypoints?: Json
         }
@@ -2163,8 +2299,11 @@ export type Database = {
           bus_id?: string | null
           created_at?: string
           created_by?: string | null
+          current_stop_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          delay_minutes?: number
+          delay_reason?: string | null
           departure_at?: string | null
           destination_address?: string | null
           destination_lat?: number | null
@@ -2175,6 +2314,7 @@ export type Database = {
           duration_min?: number | null
           eta?: string | null
           id?: string
+          is_test?: boolean
           notes?: string | null
           order_number?: string
           origin_address?: string | null
@@ -2188,9 +2328,11 @@ export type Database = {
           route_note?: string | null
           route_updated_at?: string | null
           route_version?: number
+          second_driver_user_id?: string | null
           started_at?: string | null
           status?: string
           title?: string
+          toll_data_available?: boolean | null
           updated_at?: string
           waypoints?: Json
         }
@@ -2257,10 +2399,15 @@ export type Database = {
           created_at: string
           driver_user_id: string
           driving_seconds: number
+          driving_since: string | null
           id: string
+          is_test: boolean
           km_end: number | null
           km_start: number | null
+          last_break_end: string | null
           log_date: string
+          multi_driver: boolean
+          rest_start: string | null
           updated_at: string
         }
         Insert: {
@@ -2268,10 +2415,15 @@ export type Database = {
           created_at?: string
           driver_user_id: string
           driving_seconds?: number
+          driving_since?: string | null
           id?: string
+          is_test?: boolean
           km_end?: number | null
           km_start?: number | null
+          last_break_end?: string | null
           log_date?: string
+          multi_driver?: boolean
+          rest_start?: string | null
           updated_at?: string
         }
         Update: {
@@ -2279,13 +2431,84 @@ export type Database = {
           created_at?: string
           driver_user_id?: string
           driving_seconds?: number
+          driving_since?: string | null
           id?: string
+          is_test?: boolean
           km_end?: number | null
           km_start?: number | null
+          last_break_end?: string | null
           log_date?: string
+          multi_driver?: boolean
+          rest_start?: string | null
           updated_at?: string
         }
         Relationships: []
+      }
+      driver_events: {
+        Row: {
+          created_at: string
+          delay_minutes: number | null
+          driver_user_id: string
+          event_type: string
+          id: string
+          is_test: boolean
+          lat: number | null
+          lng: number | null
+          note: string | null
+          order_id: string | null
+          reason: string | null
+          speed_kmh: number | null
+          stop_id: string | null
+          trip_uid: string | null
+        }
+        Insert: {
+          created_at?: string
+          delay_minutes?: number | null
+          driver_user_id: string
+          event_type: string
+          id?: string
+          is_test?: boolean
+          lat?: number | null
+          lng?: number | null
+          note?: string | null
+          order_id?: string | null
+          reason?: string | null
+          speed_kmh?: number | null
+          stop_id?: string | null
+          trip_uid?: string | null
+        }
+        Update: {
+          created_at?: string
+          delay_minutes?: number | null
+          driver_user_id?: string
+          event_type?: string
+          id?: string
+          is_test?: boolean
+          lat?: number | null
+          lng?: number | null
+          note?: string | null
+          order_id?: string | null
+          reason?: string | null
+          speed_kmh?: number | null
+          stop_id?: string | null
+          trip_uid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dispatch_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_events_stop_id_fkey"
+            columns: ["stop_id"]
+            isOneToOne: false
+            referencedRelation: "dispatch_order_stops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       driver_licenses: {
         Row: {
