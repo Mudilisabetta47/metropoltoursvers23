@@ -524,11 +524,35 @@ const DriverNavPage = () => {
                 <Layer id="nav-line" type="line" paint={{ "line-color": "#00CC36", "line-width": 7 }} layout={{ "line-cap": "round", "line-join": "round" }} />
               </Source>
             )}
+            {stops
+              .filter((s) => s.lat != null && s.lng != null)
+              .map((s, i) => (
+                <Marker key={s.id} latitude={Number(s.lat)} longitude={Number(s.lng)} anchor="bottom">
+                  <div
+                    className={cn(
+                      "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 border-zinc-900 shadow-lg",
+                      s.actual_departure ? "bg-zinc-600 text-zinc-300" : "bg-emerald-500 text-black",
+                    )}
+                  >
+                    {i + 1}
+                  </div>
+                </Marker>
+              ))}
+            {tolls
+              .filter((t) => t.lat != null && t.lng != null)
+              .map((t) => (
+                <Marker key={t.id} latitude={Number(t.lat)} longitude={Number(t.lng)} anchor="center">
+                  <div className="w-6 h-6 rounded-full bg-amber-400 border-2 border-zinc-900 flex items-center justify-center">
+                    <Coins className="w-3.5 h-3.5 text-black" />
+                  </div>
+                </Marker>
+              ))}
             {activeOrder?.destination_lat && (
               <Marker latitude={Number(activeOrder.destination_lat)} longitude={Number(activeOrder.destination_lng)} anchor="bottom">
                 <MapPin className="w-9 h-9 text-red-500" fill="#ef4444" />
               </Marker>
             )}
+
             {pos && (
               <Marker latitude={pos.lat} longitude={pos.lng} anchor="center">
                 <div className="w-6 h-6 rounded-full bg-blue-500 border-4 border-white shadow-lg" style={{ transform: `rotate(${pos.heading}deg)` }} />
