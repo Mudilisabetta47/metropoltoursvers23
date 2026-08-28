@@ -279,109 +279,104 @@ serve(async (req) => {
       });
     }
 
-    /* ------------------------------------------------------------- PAY */
-    if (action === "pay") {
-      const bookingNumber = str(body?.bookingNumber, 40);
-      if (!/^MT-\d{4}-\d{6}$/.test(bookingNumber)) return json({ error: "Ungültige Buchungsnummer" }, 400);
-
-      const { data: bookings, error } = await db
-        .from("bookings")
-        .select("id, price_paid, payment_status, user_id, passenger_email")
-        .eq("booking_number", bookingNumber);
-      if (error) throw error;
-      if (!bookings?.length) return json({ error: "Buchung nicht gefunden" }, 404);
-      if (bookings.some((b) => b.user_id !== user.id)) return json({ error: "Kein Zugriff" }, 403);
-      if (bookings.every((b) => b.payment_status === "paid")) {
-        return json({ alreadyPaid: true });
+    /* ------------------------------------------- PAY / CONFIRM / CANCEL */
+    const bookingNumber = str(body?.bookingNumber, 40);
+    if (["pay", "confirm", "cancel"].includes(action)) {
+      if (!/^MT-\d{4}-\d{6}$/.test(bookingNumber)) {
+        return json({ error: "Ungültige Buchungsnummer" }, 400);
       }
 
-      const amount = Math.round(
-        bookings.reduce((sum, b) => sum + Number(b.price_paid ?? 0), 0) * 100,
+      // Buchungsgruppe finden – Linien-/Individualfahrten oder Pauschalreise
+      const { data: tripRows } = await db
+        .from("bookings")
+        .select("id, user_id, price_paid, payment_status, stripe_session_id")
+        .eq("booking_number", bookingNumber);
+
+      let table: "bookings" | "tour_bookings" = "bookings";
+      let rows: any[] = tripRows ?? [];
+
+      if (!rows.length) {
+        const { data: tourRows } = await db
+          .from("tour_bookings")
+          .select("id, user_id, total_price, payment_status, stripe_payment_intent_id")
+          .eq("booking_number", bookingNumber);
+        if (!tourRows?.length) return json({ error: "Buchung nicht gefunden" }, 404);
+        table = "tour_bookings";
+        rows = tourRows;
+      }
+
+      if (rows.some((b) => b.user_id !== user.id)) return json({ error: "Kein Zugriff" }, 403);
+      const amountEur = rows.reduce(
+        (sum, b) => sum + Number(table === "bookings" ? b.price_paid : b.total_price) || 0,
+        0,
       );
-      if (amount < 50) return json({ error: "Ungültiger Zahlbetrag" }, 400);
+      const intentField = table === "bookings" ? "stripe_session_id" : "stripe_payment_intent_id";
 
-      const stripe = stripeClient();
-      const intent = await stripe.paymentIntents.create({
-        amount,
-        currency: "eur",
-        automatic_payment_methods: { enabled: true },
-        receipt_email: user.email ?? undefined,
-        metadata: { booking_number: bookingNumber, user_id: user.id, channel: "mobile_app" },
-      });
+      if (action === "pay") {
+        if (rows.every((b) => b.payment_status === "paid")) return json({ alreadyPaid: true });
+        const amount = Math.round(amountEur * 100);
+        if (amount < 50) return json({ error: "Ungültiger Zahlbetrag" }, 400);
 
-      await db
-        .from("bookings")
-        .update({ payment_status: "pending", stripe_session_id: intent.id })
-        .eq("booking_number", bookingNumber);
+        const stripe = stripeClient();
+        const intent = await stripe.paymentIntents.create({
+          amount,
+          currency: "eur",
+          automatic_payment_methods: { enabled: true },
+          receipt_email: user.email ?? undefined,
+          metadata: { booking_number: bookingNumber, user_id: user.id, channel: "mobile_app" },
+        });
 
-      return json({ clientSecret: intent.client_secret, paymentIntentId: intent.id, amount });
-    }
-
-    /* --------------------------------------------------------- CONFIRM */
-    if (action === "confirm") {
-      const bookingNumber = str(body?.bookingNumber, 40);
-      if (!/^MT-\d{4}-\d{6}$/.test(bookingNumber)) return json({ error: "Ungültige Buchungsnummer" }, 400);
-
-      const { data: bookings, error } = await db
-        .from("bookings")
-        .select("id, user_id, stripe_session_id, payment_status")
-        .eq("booking_number", bookingNumber);
-      if (error) throw error;
-      if (!bookings?.length) return json({ error: "Buchung nicht gefunden" }, 404);
-      if (bookings.some((b) => b.user_id !== user.id)) return json({ error: "Kein Zugriff" }, 403);
-
-      const intentId = bookings[0].stripe_session_id;
-      if (!intentId) return json({ error: "Keine Zahlung gestartet" }, 400);
-
-      const stripe = stripeClient();
-      const intent = await stripe.paymentIntents.retrieve(intentId);
-
-      // Zahlungsstatus wird ausschließlich serverseitig aus Stripe übernommen
-      if (intent.status === "succeeded") {
         await db
-          .from("bookings")
-          .update({
-            payment_status: "paid",
-            status: "confirmed",
-            payment_method: "stripe",
-            payment_reference: intent.id,
-            paid_at: new Date().toISOString(),
-          })
+          .from(table)
+          .update({ payment_status: "pending", [intentField]: intent.id })
           .eq("booking_number", bookingNumber);
-        return json({ paymentStatus: "paid", status: "confirmed" });
+
+        return json({ clientSecret: intent.client_secret, paymentIntentId: intent.id, amount });
       }
 
-      if (["requires_payment_method", "canceled"].includes(intent.status)) {
-        await db
-          .from("bookings")
-          .update({ payment_status: "failed" })
-          .eq("booking_number", bookingNumber);
-        return json({ paymentStatus: "failed", status: "pending" });
+      if (action === "confirm") {
+        const intentId = rows[0][intentField];
+        if (!intentId) return json({ error: "Keine Zahlung gestartet" }, 400);
+        const stripe = stripeClient();
+        const intent = await stripe.paymentIntents.retrieve(intentId);
+
+        // Zahlungsstatus wird ausschließlich serverseitig aus Stripe übernommen
+        if (intent.status === "succeeded") {
+          await db
+            .from(table)
+            .update({
+              payment_status: "paid",
+              status: "confirmed",
+              payment_method: "stripe",
+              payment_reference: intent.id,
+              paid_at: new Date().toISOString(),
+            })
+            .eq("booking_number", bookingNumber);
+          return json({ paymentStatus: "paid", status: "confirmed", bookingNumber });
+        }
+
+        if (["requires_payment_method", "canceled"].includes(intent.status)) {
+          await db.from(table).update({ payment_status: "failed" }).eq("booking_number", bookingNumber);
+          return json({ paymentStatus: "failed", status: "pending" });
+        }
+
+        return json({ paymentStatus: "pending", status: "pending", stripeStatus: intent.status });
       }
 
-      return json({ paymentStatus: "pending", status: "pending", stripeStatus: intent.status });
-    }
-
-    /* ---------------------------------------------------------- CANCEL */
-    if (action === "cancel") {
-      const bookingNumber = str(body?.bookingNumber, 40);
-      if (!/^MT-\d{4}-\d{6}$/.test(bookingNumber)) return json({ error: "Ungültige Buchungsnummer" }, 400);
-      const { data: bookings } = await db
-        .from("bookings")
-        .select("id, user_id, payment_status")
-        .eq("booking_number", bookingNumber);
-      if (!bookings?.length) return json({ error: "Buchung nicht gefunden" }, 404);
-      if (bookings.some((b) => b.user_id !== user.id)) return json({ error: "Kein Zugriff" }, 403);
-      if (bookings.some((b) => b.payment_status === "paid")) {
+      // cancel
+      if (rows.some((b) => b.payment_status === "paid")) {
         return json({ error: "Bezahlte Buchungen bitte über den Kundenservice stornieren" }, 400);
       }
-      await db.from("bookings").update({ status: "cancelled" }).eq("booking_number", bookingNumber);
-      await db
-        .from("tickets")
-        .update({ status: "cancelled" })
-        .in("booking_id", bookings.map((b) => b.id));
+      await db.from(table).update({ status: "cancelled" }).eq("booking_number", bookingNumber);
+      if (table === "bookings") {
+        await db
+          .from("tickets")
+          .update({ status: "cancelled" })
+          .in("booking_id", rows.map((b) => b.id));
+      }
       return json({ status: "cancelled" });
     }
+
 
     return json({ error: "Unbekannte Aktion" }, 400);
   } catch (error) {
