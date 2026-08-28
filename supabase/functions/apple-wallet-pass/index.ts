@@ -235,7 +235,7 @@ async function loadImages(): Promise<Record<string, Uint8Array>> {
   const out: Record<string, Uint8Array> = {};
   let logo: Uint8Array | null = null;
   try {
-    const res = await fetch(`${SITE_URL}/brand/metropol-logo.png`);
+    const res = await fetch(`${SITE_URL}/brand/metropol-logo-light.png`);
     if (res.ok) {
       const buf = new Uint8Array(await res.arrayBuffer());
       if (isPng(buf)) logo = buf;
@@ -258,7 +258,7 @@ async function loadImages(): Promise<Record<string, Uint8Array>> {
 function fmtDate(d: any) {
   if (!d) return "—";
   const dt = new Date(d);
-  return isNaN(dt.getTime()) ? String(d) : dt.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return isNaN(dt.getTime()) ? String(d) : dt.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" });
 }
 function fmtTime(t: any) {
   if (!t) return "—";
@@ -351,7 +351,7 @@ function serveHandler() {
       } else {
         const { data: b } = await admin.from("bookings")
           .select(`ticket_number, passenger_first_name, passenger_last_name, created_at,
-                   trips ( departure_date, departure_time, arrival_time, routes ( name ) ),
+                   trips ( departure_date, departure_time, arrival_date, arrival_time, routes ( name ) ),
                    origin_stop:stops!bookings_origin_stop_id_fkey ( name, city ),
                    destination_stop:stops!bookings_destination_stop_id_fkey ( name, city ),
                    seats ( seat_number )`)
@@ -367,7 +367,7 @@ function serveHandler() {
           from: o.city || o.name || "Abfahrt",
           to: d.city || d.name || "Ziel",
           departure: `${fmtDate(trip.departure_date)} · ${fmtTime(trip.departure_time)}`,
-          ret: fmtTime(trip.arrival_time),
+          ret: `${fmtDate(trip.arrival_date || trip.departure_date)} · ${fmtTime(trip.arrival_time)}`,
           passenger: `${b.passenger_first_name ?? ""} ${b.passenger_last_name ?? ""}`.trim(),
           seat: seat.seat_number || "—",
           travelType: trip?.routes?.name || "Buslinie",
@@ -378,7 +378,7 @@ function serveHandler() {
           { key: "passenger", label: "Fahrgast", value: front.passenger || "—" },
           { key: "trip", label: "Reise", value: front.travelType },
           { key: "outbound", label: "Hinreise", value: front.departure },
-          { key: "inbound", label: "Ankunft", value: fmtTime(trip.arrival_time) },
+          { key: "inbound", label: "Rückreise", value: `${fmtDate(trip.arrival_date || trip.departure_date)} · ${fmtTime(trip.arrival_time)}` },
           { key: "origin", label: "Abfahrt", value: o.name ? `${o.name}${o.city ? `, ${o.city}` : ""}` : (o.city || "—") },
           { key: "destination", label: "Ziel", value: d.name ? `${d.name}${d.city ? `, ${d.city}` : ""}` : (d.city || "—") },
           { key: "seat", label: "Sitzplatz", value: front.seat },
@@ -387,7 +387,7 @@ function serveHandler() {
       }
 
       back.push(
-        { key: "contact", label: "Kontakt", value: "Tel. +49 511 21958080\ninfo@metours.de" },
+        { key: "contact", label: "Kontakt", value: "Tel. +49 511 80781106\nkundenservice@metours.de" },
         { key: "website", label: "Website", value: "https://www.metours.de" },
         { key: "luggage", label: "Gepäck", value: "1 Koffer (max. 20 kg) + 1 Handgepäckstück pro Person. Zusätzliches Gepäck bitte vorab anmelden." },
         { key: "notes", label: "Wichtige Reisehinweise", value: "Bitte seien Sie 20 Minuten vor Abfahrt am Abfahrtsort. Gültiger Lichtbildausweis erforderlich. Dieser Pass gilt als elektronisches Ticket – QR-Code beim Einstieg bereithalten." },
@@ -405,7 +405,6 @@ function serveHandler() {
         backgroundColor: "rgb(0,204,54)",
         foregroundColor: "rgb(255,255,255)",
         labelColor: "rgb(255,255,255)",
-        logoText: "METROPOL TOURS",
         sharingProhibited: false,
         ...(relevantDate ? { relevantDate } : {}),
         barcodes: [{
@@ -426,7 +425,6 @@ function serveHandler() {
             { key: "departure", label: "ABFAHRT", value: front.departure },
           ],
           auxiliaryFields: [
-            { key: "ticket", label: "TICKET", value: ticketNumber },
             { key: "type", label: "REISEART", value: front.travelType },
             { key: "return", label: "RÜCKREISE", value: front.ret },
           ],
