@@ -274,13 +274,43 @@ const DriverNavPage = () => {
     return route.maxspeeds[i] ?? null;
   }, [route, stepIndex]);
 
+  // Lenkzeit-Ansage (nur bei aktiver Navigation, jede Meldung nur einmal)
+  useEffect(() => {
+    if (!navigating || !compliance.announcement) return;
+    if (lastDutySpoken.current === compliance.announcement) return;
+    lastDutySpoken.current = compliance.announcement;
+    speak(compliance.announcement, voice);
+    toast.warning(compliance.announcement, { duration: 10000 });
+  }, [compliance.announcement, navigating, voice]);
+
   const act = async (fn: () => Promise<void>) => {
     setBusy(true);
     try { await fn(); reload(); } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
   };
 
+  /** Fahrtrelevantes Ereignis mit GPS-Stempel protokollieren. */
+  const logEvent = useCallback(
+    async (eventType: string, payload: { reason?: string; note?: string; delay?: number; stopId?: string } = {}) => {
+      if (!user) return;
+      await db.from("driver_events").insert({
+        driver_user_id: user.id,
+        order_id: activeOrder?.id ?? null,
+        stop_id: payload.stopId ?? null,
+        event_type: eventType,
+        delay_minutes: payload.delay ?? null,
+        reason: payload.reason ?? null,
+        note: payload.note?.trim() || null,
+        lat: pos?.lat ?? null,
+        lng: pos?.lng ?? null,
+        speed_kmh: pos ? Math.round(pos.speed) : null,
+      });
+    },
+    [user, activeOrder?.id, pos],
+  );
+
   const acceptOrder = () => activeOrder && act(async () => {
     await updateOrderStatus(activeOrder.id, "accepted");
+    await logEvent("order_accepted");
     toast.success("Auftrag angenommen");
     speak("Auftrag angenommen", voice);
   });
@@ -293,30 +323,90 @@ const DriverNavPage = () => {
 
   const startNav = () => activeOrder && act(async () => {
     await updateOrderStatus(activeOrder.id, "en_route");
+    await startDriving();
     await computeRoute();
+    await logEvent("driving_start");
     setNavigating(true);
     speak("Navigation gestartet", voice);
   });
 
   const pauseNav = () => activeOrder && act(async () => {
     await updateOrderStatus(activeOrder.id, "paused");
+    await stopDriving({ startBreak: true });
+    await logEvent("break_start");
     setNavigating(false);
+    speak("Pause gestartet", voice);
   });
 
   const arrived = () => activeOrder && act(async () => {
     await updateOrderStatus(activeOrder.id, "arrived");
+    await stopDriving();
+    await logEvent("arrived");
     setNavigating(false);
     setRoute(null);
+    setManualTarget(null);
     speak("Ziel erreicht", voice);
     toast.success("Ankunft gemeldet");
   });
 
+  /** Verspätung melden: Auftrag, Ereignisprotokoll und Zentrale in einem Schritt. */
+  const submitDelay = (minutes: number, reason: string, note: string) =>
+    activeOrder && user && act(async () => {
+      await db.from("dispatch_orders")
+        .update({ delay_minutes: minutes, delay_reason: minutes > 0 ? reason : null })
+        .eq("id", activeOrder.id);
+      await logEvent("delay", { delay: minutes, reason, note });
+      await send(
+        minutes > 0
+          ? `⏱️ Verspätung ${minutes} min – ${reason}${note.trim() ? ` (${note.trim()})` : ""}`
+          : "✅ Verspätung aufgeholt, wieder im Plan",
+        user.id,
+        "driver",
+        activeOrder.id,
+      );
+      toast.success(minutes > 0 ? `Verspätung von ${minutes} min gemeldet` : "Als pünktlich gemeldet");
+      setSheetTab(null);
+    });
+
+  const submitEvent = (type: DriverEventType, note: string) =>
+    user && act(async () => {
+      await logEvent(type, { note });
+      if (activeOrder) {
+        await send(`📍 Ereignis: ${type}${note.trim() ? ` – ${note.trim()}` : ""}`, user.id, "driver", activeOrder.id);
+      }
+      toast.success("Ereignis protokolliert");
+      setSheetTab(null);
+    });
+
+  const stopArrive = (stopId: string) =>
+    act(async () => {
+      await markArrival(stopId);
+      await logEvent("stop_arrival", { stopId });
+    });
+
+  const stopDepart = (stopId: string) =>
+    act(async () => {
+      await markDeparture(stopId);
+      await logEvent("stop_departure", { stopId });
+      setRoute(null);
+    });
+
+  const navigateToStop = (stop: OrderStop) => {
+    if (stop.lat == null || stop.lng == null) return;
+    setManualTarget({ lat: Number(stop.lat), lng: Number(stop.lng) });
+    setRoute(null);
+    setSheetTab(null);
+    toast.info(`Neues Zwischenziel: ${stop.name}`);
+  };
+
   const reportProblem = () => activeOrder && user && act(async () => {
     const text = window.prompt("Was ist das Problem?") ?? "";
     if (!text.trim()) return;
+    await logEvent("problem", { note: text });
     await send(`⚠️ PROBLEM: ${text}`, user.id, "driver", activeOrder.id);
     toast.success("Zentrale informiert");
   });
+
 
   const sendChat = async () => {
     if (!chatInput.trim() || !user) return;
