@@ -310,8 +310,12 @@ serve(async (req) => {
       await admin.from("wallet_passes").update({ pass_url: finalUrl }).eq("id", pass!.id);
     }
 
-    const appleReady = !!(Deno.env.get("APPLE_PASS_TYPE_IDENTIFIER") && Deno.env.get("APPLE_TEAM_IDENTIFIER") &&
-      Deno.env.get("APPLE_PASS_CERT_P12_BASE64") && Deno.env.get("APPLE_WWDR_CERT_PEM"));
+    const appleReady = !!(
+      (Deno.env.get("APPLE_PASS_TYPE_ID") || Deno.env.get("APPLE_PASS_TYPE_IDENTIFIER")) &&
+      (Deno.env.get("APPLE_TEAM_ID") || Deno.env.get("APPLE_TEAM_IDENTIFIER")) &&
+      (Deno.env.get("APPLE_PASS_CERT_P12") || Deno.env.get("APPLE_PASS_CERT_P12_BASE64")) &&
+      (Deno.env.get("APPLE_WWDR_PEM") || Deno.env.get("APPLE_WWDR_CERT_PEM"))
+    );
 
     const previewHtml = renderPassHtml(toPassDisplay(booking_type, booking));
     return new Response(JSON.stringify({

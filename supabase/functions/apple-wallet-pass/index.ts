@@ -9,19 +9,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const PASS_TYPE_ID = Deno.env.get("APPLE_PASS_TYPE_IDENTIFIER") ?? "";
-const TEAM_ID = Deno.env.get("APPLE_TEAM_IDENTIFIER") ?? "";
-const P12_B64 = Deno.env.get("APPLE_PASS_CERT_P12_BASE64") ?? "";
+const PASS_TYPE_ID = Deno.env.get("APPLE_PASS_TYPE_ID") ?? Deno.env.get("APPLE_PASS_TYPE_IDENTIFIER") ?? "";
+const TEAM_ID = Deno.env.get("APPLE_TEAM_ID") ?? Deno.env.get("APPLE_TEAM_IDENTIFIER") ?? "";
+const P12_B64 = Deno.env.get("APPLE_PASS_CERT_P12") ?? Deno.env.get("APPLE_PASS_CERT_P12_BASE64") ?? "";
 const P12_PASS = Deno.env.get("APPLE_PASS_CERT_PASSWORD") ?? "";
-const WWDR_PEM = Deno.env.get("APPLE_WWDR_CERT_PEM") ?? "";
+const WWDR_PEM = Deno.env.get("APPLE_WWDR_PEM") ?? Deno.env.get("APPLE_WWDR_CERT_PEM") ?? "";
 const SITE_URL = Deno.env.get("PUBLIC_SITE_URL") ?? "https://www.metours.de";
 
 const missingCredentials = () => {
   const missing: string[] = [];
-  if (!PASS_TYPE_ID) missing.push("APPLE_PASS_TYPE_IDENTIFIER");
-  if (!TEAM_ID) missing.push("APPLE_TEAM_IDENTIFIER");
-  if (!P12_B64) missing.push("APPLE_PASS_CERT_P12_BASE64");
-  if (!WWDR_PEM) missing.push("APPLE_WWDR_CERT_PEM");
+  if (!PASS_TYPE_ID) missing.push("APPLE_PASS_TYPE_ID");
+  if (!TEAM_ID) missing.push("APPLE_TEAM_ID");
+  if (!P12_B64) missing.push("APPLE_PASS_CERT_P12");
+  if (!WWDR_PEM) missing.push("APPLE_WWDR_PEM");
   return missing;
 };
 
