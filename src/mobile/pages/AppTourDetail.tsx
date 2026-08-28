@@ -81,11 +81,11 @@ export default function AppTourDetail() {
   ) as string[];
 
   const startCheckout = () => {
-    // Bestehende, serverseitig abgesicherte Buchungsstrecke wiederverwenden.
+    // Vollständig interner App-Checkout – kein Wechsel auf die Website.
     const search = new URLSearchParams({ tour: tour.id, pax: participants.toString() });
     if (selected) search.set("date", selected.id);
     if (selectedTariff) search.set("tariff", selectedTariff.id);
-    navigate(`/reisen/checkout?${search.toString()}`);
+    navigate(`/app/tour-checkout?${search.toString()}`);
   };
 
   return (
