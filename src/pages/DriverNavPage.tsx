@@ -435,6 +435,9 @@ const DriverNavPage = () => {
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {delayMinutes > 0 && (
+            <Badge className="bg-amber-500 text-black font-semibold">+{delayMinutes} min</Badge>
+          )}
           {!online && <Badge className="bg-amber-500/20 text-amber-300"><WifiOff className="w-3 h-3 mr-1" />Offline</Badge>}
           <Button variant="ghost" size="icon" className="text-zinc-300 h-11 w-11" onClick={() => setVoice((v) => !v)}>
             {voice ? <Volume2 className="w-6 h-6" /> : <VolumeX className="w-6 h-6" />}
@@ -447,6 +450,31 @@ const DriverNavPage = () => {
           </Button>
         </div>
       </div>
+
+      {/* Nächster Halt inkl. erwarteter Ankunft */}
+      {nextStop && (
+        <button
+          onClick={() => setSheetTab("stops")}
+          className="shrink-0 w-full text-left bg-zinc-800/80 border-b border-zinc-700 px-4 py-2 flex items-center justify-between gap-3"
+        >
+          <div className="min-w-0">
+            <p className="text-[11px] text-zinc-400">Nächster Halt</p>
+            <p className="text-sm font-semibold text-white truncate">{nextStop.name}</p>
+          </div>
+          <div className="text-right shrink-0">
+            <p className={cn("text-lg font-bold", delayMinutes > 0 ? "text-amber-300" : "text-emerald-400")}>
+              {nextStop.planned_arrival
+                ? new Date(new Date(nextStop.planned_arrival).getTime() + delayMinutes * 60000)
+                    .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })
+                : "–"}
+            </p>
+            <p className="text-[10px] text-zinc-400">
+              {stops.filter((s) => !s.actual_departure).length} von {stops.length} offen
+            </p>
+          </div>
+        </button>
+      )}
+
 
       {/* Neuer Auftrag */}
       {incoming && (
