@@ -169,7 +169,7 @@ const OrderDialog = ({
       const eta =
         preview && dep ? new Date(new Date(dep).getTime() + preview.min * 60000).toISOString() : null;
 
-      const { error } = await db.from("dispatch_orders").insert({
+      const { data: created, error } = await db.from("dispatch_orders").insert({
         title: title.trim(),
         driver_user_id: driverId,
         bus_id: busId || null,
@@ -194,11 +194,43 @@ const OrderDialog = ({
         duration_min: preview?.min ?? null,
         eta,
         created_by: createdBy,
-      });
+      }).select("id").single();
       if (error) throw error;
+
+      // Zwischenhalte und Ziel als echte Haltestellen fuer die Fahrer-Navi anlegen
+      const stopRows = [
+        ...waypoints
+          .filter((w) => w.lat != null)
+          .map((w, i) => ({
+            order_id: created.id,
+            sort_order: i,
+            name: w.name || w.address,
+            address: w.address,
+            lat: w.lat,
+            lng: w.lng,
+            stop_type: w.type,
+            dwell_minutes: Number(w.dwell) || 0,
+            planned_arrival: w.time ? new Date(w.time).toISOString() : null,
+          })),
+        {
+          order_id: created.id,
+          sort_order: waypoints.length,
+          name: destination.name || destination.address,
+          address: destination.address,
+          lat: destination.lat,
+          lng: destination.lng,
+          stop_type: "destination",
+          dwell_minutes: 0,
+          planned_arrival: eta,
+        },
+      ];
+      const { error: stopError } = await db.from("dispatch_order_stops").insert(stopRows);
+      if (stopError) throw stopError;
+
       toast.success("Auftrag an Fahrer gesendet");
       setTitle(""); setCustomer(""); setPhone(""); setNotes(""); setDeparture("");
       setOrigin(emptyAddr); setDestination(emptyAddr); setWaypoints([]); setPreview(null);
+
       onOpenChange(false);
       onCreated();
     } catch (e: any) {
