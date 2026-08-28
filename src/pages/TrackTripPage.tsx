@@ -24,6 +24,7 @@ export default function TrackTripPage() {
   const [livePos, setLivePos] = useState<any>(null);
   const [registry, setRegistry] = useState<any>(null);
   const [legendOpen, setLegendOpen] = useState(false);
+  const [charterId, setCharterId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
@@ -40,7 +41,15 @@ export default function TrackTripPage() {
         const { data: lt } = await supabase.from("line_trips").select("*").eq("id", reg.source_id).maybeSingle();
         t = lt;
       }
+      // Individuelle Fahrten (Charter/Gruppe/Sonderfahrt) haben eine eigene Ansicht
+      if (reg?.source_type === "charter_trip") {
+        setRegistry(reg);
+        setCharterId(reg.source_id);
+        setLoading(false);
+        return;
+      }
     }
+
 
     // 2. Fallback: legacy line-trip number lookup
     if (!t) {
