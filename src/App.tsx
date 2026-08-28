@@ -42,6 +42,8 @@ const AppTours = lazy(() => import("./mobile/pages/AppTours"));
 const AppTourDetail = lazy(() => import("./mobile/pages/AppTourDetail"));
 const AppMyTrips = lazy(() => import("./mobile/pages/AppMyTrips"));
 const AppTicket = lazy(() => import("./mobile/pages/AppTicket"));
+const AppMyTickets = lazy(() => import("./mobile/pages/AppMyTickets"));
+const AppCheckout = lazy(() => import("./mobile/pages/AppCheckout"));
 const AppProfile = lazy(() => import("./mobile/pages/AppProfile"));
 
 const MobileAppLayout = () => (
