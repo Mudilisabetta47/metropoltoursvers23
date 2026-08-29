@@ -12,12 +12,20 @@ interface ScanResult {
   message: string;
   color: string;
   ticket?: any;
+  passenger?: any;
+  trip?: any;
+  checked_in_at?: string | null;
+  detail?: string;
+  attempts?: number;
+  usedFallback?: string | null;
 }
 
 const SCAN_COOLDOWN_MS = 1500;
 const MAX_PAYLOAD_LENGTH = 200;
 const QR_PAYLOAD_REGEX = /^[A-Za-z0-9\-_:./]+$/;
 const CONTAINER_ID = "fis-qr-reader";
+const MAX_ATTEMPTS = 3;
+const TICKET_NUMBER_REGEX = /((?:TKT|MT|ADM)-[A-Z0-9]+(?:-[A-Z0-9]+)*)/i;
 
 const resultLabel: Record<string, string> = {
   checked_in: "Eingecheckt",
@@ -27,15 +35,63 @@ const resultLabel: Record<string, string> = {
   expired: "Abgelaufen",
   not_found: "Nicht gefunden",
   fraud_suspected: "Betrugsverdacht",
+  rate_limited: "Zu viele Scans",
+  forbidden: "Keine Berechtigung",
+  error: "Technischer Fehler",
 };
+
+// Klartext-Status für jedes Ergebnis (Statusregeln)
+const statusText: Record<string, string> = {
+  checked_in: "GÜLTIG – Fahrgast eingecheckt",
+  already_checked_in: "BENUTZT – Ticket wurde bereits eingecheckt",
+  invalid: "UNGÜLTIG – storniert oder erstattet",
+  expired: "ABGELAUFEN – Fahrt liegt in der Vergangenheit",
+  not_found: "UNBEKANNT – Ticket nicht im System",
+  fraud_suspected: "BETRUGSVERDACHT – bitte Ausweis prüfen",
+  invalid_input: "UNGÜLTIGES FORMAT – Ticketnummer prüfen",
+  rate_limited: "GESPERRT – zu viele Scans in kurzer Zeit",
+  forbidden: "KEINE BERECHTIGUNG – Konto ohne Scan-Rechte",
+  error: "FEHLER – Ticketstatus konnte nicht geprüft werden",
+};
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Ruft die Edge Function auf und liest bei Fehlern den echten Body/Status aus. */
+async function invokeScan(payload: string): Promise<any> {
+  const { data, error } = await supabase.functions.invoke("process-ticket-scan", {
+    body: { qr_payload: payload },
+  });
+  if (!error) return data;
+
+  let status: number | undefined;
+  let detail = error.message || "Unbekannter Fehler";
+  const ctx: any = (error as any).context;
+  if (ctx && typeof ctx.status === "number") {
+    status = ctx.status;
+    try {
+      const body = await ctx.clone().json();
+      detail = body?.error || body?.message || detail;
+    } catch {
+      try {
+        const text = (await ctx.clone().text())?.slice(0, 300);
+        if (text) detail = text;
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  throw Object.assign(new Error(detail), { status });
+}
 
 const ScanTab = ({ userId }: { userId: string }) => {
   const [manual, setManual] = useState("");
   const [scanning, setScanning] = useState(false);
+  const [progress, setProgress] = useState<string | null>(null);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraStarting, setCameraStarting] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
+  const [localHistory, setLocalHistory] = useState<any[]>([]);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const lastScanRef = useRef(0);
 
@@ -63,33 +119,104 @@ const ScanTab = ({ userId }: { userId: string }) => {
     if (scanning || !payload.trim()) return;
     const now = Date.now();
     if (now - lastScanRef.current < SCAN_COOLDOWN_MS) return;
-    const sanitized = payload.trim();
-    if (sanitized.length > MAX_PAYLOAD_LENGTH || !QR_PAYLOAD_REGEX.test(sanitized)) {
-      setResult({ result: "invalid_input", message: "Ungültiges Ticket-Format", color: "red" });
+    const raw = payload.trim();
+
+    // Fallback-Kandidat: Ticketnummer aus QR-Inhalt (z. B. URL) extrahieren
+    const extracted = raw.match(TICKET_NUMBER_REGEX)?.[1]?.toUpperCase();
+    const candidates = [raw, ...(extracted && extracted !== raw.toUpperCase() ? [extracted] : [])].filter(
+      (c) => c.length <= MAX_PAYLOAD_LENGTH && QR_PAYLOAD_REGEX.test(c),
+    );
+
+    if (candidates.length === 0) {
+      setResult({
+        result: "invalid_input",
+        message: "Ungültiges Ticket-Format – bitte Ticketnummer manuell eingeben",
+        color: "red",
+      });
       return;
     }
+
     lastScanRef.current = now;
     setScanning(true);
     setResult(null);
+
+    let lastError: any = null;
     try {
-      const { data, error } = await supabase.functions.invoke("process-ticket-scan", {
-        body: { qr_payload: sanitized },
-      });
-      if (error) throw error;
-      setResult(data as ScanResult);
-      if (navigator.vibrate) {
-        if (data.color === "green") navigator.vibrate(200);
-        else if (data.color === "yellow") navigator.vibrate([100, 50, 100]);
-        else navigator.vibrate([200, 100, 200]);
+      for (let ci = 0; ci < candidates.length; ci++) {
+        const candidate = candidates[ci];
+        for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+          setProgress(
+            ci > 0
+              ? `Fallback: Ticketnummer ${candidate}…`
+              : attempt > 1
+              ? `Erneuter Versuch ${attempt}/${MAX_ATTEMPTS}…`
+              : "Ticket wird geprüft…",
+          );
+          try {
+            const data = await invokeScan(candidate);
+            const enriched: ScanResult = {
+              ...(data as ScanResult),
+              attempts: attempt,
+              usedFallback: ci > 0 ? candidate : null,
+            };
+            setResult(enriched);
+            if (navigator.vibrate) {
+              if (enriched.color === "green") navigator.vibrate(200);
+              else if (enriched.color === "yellow") navigator.vibrate([100, 50, 100]);
+              else navigator.vibrate([200, 100, 200]);
+            }
+            if (enriched.color === "green") toast.success(statusText[enriched.result] ?? enriched.message);
+            else if (enriched.color === "yellow") toast.warning(statusText[enriched.result] ?? enriched.message);
+            else toast.error(statusText[enriched.result] ?? enriched.message);
+            setManual("");
+            loadHistory();
+            return;
+          } catch (err: any) {
+            lastError = err;
+            const status: number | undefined = err?.status;
+            const retryable = status === undefined || status === 429 || status >= 500;
+            if (!retryable || attempt === MAX_ATTEMPTS) break;
+            await sleep(400 * attempt);
+          }
+        }
       }
-      setManual("");
-      loadHistory();
-    } catch (err: any) {
-      setResult({ result: "error", message: "Fehler: " + (err?.message || "Unbekannt"), color: "red" });
+
+      const status = lastError?.status;
+      const detail = lastError?.message || "Unbekannter Fehler";
+      const failure: ScanResult = {
+        result: status === 401 ? "forbidden" : status === 429 ? "rate_limited" : "error",
+        message:
+          status === 401
+            ? "Sitzung abgelaufen – bitte neu anmelden."
+            : status === 403
+            ? "Dein Konto hat keine Scan-Berechtigung."
+            : status === 429
+            ? "Zu viele Scans. Bitte kurz warten."
+            : `Scan fehlgeschlagen (HTTP ${status ?? "n/a"}): ${detail}`,
+        color: status === 429 ? "yellow" : "red",
+        detail: `${status ?? "Netzwerkfehler"} · ${detail}`,
+      };
+      setResult(failure);
+      toast.error(failure.message);
+      setLocalHistory((prev) =>
+        [
+          {
+            id: `local-${Date.now()}`,
+            scan_time: new Date().toISOString(),
+            result: failure.result,
+            qr_payload: candidates[0],
+            message: failure.detail,
+            local: true,
+          },
+          ...prev,
+        ].slice(0, 10),
+      );
     } finally {
+      setProgress(null);
       setScanning(false);
     }
   };
+
 
   const startCamera = async () => {
     if (cameraStarting) return;
