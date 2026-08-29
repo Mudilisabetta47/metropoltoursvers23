@@ -4,8 +4,9 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import {
   Loader2, ArrowLeft, Plus, Trash2, Copy, MapPin, Users, CalendarClock,
-  Radio, Play, Square, Ticket, ExternalLink, Bus, UserCog,
+  Radio, Play, Square, Ticket, ExternalLink, Bus, UserCog, Mail,
 } from "lucide-react";
+
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
