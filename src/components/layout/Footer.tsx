@@ -44,7 +44,6 @@ const Footer = () => {
       { name: "Datenschutz", path: "/privacy" },
       { name: "AGB", path: "/terms" },
       { name: "Widerrufsbelehrung", path: "/widerruf" },
-      { name: "Karriere", path: "/karriere" },
       { name: "Cookie-Einstellungen", path: "/privacy" },
     ],
   };

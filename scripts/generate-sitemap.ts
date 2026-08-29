@@ -29,7 +29,6 @@ const staticEntries: SitemapEntry[] = [
   { path: "/wochenendtrips", changefreq: "weekly", priority: "0.8" },
   { path: "/reisen", changefreq: "monthly", priority: "0.7" },
   { path: "/service", changefreq: "monthly", priority: "0.7" },
-  { path: "/karriere", changefreq: "weekly", priority: "0.6" },
   // SEO-Landingpages (Busvermietung / Personenbeförderung)
   { path: "/bus-mieten", changefreq: "monthly", priority: "0.9" },
   { path: "/busunternehmen-hannover", changefreq: "monthly", priority: "0.9" },
