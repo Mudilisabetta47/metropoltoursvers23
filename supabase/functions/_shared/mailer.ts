@@ -1,13 +1,13 @@
 // Zentraler Mailversand für METROPOL TOURS.
 // WICHTIG: Nur die in Resend verifizierte Sender-Domain "app.metours.de" darf im From stehen.
-// Antworten laufen über die Geschäftsadresse kundenservice@app.metours.de (Reply-To).
+// Antworten laufen über die Geschäftsadresse kundenservice@metours.de (Reply-To).
 
 export const SENDER_DOMAIN = "app.metours.de";
 export const FROM_BOOKING = `METROPOL TOURS GmbH <booking@${SENDER_DOMAIN}>`;
 export const FROM_SERVICE = `METROPOL TOURS GmbH <kundenservice@${SENDER_DOMAIN}>`;
 export const FROM_JOBS = `METROPOL TOURS GmbH – Personal <jobs@${SENDER_DOMAIN}>`;
 export const FROM_SYSTEM = `METROPOL TOURS System <booking@${SENDER_DOMAIN}>`;
-export const REPLY_TO = `kundenservice@${SENDER_DOMAIN}`;
+export const REPLY_TO = `kundenservice@metours.de`;
 
 export interface MailAttachment {
   filename: string;

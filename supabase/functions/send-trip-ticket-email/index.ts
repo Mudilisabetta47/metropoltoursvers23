@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
 import { emailLayout, qrTicketBlock, escapeHtmlBrand } from "../_shared/email-brand.ts";
 import { sendMail, FROM_BOOKING } from "../_shared/mailer.ts";
+import { ensureWalletUrl } from "../_shared/wallet-link.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -85,7 +86,7 @@ serve(async (req) => {
             )
             .join("")}
         </table>
-        ${qrTicketBlock(b.ticket_number ?? b.booking_number ?? "")}
+        ${qrTicketBlock(b.ticket_number ?? b.booking_number ?? "", undefined, await ensureWalletUrl(admin, b.id, b.ticket_number ?? b.booking_number ?? "TKT"))}
         <p style="margin:18px 0 0;font-size:13px;color:#5b6b60;">Bitte seien Sie 15 Minuten vor Abfahrt am Abfahrtsort. Bei Fragen antworten Sie einfach auf diese E-Mail.</p>
       `;
 

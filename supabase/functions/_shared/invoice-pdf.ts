@@ -12,7 +12,7 @@ export const COMPANY = {
   street: "Rudolf-Diesel-Weg 8",
   city: "30419 Hannover",
   phone: "+49 511 80781106",
-  email: "kundenservice@app.metours.de",
+  email: "kundenservice@metours.de",
   web: "app.metours.de",
   hrb: "HRB 222247, AG Hannover",
   iban: "DE89 3704 0044 0532 0130 00",
