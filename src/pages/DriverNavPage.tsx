@@ -162,14 +162,24 @@ const DriverNavPage = () => {
         ? []
         : (activeOrder.waypoints ?? []).map((w) => ({ lat: Number(w.lat), lng: Number(w.lng) }));
 
-      const points = manualTarget
+      const destination = { lat: Number(activeOrder.destination_lat), lng: Number(activeOrder.destination_lng) };
+      const rawPoints = manualTarget
         ? [{ lat: start.lat, lng: start.lng }, manualTarget]
         : [
             { lat: start.lat, lng: start.lng },
             ...openStops,
             ...legacyWaypoints,
-            { lat: Number(activeOrder.destination_lat), lng: Number(activeOrder.destination_lng) },
+            destination,
           ];
+
+      // Aufeinanderfolgende identische Koordinaten entfernen (z. B. Ziel-Halt + Zielpunkt),
+      // sonst lehnt die Mapbox Directions API die Anfrage ab.
+      const samePoint = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) =>
+        Math.abs(a.lat - b.lat) < 1e-5 && Math.abs(a.lng - b.lng) < 1e-5;
+      const points = rawPoints.filter(
+        (p, i) => i === 0 || !samePoint(p, rawPoints[i - 1]),
+      );
+
 
       const r = await requestRoute(token, points, { vehicleProfile: buildVehicleProfile(bus) });
       setRoute(r);
