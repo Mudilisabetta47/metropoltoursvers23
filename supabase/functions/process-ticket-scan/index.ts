@@ -195,7 +195,7 @@ Deno.serve(async (req) => {
     }
 
     // 5. Find ticket by qr_payload
-    const bookingSelect = `id, passenger_first_name, passenger_last_name, passenger_email, passenger_phone, status, price_paid, trip_id, extras, origin_stop_id, destination_stop_id, seat_id, seats(seat_number), stops!bookings_origin_stop_id_fkey(name, city), stops!bookings_destination_stop_id_fkey(name, city)`;
+    const bookingSelect = `id, passenger_first_name, passenger_last_name, passenger_email, passenger_phone, status, price_paid, trip_id, extras, origin_stop_id, destination_stop_id, seat_id, seats(seat_number), origin_stop:stops!bookings_origin_stop_id_fkey(name, city), destination_stop:stops!bookings_destination_stop_id_fkey(name, city)`;
     const { data: ticket, error: ticketError } = await supabase
       .from("tickets")
       .select(`*, bookings(${bookingSelect}), trips(id, route_id, departure_date, departure_time, arrival_time, routes(name))`)
@@ -209,7 +209,7 @@ Deno.serve(async (req) => {
     if (!resolvedTicket) {
       const { data: booking } = await supabase
         .from("bookings")
-        .select("id, ticket_number, passenger_first_name, passenger_last_name, passenger_email, passenger_phone, status, price_paid, trip_id, extras, origin_stop_id, destination_stop_id, seat_id, seats(seat_number), stops!bookings_origin_stop_id_fkey(name, city), stops!bookings_destination_stop_id_fkey(name, city), trips(id, route_id, departure_date, departure_time, arrival_time, routes(name))")
+        .select("id, ticket_number, passenger_first_name, passenger_last_name, passenger_email, passenger_phone, status, price_paid, trip_id, extras, origin_stop_id, destination_stop_id, seat_id, seats(seat_number), origin_stop:stops!bookings_origin_stop_id_fkey(name, city), destination_stop:stops!bookings_destination_stop_id_fkey(name, city), trips(id, route_id, departure_date, departure_time, arrival_time, routes(name))")
         .eq("ticket_number", qrPayload.toUpperCase())
         .maybeSingle();
 
@@ -378,8 +378,8 @@ Deno.serve(async (req) => {
         message: `Bereits eingecheckt um ${resolvedTicket.checked_in_at}`,
       });
 
-      const originStopDup = booking?.stops_bookings_origin_stop_id_fkey || booking?.stops;
-      const destStopDup = booking?.stops_bookings_destination_stop_id_fkey;
+      const originStopDup = booking?.origin_stop;
+      const destStopDup = booking?.destination_stop;
       
       return new Response(
         JSON.stringify({
@@ -479,8 +479,8 @@ Deno.serve(async (req) => {
     }
 
     // 9. Return success with extended driver info
-    const originStop = booking?.stops_bookings_origin_stop_id_fkey || booking?.stops;
-    const destStop = booking?.stops_bookings_destination_stop_id_fkey;
+    const originStop = booking?.origin_stop;
+    const destStop = booking?.destination_stop;
     
     return new Response(
       JSON.stringify({
