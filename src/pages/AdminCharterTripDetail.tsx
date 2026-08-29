@@ -162,18 +162,39 @@ export default function AdminCharterTripDetail() {
     load();
   };
 
+  const sendConfirmations = async (bookingIds: string[]) => {
+    if (!bookingIds.length) return;
+    const { data, error } = await supabase.functions.invoke("send-trip-ticket-email", { body: { bookingIds } });
+    if (error || (data as any)?.error) {
+      toast({ title: "E-Mail-Versand fehlgeschlagen", description: error?.message || (data as any)?.error, variant: "destructive" });
+    } else {
+      const sent = (data as any)?.sent ?? 0;
+      const skipped = ((data as any)?.skipped ?? []).length;
+      toast({ title: `${sent} Buchungsbestätigung(en) versendet`, description: skipped ? `${skipped} ohne gültige E-Mail übersprungen.` : undefined });
+    }
+  };
+
   const createPassengers = async (list: any[]) => {
     setBusy(true);
-    const { error } = await supabase.rpc("create_charter_passengers", { p_trip_id: tripId!, p_passengers: list as any });
+    const { data, error } = await supabase.rpc("create_charter_passengers", { p_trip_id: tripId!, p_passengers: list as any });
+    if (error) {
+      setBusy(false);
+      toast({ title: "Fehler", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: `${list.length} Fahrgast/Fahrgäste angelegt` });
+    const ids = ((data as any[]) || []).map(r => r.booking_id).filter(Boolean);
+    if (sendConfirmation) await sendConfirmations(ids);
     setBusy(false);
-    if (error) toast({ title: "Fehler", description: error.message, variant: "destructive" });
-    else { toast({ title: `${list.length} Fahrgast/Fahrgäste angelegt` }); load(); }
+    load();
   };
 
   const addSingle = () => {
     if (!pax.first_name.trim()) { toast({ title: "Vorname erforderlich", variant: "destructive" }); return; }
-    createPassengers([pax]).then(() => setPax({ first_name: "", last_name: "", email: "", phone: "" }));
+    createPassengers([{ ...pax, seat_id: pax.seat_id || undefined }])
+      .then(() => setPax({ first_name: "", last_name: "", email: "", phone: "", seat_id: "" }));
   };
+
 
   const addBulk = () => {
     const lines = bulk.split("\n").map(l => l.trim()).filter(Boolean);
