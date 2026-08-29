@@ -467,3 +467,13 @@ const ScanTab = ({ userId }: { userId: string }) => {
 };
 
 export default ScanTab;
+
+function Info({ label, value }: { label: string; value?: string | null }) {
+  if (!value) return null;
+  return (
+    <div className="flex gap-2">
+      <dt className="w-24 shrink-0 opacity-60">{label}</dt>
+      <dd className="min-w-0 break-words font-medium">{value}</dd>
+    </div>
+  );
+}
