@@ -1,15 +1,15 @@
 // Zentrales Branding für ALLE ausgehenden E-Mails von METROPOL TOURS.
 // Enthält Logo-Header, rechtliche Links (Impressum, Datenschutz, AGB) und Social-Media-Links.
 
-export const SITE_URL = "https://app.metours.de";
-export const LOGO_URL = `${SITE_URL}/brand/metropol-logo.png`;
+export const SITE_URL = "https://www.metours.de";
+export const LOGO_URL = "https://app.metours.de/brand/metropol-logo.png";
 
 export const COMPANY = {
   name: "METROPOL TOURS GmbH",
   street: "Rudolf-Diesel-Weg 8",
   city: "30419 Hannover",
-  phone: "+49 511 21943150",
-  email: "kundenservice@app.metours.de",
+  phone: "+49 511 80781106",
+  email: "kundenservice@metours.de",
   ceo: "Vedat Özel",
   hrb: "HRB 222247",
 };
