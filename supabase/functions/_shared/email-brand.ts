@@ -33,7 +33,7 @@ export function escapeHtmlBrand(v: unknown): string {
 
 /** QR-Code Bild-URL für Tickets (scanbar durch die Fahrer-App). */
 export function qrImageUrl(payload: string, size = 260): string {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=8&ecc=M&data=${encodeURIComponent(payload)}`;
+  return `https://quickchart.io/qr?size=${size}&margin=2&ecLevel=M&text=${encodeURIComponent(payload)}`;
 }
 
 export function emailHeader(subtitle?: string): string {
