@@ -58,7 +58,7 @@ export const EmailChangeEmail = ({ email, newEmail, confirmationUrl }: EmailChan
           <Text style={brandFooterText}>
             <Link href="tel:+4951180781106" style={footerLink}>+49 511 80781106</Link>
             {' · '}
-            <Link href="mailto:kundenservice@app.metours.de" style={footerLink}>kundenservice@app.metours.de</Link>
+            <Link href="mailto:kundenservice@metours.de" style={footerLink}>kundenservice@metours.de</Link>
           </Text>
           <Text style={brandFooterLinks}>
             <Link href="https://www.metours.de" style={footerLink}>Website</Link>
