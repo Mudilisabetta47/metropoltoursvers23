@@ -104,7 +104,10 @@ export default function AdminCharterTripDetail() {
     return p ? (`${p.first_name || ""} ${p.last_name || ""}`.trim() || p.email) : id?.slice(0, 8);
   };
 
+  const occupiedSeatIds = new Set(bookings.filter(b => b.status !== "cancelled" && b.seat_id).map(b => b.seat_id));
+
   const trackingUrl = registry?.trip_uid ? `${window.location.origin}/verfolge/${registry.trip_uid}` : null;
+
 
   const setStatus = async (status: string) => {
     const patch: any = { status };
