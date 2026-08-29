@@ -4,8 +4,9 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import {
   Loader2, ArrowLeft, Plus, Trash2, Copy, MapPin, Users, CalendarClock,
-  Radio, Play, Square, Ticket, ExternalLink, Bus, UserCog,
+  Radio, Play, Square, Ticket, ExternalLink, Bus, UserCog, Mail,
 } from "lucide-react";
+
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,9 +35,12 @@ export default function AdminCharterTripDetail() {
 
   const [newStop, setNewStop] = useState({ label: "", location: "", stop_type: "stop", planned_arrival: "", planned_departure: "", notes: "" });
   const [newShift, setNewShift] = useState({ user_id: "", role: "driver", shift_start: "", shift_end: "" });
-  const [pax, setPax] = useState({ first_name: "", last_name: "", email: "", phone: "" });
+  const [pax, setPax] = useState({ first_name: "", last_name: "", email: "", phone: "", seat_id: "" });
   const [bulk, setBulk] = useState("");
   const [busy, setBusy] = useState(false);
+  const [seats, setSeats] = useState<any[]>([]);
+  const [sendConfirmation, setSendConfirmation] = useState(true);
+
 
   const load = useCallback(async () => {
     if (!tripId) return;
@@ -60,6 +64,21 @@ export default function AdminCharterTripDetail() {
     setShifts(sh.data || []);
     setBookings(bk.data || []);
     setPosition(pos.data);
+
+    if (t?.bus_id) {
+      const { data: seatRows } = await supabase
+        .from("seats")
+        .select("id, seat_number, seat_type, row_number, column_number, is_active")
+        .eq("bus_id", t.bus_id)
+        .eq("is_active", true)
+        .order("row_number")
+        .order("column_number");
+      setSeats((seatRows || []).filter((s: any) => s.seat_type !== "crew"));
+    } else {
+      setSeats([]);
+    }
+
+
 
     const { data: roles } = await supabase.from("user_roles").select("user_id, role").in("role", ["driver", "office", "admin"]);
     const ids = Array.from(new Set((roles || []).map((r: any) => r.user_id)));
@@ -86,7 +105,10 @@ export default function AdminCharterTripDetail() {
     return p ? (`${p.first_name || ""} ${p.last_name || ""}`.trim() || p.email) : id?.slice(0, 8);
   };
 
+  const occupiedSeatIds = new Set(bookings.filter(b => b.status !== "cancelled" && b.seat_id).map(b => b.seat_id));
+
   const trackingUrl = registry?.trip_uid ? `${window.location.origin}/verfolge/${registry.trip_uid}` : null;
+
 
   const setStatus = async (status: string) => {
     const patch: any = { status };
@@ -144,18 +166,39 @@ export default function AdminCharterTripDetail() {
     load();
   };
 
+  const sendConfirmations = async (bookingIds: string[]) => {
+    if (!bookingIds.length) return;
+    const { data, error } = await supabase.functions.invoke("send-trip-ticket-email", { body: { bookingIds } });
+    if (error || (data as any)?.error) {
+      toast({ title: "E-Mail-Versand fehlgeschlagen", description: error?.message || (data as any)?.error, variant: "destructive" });
+    } else {
+      const sent = (data as any)?.sent ?? 0;
+      const skipped = ((data as any)?.skipped ?? []).length;
+      toast({ title: `${sent} Buchungsbestätigung(en) versendet`, description: skipped ? `${skipped} ohne gültige E-Mail übersprungen.` : undefined });
+    }
+  };
+
   const createPassengers = async (list: any[]) => {
     setBusy(true);
-    const { error } = await supabase.rpc("create_charter_passengers", { p_trip_id: tripId!, p_passengers: list as any });
+    const { data, error } = await supabase.rpc("create_charter_passengers", { p_trip_id: tripId!, p_passengers: list as any });
+    if (error) {
+      setBusy(false);
+      toast({ title: "Fehler", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: `${list.length} Fahrgast/Fahrgäste angelegt` });
+    const ids = ((data as any[]) || []).map(r => r.booking_id).filter(Boolean);
+    if (sendConfirmation) await sendConfirmations(ids);
     setBusy(false);
-    if (error) toast({ title: "Fehler", description: error.message, variant: "destructive" });
-    else { toast({ title: `${list.length} Fahrgast/Fahrgäste angelegt` }); load(); }
+    load();
   };
 
   const addSingle = () => {
     if (!pax.first_name.trim()) { toast({ title: "Vorname erforderlich", variant: "destructive" }); return; }
-    createPassengers([pax]).then(() => setPax({ first_name: "", last_name: "", email: "", phone: "" }));
+    createPassengers([{ ...pax, seat_id: pax.seat_id || undefined }])
+      .then(() => setPax({ first_name: "", last_name: "", email: "", phone: "", seat_id: "" }));
   };
+
 
   const addBulk = () => {
     const lines = bulk.split("\n").map(l => l.trim()).filter(Boolean);
@@ -344,9 +387,34 @@ export default function AdminCharterTripDetail() {
                   <Input placeholder="E-Mail" value={pax.email} onChange={e => setPax(p => ({ ...p, email: e.target.value }))} className="bg-zinc-950 border-zinc-700 text-white" />
                   <Input placeholder="Telefon" value={pax.phone} onChange={e => setPax(p => ({ ...p, phone: e.target.value }))} className="bg-zinc-950 border-zinc-700 text-white" />
                 </div>
+                <div>
+                  <Label className="text-zinc-400 text-xs">Sitzplatz</Label>
+                  <Select value={pax.seat_id || "auto"} onValueChange={v => setPax(p => ({ ...p, seat_id: v === "auto" ? "" : v }))}>
+                    <SelectTrigger className="bg-zinc-950 border-zinc-700 text-white mt-1">
+                      <SelectValue placeholder="Automatisch zuweisen" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-zinc-700 max-h-72">
+                      <SelectItem value="auto">Automatisch zuweisen</SelectItem>
+                      {seats.map(s => {
+                        const taken = occupiedSeatIds.has(s.id);
+                        return (
+                          <SelectItem key={s.id} value={s.id} disabled={taken}>
+                            Platz {s.seat_number}{taken ? " · belegt" : ""}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  {!seats.length && <p className="text-xs text-zinc-500 mt-1">Kein Fahrzeug mit Sitzplan zugewiesen – Plätze werden automatisch vergeben.</p>}
+                </div>
+                <label className="flex items-center gap-2 text-xs text-zinc-300">
+                  <input type="checkbox" checked={sendConfirmation} onChange={e => setSendConfirmation(e.target.checked)} className="accent-emerald-500" />
+                  Buchungsbestätigung per E-Mail senden
+                </label>
                 <Button onClick={addSingle} disabled={busy} className="w-full bg-emerald-600 hover:bg-emerald-700">
                   {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="w-4 h-4 mr-1" />Ticket erzeugen</>}
                 </Button>
+
               </CardContent>
             </Card>
             <Card className="bg-zinc-900 border-zinc-800">
@@ -379,6 +447,9 @@ export default function AdminCharterTripDetail() {
                     <span className="font-mono text-xs text-zinc-500">{b.booking_number}</span>
                     <span className="text-xs text-zinc-400">{b.passenger_email}</span>
                     <div className="ml-auto flex items-center gap-2">
+                      <Button size="sm" variant="ghost" className="text-zinc-400" onClick={() => sendConfirmations([b.id])}>
+                        <Mail className="w-3 h-3 mr-1" />Bestätigung
+                      </Button>
                       {trackingUrl && (
                         <a href={trackingUrl} target="_blank" rel="noreferrer">
                           <Button size="sm" variant="ghost" className="text-zinc-400"><Radio className="w-3 h-3 mr-1" />Tracking</Button>
@@ -386,6 +457,7 @@ export default function AdminCharterTripDetail() {
                       )}
                       <WalletPassButton bookingId={b.id} ticketNumber={b.ticket_number} customerEmail={b.passenger_email} size="sm" variant="outline" />
                     </div>
+
                   </CardContent>
                 </Card>
               ))}
