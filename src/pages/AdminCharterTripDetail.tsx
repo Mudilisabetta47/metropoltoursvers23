@@ -34,9 +34,12 @@ export default function AdminCharterTripDetail() {
 
   const [newStop, setNewStop] = useState({ label: "", location: "", stop_type: "stop", planned_arrival: "", planned_departure: "", notes: "" });
   const [newShift, setNewShift] = useState({ user_id: "", role: "driver", shift_start: "", shift_end: "" });
-  const [pax, setPax] = useState({ first_name: "", last_name: "", email: "", phone: "" });
+  const [pax, setPax] = useState({ first_name: "", last_name: "", email: "", phone: "", seat_id: "" });
   const [bulk, setBulk] = useState("");
   const [busy, setBusy] = useState(false);
+  const [seats, setSeats] = useState<any[]>([]);
+  const [sendConfirmation, setSendConfirmation] = useState(true);
+
 
   const load = useCallback(async () => {
     if (!tripId) return;
