@@ -45,7 +45,7 @@ export function useMyTickets() {
          seats:seat_id ( seat_number ),
          origin:origin_stop_id ( name ),
          destination:destination_stop_id ( name ),
-         trips:trip_id ( title, trip_category, departure_date, departure_time, return_date, routes ( name ) )`,
+         trips:trip_id ( title, trip_category, departure_date, departure_time, arrival_date, routes ( name ) )`,
       )
       .eq("user_id", session.session.user.id)
       .order("created_at", { ascending: false })
@@ -66,7 +66,7 @@ export function useMyTickets() {
         trip_category: b.trips?.trip_category ?? null,
         departure_date: b.trips?.departure_date ?? null,
         departure_time: b.trips?.departure_time ?? null,
-        return_date: b.trips?.return_date ?? null,
+        return_date: b.trips?.arrival_date ?? null,
         origin: b.origin?.name ?? null,
         destination: b.destination?.name ?? null,
       })),
