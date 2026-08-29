@@ -108,6 +108,35 @@ async function sendWebhookWithRetry(
   }
 }
 
+function buildPassenger(booking: any, originStop: any, destStop: any) {
+  if (!booking) return null;
+  const ex = booking.extras && typeof booking.extras === "object" ? booking.extras : {};
+  const dob = booking.contact_date_of_birth ?? ex.date_of_birth ?? ex.birth_date ?? null;
+  const street = [booking.billing_street, booking.billing_house_number].filter(Boolean).join(" ");
+  const cityLine = [booking.billing_zip, booking.billing_city].filter(Boolean).join(" ");
+  const address =
+    booking.invoice_address ||
+    [street, cityLine, booking.billing_country].filter(Boolean).join(", ") ||
+    ex.address ||
+    null;
+  return {
+    name: `${booking.passenger_first_name ?? ""} ${booking.passenger_last_name ?? ""}`.trim(),
+    first_name: booking.passenger_first_name ?? null,
+    last_name: booking.passenger_last_name ?? null,
+    email: booking.passenger_email ?? null,
+    phone: booking.passenger_phone ?? null,
+    date_of_birth: dob,
+    address,
+    billing_company: booking.billing_company ?? null,
+    booking_number: booking.booking_number ?? null,
+    seat: booking.seats?.seat_number || null,
+    price: booking.price_paid ?? null,
+    extras: booking.extras ?? null,
+    origin: originStop ? `${originStop.name} (${originStop.city})` : null,
+    destination: destStop ? `${destStop.name} (${destStop.city})` : null,
+  };
+}
+
 function errorResponse(status: number, message: string, extra?: Record<string, unknown>) {
   return new Response(
     JSON.stringify({ error: message, ...extra }),
@@ -195,7 +224,7 @@ Deno.serve(async (req) => {
     }
 
     // 5. Find ticket by qr_payload
-    const bookingSelect = `id, passenger_first_name, passenger_last_name, passenger_email, passenger_phone, status, price_paid, trip_id, extras, origin_stop_id, destination_stop_id, seat_id, seats(seat_number), origin_stop:stops!bookings_origin_stop_id_fkey(name, city), destination_stop:stops!bookings_destination_stop_id_fkey(name, city)`;
+    const bookingSelect = `id, contact_date_of_birth, billing_company, billing_first_name, billing_last_name, billing_street, billing_house_number, billing_zip, billing_city, billing_country, invoice_address, booking_number, passenger_first_name, passenger_last_name, passenger_email, passenger_phone, status, price_paid, trip_id, extras, origin_stop_id, destination_stop_id, seat_id, seats(seat_number), origin_stop:stops!bookings_origin_stop_id_fkey(name, city), destination_stop:stops!bookings_destination_stop_id_fkey(name, city)`;
     const { data: ticket, error: ticketError } = await supabase
       .from("tickets")
       .select(`*, bookings(${bookingSelect}), trips(id, route_id, departure_date, departure_time, arrival_time, routes(name))`)
@@ -209,7 +238,7 @@ Deno.serve(async (req) => {
     if (!resolvedTicket) {
       const { data: booking } = await supabase
         .from("bookings")
-        .select("id, ticket_number, passenger_first_name, passenger_last_name, passenger_email, passenger_phone, status, price_paid, trip_id, extras, origin_stop_id, destination_stop_id, seat_id, seats(seat_number), origin_stop:stops!bookings_origin_stop_id_fkey(name, city), destination_stop:stops!bookings_destination_stop_id_fkey(name, city), trips(id, route_id, departure_date, departure_time, arrival_time, routes(name))")
+        .select("id, ticket_number, contact_date_of_birth, billing_company, billing_first_name, billing_last_name, billing_street, billing_house_number, billing_zip, billing_city, billing_country, invoice_address, booking_number, passenger_first_name, passenger_last_name, passenger_email, passenger_phone, status, price_paid, trip_id, extras, origin_stop_id, destination_stop_id, seat_id, seats(seat_number), origin_stop:stops!bookings_origin_stop_id_fkey(name, city), destination_stop:stops!bookings_destination_stop_id_fkey(name, city), trips(id, route_id, departure_date, departure_time, arrival_time, routes(name))")
         .eq("ticket_number", qrPayload.toUpperCase())
         .maybeSingle();
 
@@ -387,14 +416,7 @@ Deno.serve(async (req) => {
           message: "Ticket bereits eingecheckt",
           color: "yellow",
           checked_in_at: resolvedTicket.checked_in_at,
-          passenger: booking
-            ? {
-                name: `${booking.passenger_first_name} ${booking.passenger_last_name}`,
-                seat: booking.seats?.seat_number || null,
-                origin: originStopDup ? `${originStopDup.name} (${originStopDup.city})` : null,
-                destination: destStopDup ? `${destStopDup.name} (${destStopDup.city})` : null,
-              }
-            : null,
+          passenger: buildPassenger(booking, originStopDup, destStopDup),
           trip: trip
             ? { route: trip.routes?.name, date: trip.departure_date, time: trip.departure_time }
             : null,
@@ -492,19 +514,7 @@ Deno.serve(async (req) => {
           qr_payload: resolvedTicket.qr_payload,
           checked_in_at: now,
         },
-        passenger: booking
-          ? {
-              name: `${booking.passenger_first_name} ${booking.passenger_last_name}`,
-              first_name: booking.passenger_first_name,
-              last_name: booking.passenger_last_name,
-              phone: booking.passenger_phone,
-              seat: booking.seats?.seat_number || null,
-              price: booking.price_paid,
-              extras: booking.extras,
-              origin: originStop ? `${originStop.name} (${originStop.city})` : null,
-              destination: destStop ? `${destStop.name} (${destStop.city})` : null,
-            }
-          : null,
+        passenger: buildPassenger(booking, originStop, destStop),
         trip: trip
           ? { 
               route: trip.routes?.name, 
