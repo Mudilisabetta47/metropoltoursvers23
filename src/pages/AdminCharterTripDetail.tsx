@@ -64,6 +64,21 @@ export default function AdminCharterTripDetail() {
     setBookings(bk.data || []);
     setPosition(pos.data);
 
+    if (t?.bus_id) {
+      const { data: seatRows } = await supabase
+        .from("seats")
+        .select("id, seat_number, seat_type, row_number, column_number, is_active")
+        .eq("bus_id", t.bus_id)
+        .eq("is_active", true)
+        .order("row_number")
+        .order("column_number");
+      setSeats((seatRows || []).filter((s: any) => s.seat_type !== "crew"));
+    } else {
+      setSeats([]);
+    }
+
+
+
     const { data: roles } = await supabase.from("user_roles").select("user_id, role").in("role", ["driver", "office", "admin"]);
     const ids = Array.from(new Set((roles || []).map((r: any) => r.user_id)));
     if (ids.length) {
