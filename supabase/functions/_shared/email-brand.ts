@@ -99,18 +99,27 @@ export function emailLayout(opts: {
 </body></html>`;
 }
 
-/** Ticket-/QR-Block für Buchungsbestätigungen. */
-export function qrTicketBlock(bookingNumber: string, note?: string): string {
+/** Ticket-/QR-Block für Buchungsbestätigungen. Optional mit Apple-Wallet-Button. */
+export function qrTicketBlock(bookingNumber: string, note?: string, walletUrl?: string | null): string {
   const safe = escapeHtmlBrand(bookingNumber);
+  const qr = qrImageUrl(bookingNumber);
+  const wallet = walletUrl
+    ? `<div style="margin-top:18px;">
+         <a href="${escapeHtmlBrand(walletUrl)}" style="display:inline-block;background:#0f1218;color:#ffffff;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;padding:12px 22px;border-radius:10px;"> Zu Apple Wallet hinzufügen</a>
+         <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5b6b60;margin-top:8px;">Auf dem iPhone öffnen – der Pass wird direkt in Wallet gespeichert.</div>
+       </div>`
+    : "";
   return `
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
     <tr><td align="center" style="background:#f6faf7;border:1px solid #d9e5dc;border-radius:14px;padding:24px;">
       <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#1a5f2a;margin-bottom:14px;">Ihr digitales Ticket</div>
-      <img src="${qrImageUrl(bookingNumber)}" alt="Ticket QR-Code ${safe}" width="200" height="200" style="display:block;margin:0 auto;background:#ffffff;border-radius:10px;" />
+      <a href="${qr}" style="text-decoration:none;"><img src="${qr}" alt="Ticket QR-Code ${safe}" width="200" height="200" style="display:block;margin:0 auto;background:#ffffff;border-radius:10px;border:1px solid #e2e8e4;" /></a>
       <div style="font-family:'Courier New',monospace;font-size:17px;font-weight:700;color:#0f1218;margin-top:14px;letter-spacing:1px;">${safe}</div>
       <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#5b6b60;margin-top:8px;max-width:380px;">
         ${escapeHtmlBrand(note ?? "Bitte beim Einstieg dem Fahrpersonal vorzeigen – der QR-Code wird direkt im Bus gescannt. Auch ausgedruckt gültig.")}
       </div>
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5b6b60;margin-top:6px;">Wird der QR-Code nicht angezeigt? <a href="${qr}" style="color:#1a5f2a;">Hier öffnen</a>.</div>
+      ${wallet}
     </td></tr>
   </table>`;
 }
