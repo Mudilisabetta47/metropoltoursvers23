@@ -1,4 +1,5 @@
 import { qrTicketBlock, emailFooter, LOGO_URL } from "../_shared/email-brand.ts";
+import { ensureWalletUrl } from "../_shared/wallet-link.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
@@ -98,7 +99,7 @@ const TRAVEL_GIF = "https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif";
 // Inline SVG Logo as base64 data URI for email compatibility
 const LOGO_BASE64 = LOGO_URL;
 
-function buildCustomerEmailHtml(booking: any, tour: any, date: any, tariff: any, pickup: any): string {
+function buildCustomerEmailHtml(booking: any, tour: any, date: any, tariff: any, pickup: any, walletUrl?: string | null): string {
   const safeFirst = escapeHtml(booking.contact_first_name);
   const safeLast = escapeHtml(booking.contact_last_name);
   const safeDest = escapeHtml(tour?.destination || "");
@@ -434,7 +435,7 @@ function buildCustomerEmailHtml(booking: any, tour: any, date: any, tariff: any,
       </td></tr>
     </table>
 
-    ${qrTicketBlock(booking.booking_number)}
+    ${qrTicketBlock(booking.booking_number, undefined, walletUrl)}
 
     <!-- CTA BUTTON -->
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
@@ -718,7 +719,7 @@ const handler = async (req: Request): Promise<Response> => {
         from: "METROPOL TOURS <booking@app.metours.de>",
         to: [booking.contact_email],
         subject: `✈️ Buchungsbestätigung ${safeBookingNum} – ${safeDest} | Ihre Reiseunterlagen`,
-        html: buildCustomerEmailHtml(booking, tour, date, tariff, pickup),
+        html: buildCustomerEmailHtml(booking, tour, date, tariff, pickup, await ensureWalletUrl(supabase, booking.id, booking.booking_number, "tour")),
         ...(attachments.length > 0 ? { attachments } : {}),
       });
       console.log("Customer email sent with", attachments.length, "attachments:", customerEmailRes);
