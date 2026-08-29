@@ -446,6 +446,9 @@ export default function AdminCharterTripDetail() {
                     <span className="font-mono text-xs text-zinc-500">{b.booking_number}</span>
                     <span className="text-xs text-zinc-400">{b.passenger_email}</span>
                     <div className="ml-auto flex items-center gap-2">
+                      <Button size="sm" variant="ghost" className="text-zinc-400" onClick={() => sendConfirmations([b.id])}>
+                        <Mail className="w-3 h-3 mr-1" />Bestätigung
+                      </Button>
                       {trackingUrl && (
                         <a href={trackingUrl} target="_blank" rel="noreferrer">
                           <Button size="sm" variant="ghost" className="text-zinc-400"><Radio className="w-3 h-3 mr-1" />Tracking</Button>
@@ -453,6 +456,7 @@ export default function AdminCharterTripDetail() {
                       )}
                       <WalletPassButton bookingId={b.id} ticketNumber={b.ticket_number} customerEmail={b.passenger_email} size="sm" variant="outline" />
                     </div>
+
                   </CardContent>
                 </Card>
               ))}
