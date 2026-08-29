@@ -360,16 +360,65 @@ const ScanTab = ({ userId }: { userId: string }) => {
         </div>
       </div>
 
+      {scanning && progress && (
+        <div className="rounded-2xl border border-white/10 bg-[#131720] p-3 flex items-center gap-2 text-sm text-zinc-300">
+          <Loader2 className="w-4 h-4 animate-spin text-emerald-400" /> {progress}
+        </div>
+      )}
+
       {result && (
         <div className={cn("rounded-2xl border p-4 flex items-start gap-3", styles(result.color).box)}>
           {styles(result.color).icon}
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="font-semibold">{resultLabel[result.result] || result.result}</div>
-            <div className="text-sm opacity-90 break-words">{result.message}</div>
-            {result.ticket?.booking && (
-              <div className="text-xs mt-2 opacity-80">
-                {result.ticket.booking.passenger_first_name} {result.ticket.booking.passenger_last_name}
-                {result.ticket.booking.seats?.seat_number && ` · Platz ${result.ticket.booking.seats.seat_number}`}
+            <div className="text-xs font-medium uppercase tracking-wide opacity-80">
+              {statusText[result.result] ?? "STATUS UNBEKANNT"}
+            </div>
+            <div className="text-sm opacity-90 break-words mt-1">{result.message}</div>
+            {result.checked_in_at && (
+              <div className="text-xs opacity-75 mt-1">
+                Eingecheckt: {format(new Date(result.checked_in_at), "dd.MM.yyyy HH:mm", { locale: de })} Uhr
+              </div>
+            )}
+
+            {result.passenger && (
+              <dl className="mt-3 grid grid-cols-1 gap-1 text-xs text-white/90 rounded-xl bg-black/20 p-3">
+                <Info label="Fahrgast" value={result.passenger.name} />
+                <Info
+                  label="Geburtsdatum"
+                  value={
+                    result.passenger.date_of_birth
+                      ? format(new Date(result.passenger.date_of_birth), "dd.MM.yyyy", { locale: de })
+                      : "— nicht hinterlegt"
+                  }
+                />
+                <Info label="Adresse" value={result.passenger.address || "— nicht hinterlegt"} />
+                <Info label="E-Mail" value={result.passenger.email} />
+                <Info label="Telefon" value={result.passenger.phone} />
+                <Info label="Sitzplatz" value={result.passenger.seat ? `Platz ${result.passenger.seat}` : null} />
+                <Info label="Buchung" value={result.passenger.booking_number} />
+                <Info
+                  label="Strecke"
+                  value={
+                    result.passenger.origin || result.passenger.destination
+                      ? `${result.passenger.origin ?? "?"} → ${result.passenger.destination ?? "?"}`
+                      : null
+                  }
+                />
+                {result.trip?.route && (
+                  <Info
+                    label="Fahrt"
+                    value={`${result.trip.route}${result.trip.date ? ` · ${format(new Date(result.trip.date), "dd.MM.yyyy", { locale: de })}` : ""}${result.trip.time ? ` · ${String(result.trip.time).slice(0, 5)} Uhr` : ""}`}
+                  />
+                )}
+              </dl>
+            )}
+
+            {(result.detail || result.usedFallback || (result.attempts ?? 1) > 1) && (
+              <div className="text-[11px] opacity-70 mt-2 break-words">
+                {result.usedFallback && `Fallback über Ticketnummer ${result.usedFallback}. `}
+                {(result.attempts ?? 1) > 1 && `Versuche: ${result.attempts}. `}
+                {result.detail && `Ursache: ${result.detail}`}
               </div>
             )}
           </div>
@@ -379,13 +428,13 @@ const ScanTab = ({ userId }: { userId: string }) => {
       <div className="rounded-2xl bg-[#131720] border border-white/5 p-4">
         <div className="flex items-center gap-2 mb-3">
           <History className="w-4 h-4 text-zinc-400" />
-          <h3 className="font-semibold text-white text-sm">Letzte Scans</h3>
+          <h3 className="font-semibold text-white text-sm">Scan-Historie</h3>
         </div>
-        {history.length === 0 ? (
+        {[...localHistory, ...history].length === 0 ? (
           <p className="text-sm text-zinc-500">Noch keine Scans.</p>
         ) : (
           <div className="space-y-2">
-            {history.map((h) => (
+            {[...localHistory, ...history].map((h) => (
               <div key={h.id} className="flex items-center gap-3 rounded-xl bg-[#0f1218] border border-white/5 px-3 py-2">
                 <div
                   className={cn(
@@ -399,18 +448,32 @@ const ScanTab = ({ userId }: { userId: string }) => {
                 />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm text-white truncate">{resultLabel[h.result] || h.result}</div>
-                  <div className="text-[11px] text-zinc-500 truncate">{h.qr_payload}</div>
+                  <div className="text-[11px] text-zinc-500 truncate">
+                    {h.qr_payload}
+                    {h.message ? ` · ${h.message}` : ""}
+                  </div>
                 </div>
                 <div className="text-[11px] text-zinc-500 tabular-nums">
-                  {format(new Date(h.scan_time), "dd.MM. HH:mm", { locale: de })}
+                  {format(new Date(h.scan_time), "dd.MM. HH:mm:ss", { locale: de })}
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
     </div>
   );
 };
 
 export default ScanTab;
+
+function Info({ label, value }: { label: string; value?: string | null }) {
+  if (!value) return null;
+  return (
+    <div className="flex gap-2">
+      <dt className="w-24 shrink-0 opacity-60">{label}</dt>
+      <dd className="min-w-0 break-words font-medium">{value}</dd>
+    </div>
+  );
+}
