@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, Eye, EyeOff, GripVertical, Briefcase, Loader2, Save, X, MapPin, Clock, Users, ExternalLink } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, EyeOff, GripVertical, Briefcase, Loader2, Save, X, MapPin, Clock, Users } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -210,14 +210,6 @@ const AdminJobs = () => {
       subtitle="Stellenangebote anlegen, bearbeiten und veröffentlichen"
       actions={
         <div className="flex items-center gap-2">
-          <a
-            href="/karriere"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-3 h-9 rounded-lg text-xs text-zinc-300 hover:text-white border border-white/10 hover:border-white/20 transition-colors"
-          >
-            <ExternalLink className="w-3.5 h-3.5" /> Karriere-Seite
-          </a>
           <Button onClick={openCreate} className="bg-[#00CC36] hover:bg-[#00CC36]/90 text-black font-semibold h-9">
             <Plus className="w-4 h-4 mr-1" /> Neue Stelle
           </Button>
@@ -255,7 +247,7 @@ const AdminJobs = () => {
               <Briefcase className="w-7 h-7 text-zinc-500" />
             </div>
             <h3 className="text-white font-semibold mb-1">Noch keine Stellen angelegt</h3>
-            <p className="text-zinc-400 text-sm mb-6">Lege die erste Position an, damit sie auf der Karriere-Seite erscheint.</p>
+            <p className="text-zinc-400 text-sm mb-6">Lege die erste Position an. Die Karriere-Seite ist derzeit deaktiviert.</p>
             <Button onClick={openCreate} className="bg-[#00CC36] hover:bg-[#00CC36]/90 text-black font-semibold">
               <Plus className="w-4 h-4 mr-1" /> Erste Stelle anlegen
             </Button>
@@ -462,7 +454,7 @@ const AdminJobs = () => {
             <div className="flex items-center justify-between rounded-lg bg-white/[0.03] px-4 py-3 border border-white/[0.06]">
               <div>
                 <div className="text-sm font-medium text-white">Sofort veröffentlichen</div>
-                <div className="text-xs text-zinc-400">Sichtbar auf der Karriere-Seite, sobald gespeichert.</div>
+                <div className="text-xs text-zinc-400">Aktiv für interne Bewerbungen (Karriere-Seite derzeit deaktiviert).</div>
               </div>
               <Switch
                 checked={form.is_active}

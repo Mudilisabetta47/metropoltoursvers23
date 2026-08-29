@@ -541,7 +541,7 @@ const AdminCMS = () => {
             <Tag className="w-3.5 h-3.5" />Sortiment
           </TabsTrigger>
           <TabsTrigger value="jobs" className="data-[state=active]:bg-orange-600/20 data-[state=active]:text-orange-400 text-zinc-400 gap-1.5 text-xs">
-            <UserPlus className="w-3.5 h-3.5" />Karriere
+            <UserPlus className="w-3.5 h-3.5" />Stellen
           </TabsTrigger>
           <TabsTrigger value="content" className="data-[state=active]:bg-rose-600/20 data-[state=active]:text-rose-400 text-zinc-400 gap-1.5 text-xs">
             <FileText className="w-3.5 h-3.5" />CMS Blöcke
