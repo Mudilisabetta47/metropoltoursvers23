@@ -74,3 +74,5 @@ project_id = "wberoibxqpffhnyvjnci"
     verify_jwt = false
   [functions.apple-wallet-pass]
     verify_jwt = false
+  [functions.send-trip-ticket-email]
+    verify_jwt = false
