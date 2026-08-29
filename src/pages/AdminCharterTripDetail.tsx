@@ -383,9 +383,34 @@ export default function AdminCharterTripDetail() {
                   <Input placeholder="E-Mail" value={pax.email} onChange={e => setPax(p => ({ ...p, email: e.target.value }))} className="bg-zinc-950 border-zinc-700 text-white" />
                   <Input placeholder="Telefon" value={pax.phone} onChange={e => setPax(p => ({ ...p, phone: e.target.value }))} className="bg-zinc-950 border-zinc-700 text-white" />
                 </div>
+                <div>
+                  <Label className="text-zinc-400 text-xs">Sitzplatz</Label>
+                  <Select value={pax.seat_id || "auto"} onValueChange={v => setPax(p => ({ ...p, seat_id: v === "auto" ? "" : v }))}>
+                    <SelectTrigger className="bg-zinc-950 border-zinc-700 text-white mt-1">
+                      <SelectValue placeholder="Automatisch zuweisen" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-zinc-700 max-h-72">
+                      <SelectItem value="auto">Automatisch zuweisen</SelectItem>
+                      {seats.map(s => {
+                        const taken = occupiedSeatIds.has(s.id);
+                        return (
+                          <SelectItem key={s.id} value={s.id} disabled={taken}>
+                            Platz {s.seat_number}{taken ? " · belegt" : ""}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  {!seats.length && <p className="text-xs text-zinc-500 mt-1">Kein Fahrzeug mit Sitzplan zugewiesen – Plätze werden automatisch vergeben.</p>}
+                </div>
+                <label className="flex items-center gap-2 text-xs text-zinc-300">
+                  <input type="checkbox" checked={sendConfirmation} onChange={e => setSendConfirmation(e.target.checked)} className="accent-emerald-500" />
+                  Buchungsbestätigung per E-Mail senden
+                </label>
                 <Button onClick={addSingle} disabled={busy} className="w-full bg-emerald-600 hover:bg-emerald-700">
                   {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="w-4 h-4 mr-1" />Ticket erzeugen</>}
                 </Button>
+
               </CardContent>
             </Card>
             <Card className="bg-zinc-900 border-zinc-800">
