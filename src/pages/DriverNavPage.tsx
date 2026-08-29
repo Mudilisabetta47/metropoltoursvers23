@@ -535,7 +535,8 @@ const DriverNavPage = () => {
               </Source>
             )}
             {stops
-              .filter((s) => s.lat != null && s.lng != null)
+              .filter((s) => s.lat != null && s.lng != null && s.stop_type !== "destination")
+
               .map((s, i) => (
                 <Marker key={s.id} latitude={Number(s.lat)} longitude={Number(s.lng)} anchor="bottom">
                   <div
