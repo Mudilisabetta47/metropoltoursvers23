@@ -108,6 +108,18 @@ async function sendWebhookWithRetry(
   }
 }
 
+function formatInvoiceAddress(inv: any): string | null {
+  if (!inv) return null;
+  if (typeof inv === "string") return inv;
+  if (typeof inv === "object") {
+    const street = [inv.street, inv.house_number].filter(Boolean).join(" ");
+    const cityLine = [inv.zip, inv.city].filter(Boolean).join(" ");
+    const parts = [inv.company, street, cityLine, inv.country].filter(Boolean);
+    return parts.length ? parts.join(", ") : null;
+  }
+  return null;
+}
+
 function buildPassenger(booking: any, originStop: any, destStop: any) {
   if (!booking) return null;
   const ex = booking.extras && typeof booking.extras === "object" ? booking.extras : {};
@@ -115,9 +127,9 @@ function buildPassenger(booking: any, originStop: any, destStop: any) {
   const street = [booking.billing_street, booking.billing_house_number].filter(Boolean).join(" ");
   const cityLine = [booking.billing_zip, booking.billing_city].filter(Boolean).join(" ");
   const address =
-    booking.invoice_address ||
+    formatInvoiceAddress(booking.invoice_address) ||
     [street, cityLine, booking.billing_country].filter(Boolean).join(", ") ||
-    ex.address ||
+    (typeof ex.address === "string" ? ex.address : null) ||
     null;
   return {
     name: `${booking.passenger_first_name ?? ""} ${booking.passenger_last_name ?? ""}`.trim(),
