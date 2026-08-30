@@ -121,6 +121,27 @@ function clientIp(req: Request): string {
   return req.headers.get("cf-connecting-ip") ?? req.headers.get("x-real-ip") ?? "unknown";
 }
 
+const EMAIL_RE = /[\w.+-]+@[\w-]+\.[\w.-]{2,}/;
+// Deutsche/internationale Telefonnummern, mind. 7 Ziffern
+const PHONE_RE = /(?:\+\d{1,3}[\s./-]?)?(?:\(?\d{2,5}\)?[\s./-]?)?\d{3,}(?:[\s./-]?\d{2,})+/;
+const NAME_RE = /(?:ich hei(?:ß|ss)e|mein name ist|name:)\s*([A-Za-zÄÖÜäöüß' -]{2,60})/i;
+
+function extractContact(text: string): { email: string | null; phone: string | null; name: string | null } {
+  const email = text.match(EMAIL_RE)?.[0]?.slice(0, 200) ?? null;
+
+  let phone: string | null = null;
+  // E-Mail aus dem Text entfernen, damit Zahlen darin nicht als Telefon erkannt werden
+  const withoutEmail = email ? text.replace(email, " ") : text;
+  const m = withoutEmail.match(PHONE_RE)?.[0] ?? null;
+  if (m) {
+    const digits = m.replace(/\D/g, "");
+    if (digits.length >= 7 && digits.length <= 18) phone = m.trim().slice(0, 40);
+  }
+
+  const name = text.match(NAME_RE)?.[1]?.trim().slice(0, 120) ?? null;
+  return { email, phone, name };
+}
+
 const SUSPICIOUS_PATTERNS = [
   /ignore (all )?(previous|prior) instructions/i,
   /system prompt/i,
