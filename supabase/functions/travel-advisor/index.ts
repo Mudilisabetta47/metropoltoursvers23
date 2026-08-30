@@ -244,6 +244,57 @@ serve(async (req) => {
       }
     }
 
+    // ---- Kontaktdaten-Erfassung (Lead) ----
+    // Wenn der Kunde im Chat E-Mail und/oder Telefonnummer hinterlässt, speichern wir das
+    // als Lead, damit das Reiseteam bei nicht erkannten Zielen zurückrufen kann.
+    try {
+      const contact = extractContact(lastUserText);
+      if (contact.email || contact.phone) {
+        const wish = [...messages]
+          .filter((m: any) => m.role === "user" && typeof m.content === "string")
+          .map((m: any) => m.content as string)
+          .slice(-6)
+          .join("\n")
+          .slice(0, 4000);
+
+        let exists = false;
+        if (sessionId) {
+          const { data: prev } = await db
+            .from("advisor_leads")
+            .select("id, email, phone")
+            .eq("session_id", sessionId)
+            .order("created_at", { ascending: false })
+            .limit(1);
+          const p = prev?.[0];
+          exists = !!p && p.email === (contact.email ?? null) && p.phone === (contact.phone ?? null);
+          if (p && !exists) {
+            await db.from("advisor_leads").update({
+              email: contact.email ?? p.email,
+              phone: contact.phone ?? p.phone,
+              name: contact.name ?? undefined,
+              request_text: wish,
+            }).eq("id", p.id);
+            exists = true;
+          }
+        }
+
+        if (!exists) {
+          const { error: leadErr } = await db.from("advisor_leads").insert({
+            session_id: sessionId,
+            email: contact.email,
+            phone: contact.phone,
+            name: contact.name,
+            request_text: wish,
+            reason: "unknown_destination",
+            page_url: pageUrl,
+          });
+          if (leadErr) console.error("lead insert failed:", leadErr.message);
+        }
+      }
+    } catch (e) {
+      console.error("lead capture failed:", e);
+    }
+
     const trimmedMessages = messages.slice(-20);
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
