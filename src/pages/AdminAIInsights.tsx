@@ -67,6 +67,19 @@ interface Report {
   generated_at: string;
 }
 
+interface Lead {
+  id: string;
+  session_id: string | null;
+  email: string | null;
+  phone: string | null;
+  name: string | null;
+  request_text: string | null;
+  reason: string;
+  page_url: string | null;
+  status: string;
+  created_at: string;
+}
+
 const dt = (v: string) => format(new Date(v), "dd.MM.yyyy HH:mm", { locale: de });
 
 export default function AdminAIInsights() {
