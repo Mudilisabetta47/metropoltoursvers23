@@ -108,6 +108,18 @@ async function sendWebhookWithRetry(
   }
 }
 
+function formatInvoiceAddress(inv: any): string | null {
+  if (!inv) return null;
+  if (typeof inv === "string") return inv;
+  if (typeof inv === "object") {
+    const street = [inv.street, inv.house_number].filter(Boolean).join(" ");
+    const cityLine = [inv.zip, inv.city].filter(Boolean).join(" ");
+    const parts = [inv.company, street, cityLine, inv.country].filter(Boolean);
+    return parts.length ? parts.join(", ") : null;
+  }
+  return null;
+}
+
 function buildPassenger(booking: any, originStop: any, destStop: any) {
   if (!booking) return null;
   const ex = booking.extras && typeof booking.extras === "object" ? booking.extras : {};
@@ -115,9 +127,9 @@ function buildPassenger(booking: any, originStop: any, destStop: any) {
   const street = [booking.billing_street, booking.billing_house_number].filter(Boolean).join(" ");
   const cityLine = [booking.billing_zip, booking.billing_city].filter(Boolean).join(" ");
   const address =
-    booking.invoice_address ||
+    formatInvoiceAddress(booking.invoice_address) ||
     [street, cityLine, booking.billing_country].filter(Boolean).join(", ") ||
-    ex.address ||
+    (typeof ex.address === "string" ? ex.address : null) ||
     null;
   return {
     name: `${booking.passenger_first_name ?? ""} ${booking.passenger_last_name ?? ""}`.trim(),
@@ -224,7 +236,10 @@ Deno.serve(async (req) => {
     }
 
     // 5. Find ticket by qr_payload
-    const bookingSelect = `id, contact_date_of_birth, billing_company, billing_first_name, billing_last_name, billing_street, billing_house_number, billing_zip, billing_city, billing_country, invoice_address, booking_number, passenger_first_name, passenger_last_name, passenger_email, passenger_phone, status, price_paid, trip_id, extras, origin_stop_id, destination_stop_id, seat_id, seats(seat_number), origin_stop:stops!bookings_origin_stop_id_fkey(name, city), destination_stop:stops!bookings_destination_stop_id_fkey(name, city)`;
+    // NOTE: no nested `stops` embeds here — embedding the same table twice via FK
+    // hints inside an already-nested select makes PostgREST generate a duplicate
+    // table alias (Postgres 42712). Stops are fetched separately below.
+    const bookingSelect = `id, contact_date_of_birth, billing_company, billing_first_name, billing_last_name, billing_street, billing_house_number, billing_zip, billing_city, billing_country, invoice_address, booking_number, passenger_first_name, passenger_last_name, passenger_email, passenger_phone, status, price_paid, trip_id, extras, origin_stop_id, destination_stop_id, seat_id, seats(seat_number)`;
     const { data: ticket, error: ticketError } = await supabase
       .from("tickets")
       .select(`*, bookings(${bookingSelect}), trips(id, route_id, departure_date, departure_time, arrival_time, routes(name))`)
@@ -238,7 +253,7 @@ Deno.serve(async (req) => {
     if (!resolvedTicket) {
       const { data: booking } = await supabase
         .from("bookings")
-        .select("id, ticket_number, contact_date_of_birth, billing_company, billing_first_name, billing_last_name, billing_street, billing_house_number, billing_zip, billing_city, billing_country, invoice_address, booking_number, passenger_first_name, passenger_last_name, passenger_email, passenger_phone, status, price_paid, trip_id, extras, origin_stop_id, destination_stop_id, seat_id, seats(seat_number), origin_stop:stops!bookings_origin_stop_id_fkey(name, city), destination_stop:stops!bookings_destination_stop_id_fkey(name, city), trips(id, route_id, departure_date, departure_time, arrival_time, routes(name))")
+        .select(`id, ticket_number, ${bookingSelect.replace(/^id, /, "")}, trips(id, route_id, departure_date, departure_time, arrival_time, routes(name))`)
         .eq("ticket_number", qrPayload.toUpperCase())
         .maybeSingle();
 
@@ -373,6 +388,20 @@ Deno.serve(async (req) => {
 
     const booking = resolvedTicket.bookings;
     const trip = resolvedTicket.trips;
+
+    // Fetch origin/destination stops separately (avoids duplicate-alias 42712)
+    if (booking) {
+      const stopIds = [booking.origin_stop_id, booking.destination_stop_id].filter(Boolean);
+      if (stopIds.length) {
+        const { data: stopsData } = await supabase
+          .from("stops")
+          .select("id, name, city")
+          .in("id", stopIds);
+        const stopsById = new Map((stopsData || []).map((s: any) => [s.id, s]));
+        booking.origin_stop = stopsById.get(booking.origin_stop_id) ?? null;
+        booking.destination_stop = stopsById.get(booking.destination_stop_id) ?? null;
+      }
+    }
 
     // 6. Validate ticket status
     if (resolvedTicket.status === "cancelled" || resolvedTicket.status === "refunded") {
