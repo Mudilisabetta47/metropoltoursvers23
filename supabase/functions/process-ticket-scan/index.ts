@@ -389,6 +389,20 @@ Deno.serve(async (req) => {
     const booking = resolvedTicket.bookings;
     const trip = resolvedTicket.trips;
 
+    // Fetch origin/destination stops separately (avoids duplicate-alias 42712)
+    if (booking) {
+      const stopIds = [booking.origin_stop_id, booking.destination_stop_id].filter(Boolean);
+      if (stopIds.length) {
+        const { data: stopsData } = await supabase
+          .from("stops")
+          .select("id, name, city")
+          .in("id", stopIds);
+        const stopsById = new Map((stopsData || []).map((s: any) => [s.id, s]));
+        booking.origin_stop = stopsById.get(booking.origin_stop_id) ?? null;
+        booking.destination_stop = stopsById.get(booking.destination_stop_id) ?? null;
+      }
+    }
+
     // 6. Validate ticket status
     if (resolvedTicket.status === "cancelled" || resolvedTicket.status === "refunded") {
       await supabase.from("scan_logs").insert({
