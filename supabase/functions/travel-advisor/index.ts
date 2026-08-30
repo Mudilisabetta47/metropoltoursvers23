@@ -88,6 +88,17 @@ ${offers}
 5. Verfügbarkeit prüfen: Wenn wenige Plätze frei sind, darauf hinweisen
 6. Bei komplexen Buchungsfragen an den Kundenservice verweisen
 
+## UNBEKANNTE ZIELE / KEIN PASSENDES ANGEBOT (SEHR WICHTIG)
+Wenn der Nutzer nach einem Ziel, Termin oder Wunsch fragt, den du in den AKTUELLEN ANGEBOTEN oben NICHT findest
+(z. B. ein Land/Ort, den wir nicht anbieten, oder ein Zeitraum ohne Termin):
+- Sage ehrlich, dass dafür aktuell kein Angebot in unserem System hinterlegt ist.
+- Biete sofort an, dass unser Reiseteam sich persönlich meldet und ein individuelles Angebot erstellt.
+- Frage aktiv und freundlich nach **E-Mail-Adresse UND Telefonnummer** (gerne zusätzlich Name), damit wir Kontakt aufnehmen können.
+  Beispiel: „Für **[Ziel]** habe ich aktuell kein passendes Angebot hinterlegt. 😊 Unser Reiseteam erstellt Ihnen gerne ein individuelles Angebot – dürfte ich dafür Ihre **E-Mail-Adresse** und **Telefonnummer** haben?"
+- Wenn der Nutzer Kontaktdaten nennt: bedanke dich, bestätige, dass sich das Team innerhalb von 24 Stunden (werktags) meldet,
+  und nenne alternativ kundenservice@metours.de bzw. +49 511 80781106.
+- Frage nie mehrfach hintereinander nach denselben Daten und dränge nicht, wenn der Nutzer ablehnt.
+
 ## Wichtige Regeln
 - Nutze die AKTUELLEN ANGEBOTE oben für Preise und Termine – diese sind echte Live-Daten!
 - Empfehle konkrete Reisen mit Preisen, wenn der Nutzer nach Zielen fragt
@@ -108,6 +119,27 @@ function clientIp(req: Request): string {
   const fwd = req.headers.get("x-forwarded-for");
   if (fwd) return fwd.split(",")[0].trim();
   return req.headers.get("cf-connecting-ip") ?? req.headers.get("x-real-ip") ?? "unknown";
+}
+
+const EMAIL_RE = /[\w.+-]+@[\w-]+\.[\w.-]{2,}/;
+// Deutsche/internationale Telefonnummern, mind. 7 Ziffern
+const PHONE_RE = /(?:\+\d{1,3}[\s./-]?)?(?:\(?\d{2,5}\)?[\s./-]?)?\d{3,}(?:[\s./-]?\d{2,})+/;
+const NAME_RE = /(?:ich hei(?:ß|ss)e|mein name ist|name:)\s*([A-Za-zÄÖÜäöüß' -]{2,60})/i;
+
+function extractContact(text: string): { email: string | null; phone: string | null; name: string | null } {
+  const email = text.match(EMAIL_RE)?.[0]?.slice(0, 200) ?? null;
+
+  let phone: string | null = null;
+  // E-Mail aus dem Text entfernen, damit Zahlen darin nicht als Telefon erkannt werden
+  const withoutEmail = email ? text.replace(email, " ") : text;
+  const m = withoutEmail.match(PHONE_RE)?.[0] ?? null;
+  if (m) {
+    const digits = m.replace(/\D/g, "");
+    if (digits.length >= 7 && digits.length <= 18) phone = m.trim().slice(0, 40);
+  }
+
+  const name = text.match(NAME_RE)?.[1]?.trim().slice(0, 120) ?? null;
+  return { email, phone, name };
 }
 
 const SUSPICIOUS_PATTERNS = [
@@ -231,6 +263,57 @@ serve(async (req) => {
         });
         if (msgErr) console.error("message insert failed:", msgErr.message);
       }
+    }
+
+    // ---- Kontaktdaten-Erfassung (Lead) ----
+    // Wenn der Kunde im Chat E-Mail und/oder Telefonnummer hinterlässt, speichern wir das
+    // als Lead, damit das Reiseteam bei nicht erkannten Zielen zurückrufen kann.
+    try {
+      const contact = extractContact(lastUserText);
+      if (contact.email || contact.phone) {
+        const wish = [...messages]
+          .filter((m: any) => m.role === "user" && typeof m.content === "string")
+          .map((m: any) => m.content as string)
+          .slice(-6)
+          .join("\n")
+          .slice(0, 4000);
+
+        let exists = false;
+        if (sessionId) {
+          const { data: prev } = await db
+            .from("advisor_leads")
+            .select("id, email, phone")
+            .eq("session_id", sessionId)
+            .order("created_at", { ascending: false })
+            .limit(1);
+          const p = prev?.[0];
+          exists = !!p && p.email === (contact.email ?? null) && p.phone === (contact.phone ?? null);
+          if (p && !exists) {
+            await db.from("advisor_leads").update({
+              email: contact.email ?? p.email,
+              phone: contact.phone ?? p.phone,
+              name: contact.name ?? undefined,
+              request_text: wish,
+            }).eq("id", p.id);
+            exists = true;
+          }
+        }
+
+        if (!exists) {
+          const { error: leadErr } = await db.from("advisor_leads").insert({
+            session_id: sessionId,
+            email: contact.email,
+            phone: contact.phone,
+            name: contact.name,
+            request_text: wish,
+            reason: "unknown_destination",
+            page_url: pageUrl,
+          });
+          if (leadErr) console.error("lead insert failed:", leadErr.message);
+        }
+      }
+    } catch (e) {
+      console.error("lead capture failed:", e);
     }
 
     const trimmedMessages = messages.slice(-20);

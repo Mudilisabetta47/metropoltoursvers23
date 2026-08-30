@@ -67,6 +67,19 @@ interface Report {
   generated_at: string;
 }
 
+interface Lead {
+  id: string;
+  session_id: string | null;
+  email: string | null;
+  phone: string | null;
+  name: string | null;
+  request_text: string | null;
+  reason: string;
+  page_url: string | null;
+  status: string;
+  created_at: string;
+}
+
 const dt = (v: string) => format(new Date(v), "dd.MM.yyyy HH:mm", { locale: de });
 
 export default function AdminAIInsights() {
@@ -76,6 +89,7 @@ export default function AdminAIInsights() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [events, setEvents] = useState<SecEvent[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [search, setSearch] = useState("");
@@ -91,16 +105,31 @@ export default function AdminAIInsights() {
 
   const load = async () => {
     setLoading(true);
-    const [s, e, r] = await Promise.all([
+    const [s, e, r, l] = await Promise.all([
       supabase.from("advisor_chat_sessions").select("*").order("last_activity_at", { ascending: false }).limit(300),
       supabase.from("advisor_security_events").select("*").order("created_at", { ascending: false }).limit(200),
       supabase.from("advisor_monthly_reports").select("*").order("period_start", { ascending: false }).limit(24),
+      supabase.from("advisor_leads").select("*").order("created_at", { ascending: false }).limit(200),
     ]);
     setSessions((s.data as Session[]) ?? []);
     setEvents((e.data as SecEvent[]) ?? []);
     setReports((r.data as Report[]) ?? []);
+    setLeads((l.data as Lead[]) ?? []);
     setLoading(false);
   };
+
+  const setLeadStatus = async (id: string, status: string) => {
+    const { error } = await supabase
+      .from("advisor_leads")
+      .update({ status, handled_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) {
+      toast({ title: "Aktualisierung fehlgeschlagen", description: error.message, variant: "destructive" });
+      return;
+    }
+    setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
+  };
+
 
   useEffect(() => {
     if (hasAnyStaffRole) load();
@@ -206,9 +235,86 @@ export default function AdminAIInsights() {
       <Tabs defaultValue="chats">
         <TabsList>
           <TabsTrigger value="chats">Chats</TabsTrigger>
+          <TabsTrigger value="leads">
+            Kontaktanfragen
+            {leads.filter((l) => l.status === "new").length > 0 && (
+              <span className="ml-2 text-[10px] rounded-full bg-[#00CC36] text-white px-1.5">
+                {leads.filter((l) => l.status === "new").length}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="reports">Monatsberichte</TabsTrigger>
           <TabsTrigger value="security">Sicherheitsprotokoll</TabsTrigger>
         </TabsList>
+
+        {/* LEADS */}
+        <TabsContent value="leads" className="mt-4 space-y-3">
+          <p className="text-[11px] text-zinc-400">
+            Kontaktdaten, die Kundinnen und Kunden im KI-Reiseberater hinterlassen haben – meist weil für ihr Wunschziel kein Angebot hinterlegt war.
+          </p>
+          {leads.length === 0 && (
+            <Card className="p-6 text-sm text-zinc-400">Noch keine Kontaktanfragen aus dem Chatbot.</Card>
+          )}
+          {leads.map((l) => (
+            <Card key={l.id} className="p-4 space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className={
+                      l.status === "new"
+                        ? "bg-[#00CC36]/15 text-[#00CC36] border-[#00CC36]/30"
+                        : "bg-white/10 text-zinc-300 border-white/20"
+                    }
+                  >
+                    {l.status === "new" ? "Neu" : l.status === "contacted" ? "Kontaktiert" : "Erledigt"}
+                  </Badge>
+                  <span className="text-[11px] text-zinc-500">{dt(l.created_at)}</span>
+                </div>
+                <div className="flex gap-2">
+                  {l.status !== "contacted" && (
+                    <Button size="sm" variant="outline" onClick={() => setLeadStatus(l.id, "contacted")}>
+                      Kontaktiert
+                    </Button>
+                  )}
+                  {l.status !== "done" && (
+                    <Button size="sm" className="bg-[#00CC36] hover:bg-[#00CC36]/90 text-white" onClick={() => setLeadStatus(l.id, "done")}>
+                      Erledigt
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-3 gap-2 text-sm">
+                <div>
+                  <p className="text-[11px] text-zinc-500">Name</p>
+                  <p className="text-white">{l.name || "–"}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-zinc-500">E-Mail</p>
+                  {l.email ? (
+                    <a href={`mailto:${l.email}`} className="text-[#00CC36] hover:underline break-all">{l.email}</a>
+                  ) : <p className="text-zinc-400">–</p>}
+                </div>
+                <div>
+                  <p className="text-[11px] text-zinc-500">Telefon</p>
+                  {l.phone ? (
+                    <a href={`tel:${l.phone.replace(/\s/g, "")}`} className="text-[#00CC36] hover:underline">{l.phone}</a>
+                  ) : <p className="text-zinc-400">–</p>}
+                </div>
+              </div>
+              {l.request_text && (
+                <div>
+                  <p className="text-[11px] text-zinc-500">Anfrage</p>
+                  <p className="text-sm text-zinc-200 whitespace-pre-wrap bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+                    {l.request_text}
+                  </p>
+                </div>
+              )}
+              <p className="text-[10px] text-zinc-500">Seite: {l.page_url || "–"} · Sitzung: {l.session_id || "–"}</p>
+            </Card>
+          ))}
+        </TabsContent>
+
 
         {/* CHATS */}
         <TabsContent value="chats" className="mt-4">
