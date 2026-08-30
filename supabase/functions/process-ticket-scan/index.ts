@@ -236,7 +236,10 @@ Deno.serve(async (req) => {
     }
 
     // 5. Find ticket by qr_payload
-    const bookingSelect = `id, contact_date_of_birth, billing_company, billing_first_name, billing_last_name, billing_street, billing_house_number, billing_zip, billing_city, billing_country, invoice_address, booking_number, passenger_first_name, passenger_last_name, passenger_email, passenger_phone, status, price_paid, trip_id, extras, origin_stop_id, destination_stop_id, seat_id, seats(seat_number), origin_stop:stops!bookings_origin_stop_id_fkey(name, city), destination_stop:stops!bookings_destination_stop_id_fkey(name, city)`;
+    // NOTE: no nested `stops` embeds here — embedding the same table twice via FK
+    // hints inside an already-nested select makes PostgREST generate a duplicate
+    // table alias (Postgres 42712). Stops are fetched separately below.
+    const bookingSelect = `id, contact_date_of_birth, billing_company, billing_first_name, billing_last_name, billing_street, billing_house_number, billing_zip, billing_city, billing_country, invoice_address, booking_number, passenger_first_name, passenger_last_name, passenger_email, passenger_phone, status, price_paid, trip_id, extras, origin_stop_id, destination_stop_id, seat_id, seats(seat_number)`;
     const { data: ticket, error: ticketError } = await supabase
       .from("tickets")
       .select(`*, bookings(${bookingSelect}), trips(id, route_id, departure_date, departure_time, arrival_time, routes(name))`)
@@ -250,7 +253,7 @@ Deno.serve(async (req) => {
     if (!resolvedTicket) {
       const { data: booking } = await supabase
         .from("bookings")
-        .select("id, ticket_number, contact_date_of_birth, billing_company, billing_first_name, billing_last_name, billing_street, billing_house_number, billing_zip, billing_city, billing_country, invoice_address, booking_number, passenger_first_name, passenger_last_name, passenger_email, passenger_phone, status, price_paid, trip_id, extras, origin_stop_id, destination_stop_id, seat_id, seats(seat_number), origin_stop:stops!bookings_origin_stop_id_fkey(name, city), destination_stop:stops!bookings_destination_stop_id_fkey(name, city), trips(id, route_id, departure_date, departure_time, arrival_time, routes(name))")
+        .select(`id, ticket_number, ${bookingSelect.replace(/^id, /, "")}, trips(id, route_id, departure_date, departure_time, arrival_time, routes(name))`)
         .eq("ticket_number", qrPayload.toUpperCase())
         .maybeSingle();
 
