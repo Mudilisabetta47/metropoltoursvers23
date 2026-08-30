@@ -76,6 +76,7 @@ export default function AdminAIInsights() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [events, setEvents] = useState<SecEvent[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [search, setSearch] = useState("");
@@ -91,16 +92,31 @@ export default function AdminAIInsights() {
 
   const load = async () => {
     setLoading(true);
-    const [s, e, r] = await Promise.all([
+    const [s, e, r, l] = await Promise.all([
       supabase.from("advisor_chat_sessions").select("*").order("last_activity_at", { ascending: false }).limit(300),
       supabase.from("advisor_security_events").select("*").order("created_at", { ascending: false }).limit(200),
       supabase.from("advisor_monthly_reports").select("*").order("period_start", { ascending: false }).limit(24),
+      supabase.from("advisor_leads").select("*").order("created_at", { ascending: false }).limit(200),
     ]);
     setSessions((s.data as Session[]) ?? []);
     setEvents((e.data as SecEvent[]) ?? []);
     setReports((r.data as Report[]) ?? []);
+    setLeads((l.data as Lead[]) ?? []);
     setLoading(false);
   };
+
+  const setLeadStatus = async (id: string, status: string) => {
+    const { error } = await supabase
+      .from("advisor_leads")
+      .update({ status, handled_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) {
+      toast({ title: "Aktualisierung fehlgeschlagen", description: error.message, variant: "destructive" });
+      return;
+    }
+    setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
+  };
+
 
   useEffect(() => {
     if (hasAnyStaffRole) load();
