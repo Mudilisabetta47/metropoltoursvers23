@@ -322,6 +322,54 @@ export type Database = {
         }
         Relationships: []
       }
+      advisor_leads: {
+        Row: {
+          created_at: string
+          email: string | null
+          handled_at: string | null
+          handled_by: string | null
+          id: string
+          name: string | null
+          notes: string | null
+          page_url: string | null
+          phone: string | null
+          reason: string
+          request_text: string | null
+          session_id: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          name?: string | null
+          notes?: string | null
+          page_url?: string | null
+          phone?: string | null
+          reason?: string
+          request_text?: string | null
+          session_id?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          name?: string | null
+          notes?: string | null
+          page_url?: string | null
+          phone?: string | null
+          reason?: string
+          request_text?: string | null
+          session_id?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       advisor_monthly_reports: {
         Row: {
           generated_at: string
