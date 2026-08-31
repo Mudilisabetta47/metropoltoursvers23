@@ -2,22 +2,44 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type AppPaymentStatus = "unpaid" | "pending" | "paid" | "failed";
 
+/** Liest die Fehlermeldung aus dem Kontext eines Edge-Function-Fehlers – egal in welcher Form. */
+async function readErrorMessage(error: unknown): Promise<string | null> {
+  const ctx = (error as any)?.context;
+  if (!ctx) return null;
+  try {
+    // FunctionsHttpError liefert eine echte Response (mit .json/.text)
+    if (typeof ctx.json === "function") {
+      const parsed = await ctx.json();
+      return parsed?.error ?? parsed?.message ?? null;
+    }
+    if (typeof ctx.text === "function") {
+      const txt = await ctx.text();
+      try {
+        const parsed = JSON.parse(txt);
+        return parsed?.error ?? parsed?.message ?? txt ?? null;
+      } catch {
+        return txt || null;
+      }
+    }
+    // Kontext ist ein einfaches Objekt (FunctionsFetchError / Relay)
+    if (typeof ctx === "object") return ctx.error ?? ctx.message ?? null;
+    if (typeof ctx === "string") return ctx;
+  } catch {
+    /* Fehlerkontext nicht lesbar – Originalfehler verwenden */
+  }
+  return null;
+}
+
 async function call<T>(body: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase.functions.invoke("app-booking", { body });
   if (error) {
-    // Edge-Function-Fehlermeldung (JSON) sichtbar machen
-    const ctx = (error as any)?.context;
-    try {
-      const parsed = ctx ? await ctx.json() : null;
-      if (parsed?.error) throw new Error(parsed.error);
-    } catch (e) {
-      if (e instanceof Error && e.message && e.message !== "Unexpected end of JSON input") throw e;
-    }
-    throw error;
+    const message = await readErrorMessage(error);
+    throw new Error(message || (error as any)?.message || "Buchung fehlgeschlagen");
   }
   if ((data as any)?.error) throw new Error((data as any).error);
   return data as T;
 }
+
 
 export interface PassengerInput {
   firstName: string;
