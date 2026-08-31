@@ -34,6 +34,30 @@ function str(v: unknown, max = 120): string {
   return typeof v === "string" ? v.trim().slice(0, max) : "";
 }
 
+/** Serverseitiger Extras-Katalog – Preise werden NIE vom Client übernommen. */
+const EXTRAS_CATALOG: Record<string, { label: string; price: number; perPassenger: boolean }> = {
+  extra_luggage: { label: "Zusätzliches Gepäckstück", price: 12, perPassenger: true },
+  oversize_luggage: { label: "Sperrgepäck (Ski, Rad, Kinderwagen)", price: 19, perPassenger: false },
+  priority: { label: "Priority Boarding", price: 6.9, perPassenger: true },
+  premium_seat: { label: "Premium-Sitzplatz (extra Beinfreiheit)", price: 9.9, perPassenger: true },
+  flex: { label: "Flex-Option (kostenlose Umbuchung)", price: 14.9, perPassenger: true },
+};
+
+function resolveExtras(raw: unknown, passengers: number) {
+  const ids = Array.isArray(raw)
+    ? raw.map((v) => str(v, 40)).filter((id) => id in EXTRAS_CATALOG).slice(0, 10)
+    : [];
+  const unique = [...new Set(ids)];
+  const items = unique.map((id) => {
+    const e = EXTRAS_CATALOG[id];
+    const qty = e.perPassenger ? passengers : 1;
+    return { id, label: e.label, unit_price: e.price, quantity: qty, total: Number((e.price * qty).toFixed(2)) };
+  });
+  const total = Number(items.reduce((s, i) => s + i.total, 0).toFixed(2));
+  return { items, total };
+}
+
+
 async function requireUser(req: Request) {
   const authHeader = req.headers.get("Authorization") ?? "";
   const token = authHeader.replace("Bearer ", "");
