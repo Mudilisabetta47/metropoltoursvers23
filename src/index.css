@@ -391,3 +391,44 @@
     color: rgba(161, 161, 170, 0.55);
   }
 }
+
+/* ============================================================
+   METROPOL TOURS – Mobile App Design System ("Soft Premium")
+   Premium White UI · Dark Typography · Metropol-Grün
+   ============================================================ */
+@layer components {
+  .app-card {
+    @apply rounded-[28px] border border-border/60 bg-card;
+    box-shadow: 0 1px 2px hsl(150 20% 8% / 0.04), 0 12px 32px -18px hsl(150 20% 8% / 0.22);
+  }
+  .app-card-flat {
+    @apply rounded-[28px] border border-border/50 bg-muted/50;
+  }
+  .app-card-hero {
+    @apply rounded-[32px] border border-border/60 bg-card;
+    box-shadow: 0 2px 4px hsl(150 20% 8% / 0.04), 0 24px 60px -28px hsl(150 20% 8% / 0.35);
+  }
+  .app-glass {
+    @apply border border-white/25 bg-white/15 backdrop-blur-xl;
+  }
+  .app-elevate {
+    box-shadow: 0 20px 50px -24px hsl(150 20% 8% / 0.4);
+  }
+  .app-eyebrow {
+    @apply text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground;
+  }
+  .app-title {
+    @apply text-[22px] font-extrabold leading-tight tracking-tight text-foreground;
+  }
+  .app-input {
+    @apply h-[3.25rem] rounded-2xl border border-border/70 bg-card px-4 text-[15px] font-medium text-foreground placeholder:text-muted-foreground/70;
+  }
+  .app-divider-dashed {
+    background-image: repeating-linear-gradient(
+      to right,
+      hsl(var(--border)) 0 8px,
+      transparent 8px 16px
+    );
+    height: 2px;
+  }
+}

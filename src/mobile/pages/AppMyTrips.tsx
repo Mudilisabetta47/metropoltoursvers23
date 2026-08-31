@@ -54,7 +54,7 @@ export default function AppMyTrips() {
       />
 
       {offline && (
-        <div className="mx-5 mt-4 flex items-center gap-2 rounded-2xl border border-border bg-muted/50 p-3 text-xs text-muted-foreground">
+        <div className="mx-5 mt-4 flex items-center gap-2 rounded-[22px] border border-border/60 bg-muted/50 p-3.5 text-xs font-medium text-muted-foreground">
           <WifiOff className="h-4 w-4" /> Offline-Modus – es werden gespeicherte Ticketdaten angezeigt.
         </div>
       )}
@@ -63,9 +63,9 @@ export default function AppMyTrips() {
         {loading && [0, 1].map((i) => <Skeleton key={i} className="h-32 rounded-3xl" />)}
 
         {!loading && trips.length === 0 && (
-          <div className="rounded-2xl border border-border bg-card p-5 text-center">
-            <Ticket className="mx-auto h-8 w-8 text-primary" />
-            <h2 className="mt-3 text-base font-semibold">Noch keine Buchung hinterlegt</h2>
+          <div className="app-card p-7 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] bg-primary/10"><Ticket className="h-7 w-7 text-primary" /></div>
+            <h2 className="mt-4 text-[17px] font-extrabold tracking-tight">Noch keine Buchung hinterlegt</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Du hast ohne Konto gebucht? Wir senden dir einen sicheren Zugangslink per E-Mail.
             </p>

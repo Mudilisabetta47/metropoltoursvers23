@@ -12,6 +12,7 @@ import {
   Ticket as TicketIcon,
   User,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -49,24 +50,36 @@ export default function AppMyTickets() {
         {loading && <Skeleton className="h-40 rounded-2xl" />}
 
         {!loading && authed === false && (
-          <div className="rounded-2xl border border-border p-6 text-center">
-            <TicketIcon className="mx-auto h-9 w-9 text-primary" />
-            <p className="mt-3 font-semibold">Bitte anmelden</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Melde dich an, um alle deine Tickets zu sehen.
+          <div className="app-card p-8 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] bg-primary/10">
+              <TicketIcon className="h-7 w-7 text-primary" />
+            </div>
+            <p className="mt-4 text-[17px] font-extrabold tracking-tight">Bitte anmelden</p>
+            <p className="mx-auto mt-1.5 max-w-[30ch] text-[13px] leading-relaxed text-muted-foreground">
+              Melde dich an, damit deine Tickets sicher und offline verfügbar sind.
             </p>
-            <Button className="mt-4" onClick={() => navigate("/auth?redirect=/app/tickets")}>
+            <Button
+              className="mt-5 h-12 w-full rounded-2xl font-bold"
+              onClick={() => navigate("/auth?redirect=/app/tickets")}
+            >
               Anmelden
             </Button>
           </div>
         )}
 
         {!loading && authed && grouped.length === 0 && (
-          <div className="rounded-2xl border border-border p-6 text-center">
-            <TicketIcon className="mx-auto h-9 w-9 text-muted-foreground" />
-            <p className="mt-3 font-semibold">Noch keine Tickets</p>
-            <p className="mt-1 text-sm text-muted-foreground">Buche deine erste Fahrt direkt in der App.</p>
-            <Button className="mt-4" onClick={() => navigate("/app/checkout")}>
+          <div className="app-card p-8 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] bg-muted">
+              <TicketIcon className="h-7 w-7 text-muted-foreground" />
+            </div>
+            <p className="mt-4 text-[17px] font-extrabold tracking-tight">Noch keine Tickets</p>
+            <p className="mx-auto mt-1.5 max-w-[30ch] text-[13px] leading-relaxed text-muted-foreground">
+              Sobald du gebucht hast, erscheint dein digitaler Boarding Pass hier.
+            </p>
+            <Button
+              className="mt-5 h-12 w-full rounded-2xl font-bold"
+              onClick={() => navigate("/app/checkout")}
+            >
               Fahrt buchen
             </Button>
           </div>
@@ -101,7 +114,7 @@ function TicketCard({ ticket }: { ticket: MyTicket }) {
   }, [ticket.ticket_number]);
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-border bg-card">
+    <motion.article whileTap={{ scale: 0.99 }} className="app-card overflow-hidden">
       <div className="flex items-start gap-4 p-4">
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex items-center gap-2">
@@ -109,7 +122,7 @@ function TicketCard({ ticket }: { ticket: MyTicket }) {
               {status.label}
             </span>
           </div>
-          <h3 className="truncate text-base font-bold">{ticket.trip_title}</h3>
+          <h3 className="truncate text-[17px] font-extrabold tracking-tight">{ticket.trip_title}</h3>
           <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <User className="h-3.5 w-3.5" />
             {ticket.passenger_name || "Fahrgast"}
@@ -141,7 +154,7 @@ function TicketCard({ ticket }: { ticket: MyTicket }) {
           <p className="pt-1 font-mono text-[11px] text-muted-foreground">{ticket.ticket_number}</p>
         </div>
 
-        <div className="shrink-0 rounded-xl bg-white p-2">
+        <div className="shrink-0 rounded-[20px] border border-border/60 bg-white p-2.5">
           {qr ? (
             <img src={qr} alt={`QR-Code Ticket ${ticket.ticket_number}`} className="h-24 w-24" />
           ) : (
@@ -150,7 +163,7 @@ function TicketCard({ ticket }: { ticket: MyTicket }) {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 border-t border-border bg-muted/30 px-4 py-3">
+      <div className="flex flex-wrap items-center gap-2 border-t border-dashed border-border bg-muted/40 px-4 py-3">
         <WalletPassButton
           bookingId={ticket.id}
           ticketNumber={ticket.ticket_number}
@@ -169,6 +182,6 @@ function TicketCard({ ticket }: { ticket: MyTicket }) {
           <span className="ml-auto text-sm font-semibold">{money(Number(ticket.price_paid))}</span>
         )}
       </div>
-    </article>
+    </motion.article>
   );
 }
