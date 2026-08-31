@@ -26,6 +26,7 @@ const Index = () => {
       />
       <Header />
       <main className="flex-1">
+        <InfoBanner />
         <HeroSlider />
         <FeaturesSection />
         <BrandShowcaseSection />
