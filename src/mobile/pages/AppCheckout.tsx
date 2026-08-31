@@ -1110,7 +1110,7 @@ function SuccessScreen({
         transition={{ delay: 0.25 }}
         className="mt-6 text-center text-2xl font-bold tracking-tight"
       >
-        {invoice ? "Buchung erfasst" : "Buchung bestätigt"}
+        Buchung erfolgreich
       </motion.h1>
       <motion.p
         initial={{ opacity: 0 }}
@@ -1119,7 +1119,7 @@ function SuccessScreen({
         className="mt-2 text-center text-sm text-muted-foreground"
       >
         {invoice
-          ? "Deine Tickets werden nach Zahlungseingang gültig."
+          ? "Die Zahlungsinformationen erhältst du per E-Mail."
           : "Deine Tickets stehen sofort in der App bereit."}
       </motion.p>
 
