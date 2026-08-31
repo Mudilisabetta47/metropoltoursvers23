@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { sendBookingDocuments } from "../_shared/booking-emails.ts";
 
@@ -25,12 +24,6 @@ function admin() {
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
   );
-}
-
-function stripeClient() {
-  const key = Deno.env.get("STRIPE_SECRET_KEY");
-  if (!key) throw new Error("Stripe ist nicht konfiguriert");
-  return new Stripe(key, { apiVersion: "2025-08-27.basil" });
 }
 
 function str(v: unknown, max = 120): string {
@@ -79,7 +72,6 @@ serve(async (req) => {
 
     if (action === "config") {
       return json({
-        stripePublishableKey: Deno.env.get("STRIPE_PUBLISHABLE_KEY") ?? null,
         extras: Object.entries(EXTRAS_CATALOG).map(([id, e]) => ({ id, ...e })),
       });
     }
@@ -90,6 +82,14 @@ serve(async (req) => {
     /* ---------------------------------------------------------- CREATE */
     /* ----------------------------------------------------- CREATE TOUR */
     if (action === "create" && str(body?.type, 20) === "tour") {
+      if (
+        str(body?.paymentMethod, 20) !== "invoice" ||
+        str(body?.payment_method, 20) !== "invoice" ||
+        str(body?.paymentStatus, 20) !== "open" ||
+        str(body?.payment_status, 20) !== "open"
+      ) {
+        return json({ error: "In der App ist ausschließlich Rechnung verfügbar" }, 400);
+      }
       const tourId = str(body?.tourId, 40);
       const tourDateId = str(body?.tourDateId, 40);
       const tariffId = str(body?.tariffId, 40);
@@ -225,6 +225,8 @@ serve(async (req) => {
         bookingIds: [tourBooking.id],
         unitPrice: perPerson + surcharge,
         total,
+        paymentMethod: "invoice",
+        paymentStatus: "open",
       });
 
     }
@@ -239,9 +241,14 @@ serve(async (req) => {
         ? body.seatIds.filter((s: unknown) => typeof s === "string" && UUID.test(s)).slice(0, 20)
         : [];
       const passengers = Array.isArray(body?.passengers) ? body.passengers.slice(0, 20) : [];
-      const paymentMethod = ["card", "invoice"].includes(str(body?.paymentMethod, 20))
-        ? str(body?.paymentMethod, 20)
-        : "card";
+      if (
+        str(body?.paymentMethod, 20) !== "invoice" ||
+        str(body?.payment_method, 20) !== "invoice" ||
+        str(body?.paymentStatus, 20) !== "open" ||
+        str(body?.payment_status, 20) !== "open"
+      ) {
+        return json({ error: "In der App ist ausschließlich Rechnung verfügbar" }, 400);
+      }
       const extras = resolveExtras(body?.extras, Math.max(1, passengers.length));
 
       if (![tripId, originStopId, destinationStopId].every((id) => UUID.test(id))) {
@@ -327,8 +334,8 @@ serve(async (req) => {
           extras: i === 0 ? extras.items : [],
           price_paid: Number((perSeat + extrasPerPassenger).toFixed(2)),
           status: "pending",
-          payment_status: "unpaid",
-          payment_method: paymentMethod === "invoice" ? "invoice" : "stripe",
+          payment_status: "open",
+          payment_method: "invoice",
         });
       }
 
@@ -378,11 +385,9 @@ serve(async (req) => {
         seats: (seatRows ?? []).map((s: any) => String(s.seat_number)),
         extras: extras.items.map((e) => ({ label: e.label, quantity: e.quantity, total: e.total })),
         total,
-        paymentMethod: paymentMethod === "invoice" ? "Rechnung" : "Kartenzahlung",
-        paymentStatus: paymentMethod === "invoice" ? "offen" : "offen",
-        invoice:
-          paymentMethod === "invoice"
-            ? {
+        paymentMethod: "Rechnung",
+        paymentStatus: "offen",
+        invoice: {
                 booking: {
                   booking_number: bookingNumber,
                   created_at: new Date().toISOString(),
@@ -407,8 +412,7 @@ serve(async (req) => {
                 tariff: { name: "Fahrt" },
                 pickupStop: null,
                 persist: false,
-              }
-            : undefined,
+              },
       });
 
 
@@ -421,13 +425,17 @@ serve(async (req) => {
         extras: extras.items,
         extrasTotal: extras.total,
         total,
-        paymentMethod,
+        paymentMethod: "invoice",
+        paymentStatus: "open",
       });
     }
 
-    /* ------------------------------------------- PAY / CONFIRM / CANCEL */
+    /* ---------------------------------------------------------- CANCEL */
     const bookingNumber = str(body?.bookingNumber, 40);
-    if (["pay", "confirm", "cancel"].includes(action)) {
+    if (["pay", "confirm"].includes(action)) {
+      return json({ error: "In der App ist ausschließlich Rechnung verfügbar" }, 400);
+    }
+    if (action === "cancel") {
       if (!/^MT-\d{4}-\d{6}$/.test(bookingNumber)) {
         return json({ error: "Ungültige Buchungsnummer" }, 400);
       }
@@ -452,63 +460,6 @@ serve(async (req) => {
       }
 
       if (rows.some((b) => b.user_id !== user.id)) return json({ error: "Kein Zugriff" }, 403);
-      const amountEur = rows.reduce(
-        (sum, b) => sum + Number(table === "bookings" ? b.price_paid : b.total_price) || 0,
-        0,
-      );
-      const intentField = table === "bookings" ? "stripe_session_id" : "stripe_payment_intent_id";
-
-      if (action === "pay") {
-        if (rows.every((b) => b.payment_status === "paid")) return json({ alreadyPaid: true });
-        const amount = Math.round(amountEur * 100);
-        if (amount < 50) return json({ error: "Ungültiger Zahlbetrag" }, 400);
-
-        const stripe = stripeClient();
-        const intent = await stripe.paymentIntents.create({
-          amount,
-          currency: "eur",
-          automatic_payment_methods: { enabled: true },
-          receipt_email: user.email ?? undefined,
-          metadata: { booking_number: bookingNumber, user_id: user.id, channel: "mobile_app" },
-        });
-
-        await db
-          .from(table)
-          .update({ payment_status: "pending", [intentField]: intent.id })
-          .eq("booking_number", bookingNumber);
-
-        return json({ clientSecret: intent.client_secret, paymentIntentId: intent.id, amount });
-      }
-
-      if (action === "confirm") {
-        const intentId = rows[0][intentField];
-        if (!intentId) return json({ error: "Keine Zahlung gestartet" }, 400);
-        const stripe = stripeClient();
-        const intent = await stripe.paymentIntents.retrieve(intentId);
-
-        // Zahlungsstatus wird ausschließlich serverseitig aus Stripe übernommen
-        if (intent.status === "succeeded") {
-          await db
-            .from(table)
-            .update({
-              payment_status: "paid",
-              status: "confirmed",
-              payment_method: "stripe",
-              payment_reference: intent.id,
-              paid_at: new Date().toISOString(),
-            })
-            .eq("booking_number", bookingNumber);
-          return json({ paymentStatus: "paid", status: "confirmed", bookingNumber });
-        }
-
-        if (["requires_payment_method", "canceled"].includes(intent.status)) {
-          await db.from(table).update({ payment_status: "failed" }).eq("booking_number", bookingNumber);
-          return json({ paymentStatus: "failed", status: "pending" });
-        }
-
-        return json({ paymentStatus: "pending", status: "pending", stripeStatus: intent.status });
-      }
-
       // cancel
       if (rows.some((b) => b.payment_status === "paid")) {
         return json({ error: "Bezahlte Buchungen bitte über den Kundenservice stornieren" }, 400);

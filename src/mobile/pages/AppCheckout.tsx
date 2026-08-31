@@ -14,7 +14,6 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
-  CreditCard,
   FileText,
   Loader2,
   Lock,
@@ -32,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -106,8 +106,6 @@ export default function AppCheckout() {
   const [contactPhone, setContactPhone] = useState("");
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
   const [extrasCatalog, setExtrasCatalog] = useState<AppExtra[]>(FALLBACK_EXTRAS);
-  // Zahlungsmethoden sind in der App deaktiviert – Buchung erfolgt auf Rechnung.
-  const paymentMethod = "invoice" as const;
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [booking, setBooking] = useState<{ bookingNumber: string; total: number; unitPrice: number } | null>(null);
@@ -215,7 +213,6 @@ export default function AppCheckout() {
         passengers,
         contactEmail,
         contactPhone,
-        paymentMethod,
         extras: selectedExtras,
       });
       setBooking({ bookingNumber: result.bookingNumber, total: result.total, unitPrice: result.unitPrice });
@@ -266,7 +263,7 @@ export default function AppCheckout() {
   }
 
   if (done && booking) {
-    return <SuccessScreen booking={booking} trip={trip} origin={origin?.name} destination={destination?.name} invoice={paymentMethod === "invoice"} onOpenTicket={() => navigate("/app/tickets")} onHome={() => navigate("/app")} />;
+    return <SuccessScreen booking={booking} trip={trip} origin={origin?.name} destination={destination?.name} onOpenTicket={() => navigate("/app/tickets")} onHome={() => navigate("/app")} />;
   }
 
   const seatLabels = seats.filter((s) => seatIds.includes(s.id)).map((s) => s.seat_number);
@@ -765,24 +762,22 @@ export default function AppCheckout() {
 
               <div className="rounded-3xl border border-border bg-card p-4 text-sm">
                 <p className="mb-2 font-semibold">Zahlungsart</p>
-                <div className="flex items-start gap-3 rounded-2xl border-2 border-primary/60 bg-primary/8 p-3.5">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary">
-                    <CheckCircle2 className="h-4 w-4 text-primary-foreground" />
-                  </span>
-                  <span>
-                    <span className="block font-semibold">Rechnung</span>
-                    <span className="block text-xs text-muted-foreground">
-                      Zahlung bequem auf Rechnung nach der Buchung – die Zahlungsdetails erhältst du per E-Mail.
+                <RadioGroup value="invoice" aria-label="Zahlungsart">
+                  <label htmlFor="app-payment-invoice" className="flex cursor-pointer items-start gap-3 rounded-2xl border-2 border-primary/60 bg-primary/8 p-3.5">
+                    <RadioGroupItem id="app-payment-invoice" value="invoice" className="mt-0.5 shrink-0" />
+                    <span>
+                      <span className="block font-semibold">Rechnung</span>
+                      <span className="block text-xs text-muted-foreground">Zahlung bequem auf Rechnung nach der Buchung</span>
                     </span>
-                  </span>
-                </div>
+                  </label>
+                </RadioGroup>
               </div>
 
 
               <PriceBreakdown fare={fareTotal} extras={extrasTotal} total={grandTotal} pax={pax} />
 
               <p className="px-1 text-[11px] leading-relaxed text-muted-foreground">
-                Mit „Jetzt verbindlich buchen“ akzeptierst du unsere{" "}
+                Mit „Zahlungspflichtig buchen“ akzeptierst du unsere{" "}
                 <a href="/agb" className="underline">
                   AGB
                 </a>{" "}
@@ -820,7 +815,7 @@ export default function AppCheckout() {
             {creating ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : null}
-            {step === "pruefen" ? "Jetzt verbindlich buchen" : "Weiter"}
+            {step === "pruefen" ? "Zahlungspflichtig buchen" : "Weiter"}
             {step !== "pruefen" && <ArrowRight className="ml-2 h-4 w-4" />}
           </Button>
         </div>
@@ -987,92 +982,11 @@ function PriceBreakdown({
   );
 }
 
-function VirtualCard({ total, name, method }: { total: number; name: string; method: "card" | "invoice" }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, rotateX: -12, y: 16 }}
-      animate={{ opacity: 1, rotateX: 0, y: 0 }}
-      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-      className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/25 via-card to-card p-5 shadow-[0_20px_45px_-25px_hsl(var(--primary)/0.8)]"
-    >
-      <motion.div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-foreground/8 to-transparent"
-        initial={{ x: "-120%" }}
-        animate={{ x: "120%" }}
-        transition={{ repeat: Infinity, duration: 3.4, ease: "linear" }}
-      />
-      <div className="flex items-start justify-between">
-        <div className="h-8 w-11 rounded-md bg-foreground/15" />
-        {method === "card" ? (
-          <CreditCard className="h-6 w-6 text-primary" />
-        ) : (
-          <FileText className="h-6 w-6 text-primary" />
-        )}
-      </div>
-      <p className="mt-6 font-mono text-lg tracking-[0.2em]">•••• •••• •••• ••••</p>
-      <div className="mt-4 flex items-end justify-between">
-        <div>
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Karteninhaber</p>
-          <p className="text-sm font-semibold">{name || "Reisende:r"}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Betrag</p>
-          <AnimatedPrice value={total} className="text-base font-bold" />
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-function PayOption({
-  active,
-  onClick,
-  icon,
-  title,
-  subtitle,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  title: string;
-  subtitle: string;
-}) {
-  return (
-    <Pressable
-      onClick={onClick}
-      className={cn(
-        "flex w-full items-center gap-3 rounded-3xl border p-4 text-left transition-colors",
-        active ? "border-primary/60 bg-primary/8" : "border-border bg-card",
-      )}
-    >
-      <span
-        className={cn(
-          "flex h-10 w-10 items-center justify-center rounded-2xl",
-          active ? "bg-primary text-primary-foreground" : "bg-muted",
-        )}
-      >
-        {icon}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold">{title}</span>
-        <span className="block text-xs text-muted-foreground">{subtitle}</span>
-      </span>
-      <AnimatePresence>
-        {active && (
-          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-            <Check className="h-4 w-4 text-primary" />
-          </motion.span>
-        )}
-      </AnimatePresence>
-    </Pressable>
-  );
-}
-
 function TrustRow() {
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 rounded-2xl bg-muted/40 px-4 py-3 text-[11px] text-muted-foreground">
       <span className="flex items-center gap-1.5">
-        <ShieldCheck className="h-3.5 w-3.5 text-primary" /> Sichere, verschlüsselte Zahlung
+        <ShieldCheck className="h-3.5 w-3.5 text-primary" /> Sichere Buchungsübertragung
       </span>
       <a href="tel:+4951180781106" className="flex items-center gap-1.5 underline-offset-2 hover:underline">
         <Phone className="h-3.5 w-3.5" /> +49 511 80781106
@@ -1088,7 +1002,6 @@ function SuccessScreen({
   trip,
   origin,
   destination,
-  invoice,
   onOpenTicket,
   onHome,
 }: {
@@ -1096,7 +1009,6 @@ function SuccessScreen({
   trip: { title: string | null; route_name: string; departure_date: string; departure_time: string | null } | null;
   origin?: string;
   destination?: string;
-  invoice: boolean;
   onOpenTicket: () => void;
   onHome: () => void;
 }) {
@@ -1118,9 +1030,7 @@ function SuccessScreen({
         transition={{ delay: 0.35 }}
         className="mt-2 text-center text-sm text-muted-foreground"
       >
-        {invoice
-          ? "Die Zahlungsinformationen erhältst du per E-Mail."
-          : "Deine Tickets stehen sofort in der App bereit."}
+        Die Zahlungsinformationen erhältst du per E-Mail.
       </motion.p>
 
       {/* Ticket fährt ins Interface */}
@@ -1151,7 +1061,7 @@ function SuccessScreen({
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Zahlungsart</span>
-              <span className="font-semibold">{invoice ? "Rechnung" : "Kartenzahlung"}</span>
+              <span className="font-semibold">Rechnung</span>
             </div>
           </div>
         </div>

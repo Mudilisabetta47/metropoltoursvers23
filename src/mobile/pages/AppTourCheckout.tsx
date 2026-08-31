@@ -6,7 +6,7 @@ import {
   ArrowLeft,
   CalendarDays,
   CheckCircle2,
-  CreditCard,
+  FileText,
   Loader2,
   MapPin,
   Ticket as TicketIcon,
@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -352,20 +353,21 @@ export default function AppTourCheckout() {
             </div>
             <div className="rounded-2xl border border-border p-4 text-sm">
               <p className="mb-2 font-semibold">Zahlungsart</p>
-              <div className="flex items-start gap-3 rounded-xl border-2 border-primary/60 bg-primary/10 p-3">
-                <CreditCard className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span>
-                  <span className="block font-semibold">Rechnung</span>
-                  <span className="block text-xs text-muted-foreground">
-                    Zahlung bequem auf Rechnung nach der Buchung
+              <RadioGroup value="invoice" aria-label="Zahlungsart">
+                <label htmlFor="app-tour-payment-invoice" className="flex cursor-pointer items-start gap-3 rounded-xl border-2 border-primary/60 bg-primary/10 p-3">
+                  <RadioGroupItem id="app-tour-payment-invoice" value="invoice" className="mt-0.5 shrink-0" />
+                  <FileText className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <span>
+                    <span className="block font-semibold">Rechnung</span>
+                    <span className="block text-xs text-muted-foreground">Zahlung bequem auf Rechnung nach der Buchung</span>
                   </span>
-                </span>
-              </div>
+                </label>
+              </RadioGroup>
             </div>
 
             <Button className="h-12 w-full" disabled={creating} onClick={submit}>
               {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Verbindlich buchen
+              Zahlungspflichtig buchen
             </Button>
           </section>
         )}
