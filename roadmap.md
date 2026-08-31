@@ -4,4 +4,4 @@
 - [x] Email update prepared (28 Aug 2026) — ready for review; publish to complete it.
 - [ ] Add additional Hamburg landing pages (`/reisebus-mieten-hamburg`, `/busvermietung-hamburg`) to match Hannover/Bremen variants.
 - [x] Fix iOS booking error "c.json is not a function" (invoke response handling).
-- [ ] Enforce and verify invoice as the only payment method in the iOS/mobile checkout.
+- [x] Enforce and verify invoice as the only payment method in the iOS/mobile checkout.
