@@ -7,11 +7,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
-import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { MobileHeader } from "@/mobile/MobileAppShell";
 import { useMobileTours } from "@/mobile/hooks/useMobileTours";
 import { TourCardMobile } from "@/mobile/components/TourCardMobile";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
+import { Shimmer, Stagger, StaggerItem } from "@/mobile/components/motion";
 
 export default function AppTours() {
   const [params, setParams] = useSearchParams();
@@ -109,13 +110,35 @@ export default function AppTours() {
       </div>
 
       <div className="space-y-3 px-5 pt-2">
-        {isLoading
-          ? [0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-36 rounded-2xl" />)
-          : filtered.map((t) => <TourCardMobile key={t.id} tour={t} />)}
+        {isLoading ? (
+          <div className="space-y-3">
+            {[0, 1, 2, 3].map((i) => (
+              <Shimmer key={i} className="h-36" />
+            ))}
+          </div>
+        ) : (
+          <LayoutGroup>
+            <Stagger className="space-y-3">
+              <AnimatePresence mode="popLayout">
+                {filtered.map((t) => (
+                  <StaggerItem key={t.id}>
+                    <motion.div layout exit={{ opacity: 0, scale: 0.97 }}>
+                      <TourCardMobile tour={t} />
+                    </motion.div>
+                  </StaggerItem>
+                ))}
+              </AnimatePresence>
+            </Stagger>
+          </LayoutGroup>
+        )}
         {!isLoading && filtered.length === 0 && (
-          <p className="py-12 text-center text-sm text-muted-foreground">
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="py-12 text-center text-sm text-muted-foreground"
+          >
             Keine Reise gefunden. Versuche einen anderen Suchbegriff.
-          </p>
+          </motion.p>
         )}
       </div>
     </div>
@@ -132,8 +155,10 @@ function Chip({
   children: React.ReactNode;
 }) {
   return (
-    <button
+    <motion.button
       onClick={onClick}
+      whileTap={{ scale: 0.94 }}
+      transition={{ type: "spring", stiffness: 420, damping: 28 }}
       className={cn(
         "min-h-10 shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
         active
@@ -142,6 +167,6 @@ function Chip({
       )}
     >
       {children}
-    </button>
+    </motion.button>
   );
 }
