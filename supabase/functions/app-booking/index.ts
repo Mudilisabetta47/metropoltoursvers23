@@ -77,6 +77,7 @@ serve(async (req) => {
     if (action === "config") {
       return json({
         stripePublishableKey: Deno.env.get("STRIPE_PUBLISHABLE_KEY") ?? null,
+        extras: Object.entries(EXTRAS_CATALOG).map(([id, e]) => ({ id, ...e })),
       });
     }
 
