@@ -351,25 +351,66 @@ serve(async (req) => {
 
       const total = Number((perSeat * seatIds.length + extras.total).toFixed(2));
 
-      const { data: tripInfo } = await db
-        .from("trips")
-        .select("title, departure_date, departure_time")
-        .eq("id", tripId)
-        .maybeSingle();
+      const [{ data: tripInfo }, { data: seatRows }, { data: originStop }, { data: destStop }] =
+        await Promise.all([
+          db.from("trips").select("*").eq("id", tripId).maybeSingle(),
+          db.from("seats").select("id, seat_number").in("id", seatIds),
+          db.from("stops").select("name, city").eq("id", originStopId).maybeSingle(),
+          db.from("stops").select("name, city").eq("id", destinationStopId).maybeSingle(),
+        ]);
 
-      await sendBookingMails(db, {
+      const originLabel = [originStop?.city, originStop?.name].filter(Boolean).join(", ");
+      const destLabel = [destStop?.city, destStop?.name].filter(Boolean).join(", ");
+      const routeTitle = tripInfo?.title || (originLabel && destLabel ? `${originLabel} → ${destLabel}` : "Ihre Fahrt");
+
+      await sendBookingDocuments(db, {
+        kind: "trip",
         bookingNumber,
         bookingId: (created ?? [])[0]?.id ?? null,
         customerEmail: contactEmail,
-        title: tripInfo?.title ?? "Ihre Fahrt",
-        dateLine: [tripInfo?.departure_date, tripInfo?.departure_time].filter(Boolean).join(" · "),
+        customerName: `${cleanPassengers[0].first_name} ${cleanPassengers[0].last_name}`,
+        title: routeTitle,
+        departureDate: tripInfo?.departure_date ?? null,
+        returnDate: tripInfo?.arrival_date ?? null,
+        departurePlace: originLabel || null,
+        departureTime: tripInfo?.departure_time ?? null,
         passengers: cleanPassengers.map((p) => `${p.first_name} ${p.last_name}`),
+        seats: (seatRows ?? []).map((s: any) => String(s.seat_number)),
+        extras: extras.items.map((e) => ({ label: e.label, quantity: e.quantity, total: e.total })),
         total,
-        rows: [
-          ["Sitzplätze", String(seatIds.length)],
-          ["Tickets", (created ?? []).map((b: any) => b.ticket_number).join(", ")],
-        ],
+        paymentMethod: paymentMethod === "invoice" ? "Rechnung" : "Kartenzahlung",
+        paymentStatus: paymentMethod === "invoice" ? "offen" : "offen",
+        invoice:
+          paymentMethod === "invoice"
+            ? {
+                booking: {
+                  booking_number: bookingNumber,
+                  created_at: new Date().toISOString(),
+                  participants: seatIds.length,
+                  base_price: perSeat,
+                  pickup_surcharge: 0,
+                  total_price: total,
+                  contact_first_name: cleanPassengers[0].first_name,
+                  contact_last_name: cleanPassengers[0].last_name,
+                  contact_email: contactEmail,
+                  luggage_addons: extras.items.map((e) => ({
+                    name: e.label,
+                    quantity: e.quantity,
+                    total: e.total,
+                    price: e.unit_price,
+                  })),
+                  status: "pending",
+                  payment_method: "invoice",
+                },
+                tour: { destination: routeTitle, country: "" },
+                date: { departure_date: tripInfo?.departure_date, return_date: tripInfo?.arrival_date },
+                tariff: { name: "Fahrt" },
+                pickupStop: null,
+                persist: false,
+              }
+            : undefined,
       });
+
 
       return json({
         bookingNumber,
