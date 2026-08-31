@@ -21,12 +21,11 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { nativeHaptic } from "@/mobile/lib/native";
-import { InAppPayment } from "@/mobile/components/InAppPayment";
 import { createTourBooking, money, type PassengerInput } from "@/mobile/lib/appBooking";
 
-type Step = "details" | "passengers" | "summary" | "payment" | "done";
+type Step = "details" | "passengers" | "summary" | "done";
 
-const STEPS: Step[] = ["details", "passengers", "summary", "payment"];
+const STEPS: Step[] = ["details", "passengers", "summary"];
 
 export default function AppTourCheckout() {
   const navigate = useNavigate();
@@ -129,7 +128,8 @@ export default function AppTourCheckout() {
         contactPhone,
       });
       setBooking({ bookingNumber: result.bookingNumber, total: result.total });
-      setStep("payment");
+      void nativeHaptic();
+      setStep("done");
     } catch (e: any) {
       toast.error(e?.message ?? "Buchung fehlgeschlagen");
     } finally {
@@ -351,36 +351,12 @@ export default function AppTourCheckout() {
               </div>
             </div>
             <div className="flex items-center gap-2 rounded-2xl border border-border p-4 text-sm">
-              <CreditCard className="h-4 w-4 text-primary" /> Zahlung sicher in der App
+              <CreditCard className="h-4 w-4 text-primary" /> Zahlung bequem auf Rechnung nach der Buchung
             </div>
             <Button className="h-12 w-full" disabled={creating} onClick={submit}>
               {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Zahlungspflichtig buchen
+              Verbindlich buchen
             </Button>
-          </section>
-        )}
-
-        {step === "payment" && booking && (
-          <section className="space-y-4">
-            <div className="rounded-2xl border border-border p-4 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Buchungsnummer</span>
-                <span className="font-mono font-semibold">{booking.bookingNumber}</span>
-              </div>
-              <div className="mt-1 flex justify-between text-base font-bold">
-                <span>Zu zahlen</span>
-                <span>{money(booking.total)}</span>
-              </div>
-            </div>
-            <InAppPayment
-              bookingNumber={booking.bookingNumber}
-              amount={booking.total}
-              onPaid={() => {
-                void nativeHaptic();
-                setStep("done");
-              }}
-              onFailed={(m) => toast.error(m)}
-            />
           </section>
         )}
 
@@ -388,6 +364,9 @@ export default function AppTourCheckout() {
           <section className="space-y-5 py-6 text-center">
             <CheckCircle2 className="mx-auto h-14 w-14 text-primary" />
             <h2 className="text-xl font-bold">Buchung bestätigt</h2>
+            <p className="text-sm text-muted-foreground">
+              Die Rechnung mit allen Zahlungsdetails erhältst du per E-Mail.
+            </p>
             <div className="rounded-2xl border border-border p-4">
               <p className="text-xs text-muted-foreground">Buchungsnummer</p>
               <p className="font-mono text-lg font-bold">{booking.bookingNumber}</p>

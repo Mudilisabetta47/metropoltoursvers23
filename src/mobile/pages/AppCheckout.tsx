@@ -35,10 +35,8 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { nativeHaptic } from "@/mobile/lib/native";
-import { InAppPayment } from "@/mobile/components/InAppPayment";
 import {
   AnimatedPrice,
-  BottomSheet,
   Expand,
   FadeIn,
   Pressable,
@@ -765,9 +763,9 @@ export default function AppCheckout() {
               )}
 
               <div className="rounded-3xl border border-border bg-card p-4 text-sm">
-                <p className="mb-1 font-semibold">Zahlungsart</p>
+                <p className="mb-1 font-semibold">Zahlung</p>
                 <p className="text-muted-foreground">
-                  {paymentMethod === "card" ? "Karte / Apple Pay / Google Pay" : "Rechnung / Überweisung"}
+                  Rechnung / Überweisung – die Zahlungsdetails erhältst du per E-Mail.
                 </p>
               </div>
 
