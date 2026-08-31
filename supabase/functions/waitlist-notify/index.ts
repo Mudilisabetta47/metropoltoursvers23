@@ -2,6 +2,7 @@ import { emailLayout } from "../_shared/email-brand.ts";
 // Benachrichtigt erste wartende Person bei freiem Platz (E-Mail + Push)
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { requireStaff } from "../_shared/authz.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,11 +13,21 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { trip_id, tour_date_id } = await req.json().catch(() => ({}));
     const admin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
+
+    // --- AuthZ: nur interne Service-Role-Aufrufe oder Mitarbeitende ---
+    const auth = await requireStaff(req, admin, ["admin", "office", "agent"]);
+    if (!auth.ok) {
+      return new Response(JSON.stringify({ error: auth.error }), {
+        status: auth.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { trip_id, tour_date_id } = await req.json().catch(() => ({}));
 
     let query = admin.from("waitlist_entries").select("*")
       .eq("status", "waiting")

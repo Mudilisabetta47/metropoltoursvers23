@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { requireStaff } from "../_shared/authz.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const corsHeaders = {
@@ -48,6 +49,12 @@ function buildEmail(opts: {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    const supabaseAuth = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const auth = await requireStaff(req, supabaseAuth, ["admin", "office", "agent"]);
+    if (!auth.ok) {
+      return new Response(JSON.stringify({ error: auth.error }), { status: auth.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     const { trip_uid, event_id } = await req.json();
     if (!trip_uid || typeof trip_uid !== "string") {
       return new Response(JSON.stringify({ error: "trip_uid required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
