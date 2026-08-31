@@ -1,6 +1,6 @@
 // Zentraler Dokumenten- und Mailversand nach einer Buchung (App / Rechnung).
 // Regel: Fehler beim Mail-/PDF-Versand dürfen die Buchung NIEMALS scheitern lassen.
-import { encodeBase64 } from "https://deno.land/std@0.190.0/encoding/base64.ts";
+import { encode as encodeBase64 } from "https://deno.land/std@0.190.0/encoding/base64.ts";
 import { emailLayout, escapeHtmlBrand } from "./email-brand.ts";
 import { sendMail, FROM_BOOKING, REPLY_TO } from "./mailer.ts";
 import { buildInvoicePdf, resolveBillingAddress, COMPANY } from "./invoice-pdf.ts";
