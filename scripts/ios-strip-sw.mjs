@@ -7,12 +7,13 @@ import { fileURLToPath } from "node:url";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const iosPublic = path.join(projectRoot, "ios/App/App/public");
-const files = ["sw.js", "service-worker.js"];
+const files = ["sw.js", "sw\\.js", "service-worker.js"];
 
 for (const file of files) {
   const target = path.join(iosPublic, file);
+  await rm(target, { force: true });
+
   try {
-    await rm(target, { force: true });
     await access(target);
     throw new Error(`[ios-strip-sw] removal failed: ${target}`);
   } catch (error) {
@@ -22,4 +23,4 @@ for (const file of files) {
   }
 }
 
-console.log("[ios-strip-sw] native iOS bundle contains no service-worker files");
+console.log(`[ios-strip-sw] verified absent: ${files.join(", ")}`);
