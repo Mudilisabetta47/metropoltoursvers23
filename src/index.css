@@ -421,7 +421,7 @@
     @apply text-[22px] font-extrabold leading-tight tracking-tight text-foreground;
   }
   .app-input {
-    @apply h-13 rounded-2xl border border-border/70 bg-card px-4 text-[15px] font-medium text-foreground placeholder:text-muted-foreground/70;
+    @apply h-[3.25rem] rounded-2xl border border-border/70 bg-card px-4 text-[15px] font-medium text-foreground placeholder:text-muted-foreground/70;
   }
   .app-divider-dashed {
     background-image: repeating-linear-gradient(
