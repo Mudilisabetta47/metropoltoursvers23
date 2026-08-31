@@ -373,13 +373,23 @@ export default function AppTourCheckout() {
         {step === "done" && booking && (
           <section className="space-y-5 py-6 text-center">
             <CheckCircle2 className="mx-auto h-14 w-14 text-primary" />
-            <h2 className="text-xl font-bold">Buchung bestätigt</h2>
+            <h2 className="text-xl font-bold">Buchung erfolgreich</h2>
             <p className="text-sm text-muted-foreground">
-              Die Rechnung mit allen Zahlungsdetails erhältst du per E-Mail.
+              Die Zahlungsinformationen erhältst du per E-Mail.
             </p>
             <div className="rounded-2xl border border-border p-4">
               <p className="text-xs text-muted-foreground">Buchungsnummer</p>
               <p className="font-mono text-lg font-bold">{booking.bookingNumber}</p>
+            </div>
+            <div className="space-y-2 rounded-2xl border border-border p-4 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Zu zahlen</span>
+                <span className="font-bold">{money(booking.total)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Zahlungsart</span>
+                <span className="font-semibold">Rechnung</span>
+              </div>
             </div>
             <Button className="h-12 w-full" onClick={() => navigate("/app/meine-reisen")}>
               Zu meinen Buchungen

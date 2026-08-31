@@ -1110,7 +1110,7 @@ function SuccessScreen({
         transition={{ delay: 0.25 }}
         className="mt-6 text-center text-2xl font-bold tracking-tight"
       >
-        {invoice ? "Buchung erfasst" : "Buchung bestätigt"}
+        Buchung erfolgreich
       </motion.h1>
       <motion.p
         initial={{ opacity: 0 }}
@@ -1119,7 +1119,7 @@ function SuccessScreen({
         className="mt-2 text-center text-sm text-muted-foreground"
       >
         {invoice
-          ? "Deine Tickets werden nach Zahlungseingang gültig."
+          ? "Die Zahlungsinformationen erhältst du per E-Mail."
           : "Deine Tickets stehen sofort in der App bereit."}
       </motion.p>
 
@@ -1144,6 +1144,16 @@ function SuccessScreen({
               {trip.departure_time ? ` · ${trip.departure_time.slice(0, 5)} Uhr` : ""}
             </p>
           )}
+          <div className="mt-4 space-y-1.5 border-t border-border/60 pt-4 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Zu zahlen</span>
+              <span className="font-bold">{money(booking.total)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Zahlungsart</span>
+              <span className="font-semibold">{invoice ? "Rechnung" : "Kartenzahlung"}</span>
+            </div>
+          </div>
         </div>
         <div className="relative border-t border-dashed border-border/70">
           <span className="absolute -left-3 -top-3 h-6 w-6 rounded-full bg-background" />
