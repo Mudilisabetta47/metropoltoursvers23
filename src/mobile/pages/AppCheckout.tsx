@@ -14,7 +14,6 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
-  FileText,
   Loader2,
   Lock,
   Luggage,
