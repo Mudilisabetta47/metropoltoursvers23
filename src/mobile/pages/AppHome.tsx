@@ -11,6 +11,9 @@ import { TourCardMobile, money } from "@/mobile/components/TourCardMobile";
 import { MobileTourSearch } from "@/mobile/components/MobileTourSearch";
 import { useAppHomeContent } from "@/mobile/hooks/useAppContent";
 import { EASE, Reveal, Shimmer } from "@/mobile/components/motion";
+import { isNativeApp } from "@/mobile/lib/native";
+
+const IOS_DIAGNOSTIC_MARKER = "METROPOL-IOS-DIAG-2026-08-31";
 
 const heroItem = {
   hidden: { opacity: 0, y: 22 },
@@ -97,7 +100,14 @@ export default function AppHome() {
               animate="show"
               className="flex items-center justify-between"
             >
-              <LogoLight size="sm" />
+              <div>
+                <LogoLight size="sm" />
+                {isNativeApp() && (
+                  <span className="mt-1 block text-[8px] font-semibold text-white/70">
+                    {IOS_DIAGNOSTIC_MARKER}
+                  </span>
+                )}
+              </div>
               <span className="flex h-10 items-center gap-2 rounded-full app-glass px-3 text-[10px] font-black uppercase tracking-widest text-white">
                 <motion.span
                   className="h-2 w-2 rounded-full bg-primary"
