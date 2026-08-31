@@ -251,6 +251,26 @@ serve(async (req) => {
         .single();
       if (tbErr) throw tbErr;
 
+      const { data: tourInfo } = await db
+        .from("package_tours")
+        .select("destination, country")
+        .eq("id", tourId)
+        .maybeSingle();
+
+      await sendBookingMails(db, {
+        bookingNumber: tourBooking.booking_number,
+        bookingId: tourBooking.id,
+        customerEmail: contactEmail,
+        title: `Reise nach ${tourInfo?.destination ?? "Ihrem Ziel"}`,
+        dateLine: [tourDate.departure_date, tourDate.return_date].filter(Boolean).join(" – "),
+        passengers: cleanPassengers.map((p) => `${p.first_name} ${p.last_name}`),
+        total,
+        rows: [
+          ["Reisende", String(participants)],
+          ["Tarif", String(tariff.name ?? tariff.slug ?? "")],
+        ],
+      });
+
       return json({
         type: "tour",
         bookingNumber: tourBooking.booking_number,
@@ -258,6 +278,7 @@ serve(async (req) => {
         unitPrice: perPerson + surcharge,
         total,
       });
+
     }
 
     /* ---------------------------------------------------------- CREATE */
