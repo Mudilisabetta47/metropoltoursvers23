@@ -1,85 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
-import { emailLayout, escapeHtmlBrand } from "../_shared/email-brand.ts";
-import { sendMail, FROM_BOOKING } from "../_shared/mailer.ts";
+import { sendBookingDocuments } from "../_shared/booking-emails.ts";
 
-const INTERNAL_RECIPIENTS = ["info@metours.de", "buchung@metours.de"];
-
-const eur = (v: number) =>
-  new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(Number(v) || 0);
-
-interface BookingMailInput {
-  bookingNumber: string;
-  bookingId: string | null;
-  customerEmail: string;
-  title: string;
-  dateLine: string;
-  passengers: string[];
-  total: number;
-  rows: [string, string][];
-}
-
-/**
- * Bestätigungsmail an den Kunden + interne Benachrichtigung.
- * Fehler werden protokolliert, führen aber NIE zum Fehlschlagen der Buchung.
- */
-async function sendBookingMails(db: any, i: BookingMailInput) {
-  try {
-    const detailRows = i.rows
-      .map(
-        ([k, v]) =>
-          `<tr><td style="padding:6px 0;color:#666;">${escapeHtmlBrand(k)}</td><td style="padding:6px 0;text-align:right;font-weight:600;">${escapeHtmlBrand(v)}</td></tr>`,
-      )
-      .join("");
-    const paxHtml = i.passengers.map((p) => `<li>${escapeHtmlBrand(p)}</li>`).join("");
-
-    const body = `
-      <h2 style="margin:0 0 8px;">Buchungsbestätigung</h2>
-      <p style="margin:0 0 16px;color:#444;">Vielen Dank für Ihre Buchung bei METROPOL TOURS.</p>
-      <p style="font-size:18px;font-weight:700;margin:0 0 4px;">${escapeHtmlBrand(i.title)}</p>
-      <p style="margin:0 0 16px;color:#444;">${escapeHtmlBrand(i.dateLine)}</p>
-      <table style="width:100%;border-collapse:collapse;font-size:14px;">
-        <tr><td style="padding:6px 0;color:#666;">Buchungsnummer</td><td style="padding:6px 0;text-align:right;font-weight:700;">${escapeHtmlBrand(i.bookingNumber)}</td></tr>
-        ${detailRows}
-        <tr><td style="padding:6px 0;color:#666;">Zahlungsart</td><td style="padding:6px 0;text-align:right;font-weight:600;">Rechnung</td></tr>
-        <tr><td style="padding:10px 0;border-top:1px solid #eee;font-weight:700;">Gesamtpreis</td><td style="padding:10px 0;border-top:1px solid #eee;text-align:right;font-weight:700;">${eur(i.total)}</td></tr>
-      </table>
-      <p style="margin:18px 0 4px;font-weight:600;">Reisende</p>
-      <ul style="margin:0 0 16px;padding-left:18px;color:#444;">${paxHtml}</ul>
-      <p style="color:#444;">Zahlung bequem auf Rechnung nach der Buchung – die Rechnung mit allen Zahlungsdetails senden wir Ihnen separat zu.</p>
-    `;
-
-    await sendMail(db, {
-      from: FROM_BOOKING,
-      to: i.customerEmail,
-      subject: `Buchungsbestätigung ${i.bookingNumber} – METROPOL TOURS`,
-      html: emailLayout({ title: "Buchungsbestätigung", preheader: `Buchung ${i.bookingNumber}`, content: body }),
-      template: "app_booking_confirmation",
-      bookingNumber: i.bookingNumber,
-      bookingId: i.bookingId,
-      metadata: { channel: "mobile_app", payment_method: "invoice" },
-    });
-
-    await sendMail(db, {
-      from: FROM_BOOKING,
-      to: INTERNAL_RECIPIENTS,
-      subject: `Neue App-Buchung ${i.bookingNumber} (Rechnung) – ${i.title}`,
-      html: emailLayout({
-        title: "Neue Buchung über die App",
-        content:
-          body +
-          `<p style="color:#444;">Kunde: ${escapeHtmlBrand(i.customerEmail)} · Kanal: Mobile App</p>`,
-      }),
-      template: "app_booking_internal",
-      bookingNumber: i.bookingNumber,
-      bookingId: i.bookingId,
-      metadata: { channel: "mobile_app", internal: true },
-    });
-  } catch (e) {
-    console.error("app-booking mail failed", (e as Error).message);
-  }
-}
 
 
 const corsHeaders = {
