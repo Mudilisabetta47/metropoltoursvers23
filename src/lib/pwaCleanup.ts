@@ -1,5 +1,13 @@
 const CLEANUP_VERSION = "metours-sw-cleanup-2026-07-28";
 const RELOAD_FLAG = `${CLEANUP_VERSION}-reloaded`;
+const NATIVE_RELOAD_FLAG = `${CLEANUP_VERSION}-native-reloaded`;
+
+function isNativeContainer() {
+  if (typeof window === "undefined") return false;
+  const cap = (window as any).Capacitor;
+  if (cap?.isNativePlatform?.()) return true;
+  return ["capacitor:", "ionic:"].includes(window.location.protocol);
+}
 
 function isAppShellWorker(url: string) {
   try {
@@ -19,6 +27,37 @@ function shouldReloadAfterCleanup() {
   return path === "/admin/driver" || path.startsWith("/admin/driver/") || path === "/fahrer" || path.startsWith("/fahrer/");
 }
 
+/**
+ * Im nativen Capacitor-Container darf niemals ein Service Worker aktiv sein:
+ * alle Registrierungen und der komplette (app-eigene, origin-isolierte)
+ * Cache-Storage werden entfernt, damit die WKWebView immer die frischen
+ * Assets aus dem Bundle lädt.
+ */
+async function cleanupNativeContainer() {
+  let removedSomething = false;
+
+  if ("serviceWorker" in navigator) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    if (registrations.length > 0) {
+      removedSomething = true;
+      await Promise.allSettled(registrations.map((registration) => registration.unregister()));
+    }
+  }
+
+  if ("caches" in window) {
+    const cacheNames = await caches.keys();
+    if (cacheNames.length > 0) {
+      removedSomething = true;
+      await Promise.allSettled(cacheNames.map((name) => caches.delete(name)));
+    }
+  }
+
+  if (removedSomething && !window.sessionStorage.getItem(NATIVE_RELOAD_FLAG)) {
+    window.sessionStorage.setItem(NATIVE_RELOAD_FLAG, "1");
+    window.location.reload();
+  }
+}
+
 export async function cleanupStaleAppShellServiceWorkers() {
   if (typeof window === "undefined") return;
 
@@ -27,6 +66,11 @@ export async function cleanupStaleAppShellServiceWorkers() {
   let removedSomething = false;
 
   try {
+    if (isNativeContainer()) {
+      await cleanupNativeContainer();
+      return;
+    }
+
     if (supportsServiceWorker) {
       const registrations = await navigator.serviceWorker.getRegistrations();
       const appRegistrations = registrations.filter((registration) => {
