@@ -161,7 +161,7 @@ export default function AppHome() {
           <MobileTourSearch tours={tours ?? []} />
           <div className="mt-3 flex items-center justify-center gap-4 text-[11px] font-semibold text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" /> Sichere Zahlung
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" /> Zahlung per Rechnung
             </span>
             <span className="flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-primary" /> Digitale Tickets

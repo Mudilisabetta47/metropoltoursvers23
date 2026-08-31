@@ -985,7 +985,7 @@ function TrustRow() {
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 rounded-2xl bg-muted/40 px-4 py-3 text-[11px] text-muted-foreground">
       <span className="flex items-center gap-1.5">
-        <ShieldCheck className="h-3.5 w-3.5 text-primary" /> Sichere Buchungsübertragung
+        <ShieldCheck className="h-3.5 w-3.5 text-primary" /> Zahlung per Rechnung
       </span>
       <a href="tel:+4951180781106" className="flex items-center gap-1.5 underline-offset-2 hover:underline">
         <Phone className="h-3.5 w-3.5" /> +49 511 80781106

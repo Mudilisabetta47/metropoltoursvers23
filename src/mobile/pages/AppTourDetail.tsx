@@ -150,7 +150,7 @@ export default function AppTourDetail() {
 
         <div className="grid grid-cols-2 gap-2 rounded-xl border border-border bg-card p-3">
           <Trust icon={ShieldCheck} title="Reisesicherung" detail="Insolvenzschutz inkl." />
-          <Trust icon={Lock} title="Sichere Zahlung" detail="SSL & DSGVO" />
+          <Trust icon={Lock} title="Zahlung per Rechnung" detail="Bequem nach der Buchung" />
           <Trust icon={Zap} title="Sofortbestätigung" detail="Direkt per E-Mail" />
           <Trust icon={Check} title="Bestpreis" detail="Keine versteckten Kosten" />
         </div>
