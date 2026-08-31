@@ -511,7 +511,6 @@ export default function AppCheckout() {
                   <div className="grid grid-cols-5 gap-2">
                     {seats.map((s, i) => {
                       const selected = seatIds.includes(s.id);
-                      const isAisle = i % 5 === 2;
                       return (
                         <motion.button
                           key={s.id}
@@ -523,7 +522,6 @@ export default function AppCheckout() {
                           whileTap={s.available ? { scale: 0.9 } : undefined}
                           className={cn(
                             "relative flex h-12 items-center justify-center rounded-xl border text-[13px] font-semibold transition-colors",
-                            isAisle && "col-start-3 opacity-100",
                             !s.available &&
                               "cursor-not-allowed border-border bg-muted text-muted-foreground/50 line-through",
                             s.available && !selected && "border-border bg-card hover:border-primary/50",
@@ -844,7 +842,7 @@ export default function AppCheckout() {
             <AnimatedPrice value={grandTotal} className="block text-xl font-bold leading-tight" />
           </div>
           <Button
-            className="h-13 min-h-12 flex-1 rounded-2xl text-base font-semibold"
+            className="h-12 flex-1 rounded-2xl text-base font-semibold"
             disabled={!stepValid[step] || creating}
             onClick={() => (step === "pruefen" ? submitBooking() : go(STEPS[stepIndex + 1].key))}
           >
