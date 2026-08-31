@@ -1,85 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
-import { emailLayout, escapeHtmlBrand } from "../_shared/email-brand.ts";
-import { sendMail, FROM_BOOKING } from "../_shared/mailer.ts";
+import { sendBookingDocuments } from "../_shared/booking-emails.ts";
 
-const INTERNAL_RECIPIENTS = ["info@metours.de", "buchung@metours.de"];
-
-const eur = (v: number) =>
-  new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(Number(v) || 0);
-
-interface BookingMailInput {
-  bookingNumber: string;
-  bookingId: string | null;
-  customerEmail: string;
-  title: string;
-  dateLine: string;
-  passengers: string[];
-  total: number;
-  rows: [string, string][];
-}
-
-/**
- * Bestätigungsmail an den Kunden + interne Benachrichtigung.
- * Fehler werden protokolliert, führen aber NIE zum Fehlschlagen der Buchung.
- */
-async function sendBookingMails(db: any, i: BookingMailInput) {
-  try {
-    const detailRows = i.rows
-      .map(
-        ([k, v]) =>
-          `<tr><td style="padding:6px 0;color:#666;">${escapeHtmlBrand(k)}</td><td style="padding:6px 0;text-align:right;font-weight:600;">${escapeHtmlBrand(v)}</td></tr>`,
-      )
-      .join("");
-    const paxHtml = i.passengers.map((p) => `<li>${escapeHtmlBrand(p)}</li>`).join("");
-
-    const body = `
-      <h2 style="margin:0 0 8px;">Buchungsbestätigung</h2>
-      <p style="margin:0 0 16px;color:#444;">Vielen Dank für Ihre Buchung bei METROPOL TOURS.</p>
-      <p style="font-size:18px;font-weight:700;margin:0 0 4px;">${escapeHtmlBrand(i.title)}</p>
-      <p style="margin:0 0 16px;color:#444;">${escapeHtmlBrand(i.dateLine)}</p>
-      <table style="width:100%;border-collapse:collapse;font-size:14px;">
-        <tr><td style="padding:6px 0;color:#666;">Buchungsnummer</td><td style="padding:6px 0;text-align:right;font-weight:700;">${escapeHtmlBrand(i.bookingNumber)}</td></tr>
-        ${detailRows}
-        <tr><td style="padding:6px 0;color:#666;">Zahlungsart</td><td style="padding:6px 0;text-align:right;font-weight:600;">Rechnung</td></tr>
-        <tr><td style="padding:10px 0;border-top:1px solid #eee;font-weight:700;">Gesamtpreis</td><td style="padding:10px 0;border-top:1px solid #eee;text-align:right;font-weight:700;">${eur(i.total)}</td></tr>
-      </table>
-      <p style="margin:18px 0 4px;font-weight:600;">Reisende</p>
-      <ul style="margin:0 0 16px;padding-left:18px;color:#444;">${paxHtml}</ul>
-      <p style="color:#444;">Zahlung bequem auf Rechnung nach der Buchung – die Rechnung mit allen Zahlungsdetails senden wir Ihnen separat zu.</p>
-    `;
-
-    await sendMail(db, {
-      from: FROM_BOOKING,
-      to: i.customerEmail,
-      subject: `Buchungsbestätigung ${i.bookingNumber} – METROPOL TOURS`,
-      html: emailLayout({ title: "Buchungsbestätigung", preheader: `Buchung ${i.bookingNumber}`, content: body }),
-      template: "app_booking_confirmation",
-      bookingNumber: i.bookingNumber,
-      bookingId: i.bookingId,
-      metadata: { channel: "mobile_app", payment_method: "invoice" },
-    });
-
-    await sendMail(db, {
-      from: FROM_BOOKING,
-      to: INTERNAL_RECIPIENTS,
-      subject: `Neue App-Buchung ${i.bookingNumber} (Rechnung) – ${i.title}`,
-      html: emailLayout({
-        title: "Neue Buchung über die App",
-        content:
-          body +
-          `<p style="color:#444;">Kunde: ${escapeHtmlBrand(i.customerEmail)} · Kanal: Mobile App</p>`,
-      }),
-      template: "app_booking_internal",
-      bookingNumber: i.bookingNumber,
-      bookingId: i.bookingId,
-      metadata: { channel: "mobile_app", internal: true },
-    });
-  } catch (e) {
-    console.error("app-booking mail failed", (e as Error).message);
-  }
-}
 
 
 const corsHeaders = {
@@ -194,7 +117,7 @@ serve(async (req) => {
         db.from("tour_dates").select("*").eq("id", tourDateId).eq("tour_id", tourId).maybeSingle(),
         db.from("tour_tariffs").select("*").eq("id", tariffId).eq("tour_id", tourId).maybeSingle(),
         UUID.test(pickupStopId)
-          ? db.from("tour_pickup_stops").select("id, surcharge").eq("id", pickupStopId).maybeSingle()
+          ? db.from("tour_pickup_stops").select("*").eq("id", pickupStopId).maybeSingle()
           : Promise.resolve({ data: null } as any),
       ]);
       if (!tourDate || !tariff) return json({ error: "Reisetermin nicht gefunden" }, 404);
@@ -253,23 +176,48 @@ serve(async (req) => {
 
       const { data: tourInfo } = await db
         .from("package_tours")
-        .select("destination, country")
+        .select("*")
         .eq("id", tourId)
         .maybeSingle();
 
-      await sendBookingMails(db, {
+      const { data: fullBooking } = await db
+        .from("tour_bookings")
+        .select("*")
+        .eq("id", tourBooking.id)
+        .maybeSingle();
+
+      await sendBookingDocuments(db, {
+        kind: "tour",
         bookingNumber: tourBooking.booking_number,
         bookingId: tourBooking.id,
         customerEmail: contactEmail,
-        title: `Reise nach ${tourInfo?.destination ?? "Ihrem Ziel"}`,
-        dateLine: [tourDate.departure_date, tourDate.return_date].filter(Boolean).join(" – "),
+        customerName: `${cleanPassengers[0].first_name} ${cleanPassengers[0].last_name}`,
+        title: `${tourInfo?.title ?? "Reise"} – ${tourInfo?.destination ?? ""}`.trim(),
+        departureDate: tourDate.departure_date,
+        returnDate: tourDate.return_date,
+        departurePlace: pickup
+          ? [pickup.city, pickup.location_name ?? pickup.meeting_point].filter(Boolean).join(", ")
+          : null,
+        departureTime: pickup?.departure_time ?? null,
         passengers: cleanPassengers.map((p) => `${p.first_name} ${p.last_name}`),
+        seats: [],
+        extras:
+          surcharge > 0
+            ? [{ label: "Zustiegszuschlag", quantity: participants, total: Number((surcharge * participants).toFixed(2)) }]
+            : [],
         total,
-        rows: [
-          ["Reisende", String(participants)],
-          ["Tarif", String(tariff.name ?? tariff.slug ?? "")],
-        ],
+        paymentMethod: "Rechnung",
+        paymentStatus: "offen",
+        invoice: {
+          booking: fullBooking ?? { ...tourBooking, participants, base_price: perPerson, pickup_surcharge: surcharge, total_price: total, contact_first_name: cleanPassengers[0].first_name, contact_last_name: cleanPassengers[0].last_name, created_at: new Date().toISOString() },
+          tour: tourInfo,
+          date: tourDate,
+          tariff,
+          pickupStop: pickup,
+          persist: true,
+        },
       });
+
 
       return json({
         type: "tour",
@@ -403,25 +351,66 @@ serve(async (req) => {
 
       const total = Number((perSeat * seatIds.length + extras.total).toFixed(2));
 
-      const { data: tripInfo } = await db
-        .from("trips")
-        .select("title, departure_date, departure_time")
-        .eq("id", tripId)
-        .maybeSingle();
+      const [{ data: tripInfo }, { data: seatRows }, { data: originStop }, { data: destStop }] =
+        await Promise.all([
+          db.from("trips").select("*").eq("id", tripId).maybeSingle(),
+          db.from("seats").select("id, seat_number").in("id", seatIds),
+          db.from("stops").select("name, city").eq("id", originStopId).maybeSingle(),
+          db.from("stops").select("name, city").eq("id", destinationStopId).maybeSingle(),
+        ]);
 
-      await sendBookingMails(db, {
+      const originLabel = [originStop?.city, originStop?.name].filter(Boolean).join(", ");
+      const destLabel = [destStop?.city, destStop?.name].filter(Boolean).join(", ");
+      const routeTitle = tripInfo?.title || (originLabel && destLabel ? `${originLabel} → ${destLabel}` : "Ihre Fahrt");
+
+      await sendBookingDocuments(db, {
+        kind: "trip",
         bookingNumber,
         bookingId: (created ?? [])[0]?.id ?? null,
         customerEmail: contactEmail,
-        title: tripInfo?.title ?? "Ihre Fahrt",
-        dateLine: [tripInfo?.departure_date, tripInfo?.departure_time].filter(Boolean).join(" · "),
+        customerName: `${cleanPassengers[0].first_name} ${cleanPassengers[0].last_name}`,
+        title: routeTitle,
+        departureDate: tripInfo?.departure_date ?? null,
+        returnDate: tripInfo?.arrival_date ?? null,
+        departurePlace: originLabel || null,
+        departureTime: tripInfo?.departure_time ?? null,
         passengers: cleanPassengers.map((p) => `${p.first_name} ${p.last_name}`),
+        seats: (seatRows ?? []).map((s: any) => String(s.seat_number)),
+        extras: extras.items.map((e) => ({ label: e.label, quantity: e.quantity, total: e.total })),
         total,
-        rows: [
-          ["Sitzplätze", String(seatIds.length)],
-          ["Tickets", (created ?? []).map((b: any) => b.ticket_number).join(", ")],
-        ],
+        paymentMethod: paymentMethod === "invoice" ? "Rechnung" : "Kartenzahlung",
+        paymentStatus: paymentMethod === "invoice" ? "offen" : "offen",
+        invoice:
+          paymentMethod === "invoice"
+            ? {
+                booking: {
+                  booking_number: bookingNumber,
+                  created_at: new Date().toISOString(),
+                  participants: seatIds.length,
+                  base_price: perSeat,
+                  pickup_surcharge: 0,
+                  total_price: total,
+                  contact_first_name: cleanPassengers[0].first_name,
+                  contact_last_name: cleanPassengers[0].last_name,
+                  contact_email: contactEmail,
+                  luggage_addons: extras.items.map((e) => ({
+                    name: e.label,
+                    quantity: e.quantity,
+                    total: e.total,
+                    price: e.unit_price,
+                  })),
+                  status: "pending",
+                  payment_method: "invoice",
+                },
+                tour: { destination: routeTitle, country: "" },
+                date: { departure_date: tripInfo?.departure_date, return_date: tripInfo?.arrival_date },
+                tariff: { name: "Fahrt" },
+                pickupStop: null,
+                persist: false,
+              }
+            : undefined,
       });
+
 
       return json({
         bookingNumber,
