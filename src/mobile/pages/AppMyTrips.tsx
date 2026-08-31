@@ -79,7 +79,7 @@ export default function AppMyTrips() {
         )}
 
 
-        {!loading && trips.length === 0 && (
+        {!loading && !error && trips.length === 0 && (
           <div className="app-card p-7 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] bg-primary/10"><Ticket className="h-7 w-7 text-primary" /></div>
             <h2 className="mt-4 text-[17px] font-extrabold tracking-tight">Noch keine Buchung hinterlegt</h2>
