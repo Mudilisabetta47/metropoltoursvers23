@@ -62,7 +62,24 @@ export default function AppMyTrips() {
       <div className="space-y-3 px-5 pt-4">
         {loading && [0, 1].map((i) => <Skeleton key={i} className="h-32 rounded-3xl" />)}
 
-        {!loading && trips.length === 0 && (
+        {!loading && error && trips.length > 0 && (
+          <div className="rounded-[22px] border border-destructive/40 bg-destructive/10 p-4 text-xs text-destructive">
+            {error}
+          </div>
+        )}
+
+        {!loading && error && trips.length === 0 && (
+          <div className="app-card p-6 text-center">
+            <h2 className="text-[17px] font-extrabold tracking-tight">Buchungen konnten nicht geladen werden</h2>
+            <p className="mt-1 break-words text-sm text-destructive">{error}</p>
+            <Button onClick={() => void reload()} className="mt-4 h-12 w-full rounded-2xl">
+              <RefreshCw className="mr-2 h-4 w-4" /> Erneut versuchen
+            </Button>
+          </div>
+        )}
+
+
+        {!loading && !error && trips.length === 0 && (
           <div className="app-card p-7 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] bg-primary/10"><Ticket className="h-7 w-7 text-primary" /></div>
             <h2 className="mt-4 text-[17px] font-extrabold tracking-tight">Noch keine Buchung hinterlegt</h2>

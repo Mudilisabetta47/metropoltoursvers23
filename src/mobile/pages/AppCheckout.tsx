@@ -11,6 +11,7 @@ import {
   Bus,
   CalendarDays,
   Check,
+  CheckCircle2,
   ChevronRight,
   Clock,
   CreditCard,
@@ -763,11 +764,20 @@ export default function AppCheckout() {
               )}
 
               <div className="rounded-3xl border border-border bg-card p-4 text-sm">
-                <p className="mb-1 font-semibold">Zahlung</p>
-                <p className="text-muted-foreground">
-                  Rechnung / Überweisung – die Zahlungsdetails erhältst du per E-Mail.
-                </p>
+                <p className="mb-2 font-semibold">Zahlungsart</p>
+                <div className="flex items-start gap-3 rounded-2xl border-2 border-primary/60 bg-primary/8 p-3.5">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary">
+                    <CheckCircle2 className="h-4 w-4 text-primary-foreground" />
+                  </span>
+                  <span>
+                    <span className="block font-semibold">Rechnung</span>
+                    <span className="block text-xs text-muted-foreground">
+                      Zahlung bequem auf Rechnung nach der Buchung – die Zahlungsdetails erhältst du per E-Mail.
+                    </span>
+                  </span>
+                </div>
               </div>
+
 
               <PriceBreakdown fare={fareTotal} extras={extrasTotal} total={grandTotal} pax={pax} />
 

@@ -350,9 +350,19 @@ export default function AppTourCheckout() {
                 <span>{money(perPerson * pax)}</span>
               </div>
             </div>
-            <div className="flex items-center gap-2 rounded-2xl border border-border p-4 text-sm">
-              <CreditCard className="h-4 w-4 text-primary" /> Zahlung bequem auf Rechnung nach der Buchung
+            <div className="rounded-2xl border border-border p-4 text-sm">
+              <p className="mb-2 font-semibold">Zahlungsart</p>
+              <div className="flex items-start gap-3 rounded-xl border-2 border-primary/60 bg-primary/10 p-3">
+                <CreditCard className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <span>
+                  <span className="block font-semibold">Rechnung</span>
+                  <span className="block text-xs text-muted-foreground">
+                    Zahlung bequem auf Rechnung nach der Buchung
+                  </span>
+                </span>
+              </div>
             </div>
+
             <Button className="h-12 w-full" disabled={creating} onClick={submit}>
               {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Verbindlich buchen
