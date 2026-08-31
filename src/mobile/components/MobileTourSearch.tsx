@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, MapPin, Search } from "lucide-react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -37,15 +38,27 @@ export function MobileTourSearch({ tours }: { tours: MobileTour[] }) {
   return (
     <Drawer open={open} onOpenChange={setOpen} shouldScaleBackground={false}>
       <DrawerTrigger asChild>
-        <Button
-          variant="hero"
-          className="h-14 w-full justify-start rounded-xl px-4 text-left shadow-elevated"
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.985 }}
+          transition={{ type: "spring", stiffness: 420, damping: 30 }}
+          className="flex w-full items-center gap-2 rounded-[24px] border border-border/60 bg-card p-2 pl-4 text-left shadow-[0_20px_50px_-24px_hsl(150_20%_8%_/_0.45)]"
         >
-          <Search className="h-5 w-5 text-primary" />
-          <span className="font-medium text-foreground/70">Wo möchtest du hin?</span>
-        </Button>
+          <Search className="h-5 w-5 shrink-0 text-primary" strokeWidth={2.5} />
+          <span className="min-w-0 flex-1 py-3">
+            <span className="block truncate text-[15px] font-semibold text-foreground">
+              Wohin geht die Reise?
+            </span>
+            <span className="block truncate text-[11px] font-medium text-muted-foreground">
+              Ziel, Land oder Termin suchen
+            </span>
+          </span>
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-primary text-primary-foreground">
+            <ArrowRight className="h-5 w-5" strokeWidth={2.5} />
+          </span>
+        </motion.button>
       </DrawerTrigger>
-      <DrawerContent className="max-h-[88dvh] rounded-t-2xl pb-[env(safe-area-inset-bottom)]">
+      <DrawerContent className="max-h-[88dvh] rounded-t-[32px] pb-[env(safe-area-inset-bottom)]">
         <DrawerHeader className="px-5 pb-2 text-left">
           <DrawerTitle>Reiseziel finden</DrawerTitle>
           <DrawerDescription>Durchsuche alle aktuell vorhandenen Reisen.</DrawerDescription>
@@ -59,14 +72,14 @@ export function MobileTourSearch({ tours }: { tours: MobileTour[] }) {
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={(event) => event.key === "Enter" && showAll()}
               placeholder="Ziel, Land oder Reise"
-              className="h-12 rounded-xl border-2 border-primary/50 pl-11 text-base"
+              className="h-14 rounded-2xl border-2 border-primary/40 pl-11 text-base font-medium"
               inputMode="search"
             />
           </div>
           <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
             {term ? `${suggestions.length} passende Vorschläge` : "Beliebte Reiseziele"}
           </p>
-          <div className="divide-y divide-border rounded-xl border border-border bg-card">
+          <div className="divide-y divide-border/60 overflow-hidden rounded-[24px] border border-border/60 bg-card">
             {suggestions.map((tour) => (
               <button
                 key={tour.id}
@@ -81,7 +94,7 @@ export function MobileTourSearch({ tours }: { tours: MobileTour[] }) {
                 <img
                   src={tour.hero_image_url || tour.image_url || "/brand/metropol-logo.png"}
                   alt=""
-                  className="h-12 w-16 shrink-0 rounded-lg object-cover"
+                  className="h-14 w-16 shrink-0 rounded-2xl object-cover"
                 />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-bold">{tour.destination}</span>
