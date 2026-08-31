@@ -162,9 +162,10 @@ serve(async (req) => {
           pickup_surcharge: surcharge,
           total_price: total,
           status: "pending",
-          payment_status: "unpaid",
-          payment_method: "stripe",
-          booking_type: "app",
+          payment_status: "open",
+          payment_method: "invoice",
+          booking_type: "direct",
+
         })
         .select("id, booking_number, total_price")
         .single();
@@ -414,9 +415,17 @@ serve(async (req) => {
 
     return json({ error: "Unbekannte Aktion" }, 400);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unbekannter Fehler";
-    console.error("app-booking error:", message);
+    const err = error as any;
+    const message =
+      (error instanceof Error && error.message) ||
+      err?.message ||
+      err?.error_description ||
+      err?.hint ||
+      (typeof err === "string" ? err : JSON.stringify(err)) ||
+      "Unbekannter Fehler";
+    console.error("app-booking error:", message, err?.code ?? "", err?.details ?? "");
     const status = message === "Nicht angemeldet" ? 401 : 500;
-    return json({ error: message }, status);
+    return json({ error: message, code: err?.code ?? null, details: err?.details ?? null }, status);
   }
 });
+
