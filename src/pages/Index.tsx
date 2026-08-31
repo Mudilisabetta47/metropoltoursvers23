@@ -1,5 +1,6 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { InfoBanner } from "@/components/home/InfoBanner";
 import HeroSlider from "@/components/home/HeroSlider";
 import FeaturesSection from "@/components/home/FeaturesSection";
 import BrandShowcaseSection from "@/components/home/BrandShowcaseSection";
@@ -25,6 +26,7 @@ const Index = () => {
       />
       <Header />
       <main className="flex-1">
+        <InfoBanner />
         <HeroSlider />
         <FeaturesSection />
         <BrandShowcaseSection />
