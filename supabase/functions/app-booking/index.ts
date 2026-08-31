@@ -402,6 +402,27 @@ serve(async (req) => {
       if (ticketErr) throw ticketErr;
 
       const total = Number((perSeat * seatIds.length + extras.total).toFixed(2));
+
+      const { data: tripInfo } = await db
+        .from("trips")
+        .select("title, departure_date, departure_time")
+        .eq("id", tripId)
+        .maybeSingle();
+
+      await sendBookingMails(db, {
+        bookingNumber,
+        bookingId: (created ?? [])[0]?.id ?? null,
+        customerEmail: contactEmail,
+        title: tripInfo?.title ?? "Ihre Fahrt",
+        dateLine: [tripInfo?.departure_date, tripInfo?.departure_time].filter(Boolean).join(" · "),
+        passengers: cleanPassengers.map((p) => `${p.first_name} ${p.last_name}`),
+        total,
+        rows: [
+          ["Sitzplätze", String(seatIds.length)],
+          ["Tickets", (created ?? []).map((b: any) => b.ticket_number).join(", ")],
+        ],
+      });
+
       return json({
         bookingNumber,
         bookingIds: (created ?? []).map((b) => b.id),
