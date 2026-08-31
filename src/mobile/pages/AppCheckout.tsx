@@ -107,11 +107,11 @@ export default function AppCheckout() {
   const [contactPhone, setContactPhone] = useState("");
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
   const [extrasCatalog, setExtrasCatalog] = useState<AppExtra[]>(FALLBACK_EXTRAS);
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "invoice">("card");
+  // Zahlungsmethoden sind in der App deaktiviert – Buchung erfolgt auf Rechnung.
+  const paymentMethod = "invoice" as const;
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [booking, setBooking] = useState<{ bookingNumber: string; total: number; unitPrice: number } | null>(null);
-  const [paySheet, setPaySheet] = useState(false);
   const [done, setDone] = useState(false);
   const [authed, setAuthed] = useState<boolean | null>(null);
   const doneRef = useRef(false);
@@ -188,7 +188,6 @@ export default function AppCheckout() {
       contactEmail.includes("@") &&
       passengers.every((p) => p.firstName.trim() && p.lastName.trim() && p.dateOfBirth),
     extras: true,
-    zahlung: true,
     pruefen: true,
   };
 
@@ -222,8 +221,7 @@ export default function AppCheckout() {
       });
       setBooking({ bookingNumber: result.bookingNumber, total: result.total, unitPrice: result.unitPrice });
       void nativeHaptic();
-      if (paymentMethod === "invoice") finish();
-      else setPaySheet(true);
+      finish();
     } catch (e: any) {
       const msg: string = e?.message ?? "Buchung fehlgeschlagen";
       setError(msg);
@@ -240,7 +238,6 @@ export default function AppCheckout() {
   const finish = () => {
     if (doneRef.current) return;
     doneRef.current = true;
-    setPaySheet(false);
     setDone(true);
     void nativeHaptic();
   };
@@ -720,39 +717,6 @@ export default function AppCheckout() {
             </section>
           )}
 
-          {/* ============================================= 5 – Zahlung */}
-          {step === "zahlung" && (
-            <section className="space-y-4">
-              <div>
-                <h2 className="text-xl font-bold tracking-tight">Zahlung</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Alle Zahlungen laufen verschlüsselt direkt in der App.
-                </p>
-              </div>
-
-              <VirtualCard total={grandTotal} name={`${passengers[0]?.firstName ?? ""} ${passengers[0]?.lastName ?? ""}`.trim()} method={paymentMethod} />
-
-              <div className="space-y-3">
-                <PayOption
-                  active={paymentMethod === "card"}
-                  onClick={() => setPaymentMethod("card")}
-                  icon={<CreditCard className="h-4 w-4" />}
-                  title="Karte, Apple Pay & Google Pay"
-                  subtitle="Sofort bestätigt – du bleibst in der App"
-                />
-                <PayOption
-                  active={paymentMethod === "invoice"}
-                  onClick={() => setPaymentMethod("invoice")}
-                  icon={<FileText className="h-4 w-4" />}
-                  title="Rechnung / Überweisung"
-                  subtitle="Tickets werden nach Zahlungseingang gültig"
-                />
-              </div>
-
-              <TrustRow />
-            </section>
-          )}
-
           {/* ============================================== 6 – Prüfen */}
           {step === "pruefen" && trip && (
             <section className="space-y-4">
@@ -854,32 +818,6 @@ export default function AppCheckout() {
         </div>
       </motion.div>
 
-      {/* ------------------------------------------------- Zahlungs-Sheet */}
-      <BottomSheet open={paySheet} onClose={() => setPaySheet(false)} title="Sicher bezahlen">
-        {booking && (
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-border p-4 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Buchungsnummer</span>
-                <span className="font-mono font-semibold">{booking.bookingNumber}</span>
-              </div>
-              <div className="mt-1 flex justify-between text-base font-bold">
-                <span>Zu zahlen</span>
-                <AnimatedPrice value={booking.total} />
-              </div>
-            </div>
-            <InAppPayment
-              bookingNumber={booking.bookingNumber}
-              amount={booking.total}
-              onPaid={finish}
-              onFailed={(m) => {
-                setError(m);
-                toast.error(m);
-              }}
-            />
-          </div>
-        )}
-      </BottomSheet>
     </div>
   );
 }
