@@ -117,7 +117,7 @@ serve(async (req) => {
         db.from("tour_dates").select("*").eq("id", tourDateId).eq("tour_id", tourId).maybeSingle(),
         db.from("tour_tariffs").select("*").eq("id", tariffId).eq("tour_id", tourId).maybeSingle(),
         UUID.test(pickupStopId)
-          ? db.from("tour_pickup_stops").select("id, surcharge").eq("id", pickupStopId).maybeSingle()
+          ? db.from("tour_pickup_stops").select("*").eq("id", pickupStopId).maybeSingle()
           : Promise.resolve({ data: null } as any),
       ]);
       if (!tourDate || !tariff) return json({ error: "Reisetermin nicht gefunden" }, 404);
