@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:ios": "vite build && cap sync ios",
-    "ios:sync": "cap sync ios",
+    "build:ios": "bun run build && bun run ios:sync",
+    "ios:sync": "npx cap sync ios && bun run ios:verify-sw-clean",
+    "ios:strip-sw": "node scripts/ios-strip-sw.mjs",
+    "ios:verify-sw-clean": "test ! -e 'ios/App/App/public/sw.js' && test ! -e 'ios/App/App/public/sw\\.js' && test ! -e 'ios/App/App/public/service-worker.js' && echo 'IOS SW CLEAN'",
     "capacitor:sync:after": "node scripts/ios-strip-sw.mjs",
     "ios:open": "cap open ios",
     "ios:run": "cap run ios",
