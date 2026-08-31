@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 export function InfoBanner() {
   return (
-    <section className="relative w-full border-b border-primary/10 bg-gradient-to-r from-primary/[0.06] via-background to-primary/[0.04]">
+    <section className="relative w-full border-b border-primary/10 bg-gradient-to-r from-primary/[0.06] via-background to-primary/[0.04] pt-16 lg:pt-20">
       <div className="container mx-auto px-4 py-2.5 sm:py-3">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-4">
           <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
