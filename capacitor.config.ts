@@ -3,7 +3,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const devServerUrl = process.env.CAPACITOR_DEV_SERVER_URL;
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.a97d4e9208ce43758235171e4e8e16a2',
+  appId: 'de.metours.app',
   appName: 'METROPOL TOURS',
   webDir: 'dist',
   ...(devServerUrl
