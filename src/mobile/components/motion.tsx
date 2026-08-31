@@ -108,8 +108,7 @@ export function Pressable({
   return (
     <Comp
       aria-label={ariaLabel}
-      // @ts-expect-error – motion.div kennt disabled nicht
-      disabled={disabled}
+      {...(as === "button" ? { disabled } : {})}
       onClick={disabled ? undefined : onClick}
       whileTap={disabled ? undefined : { scale: 0.975 }}
       whileHover={disabled ? undefined : { y: -2 }}
