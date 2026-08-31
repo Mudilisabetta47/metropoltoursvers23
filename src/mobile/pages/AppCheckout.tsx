@@ -62,14 +62,13 @@ import {
   useTripSeats,
 } from "@/mobile/hooks/useTripBooking";
 
-type Step = "reise" | "sitzplatz" | "reisende" | "extras" | "zahlung" | "pruefen";
+type Step = "reise" | "sitzplatz" | "reisende" | "extras" | "pruefen";
 
 const STEPS: { key: Step; label: string }[] = [
   { key: "reise", label: "Reise" },
   { key: "sitzplatz", label: "Sitzplatz" },
   { key: "reisende", label: "Reisende" },
   { key: "extras", label: "Extras" },
-  { key: "zahlung", label: "Zahlung" },
   { key: "pruefen", label: "Prüfen" },
 ];
 
