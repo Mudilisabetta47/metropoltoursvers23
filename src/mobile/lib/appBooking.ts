@@ -27,10 +27,19 @@ export interface PassengerInput {
   dateOfBirth?: string;
 }
 
+export interface AppExtra {
+  id: string;
+  label: string;
+  price: number;
+  perPassenger: boolean;
+}
+
 export interface CreateResult {
   bookingNumber: string;
   bookingIds: string[];
   unitPrice: number;
+  farePrice?: number;
+  extrasTotal?: number;
   total: number;
   tickets?: { id: string; ticket_number: string; seat_id: string }[];
 }
@@ -45,6 +54,7 @@ export function createTripBooking(input: {
   contactEmail: string;
   contactPhone?: string;
   paymentMethod: "card" | "invoice";
+  extras?: string[];
 }) {
   return call<CreateResult>({ action: "create", type: "trip", ...input });
 }
@@ -82,7 +92,7 @@ export function cancelBooking(bookingNumber: string) {
 }
 
 export function getPaymentConfig() {
-  return call<{ stripePublishableKey: string | null }>({ action: "config" });
+  return call<{ stripePublishableKey: string | null; extras?: AppExtra[] }>({ action: "config" });
 }
 
 export const money = (value: number) =>

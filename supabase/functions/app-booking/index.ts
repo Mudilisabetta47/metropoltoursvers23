@@ -34,6 +34,30 @@ function str(v: unknown, max = 120): string {
   return typeof v === "string" ? v.trim().slice(0, max) : "";
 }
 
+/** Serverseitiger Extras-Katalog – Preise werden NIE vom Client übernommen. */
+const EXTRAS_CATALOG: Record<string, { label: string; price: number; perPassenger: boolean }> = {
+  extra_luggage: { label: "Zusätzliches Gepäckstück", price: 12, perPassenger: true },
+  oversize_luggage: { label: "Sperrgepäck (Ski, Rad, Kinderwagen)", price: 19, perPassenger: false },
+  priority: { label: "Priority Boarding", price: 6.9, perPassenger: true },
+  premium_seat: { label: "Premium-Sitzplatz (extra Beinfreiheit)", price: 9.9, perPassenger: true },
+  flex: { label: "Flex-Option (kostenlose Umbuchung)", price: 14.9, perPassenger: true },
+};
+
+function resolveExtras(raw: unknown, passengers: number) {
+  const ids = Array.isArray(raw)
+    ? raw.map((v) => str(v, 40)).filter((id) => id in EXTRAS_CATALOG).slice(0, 10)
+    : [];
+  const unique = [...new Set(ids)];
+  const items = unique.map((id) => {
+    const e = EXTRAS_CATALOG[id];
+    const qty = e.perPassenger ? passengers : 1;
+    return { id, label: e.label, unit_price: e.price, quantity: qty, total: Number((e.price * qty).toFixed(2)) };
+  });
+  const total = Number(items.reduce((s, i) => s + i.total, 0).toFixed(2));
+  return { items, total };
+}
+
+
 async function requireUser(req: Request) {
   const authHeader = req.headers.get("Authorization") ?? "";
   const token = authHeader.replace("Bearer ", "");
@@ -53,6 +77,7 @@ serve(async (req) => {
     if (action === "config") {
       return json({
         stripePublishableKey: Deno.env.get("STRIPE_PUBLISHABLE_KEY") ?? null,
+        extras: Object.entries(EXTRAS_CATALOG).map(([id, e]) => ({ id, ...e })),
       });
     }
 
@@ -167,6 +192,7 @@ serve(async (req) => {
       const paymentMethod = ["card", "invoice"].includes(str(body?.paymentMethod, 20))
         ? str(body?.paymentMethod, 20)
         : "card";
+      const extras = resolveExtras(body?.extras, Math.max(1, passengers.length));
 
       if (![tripId, originStopId, destinationStopId].every((id) => UUID.test(id))) {
         return json({ error: "Ungültige Fahrt- oder Streckenauswahl" }, 400);
@@ -186,6 +212,7 @@ serve(async (req) => {
         last_name: str(p?.lastName, 80),
         email: str(p?.email, 160).toLowerCase(),
         phone: str(p?.phone, 40),
+        date_of_birth: str(p?.dateOfBirth, 10) || null,
       }));
       if (cleanPassengers.some((p) => !p.first_name || !p.last_name)) {
         return json({ error: "Bitte alle Fahrgastnamen angeben" }, 400);
@@ -228,6 +255,8 @@ serve(async (req) => {
       const { data: bookingNumber, error: bnErr } = await db.rpc("next_booking_number");
       if (bnErr) throw bnErr;
 
+      const extrasPerPassenger = seatIds.length ? extras.total / seatIds.length : 0;
+
       const rows: any[] = [];
       for (let i = 0; i < seatIds.length; i++) {
         const { data: ticketNumber, error: tnErr } = await db.rpc("generate_ticket_number");
@@ -244,7 +273,9 @@ serve(async (req) => {
           passenger_last_name: cleanPassengers[i].last_name,
           passenger_email: cleanPassengers[i].email || contactEmail,
           passenger_phone: cleanPassengers[i].phone || str(body?.contactPhone, 40) || null,
-          price_paid: perSeat,
+          contact_date_of_birth: cleanPassengers[i].date_of_birth,
+          extras: i === 0 ? extras.items : [],
+          price_paid: Number((perSeat + extrasPerPassenger).toFixed(2)),
           status: "pending",
           payment_status: "unpaid",
           payment_method: paymentMethod === "invoice" ? "invoice" : "stripe",
@@ -268,12 +299,15 @@ serve(async (req) => {
       );
       if (ticketErr) throw ticketErr;
 
-      const total = Number((perSeat * seatIds.length).toFixed(2));
+      const total = Number((perSeat * seatIds.length + extras.total).toFixed(2));
       return json({
         bookingNumber,
         bookingIds: (created ?? []).map((b) => b.id),
         tickets: created,
         unitPrice: perSeat,
+        farePrice: Number((perSeat * seatIds.length).toFixed(2)),
+        extras: extras.items,
+        extrasTotal: extras.total,
         total,
         paymentMethod,
       });
