@@ -64,7 +64,16 @@ export interface CreateResult {
   extrasTotal?: number;
   total: number;
   tickets?: { id: string; ticket_number: string; seat_id: string }[];
+  paymentMethod: "invoice";
+  paymentStatus: "open";
 }
+
+const MOBILE_INVOICE_PAYMENT = {
+  paymentMethod: "invoice",
+  payment_method: "invoice",
+  paymentStatus: "open",
+  payment_status: "open",
+} as const;
 
 /** Fahrt-Buchung (Linien-, Charter- und Individualfahrten) serverseitig anlegen. */
 export function createTripBooking(input: {
@@ -75,10 +84,9 @@ export function createTripBooking(input: {
   passengers: PassengerInput[];
   contactEmail: string;
   contactPhone?: string;
-  paymentMethod: "card" | "invoice";
   extras?: string[];
 }) {
-  return call<CreateResult>({ action: "create", type: "trip", ...input });
+  return call<CreateResult>({ action: "create", type: "trip", ...input, ...MOBILE_INVOICE_PAYMENT });
 }
 
 /** Pauschalreise-Buchung serverseitig anlegen. */
@@ -92,21 +100,7 @@ export function createTourBooking(input: {
   contactEmail: string;
   contactPhone?: string;
 }) {
-  return call<CreateResult>({ action: "create", type: "tour", ...input });
-}
-
-export function startPayment(bookingNumber: string) {
-  return call<{ clientSecret?: string; paymentIntentId?: string; amount?: number; alreadyPaid?: boolean }>({
-    action: "pay",
-    bookingNumber,
-  });
-}
-
-export function confirmPayment(bookingNumber: string) {
-  return call<{ paymentStatus: AppPaymentStatus; status: string }>({
-    action: "confirm",
-    bookingNumber,
-  });
+  return call<CreateResult>({ action: "create", type: "tour", ...input, ...MOBILE_INVOICE_PAYMENT });
 }
 
 export function cancelBooking(bookingNumber: string) {
@@ -114,7 +108,7 @@ export function cancelBooking(bookingNumber: string) {
 }
 
 export function getPaymentConfig() {
-  return call<{ stripePublishableKey: string | null; extras?: AppExtra[] }>({ action: "config" });
+  return call<{ extras?: AppExtra[] }>({ action: "config" });
 }
 
 export const money = (value: number) =>

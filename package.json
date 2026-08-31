@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:ios": "bun run build && bun run ios:sync",
-    "ios:sync": "npx cap sync ios && bun run ios:verify-sw-clean",
+    "ios:sync": "npx cap sync ios && bun run ios:strip-sw && bun run ios:verify-sw-clean",
     "ios:strip-sw": "node scripts/ios-strip-sw.mjs",
     "ios:verify-sw-clean": "test ! -e 'ios/App/App/public/sw.js' && test ! -e 'ios/App/App/public/sw\\.js' && test ! -e 'ios/App/App/public/service-worker.js' && echo 'IOS SW CLEAN'",
     "capacitor:sync:after": "node scripts/ios-strip-sw.mjs",
