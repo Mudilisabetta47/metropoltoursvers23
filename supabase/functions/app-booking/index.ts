@@ -176,23 +176,48 @@ serve(async (req) => {
 
       const { data: tourInfo } = await db
         .from("package_tours")
-        .select("destination, country")
+        .select("*")
         .eq("id", tourId)
         .maybeSingle();
 
-      await sendBookingMails(db, {
+      const { data: fullBooking } = await db
+        .from("tour_bookings")
+        .select("*")
+        .eq("id", tourBooking.id)
+        .maybeSingle();
+
+      await sendBookingDocuments(db, {
+        kind: "tour",
         bookingNumber: tourBooking.booking_number,
         bookingId: tourBooking.id,
         customerEmail: contactEmail,
-        title: `Reise nach ${tourInfo?.destination ?? "Ihrem Ziel"}`,
-        dateLine: [tourDate.departure_date, tourDate.return_date].filter(Boolean).join(" – "),
+        customerName: `${cleanPassengers[0].first_name} ${cleanPassengers[0].last_name}`,
+        title: `${tourInfo?.title ?? "Reise"} – ${tourInfo?.destination ?? ""}`.trim(),
+        departureDate: tourDate.departure_date,
+        returnDate: tourDate.return_date,
+        departurePlace: pickup
+          ? [pickup.city, pickup.location_name ?? pickup.meeting_point].filter(Boolean).join(", ")
+          : null,
+        departureTime: pickup?.departure_time ?? null,
         passengers: cleanPassengers.map((p) => `${p.first_name} ${p.last_name}`),
+        seats: [],
+        extras:
+          surcharge > 0
+            ? [{ label: "Zustiegszuschlag", quantity: participants, total: Number((surcharge * participants).toFixed(2)) }]
+            : [],
         total,
-        rows: [
-          ["Reisende", String(participants)],
-          ["Tarif", String(tariff.name ?? tariff.slug ?? "")],
-        ],
+        paymentMethod: "Rechnung",
+        paymentStatus: "offen",
+        invoice: {
+          booking: fullBooking ?? { ...tourBooking, participants, base_price: perPerson, pickup_surcharge: surcharge, total_price: total, contact_first_name: cleanPassengers[0].first_name, contact_last_name: cleanPassengers[0].last_name, created_at: new Date().toISOString() },
+          tour: tourInfo,
+          date: tourDate,
+          tariff,
+          pickupStop: pickup,
+          persist: true,
+        },
       });
+
 
       return json({
         type: "tour",
