@@ -203,7 +203,7 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
           </div>
         </div>
 
-        </div>
+
 
 
         <BoardingSchedule stops={stops} />
