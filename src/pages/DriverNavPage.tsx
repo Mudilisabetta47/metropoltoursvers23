@@ -764,8 +764,13 @@ const DriverNavPage = () => {
                 onArrive={stopArrive}
                 onDepart={stopDepart}
                 onNavigate={navigateToStop}
+                onAddUnscheduled={addUnscheduled}
+                onRemoveUnscheduled={removeUnscheduled}
+                canEdit={!!activeOrder}
+                hasGps={!!pos}
                 busy={busy}
               />
+
             </TabsContent>
             <TabsContent value="manifest" className="mt-4">
               <ManifestPanel
