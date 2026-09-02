@@ -229,7 +229,7 @@ const CheckoutPage = () => {
       const { data: tripData, error: tripError } = await supabase
         .from('trips')
         .select(`
-          *,
+          id, route_id, bus_id, departure_date, departure_time, arrival_time, base_price, is_active, created_at, updated_at, arrival_date, title, trip_category, seat_capacity, status,
           route:routes(*),
           bus:buses(*)
         `)
