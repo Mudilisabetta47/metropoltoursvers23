@@ -108,8 +108,14 @@ serve(async (req) => {
         headers: { Authorization: `Bearer ${apiKey}` },
       });
       const dbody = await dres.json().catch(() => ({}));
+      if (dres.status === 401 || dres.status === 403) {
+        // Sending-only API-Key: Domainliste nicht lesbar – Versand-Ergebnis entscheidet.
+        preflight = { domain: SENDER_DOMAIN, status: "unbekannt (Sending-only Key)", apiKey: "gültig für Versand" };
+        if (body?.preflightOnly) return json({ preflight });
+        throw new Error("__skip_domain_check__");
+      }
       if (!dres.ok) {
-        return json({ error: `Mailversand abgebrochen: Authentifizierung beim Mailserver fehlgeschlagen (${dres.status}).` }, 502);
+        return json({ error: `Mailversand abgebrochen: Mailserver antwortete mit Status ${dres.status}.` }, 502);
       }
       const list: any[] = dbody?.data ?? [];
       const domain = list.find((d) => d?.name === SENDER_DOMAIN);
