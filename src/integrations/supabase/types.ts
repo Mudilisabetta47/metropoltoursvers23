@@ -8402,6 +8402,7 @@ export type Database = {
           valid_scans: number
         }[]
       }
+      get_trip_internal_notes: { Args: { p_trip_id: string }; Returns: string }
       get_trip_manifest: {
         Args: { p_trip_id: string }
         Returns: {
