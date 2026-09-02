@@ -19,7 +19,7 @@ export function InfoBanner() {
               <Bus className="h-[18px] w-[18px]" />
             </div>
             <p className="text-sm sm:text-[15px] leading-snug text-foreground">
-              <span className="font-semibold">Unsere Jungfernfahrt nach{" "}</span>
+              <span className="font-semibold">Unsere Promotionfahrt 2026 nach{" "}</span>
               <span className="font-semibold text-primary">Novalja</span>
               <span className="mx-1.5 text-muted-foreground">·</span>
               <span>Ab dem</span>{" "}

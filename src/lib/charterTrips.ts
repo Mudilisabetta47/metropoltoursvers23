@@ -16,7 +16,7 @@ export const TRIP_CATEGORY_LABELS: Record<string, string> = {
   private: "Private Fahrt",
   group: "Gruppenfahrt",
   special: "Sonderfahrt",
-  maiden: "Jungfernfahrt",
+  maiden: "Promotionfahrt 2026",
   package_tour_date: "Pauschalreise",
 };
 

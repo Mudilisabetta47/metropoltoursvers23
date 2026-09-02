@@ -1,7 +1,7 @@
 // EINMALIGE Korrektur-Mail Rückfahrt Kroatien 10.09.2026 – danach Funktion wieder löschen.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
-import { sendMail, FROM_SERVICE } from "../_shared/mailer.ts";
+import { sendMail, FROM_SERVICE, SENDER_DOMAIN } from "../_shared/mailer.ts";
 import { emailLayout, qrTicketBlock, escapeHtmlBrand } from "../_shared/email-brand.ts";
 import { ensureWalletUrl } from "../_shared/wallet-link.ts";
 
@@ -99,6 +99,47 @@ serve(async (req) => {
 
     const testEmail = typeof body?.testEmail === "string" ? body.testEmail : null;
 
+    // ---- Preflight: API-Key, Absenderdomain, SPF/DKIM/DMARC-Status prüfen ----
+    const apiKey = Deno.env.get("RESEND_API_KEY");
+    if (!apiKey) return json({ error: "Mailversand nicht möglich: RESEND_API_KEY fehlt." }, 500);
+    let preflight: Record<string, unknown> = {};
+    try {
+      const dres = await fetch("https://api.resend.com/domains", {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      });
+      const dbody = await dres.json().catch(() => ({}));
+      if (dres.status === 401 || dres.status === 403) {
+        // Sending-only API-Key: Domainliste nicht lesbar – Versand-Ergebnis entscheidet.
+        preflight = { domain: SENDER_DOMAIN, status: "unbekannt (Sending-only Key)", apiKey: "gültig für Versand" };
+        if (body?.preflightOnly) return json({ preflight });
+        throw new Error("__skip_domain_check__");
+      }
+      if (!dres.ok) {
+        return json({ error: `Mailversand abgebrochen: Mailserver antwortete mit Status ${dres.status}.` }, 502);
+      }
+      const list: any[] = dbody?.data ?? [];
+      const domain = list.find((d) => d?.name === SENDER_DOMAIN);
+      if (!domain) {
+        return json({ error: `Mailversand abgebrochen: Absenderdomain ${SENDER_DOMAIN} ist beim Mailserver nicht eingerichtet.` }, 502);
+      }
+      if (domain.status !== "verified") {
+        return json({ error: `Mailversand abgebrochen: Absenderdomain ${SENDER_DOMAIN} ist nicht verifiziert (Status: ${domain.status}). SPF/DKIM prüfen.` }, 502);
+      }
+      const records: any[] = domain.records ?? [];
+      preflight = {
+        domain: domain.name,
+        status: domain.status,
+        spf: records.some((r) => String(r?.value ?? "").includes("spf")) ? "ok" : "fehlt",
+        dkim: records.some((r) => String(r?.record ?? "").toUpperCase() === "DKIM") ? "ok" : "fehlt",
+        records: records.map((r) => ({ record: r?.record, status: r?.status })),
+      };
+    } catch (e) {
+      if ((e as Error).message !== "__skip_domain_check__") {
+        return json({ error: `Mailversand abgebrochen: Mailserver nicht erreichbar (${(e as Error).message}).` }, 502);
+      }
+    }
+    if (body?.preflightOnly) return json({ preflight });
+
     let query = admin
       .from("bookings")
       .select("id, booking_number, ticket_number, passenger_email, passenger_first_name, seats(seat_number), origin_stop:stops!bookings_origin_stop_id_fkey(name, city), destination_stop:stops!bookings_destination_stop_id_fkey(name, city), trips(title, routes(name, description))")
@@ -148,13 +189,15 @@ serve(async (req) => {
         subject: "Korrektur: Ihr Ticket Hinfahrt 03.09. / Rückfahrt 10.09.2026 – METROPOL TOURS",
         html,
         template: "return-trip-correction",
+        priority: "high",
         bookingNumber: b.booking_number,
         bookingId: b.id,
       });
       results.push({ booking: b.booking_number, email: b.passenger_email, ok: r.ok, err: r.error });
     }
 
-    return json({ sent: results.filter((r) => r.ok).length, total: results.length, results });
+    const failed = results.filter((r) => !r.ok);
+    return json({ ok: failed.length === 0, sent: results.filter((r) => r.ok).length, failed: failed.length, total: results.length, preflight, results }, failed.length ? 207 : 200);
   } catch (e) {
     return json({ error: (e as Error).message }, 500);
   }

@@ -38,7 +38,7 @@ const SOURCE_LABELS: Record<string, string> = {
   private_trip: "Privat",
   group_trip: "Gruppe",
   special_trip: "Sonderfahrt",
-  maiden_trip: "Jungfernfahrt",
+  maiden_trip: "Promotionfahrt 2026",
 };
 
 const SOURCE_COLORS: Record<string, string> = {
