@@ -52,6 +52,7 @@ const maneuverIcon = (type: string, modifier?: string) => {
 
 
 const DriverNavPage = () => {
+  useForceDarkCockpit();
   const location = useLocation();
   const { user, isDriver, isAdmin, isOffice, isLoading: authLoading } = useAuth();
   const { token } = useMapboxToken();
