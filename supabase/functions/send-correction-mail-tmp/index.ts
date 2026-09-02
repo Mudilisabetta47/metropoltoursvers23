@@ -1,7 +1,7 @@
 // EINMALIGE Korrektur-Mail Rückfahrt Kroatien 10.09.2026 – danach Funktion wieder löschen.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
-import { sendMail, FROM_SERVICE } from "../_shared/mailer.ts";
+import { sendMail, FROM_SERVICE, SENDER_DOMAIN } from "../_shared/mailer.ts";
 import { emailLayout, qrTicketBlock, escapeHtmlBrand } from "../_shared/email-brand.ts";
 import { ensureWalletUrl } from "../_shared/wallet-link.ts";
 
@@ -188,7 +188,8 @@ serve(async (req) => {
       results.push({ booking: b.booking_number, email: b.passenger_email, ok: r.ok, err: r.error });
     }
 
-    return json({ sent: results.filter((r) => r.ok).length, total: results.length, results });
+    const failed = results.filter((r) => !r.ok);
+    return json({ ok: failed.length === 0, sent: results.filter((r) => r.ok).length, failed: failed.length, total: results.length, preflight, results }, failed.length ? 207 : 200);
   } catch (e) {
     return json({ error: (e as Error).message }, 500);
   }
