@@ -32,16 +32,28 @@ serve(async (req) => {
       { auth: { persistSession: false } },
     );
 
-    // Auth: nur Admin/Office dürfen Bestätigungen versenden
+    // Auth: nur Admin/Office (oder Service-Role für interne Aufrufe) dürfen Bestätigungen versenden
     const token = (req.headers.get("Authorization") ?? "").replace("Bearer ", "");
     if (!token) return json({ error: "unauthorized" }, 401);
-    const { data: userRes } = await admin.auth.getUser(token);
-    const user = userRes?.user;
-    if (!user) return json({ error: "unauthorized" }, 401);
 
-    const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", user.id);
-    const allowed = (roles ?? []).some((r: any) => r.role === "admin" || r.role === "office");
-    if (!allowed) return json({ error: "forbidden" }, 403);
+    let isServiceRole = token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1] ?? ""));
+      if (payload?.role === "service_role") isServiceRole = true;
+    } catch { /* kein JWT */ }
+
+
+    let user: { id: string } | null = null;
+    if (!isServiceRole) {
+      const { data: userRes } = await admin.auth.getUser(token);
+      user = userRes?.user ?? null;
+      if (!user) return json({ error: "unauthorized" }, 401);
+
+      const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", user.id);
+      const allowed = (roles ?? []).some((r: any) => r.role === "admin" || r.role === "office");
+      if (!allowed) return json({ error: "forbidden" }, 403);
+    }
+
 
     const body = await req.json().catch(() => ({}));
     const ids: string[] = Array.isArray(body?.bookingIds) ? body.bookingIds : [];
@@ -98,7 +110,7 @@ serve(async (req) => {
         template: "trip_booking_confirmation",
         bookingNumber: b.booking_number,
         bookingId: b.id,
-        sentByUserId: user.id,
+        sentByUserId: user?.id ?? null,
       });
       if (res.ok) sent++;
       else skipped.push(b.ticket_number ?? b.id);
