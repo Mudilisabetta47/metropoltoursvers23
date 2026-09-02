@@ -260,8 +260,24 @@ const TripDetailSheet = ({ trip, onClose }: { trip: Trip; onClose: () => void })
             <div className="pt-2 space-y-2">
               <div className="flex items-center gap-2 text-xs text-zinc-400">
                 <Radio className={cn("w-4 h-4", gpsOn ? "text-emerald-400 animate-pulse" : "text-zinc-600")} />
-                {gpsOn ? "GPS-Tracking aktiv" : "GPS-Tracking inaktiv"}
+                {gpsOn ? "Standort wird live geteilt" : "Standortfreigabe inaktiv"}
+                {gps.coords && (
+                  <span className="text-[11px] text-zinc-500">
+                    · {Math.round(gps.coords.speedKmh)} km/h
+                    {gps.lastSentAt && ` · gesendet ${format(new Date(gps.lastSentAt), "HH:mm:ss")}`}
+                  </span>
+                )}
               </div>
+              <button
+                onClick={() => setShareGps((v) => !v)}
+                className={cn(
+                  "w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold",
+                  gpsOn ? "bg-white/10 text-zinc-200 hover:bg-white/15" : "bg-cyan-600 hover:bg-cyan-500 text-white",
+                )}
+              >
+                <Radio className="w-4 h-4" /> {gpsOn ? "Standort nicht mehr teilen" : "Standort teilen"}
+              </button>
+
               {tripRow?.status !== "running" ? (
                 <button
                   onClick={() => setStatus("running")}
