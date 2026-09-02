@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Logo } from "@/components/brand/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import BoardingSchedule, { type BoardingStop } from "@/components/schedule/BoardingSchedule";
-import { setPageSeo } from "@/lib/seo";
+import SEO from "@/components/seo/SEO";
 
 interface TripRow {
   id: string;
@@ -25,15 +25,6 @@ interface TripRow {
 export default function FahrplanPage() {
   const [trips, setTrips] = useState<TripRow[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setPageSeo?.({
-      title: "Fahrplan & Zustiegsorte | METROPOL TOURS",
-      description:
-        "Alle Abfahrtszeiten und Zustiegsorte unserer Busreisen – inklusive Steig-Angaben (z. B. Bremen ZOB Steig 5) und Live-Tracking.",
-      path: "/fahrplan",
-    });
-  }, []);
 
   useEffect(() => {
     (async () => {
@@ -74,6 +65,11 @@ export default function FahrplanPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50">
+      <SEO
+        title="Fahrplan & Zustiegsorte"
+        description="Alle Abfahrtszeiten und Zustiegsorte unserer Busreisen – inklusive Steig-Angaben (Bremen ZOB Steig 5) und Live-Tracking."
+        path="/fahrplan"
+      />
       <div className="h-2 bg-emerald-500" />
       <header className="border-b border-zinc-200 bg-white">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
