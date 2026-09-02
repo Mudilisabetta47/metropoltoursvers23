@@ -66,6 +66,8 @@ const DriverNavPage = () => {
   const [online, setOnline] = useState(typeof navigator !== "undefined" ? navigator.onLine : true);
   const [bus, setBus] = useState<any>(null);
   const [gpsError, setGpsError] = useState<string | null>(null);
+  const [gpsDenied, setGpsDenied] = useState(false);
+  const [gpsRetry, setGpsRetry] = useState(0);
   const [busy, setBusy] = useState(false);
   const [sheetTab, setSheetTab] = useState<SheetTab | null>(null);
   const [manualTarget, setManualTarget] = useState<{ lat: number; lng: number } | null>(null);
