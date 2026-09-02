@@ -2,7 +2,7 @@
 // Enthält Logo-Header, rechtliche Links (Impressum, Datenschutz, AGB) und Social-Media-Links.
 
 export const SITE_URL = "https://www.metours.de";
-export const LOGO_URL = "https://app.metours.de/brand/metropol-logo.png";
+export const LOGO_URL = "https://app.metours.de/brand/metropol-logo-white.png";
 
 export const COMPANY = {
   name: "METROPOL TOURS GmbH",
