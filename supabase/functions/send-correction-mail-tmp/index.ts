@@ -11,6 +11,20 @@ const corsHeaders = {
 };
 
 const TRACKING_URL = "https://www.metours.de/verfolge/MT-2026-QT89W8";
+const OUTBOUND_TRIP_ID = "49b5f151-d957-42fc-9596-75fb42d2f9db";
+
+// Zustiegszeiten Hinfahrt 03.09.2026 (München in der Nacht auf 04.09.)
+const BOARDING_TIMES: Record<string, string> = {
+  "hamburg": "03.09.2026, 16:00 Uhr – Hamburg ZOB",
+  "bremen": "03.09.2026, 18:15 Uhr – Bremen ZOB, Steig 5",
+  "hannover": "03.09.2026, 20:00 Uhr – Hannover ZOB",
+  "münchen": "04.09.2026, 04:30 Uhr – München ZOB",
+};
+const boardingInfo = (city: string) => {
+  const c = (city || "").toLowerCase();
+  for (const k of Object.keys(BOARDING_TIMES)) if (c.includes(k)) return BOARDING_TIMES[k];
+  return "03.09.2026 – Abfahrt an Ihrem Zustiegsort";
+};
 
 interface TicketInfo {
   firstName: string;
@@ -18,6 +32,9 @@ interface TicketInfo {
   ticketNumber: string;
   seat: string;
   route: string;
+  boarding: string;
+  origin: string;
+  destination: string;
   walletUrl?: string | null;
 }
 
@@ -26,18 +43,19 @@ const buildContent = (t: TicketInfo) => {
     ["Buchungsnummer", t.bookingNumber || "—"],
     ["Ticketnummer", t.ticketNumber || "—"],
     ["Fahrt", t.route],
-    ["Hinfahrt", "Donnerstag, 03.09.2026 – Abfahrt an Ihrem Zustiegsort (Hannover / Hamburg / München)"],
-    ["Rückfahrt", "Donnerstag, 10.09.2026 – Ankunft zurück in Deutschland"],
+    ["Ihr Zustieg (Hinfahrt)", t.boarding],
+    ["Rückfahrt", "10.09.2026 – Ankunft zurück in Deutschland"],
     ["Sitzplatz", t.seat],
   ];
 
   return `
-  <h1 style="margin:0 0 10px;font-size:22px;color:#0f1218;">Korrektur: Rückfahrt am 10.09.2026</h1>
+  <h1 style="margin:0 0 10px;font-size:22px;color:#0f1218;">Korrektur & Ihr gültiges Ticket</h1>
   <p style="margin:0 0 14px;">Guten Tag${t.firstName ? ` ${escapeHtmlBrand(t.firstName)}` : ""},</p>
-  <p style="margin:0 0 14px;">bitte <strong>ignorieren Sie die zuvor erhaltene Ticket-E-Mail</strong> für Ihre Rückfahrt –
-  dort war das Rückfahrtdatum leider falsch angegeben (09.09.2026).</p>
-  <p style="margin:0 0 18px;">Es gilt: Wir fahren am <strong>03.09.2026</strong> los und sind am
-  <strong>10.09.2026 wieder zurück in Deutschland</strong>. Ihr korrigiertes Ticket finden Sie direkt in dieser E-Mail.</p>
+  <p style="margin:0 0 14px;">bitte <strong>ignorieren Sie die zuvor erhaltene Ticket-E-Mail</strong> –
+  dort waren Fahrtrichtung und Datum leider falsch angegeben.</p>
+  <p style="margin:0 0 18px;">Es gilt: <strong>Hinfahrt ${escapeHtmlBrand(t.origin)} → ${escapeHtmlBrand(t.destination)} am 03.09.2026</strong> (Zustieg siehe unten)
+  und <strong>Rückfahrt am 10.09.2026</strong> zurück nach Deutschland. Ihr gültiges Ticket
+  (Hin- und Rückfahrt) finden Sie direkt in dieser E-Mail – auch als Apple-Wallet-Pass mit der richtigen Fahrtrichtung.</p>
 
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8e4;border-radius:12px;overflow:hidden;">
     ${rows
@@ -83,9 +101,10 @@ serve(async (req) => {
 
     let query = admin
       .from("bookings")
-      .select("id, booking_number, ticket_number, passenger_email, passenger_first_name, seats(seat_number), trips(title, routes(name, description))")
-      .gte("booking_number", "MT-2026-001101")
-      .lte("booking_number", "MT-2026-001134")
+      .select("id, booking_number, ticket_number, passenger_email, passenger_first_name, seats(seat_number), origin_stop:stops!bookings_origin_stop_id_fkey(name, city), destination_stop:stops!bookings_destination_stop_id_fkey(name, city), trips(title, routes(name, description))")
+      .eq("trip_id", OUTBOUND_TRIP_ID)
+      .gte("booking_number", "MT-2026-001030")
+      .lte("booking_number", "MT-2026-001058")
       .order("booking_number");
     if (testEmail) query = query.eq("passenger_email", testEmail).limit(1);
     const { data: bookings, error } = await query;
@@ -95,6 +114,10 @@ serve(async (req) => {
     for (const b of bookings ?? []) {
       const trip: any = (b as any).trips ?? {};
       const route = trip?.routes?.description || trip?.routes?.name || trip?.title || "Kroatien – Novalja";
+      const origin: any = (b as any).origin_stop ?? {};
+      const dest: any = (b as any).destination_stop ?? {};
+      const originLabel = origin.city || origin.name || "Zustiegsort";
+      const destLabel = dest.city || dest.name || "Novalja (Kroatien)";
       const ticketNumber = b.ticket_number ?? b.booking_number ?? "";
       let walletUrl: string | null = null;
       try {
@@ -102,15 +125,18 @@ serve(async (req) => {
       } catch { /* optional */ }
 
       const html = emailLayout({
-        title: "Korrektur Ihrer Rückfahrt",
-        preheader: "Korrektur: Rückfahrt am 10.09.2026 – inkl. Ticket",
+        title: "Korrektur & Ihr gültiges Ticket",
+        preheader: "Korrektur: Hinreise 03.09. / Rückreise 10.09.2026 – inkl. gültigem Ticket",
         subtitle: "Korrektur & Ticket",
         content: buildContent({
           firstName: b.passenger_first_name ?? "",
           bookingNumber: b.booking_number ?? "",
           ticketNumber,
           seat: (b as any).seats?.seat_number ? `Platz ${(b as any).seats.seat_number}` : "wird zugewiesen",
-          route,
+          route: `${originLabel} → ${destLabel}`,
+          boarding: boardingInfo(origin.city || origin.name || ""),
+          origin: originLabel,
+          destination: destLabel,
           walletUrl,
         }),
       });
@@ -119,7 +145,7 @@ serve(async (req) => {
         from: FROM_SERVICE,
         to: b.passenger_email,
         bcc: ["kundenservice@metours.de"],
-        subject: "Korrektur: Ihre Rückfahrt am 10.09.2026 – METROPOL TOURS",
+        subject: "Korrektur: Ihr Ticket Hinfahrt 03.09. / Rückfahrt 10.09.2026 – METROPOL TOURS",
         html,
         template: "return-trip-correction",
         bookingNumber: b.booking_number,
