@@ -6,6 +6,8 @@ import { de } from "date-fns/locale";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { STOP_TYPE_LABELS } from "@/lib/charterTrips";
+import { useLiveGpsBroadcast } from "@/hooks/useLiveGpsBroadcast";
+
 
 interface Trip {
   id: string;
@@ -142,8 +144,15 @@ const TripsTab = ({ userId }: { userId: string }) => {
 const TripDetailSheet = ({ trip, onClose }: { trip: Trip; onClose: () => void }) => {
   const [schedule, setSchedule] = useState<any[]>([]);
   const [tripRow, setTripRow] = useState<any>(trip.trip || null);
-  const [gpsOn, setGpsOn] = useState(false);
-  const watchRef = useRef<number | null>(null);
+  const [shareGps, setShareGps] = useState(false);
+
+  // Echte GPS-Daten des Fahrers an die öffentliche Live-Verfolgung senden
+  const gps = useLiveGpsBroadcast({
+    tripId: trip.assigned_trip_id,
+    active: shareGps,
+    status: tripRow?.status === "running" ? "on_route" : "standby",
+  });
+  const gpsOn = gps.sharing;
 
   useEffect(() => {
     if (!trip.assigned_trip_id) return;
@@ -155,39 +164,14 @@ const TripDetailSheet = ({ trip, onClose }: { trip: Trip; onClose: () => void })
       .then(({ data }) => setSchedule(data || []));
   }, [trip.assigned_trip_id]);
 
-  useEffect(() => () => {
-    if (watchRef.current !== null) navigator.geolocation.clearWatch(watchRef.current);
-  }, []);
+  // Läuft die Fahrt bereits, wird der Standort automatisch geteilt
+  useEffect(() => {
+    if (tripRow?.status === "running") setShareGps(true);
+  }, [tripRow?.status]);
 
-  const startGps = () => {
-    if (!navigator.geolocation || !trip.assigned_trip_id) return;
-    watchRef.current = navigator.geolocation.watchPosition(
-      async (pos) => {
-        await (supabase as any).from("bus_positions_live").upsert(
-          {
-            trip_id: trip.assigned_trip_id,
-            bus_id: trip.assigned_bus_id,
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-            speed_kmh: pos.coords.speed ? pos.coords.speed * 3.6 : 0,
-            heading: pos.coords.heading ?? null,
-            status: "running",
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "trip_id" }
-        );
-      },
-      () => toast.error("GPS nicht verfügbar"),
-      { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 }
-    );
-    setGpsOn(true);
-  };
-
-  const stopGps = () => {
-    if (watchRef.current !== null) navigator.geolocation.clearWatch(watchRef.current);
-    watchRef.current = null;
-    setGpsOn(false);
-  };
+  useEffect(() => {
+    if (gps.error) toast.error(gps.error);
+  }, [gps.error]);
 
   const setStatus = async (status: "running" | "completed") => {
     if (!trip.assigned_trip_id) return;
@@ -197,9 +181,10 @@ const TripDetailSheet = ({ trip, onClose }: { trip: Trip; onClose: () => void })
     const { error } = await (supabase as any).from("trips").update(patch).eq("id", trip.assigned_trip_id);
     if (error) { toast.error(error.message); return; }
     setTripRow((t: any) => ({ ...(t || {}), ...patch }));
-    if (status === "running") { startGps(); toast.success("Fahrt gestartet – GPS aktiv"); }
-    else { stopGps(); toast.success("Fahrt beendet"); }
+    if (status === "running") { setShareGps(true); toast.success("Fahrt gestartet – Standort wird live geteilt"); }
+    else { setShareGps(false); toast.success("Fahrt beendet"); }
   };
+
 
   const openMaps = () => {
     const q = trip.route?.name || trip.dispatch_location || "";
@@ -277,8 +262,24 @@ const TripDetailSheet = ({ trip, onClose }: { trip: Trip; onClose: () => void })
             <div className="pt-2 space-y-2">
               <div className="flex items-center gap-2 text-xs text-zinc-400">
                 <Radio className={cn("w-4 h-4", gpsOn ? "text-emerald-400 animate-pulse" : "text-zinc-600")} />
-                {gpsOn ? "GPS-Tracking aktiv" : "GPS-Tracking inaktiv"}
+                {gpsOn ? "Standort wird live geteilt" : "Standortfreigabe inaktiv"}
+                {gps.coords && (
+                  <span className="text-[11px] text-zinc-500">
+                    · {Math.round(gps.coords.speedKmh)} km/h
+                    {gps.lastSentAt && ` · gesendet ${format(new Date(gps.lastSentAt), "HH:mm:ss")}`}
+                  </span>
+                )}
               </div>
+              <button
+                onClick={() => setShareGps((v) => !v)}
+                className={cn(
+                  "w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold",
+                  gpsOn ? "bg-white/10 text-zinc-200 hover:bg-white/15" : "bg-cyan-600 hover:bg-cyan-500 text-white",
+                )}
+              >
+                <Radio className="w-4 h-4" /> {gpsOn ? "Standort nicht mehr teilen" : "Standort teilen"}
+              </button>
+
               {tripRow?.status !== "running" ? (
                 <button
                   onClick={() => setStatus("running")}
