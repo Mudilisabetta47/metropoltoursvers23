@@ -88,7 +88,19 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
     );
   }
 
+  const positionAgeMs = position?.updated_at ? now - new Date(position.updated_at).getTime() : null;
+  const liveActive = positionAgeMs != null && positionAgeMs < 5 * 60 * 1000;
+  const positionAgeLabel =
+    positionAgeMs == null
+      ? "—"
+      : positionAgeMs < 60000
+        ? "gerade eben"
+        : positionAgeMs < 3600000
+          ? `vor ${Math.round(positionAgeMs / 60000)} Min.`
+          : `am ${format(new Date(position.updated_at), "dd.MM. HH:mm")} Uhr`;
+
   const delay = registry?.current_delay_min || 0;
+
   const departAt = new Date(`${trip.departure_date}T${trip.departure_time || "00:00:00"}`);
   const arriveAt = trip.arrival_date ? new Date(`${trip.arrival_date}T${trip.arrival_time || "00:00:00"}`) : null;
   const beforeDeparture = now < departAt.getTime();
