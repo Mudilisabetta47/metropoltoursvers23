@@ -66,6 +66,12 @@ export async function sendMail(
           reply_to: opts.reply_to ?? REPLY_TO,
           subject: opts.subject,
           html: opts.html,
+          headers: {
+            ...(opts.priority === "high"
+              ? { "X-Priority": "1", "X-MSMail-Priority": "High", Priority: "urgent", Importance: "high" }
+              : {}),
+            ...(opts.headers ?? {}),
+          },
           attachments: opts.attachments?.length ? opts.attachments : undefined,
         }),
       });
