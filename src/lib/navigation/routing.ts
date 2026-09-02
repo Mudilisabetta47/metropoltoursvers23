@@ -73,29 +73,42 @@ export interface GeocodeResult {
   lng: number;
 }
 
-export const buildVehicleProfile = (bus: any | null | undefined): VehicleProfile | null => {
-  if (!bus) return null;
+/** Standardprofil unseres Reisebusses, falls dem Auftrag kein Fahrzeug zugeordnet ist. */
+export const DEFAULT_COACH_PROFILE: VehicleProfile = {
+  busNumber: null,
+  heightCm: 360,
+  widthCm: 255,
+  lengthCm: 1250,
+  weightKg: 18000,
+  axles: 3,
+  routingNotes: null,
+};
+
+export const buildVehicleProfile = (bus: any | null | undefined): VehicleProfile => {
+  if (!bus) return DEFAULT_COACH_PROFILE;
   return {
     busNumber: bus.bus_number ?? bus.name ?? null,
-    heightCm: bus.height_cm ?? null,
-    widthCm: bus.width_cm ?? null,
-    lengthCm: bus.length_cm ?? null,
-    weightKg: bus.weight_kg ?? null,
-    axles: bus.axles ?? null,
+    heightCm: bus.height_cm ?? DEFAULT_COACH_PROFILE.heightCm,
+    widthCm: bus.width_cm ?? DEFAULT_COACH_PROFILE.widthCm,
+    lengthCm: bus.length_cm ?? DEFAULT_COACH_PROFILE.lengthCm,
+    weightKg: bus.weight_kg ?? DEFAULT_COACH_PROFILE.weightKg,
+    axles: bus.axles ?? DEFAULT_COACH_PROFILE.axles,
     routingNotes: bus.routing_notes ?? null,
   };
 };
 
-/** Hinweise, die aus dem Fahrzeugprofil abgeleitet werden (kein automatisches Truck-Routing). */
+/** Hinweise, die aus dem Fahrzeugprofil abgeleitet werden. */
 export const vehicleProfileWarnings = (p: VehicleProfile | null): string[] => {
   if (!p) return [];
   const w: string[] = [];
   if (p.heightCm && p.heightCm >= 350) w.push(`Fahrzeughöhe ${(p.heightCm / 100).toFixed(2)} m – Unterführungen prüfen`);
   if (p.weightKg && p.weightKg >= 12000) w.push(`Gesamtgewicht ${(p.weightKg / 1000).toFixed(1)} t – Brücken-/Gewichtsbeschränkungen prüfen`);
   if (p.lengthCm && p.lengthCm >= 1300) w.push(`Fahrzeuglänge ${(p.lengthCm / 100).toFixed(1)} m – enge Ortsdurchfahrten meiden`);
+  if (p.axles && p.axles >= 3) w.push(`${p.axles} Achsen – Mautklasse und Achslasten beachten`);
   if (p.routingNotes) w.push(p.routingNotes);
   return w;
 };
+
 
 export async function requestRoute(
   token: string,
@@ -106,6 +119,7 @@ export async function requestRoute(
   if (points.length < 2) throw new Error("Mindestens Start und Ziel erforderlich");
 
   const coords = points.map((p) => `${p.lng},${p.lat}`).join(";");
+  const profile = opts.vehicleProfile ?? DEFAULT_COACH_PROFILE;
   const params = new URLSearchParams({
     access_token: token,
     geometries: "geojson",
@@ -119,11 +133,28 @@ export async function requestRoute(
     compute_toll_cost: "true",
   });
 
-  const res = await fetch(`${MAPBOX_BASE}/directions/v5/mapbox/driving-traffic/${coords}?${params}`);
+  // Fahrzeugprofil an die Directions API übergeben, damit gesperrte
+  // Unterführungen, Brücken und Gewichtsbeschränkungen gemieden werden.
+  if (profile.heightCm) params.set("max_height", (profile.heightCm / 100).toFixed(2));
+  if (profile.widthCm) params.set("max_width", (profile.widthCm / 100).toFixed(2));
+  if (profile.weightKg) params.set("max_weight", (profile.weightKg / 1000).toFixed(2));
+  // Reisebusse: keine unbefestigten Strecken, keine Autozüge.
+  params.set("exclude", "unpaved");
+
+  const url = (p: URLSearchParams) => `${MAPBOX_BASE}/directions/v5/mapbox/driving-traffic/${coords}?${p}`;
+  let res = await fetch(url(params));
+  if (!res.ok) {
+    // Fallback ohne Fahrzeugparameter, damit die Navigation nie komplett ausfällt.
+    const plain = new URLSearchParams(params);
+    ["max_height", "max_width", "max_weight", "exclude"].forEach((k) => plain.delete(k));
+    res = await fetch(url(plain));
+  }
   if (!res.ok) throw new Error(`Routing fehlgeschlagen (${res.status})`);
   const json = await res.json();
+
   const route = json.routes?.[0];
   if (!route) throw new Error("Keine Route gefunden");
+
 
   const steps: RouteStep[] = (route.legs ?? []).flatMap((leg: any) =>
     (leg.steps ?? []).map((s: any) => ({

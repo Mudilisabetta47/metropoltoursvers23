@@ -66,6 +66,8 @@ const DriverNavPage = () => {
   const [online, setOnline] = useState(typeof navigator !== "undefined" ? navigator.onLine : true);
   const [bus, setBus] = useState<any>(null);
   const [gpsError, setGpsError] = useState<string | null>(null);
+  const [gpsDenied, setGpsDenied] = useState(false);
+  const [gpsRetry, setGpsRetry] = useState(0);
   const [busy, setBusy] = useState(false);
   const [sheetTab, setSheetTab] = useState<SheetTab | null>(null);
   const [manualTarget, setManualTarget] = useState<{ lat: number; lng: number } | null>(null);
@@ -114,13 +116,19 @@ const DriverNavPage = () => {
 
   // GPS-Watch + Realtime-Push in fleet_positions
   useEffect(() => {
-    if (!user || !("geolocation" in navigator)) {
+    if (!user) return;
+    if (typeof window !== "undefined" && !window.isSecureContext) {
+      setGpsError("Standort nur über HTTPS möglich – bitte die App über https:// öffnen.");
+      return;
+    }
+    if (!("geolocation" in navigator)) {
       setGpsError("Keine GPS-Unterstützung auf diesem Gerät");
       return;
     }
     const watchId = navigator.geolocation.watchPosition(
       async (p) => {
         setGpsError(null);
+        setGpsDenied(false);
         const next = {
           lat: p.coords.latitude,
           lng: p.coords.longitude,
@@ -154,11 +162,56 @@ const DriverNavPage = () => {
           { onConflict: "driver_user_id" },
         );
       },
-      (err) => setGpsError(err.message),
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          setGpsDenied(true);
+          setGpsError("Standortfreigabe verweigert");
+        } else if (err.code === err.POSITION_UNAVAILABLE) {
+          setGpsError("Kein GPS-Signal – bitte im Freien erneut versuchen");
+        } else if (err.code === err.TIMEOUT) {
+          setGpsError("GPS-Signal wird gesucht …");
+        } else {
+          setGpsError(err.message);
+        }
+      },
       { enableHighAccuracy: true, maximumAge: 3000, timeout: 20000 },
     );
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [user, activeOrder?.id, activeOrder?.status, activeOrder?.bus_id]);
+  }, [user, gpsRetry, activeOrder?.id, activeOrder?.status, activeOrder?.bus_id]);
+
+  /** Standortfreigabe aktiv anfordern (iOS/Android benötigen eine Nutzeraktion). */
+  const requestGps = useCallback(() => {
+    if (!("geolocation" in navigator)) return;
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        setGpsDenied(false);
+        setGpsError(null);
+        setPos({
+          lat: p.coords.latitude,
+          lng: p.coords.longitude,
+          speed: p.coords.speed != null && p.coords.speed >= 0 ? p.coords.speed * 3.6 : 0,
+          heading: p.coords.heading ?? 0,
+        });
+        setGpsRetry((n) => n + 1);
+      },
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          setGpsDenied(true);
+          setGpsError("Standortfreigabe verweigert");
+        } else setGpsError(err.message);
+      },
+      { enableHighAccuracy: true, timeout: 20000 },
+    );
+  }, []);
+
+  // Karte folgt dem Fahrzeug, solange navigiert wird
+  useEffect(() => {
+    if (!navigating || !pos || !mapRef.current) return;
+    try {
+      mapRef.current.easeTo({ center: [pos.lng, pos.lat], zoom: 15, duration: 800 });
+    } catch { /* Karte noch nicht bereit */ }
+  }, [pos?.lat, pos?.lng, navigating]);
+
 
   // Routenberechnung (echte Mapbox Directions mit Traffic, inkl. Haltestellen und Maut)
   const computeRoute = useCallback(async () => {
