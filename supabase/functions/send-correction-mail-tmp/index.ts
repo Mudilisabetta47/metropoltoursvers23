@@ -148,6 +148,7 @@ serve(async (req) => {
         subject: "Korrektur: Ihr Ticket Hinfahrt 03.09. / Rückfahrt 10.09.2026 – METROPOL TOURS",
         html,
         template: "return-trip-correction",
+        priority: "high",
         bookingNumber: b.booking_number,
         bookingId: b.id,
       });
