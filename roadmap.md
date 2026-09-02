@@ -8,3 +8,4 @@
 - [ ] Korrektur-Mail Rückfahrt 10.09.: erst Test an Admin, dann alle 34 (BCC kundenservice@metours.de)
 
 - [x] Fahrer-Fahrplan PDF (FA-2026-29253) inkl. Lenk-/Ruhezeiten und 3-Fahrer-Rotation (Wechsel Würzburg)
+- [x] Admin-PDF Fahrauftrag FA-2026-29253 mit Kartenansicht (Navi-Route)
