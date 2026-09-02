@@ -2277,6 +2277,7 @@ export type Database = {
           eta: string | null
           id: string
           is_test: boolean
+          live_tracking_from: string | null
           notes: string | null
           order_number: string
           origin_address: string | null
@@ -2295,6 +2296,7 @@ export type Database = {
           status: string
           title: string
           toll_data_available: boolean | null
+          trip_id: string | null
           updated_at: string
           waypoints: Json
         }
@@ -2320,6 +2322,7 @@ export type Database = {
           eta?: string | null
           id?: string
           is_test?: boolean
+          live_tracking_from?: string | null
           notes?: string | null
           order_number: string
           origin_address?: string | null
@@ -2338,6 +2341,7 @@ export type Database = {
           status?: string
           title: string
           toll_data_available?: boolean | null
+          trip_id?: string | null
           updated_at?: string
           waypoints?: Json
         }
@@ -2363,6 +2367,7 @@ export type Database = {
           eta?: string | null
           id?: string
           is_test?: boolean
+          live_tracking_from?: string | null
           notes?: string | null
           order_number?: string
           origin_address?: string | null
@@ -2381,6 +2386,7 @@ export type Database = {
           status?: string
           title?: string
           toll_data_available?: boolean | null
+          trip_id?: string | null
           updated_at?: string
           waypoints?: Json
         }
@@ -2390,6 +2396,13 @@ export type Database = {
             columns: ["bus_id"]
             isOneToOne: false
             referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispatch_orders_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
             referencedColumns: ["id"]
           },
         ]
