@@ -5,7 +5,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import {
   Navigation, Check, X, Play, Coffee, Flag, AlertTriangle, Volume2, VolumeX,
   MessageSquare, Send, Loader2, MapPin, Gauge, Clock, WifiOff, ArrowUp,
-  CornerUpLeft, CornerUpRight, RotateCcw, ListOrdered, Coins, Timer, Hourglass,
+  CornerUpLeft, CornerUpRight, RotateCcw, ListOrdered, Coins, Timer, Hourglass, Users,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
@@ -14,9 +14,11 @@ import {
   DispatchOrder, useDispatchMessages, useDriverOrders, updateOrderStatus,
 } from "@/hooks/useFleet";
 import { OrderStop, saveRouteTolls, useOrderStops } from "@/hooks/useOrderStops";
+import { useTripManifest } from "@/hooks/useTripManifest";
 import { useDrivingTime } from "@/hooks/useDrivingTime";
 import { formatHm } from "@/lib/driving/euDrivingRules";
 import StopsPanel from "@/components/driver/StopsPanel";
+import ManifestPanel from "@/components/driver/ManifestPanel";
 import TollPanel from "@/components/driver/TollPanel";
 import DelaySheet from "@/components/driver/DelaySheet";
 import EventSheet, { DriverEventType } from "@/components/driver/EventSheet";
@@ -36,7 +38,7 @@ import { toast } from "sonner";
 const db = supabase as any;
 const ROUTE_CACHE_KEY = "metours_driver_route_cache";
 
-type SheetTab = "stops" | "tolls" | "delay" | "event" | "duty";
+type SheetTab = "stops" | "tolls" | "delay" | "event" | "duty" | "manifest";
 
 const maneuverIcon = (type: string, modifier?: string) => {
   if (type === "arrive") return Flag;
