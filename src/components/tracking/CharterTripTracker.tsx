@@ -27,6 +27,13 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
   const [stops, setStops] = useState<any[]>([]);
   const [position, setPosition] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
+
 
   useEffect(() => {
     (async () => {
