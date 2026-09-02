@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
+import { useLiveGpsBroadcast } from "@/hooks/useLiveGpsBroadcast";
+import { useForceDarkCockpit } from "@/hooks/useForceDarkCockpit";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DispatchOrder, useDispatchMessages, useDriverOrders, updateOrderStatus,
