@@ -86,6 +86,13 @@ const DriverNavPage = () => {
     useDrivingTime(user?.id);
   const delayMinutes = activeOrder?.delay_minutes ?? 0;
 
+  // Zustiegsliste: Fahrt des Tages (Auftragsdatum oder heute), live synchronisiert
+  const manifestDate = useMemo(
+    () => (activeOrder?.departure_at ?? new Date().toISOString()).slice(0, 10),
+    [activeOrder?.departure_at],
+  );
+  const manifest = useTripManifest(user?.id, manifestDate);
+
 
   // Online/Offline
   useEffect(() => {
@@ -655,9 +662,21 @@ const DriverNavPage = () => {
       </div>
 
       {/* Schnellzugriffe */}
-      <div className="shrink-0 grid grid-cols-4 gap-2 px-3 pt-3 bg-zinc-900">
+      <div className="shrink-0 grid grid-cols-5 gap-2 px-3 pt-3 bg-zinc-900">
         <Button variant="outline" className="h-12 flex-col gap-0.5 text-[11px]" onClick={() => setSheetTab("stops")}>
           <ListOrdered className="w-4 h-4" /> Halte
+        </Button>
+        <Button
+          variant="outline"
+          className={cn("h-12 flex-col gap-0.5 text-[11px] relative", manifest.totalPassengers > 0 && "border-emerald-600 text-emerald-300")}
+          onClick={() => setSheetTab("manifest")}
+        >
+          <Users className="w-4 h-4" /> Zustieg
+          {manifest.totalPassengers > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-emerald-500 text-black text-[10px] font-bold flex items-center justify-center">
+              {manifest.totalPassengers}
+            </span>
+          )}
         </Button>
         <Button variant="outline" className="h-12 flex-col gap-0.5 text-[11px]" onClick={() => setSheetTab("tolls")}>
           <Coins className="w-4 h-4" /> Maut
@@ -697,8 +716,9 @@ const DriverNavPage = () => {
             <SheetTitle className="text-white">Fahrtinformationen</SheetTitle>
           </SheetHeader>
           <Tabs value={sheetTab ?? "stops"} onValueChange={(v) => setSheetTab(v as SheetTab)} className="mt-3">
-            <TabsList className="grid grid-cols-5 bg-zinc-900 h-auto">
+            <TabsList className="grid grid-cols-6 bg-zinc-900 h-auto">
               <TabsTrigger value="stops" className="text-xs py-2">Halte</TabsTrigger>
+              <TabsTrigger value="manifest" className="text-xs py-2">Zustieg</TabsTrigger>
               <TabsTrigger value="tolls" className="text-xs py-2">Maut</TabsTrigger>
               <TabsTrigger value="delay" className="text-xs py-2">Verspätung</TabsTrigger>
               <TabsTrigger value="event" className="text-xs py-2">Ereignis</TabsTrigger>
@@ -712,6 +732,15 @@ const DriverNavPage = () => {
                 onDepart={stopDepart}
                 onNavigate={navigateToStop}
                 busy={busy}
+              />
+            </TabsContent>
+            <TabsContent value="manifest" className="mt-4">
+              <ManifestPanel
+                trip={manifest.trip}
+                stops={manifest.stops}
+                totalPassengers={manifest.totalPassengers}
+                totalBoarded={manifest.totalBoarded}
+                isLoading={manifest.isLoading}
               />
             </TabsContent>
             <TabsContent value="tolls" className="mt-4">
