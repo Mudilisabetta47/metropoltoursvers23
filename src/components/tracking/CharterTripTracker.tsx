@@ -153,11 +153,13 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
 
         <div className="rounded-2xl overflow-hidden border border-zinc-200">
           <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 border-b border-zinc-100 bg-white">
-            <span className={`flex items-center gap-1.5 text-xs font-semibold ${liveActive ? "text-emerald-600" : "text-zinc-500"}`}>
-              <span className={`w-2 h-2 rounded-full ${liveActive ? "bg-emerald-500 animate-pulse" : "bg-zinc-400"}`} />
-              {liveActive ? "Live-GPS vom Fahrer" : position ? "Letzte bekannte Position" : "Noch kein GPS-Signal"}
+            <span className={`flex items-center gap-1.5 text-xs font-semibold ${liveActive && !beforeDeparture ? "text-emerald-600" : "text-zinc-500"}`}>
+              <span className={`w-2 h-2 rounded-full ${liveActive && !beforeDeparture ? "bg-emerald-500 animate-pulse" : "bg-zinc-400"}`} />
+              {beforeDeparture
+                ? `Live-GPS ab ${trip.departure_time?.slice(0, 5) ?? "Abfahrt"} Uhr`
+                : liveActive ? "Live-GPS vom Fahrer" : position ? "Letzte bekannte Position" : "Noch kein GPS-Signal"}
             </span>
-            {position && (
+            {position && !beforeDeparture && (
               <span className="text-xs text-zinc-500">
                 Aktualisiert {positionAgeLabel}
                 {position.speed_kmh != null && ` · ${Math.round(Number(position.speed_kmh))} km/h`}
@@ -165,7 +167,7 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
             )}
           </div>
           <div className="h-[320px]">
-            {token && position ? (
+            {token && position && !beforeDeparture ? (
               <Map
                 ref={mapRef}
                 mapboxAccessToken={token}
@@ -189,13 +191,19 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
                 </Marker>
               </Map>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-zinc-500 gap-2 bg-zinc-50">
+              <div className="h-full flex flex-col items-center justify-center text-zinc-500 gap-2 bg-zinc-50 px-6 text-center">
                 <Radio className="w-6 h-6" />
-                <p className="text-sm">Die Live-Ortung startet, sobald der Fahrer seinen Standort teilt.</p>
+                <p className="text-sm">
+                  {beforeDeparture
+                    ? `Die Live-Ortung wird ab ${trip.departure_time?.slice(0, 5) ?? ""} Uhr am Abfahrtstag freigeschaltet.`
+                    : "Die Live-Ortung startet, sobald der Fahrer seinen Standort teilt."}
+                </p>
               </div>
             )}
           </div>
         </div>
+
+
 
 
         <BoardingSchedule stops={stops} />

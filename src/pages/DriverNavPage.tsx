@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
+import { useLiveGpsBroadcast } from "@/hooks/useLiveGpsBroadcast";
+import { useForceDarkCockpit } from "@/hooks/useForceDarkCockpit";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DispatchOrder, useDispatchMessages, useDriverOrders, updateOrderStatus,
@@ -50,6 +52,7 @@ const maneuverIcon = (type: string, modifier?: string) => {
 
 
 const DriverNavPage = () => {
+  useForceDarkCockpit();
   const location = useLocation();
   const { user, isDriver, isAdmin, isOffice, isLoading: authLoading } = useAuth();
   const { token } = useMapboxToken();
@@ -97,6 +100,28 @@ const DriverNavPage = () => {
     [activeOrder?.departure_at],
   );
   const manifest = useTripManifest(user?.id, manifestDate);
+
+  // Öffentliche Live-Verfolgung: nur für die verknüpfte Fahrt und erst ab Freigabezeit
+  const trackingFromMs = useMemo(() => {
+    const raw = activeOrder?.live_tracking_from ?? activeOrder?.departure_at ?? null;
+    return raw ? new Date(raw).getTime() : null;
+  }, [activeOrder?.live_tracking_from, activeOrder?.departure_at]);
+  const [clock, setClock] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setClock(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
+  const trackingReleased = trackingFromMs == null || clock >= trackingFromMs;
+  const liveGps = useLiveGpsBroadcast({
+    tripId: activeOrder?.trip_id ?? null,
+    active: Boolean(activeOrder?.trip_id) && trackingReleased && activeOrder?.status !== "arrived",
+    status:
+      activeOrder?.status === "en_route" ? "on_route"
+        : activeOrder?.status === "paused" ? "break"
+        : activeOrder?.status === "arrived" ? "arrived" : "ready",
+  });
+
+
 
 
   // Online/Offline
@@ -555,6 +580,36 @@ const DriverNavPage = () => {
           </Button>
         </div>
       </div>
+
+      {/* GPS- und Live-Tracking-Status */}
+      {(gpsDenied || gpsError || activeOrder?.trip_id) && (
+        <div className="shrink-0 bg-zinc-900/80 border-b border-zinc-800 px-4 py-2 flex flex-wrap items-center gap-2 text-xs">
+          {gpsDenied ? (
+            <>
+              <span className="text-red-300 font-semibold">GPS gesperrt</span>
+              <span className="text-zinc-400">
+                Standortfreigabe in den Geräteeinstellungen (iOS: Einstellungen → Datenschutz → Ortungsdienste, Browser: Schloss-Symbol) erlauben.
+              </span>
+              <Button size="sm" className="h-8 bg-emerald-500 hover:bg-emerald-600 text-black font-semibold" onClick={requestGps}>
+                Standort freigeben
+              </Button>
+            </>
+          ) : gpsError ? (
+            <span className="text-amber-300">{gpsError}</span>
+          ) : null}
+
+          {activeOrder?.trip_id && (
+            <span className={cn("ml-auto flex items-center gap-1.5 font-semibold", liveGps.sharing ? "text-emerald-400" : "text-zinc-400")}>
+              <span className={cn("w-2 h-2 rounded-full", liveGps.sharing ? "bg-emerald-400 animate-pulse" : "bg-zinc-500")} />
+              {liveGps.sharing
+                ? "Live-Tracking aktiv (Fahrgäste)"
+                : trackingReleased
+                  ? "Live-Tracking bereit"
+                  : `Live ab ${trackingFromMs ? new Date(trackingFromMs).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) : ""} Uhr`}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Nächster Halt inkl. erwarteter Ankunft */}
       {nextStop && (
