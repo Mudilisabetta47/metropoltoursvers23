@@ -130,28 +130,52 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
         )}
 
 
-        <div className="rounded-2xl overflow-hidden border border-zinc-200 h-[320px]">
-          {token && position ? (
-            <Map
-              mapboxAccessToken={token}
-              initialViewState={{ longitude: position.lng, latitude: position.lat, zoom: 9 }}
-              style={{ width: "100%", height: "100%" }}
-              mapStyle="mapbox://styles/mapbox/streets-v12"
-            >
-              <NavigationControl position="top-right" />
-              <Marker longitude={position.lng} latitude={position.lat}>
-                <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg ring-4 ring-emerald-500/30">
-                  <Bus className="w-5 h-5 text-white" />
-                </div>
-              </Marker>
-            </Map>
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center text-zinc-500 gap-2 bg-zinc-50">
-              <Radio className="w-6 h-6" />
-              <p className="text-sm">Die Live-Ortung startet, sobald der Fahrer die Fahrt beginnt.</p>
-            </div>
-          )}
+        <div className="rounded-2xl overflow-hidden border border-zinc-200">
+          <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 border-b border-zinc-100 bg-white">
+            <span className={`flex items-center gap-1.5 text-xs font-semibold ${liveActive ? "text-emerald-600" : "text-zinc-500"}`}>
+              <span className={`w-2 h-2 rounded-full ${liveActive ? "bg-emerald-500 animate-pulse" : "bg-zinc-400"}`} />
+              {liveActive ? "Live-GPS vom Fahrer" : position ? "Letzte bekannte Position" : "Noch kein GPS-Signal"}
+            </span>
+            {position && (
+              <span className="text-xs text-zinc-500">
+                Aktualisiert {positionAgeLabel}
+                {position.speed_kmh != null && ` · ${Math.round(Number(position.speed_kmh))} km/h`}
+              </span>
+            )}
+          </div>
+          <div className="h-[320px]">
+            {token && position ? (
+              <Map
+                ref={mapRef}
+                mapboxAccessToken={token}
+                initialViewState={{ longitude: position.lng, latitude: position.lat, zoom: 9 }}
+                style={{ width: "100%", height: "100%" }}
+                mapStyle="mapbox://styles/mapbox/streets-v12"
+              >
+                <NavigationControl position="top-right" />
+                {stops.filter((s: any) => s.lat != null && s.lng != null).map((s: any) => (
+                  <Marker key={s.id} longitude={Number(s.lng)} latitude={Number(s.lat)}>
+                    <div className="w-3 h-3 rounded-full bg-white border-2 border-emerald-600 shadow" title={s.label} />
+                  </Marker>
+                ))}
+                <Marker longitude={position.lng} latitude={position.lat}>
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg ring-4 transition-transform ${liveActive ? "bg-emerald-500 ring-emerald-500/30" : "bg-zinc-400 ring-zinc-400/30"}`}
+                    style={position.heading != null ? { transform: `rotate(${Number(position.heading)}deg)` } : undefined}
+                  >
+                    <Bus className="w-5 h-5 text-white" />
+                  </div>
+                </Marker>
+              </Map>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-zinc-500 gap-2 bg-zinc-50">
+                <Radio className="w-6 h-6" />
+                <p className="text-sm">Die Live-Ortung startet, sobald der Fahrer seinen Standort teilt.</p>
+              </div>
+            )}
+          </div>
         </div>
+
 
         <BoardingSchedule stops={stops} />
 
