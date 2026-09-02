@@ -12,6 +12,7 @@ import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { STOP_TYPE_LABELS } from "@/lib/charterTrips";
+import BoardingSchedule, { platformOf } from "@/components/schedule/BoardingSchedule";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 interface Props {
@@ -117,6 +118,7 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
             {arriveAt && <> · Ankunft {format(arriveAt, "dd.MM.yyyy", { locale: de })} · {trip.arrival_time?.slice(0, 5)} Uhr</>}
           </p>
           {registry?.trip_uid && <p className="text-xs font-mono text-zinc-400 mt-1">{registry.trip_uid}</p>}
+          <Link to="/fahrplan" className="inline-block mt-2 text-sm font-medium text-emerald-700 underline">Kompletten Fahrplan & alle Zustiegsorte ansehen</Link>
         </div>
 
         {beforeDeparture && (
@@ -151,6 +153,8 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
           )}
         </div>
 
+        <BoardingSchedule stops={stops} />
+
         <section>
           <h2 className="text-lg font-semibold text-zinc-900 mb-3">Reiseplan</h2>
           {stops.length === 0 ? (
@@ -163,6 +167,7 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium text-zinc-900">{s.label}</span>
                     <Badge variant="outline" className="text-xs">{STOP_TYPE_LABELS[s.stop_type] || s.stop_type}</Badge>
+                    {platformOf(s) && <Badge className="text-xs bg-emerald-600 hover:bg-emerald-600">{platformOf(s)}</Badge>}
                   </div>
                   <div className="text-sm text-zinc-500 flex items-center gap-2 mt-0.5">
                     <MapPin className="w-3 h-3" />
