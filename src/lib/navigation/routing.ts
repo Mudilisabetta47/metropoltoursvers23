@@ -141,9 +141,17 @@ export async function requestRoute(
   // Reisebusse: keine unbefestigten Strecken, keine Autozüge.
   params.set("exclude", "unpaved");
 
-  const res = await fetch(`${MAPBOX_BASE}/directions/v5/mapbox/driving-traffic/${coords}?${params}`);
+  const url = (p: URLSearchParams) => `${MAPBOX_BASE}/directions/v5/mapbox/driving-traffic/${coords}?${p}`;
+  let res = await fetch(url(params));
+  if (!res.ok) {
+    // Fallback ohne Fahrzeugparameter, damit die Navigation nie komplett ausfällt.
+    const plain = new URLSearchParams(params);
+    ["max_height", "max_width", "max_weight", "exclude"].forEach((k) => plain.delete(k));
+    res = await fetch(url(plain));
+  }
   if (!res.ok) throw new Error(`Routing fehlgeschlagen (${res.status})`);
   const json = await res.json();
+
   const route = json.routes?.[0];
   if (!route) throw new Error("Keine Route gefunden");
 
