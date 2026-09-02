@@ -119,6 +119,7 @@ export async function requestRoute(
   if (points.length < 2) throw new Error("Mindestens Start und Ziel erforderlich");
 
   const coords = points.map((p) => `${p.lng},${p.lat}`).join(";");
+  const profile = opts.vehicleProfile ?? DEFAULT_COACH_PROFILE;
   const params = new URLSearchParams({
     access_token: token,
     geometries: "geojson",
@@ -132,11 +133,20 @@ export async function requestRoute(
     compute_toll_cost: "true",
   });
 
+  // Fahrzeugprofil an die Directions API übergeben, damit gesperrte
+  // Unterführungen, Brücken und Gewichtsbeschränkungen gemieden werden.
+  if (profile.heightCm) params.set("max_height", (profile.heightCm / 100).toFixed(2));
+  if (profile.widthCm) params.set("max_width", (profile.widthCm / 100).toFixed(2));
+  if (profile.weightKg) params.set("max_weight", (profile.weightKg / 1000).toFixed(2));
+  // Reisebusse: keine unbefestigten Strecken, keine Autozüge.
+  params.set("exclude", "unpaved");
+
   const res = await fetch(`${MAPBOX_BASE}/directions/v5/mapbox/driving-traffic/${coords}?${params}`);
   if (!res.ok) throw new Error(`Routing fehlgeschlagen (${res.status})`);
   const json = await res.json();
   const route = json.routes?.[0];
   if (!route) throw new Error("Keine Route gefunden");
+
 
   const steps: RouteStep[] = (route.legs ?? []).flatMap((leg: any) =>
     (leg.steps ?? []).map((s: any) => ({
