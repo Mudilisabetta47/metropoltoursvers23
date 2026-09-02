@@ -432,7 +432,7 @@ const DriverNavPage = () => {
           activeOrder.id,
         );
       }
-      if (voice) speak(`Außerplanmäßiger Halt ${name} gemeldet`);
+      speak(`Außerplanmäßiger Halt ${name} gemeldet`, voice);
       toast.success("Halt angelegt und an die Zentrale gemeldet");
     });
 
