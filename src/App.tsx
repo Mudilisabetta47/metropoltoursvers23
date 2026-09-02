@@ -28,6 +28,7 @@ const ReisenPage = lazy(() => import("./pages/ReisenPage"));
 const BusinessServicesPage = lazy(() => import("./pages/BusinessServicesPage"));
 const BookingsPage = lazy(() => import("./pages/BookingsPage"));
 const TrackBookingPage = lazy(() => import("./pages/TrackBookingPage"));
+const FahrplanPage = lazy(() => import("./pages/FahrplanPage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const ImprintPage = lazy(() => import("./pages/ImprintPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
@@ -166,7 +167,7 @@ const PublicGate = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   
   // Always allow auth, admin, reset-password, legal pages
-  const bypassPaths = ['/auth', '/admin', '/fahrer', '/reset-password', '/imprint', '/privacy', '/terms', '/widerruf', '/passagierdaten', '/verfolge', '/.lovable/oauth/consent'];
+  const bypassPaths = ['/auth', '/admin', '/fahrer', '/reset-password', '/imprint', '/privacy', '/terms', '/widerruf', '/passagierdaten', '/verfolge', '/fahrplan', '/.lovable/oauth/consent'];
   const isBypassed = bypassPaths.some(p => location.pathname.startsWith(p));
   
   if (isBypassed) return <>{children}</>;
@@ -334,6 +335,7 @@ const App = () => (
              <Route path="/admin/trips" element={<AdminTrips />} />
              <Route path="/admin/fahrten" element={<AdminCharterTrips />} />
              <Route path="/admin/fahrten/:tripId" element={<AdminCharterTripDetail />} />
+              <Route path="/fahrplan" element={<FahrplanPage />} />
               <Route path="/verfolge" element={<TrackTripLandingPage />} />
               <Route path="/verfolge/:tripNumber" element={<TrackTripPage />} />
               <Route path="/fahrer/navi" element={<DriverNavPage />} />
