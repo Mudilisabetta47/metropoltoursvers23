@@ -182,7 +182,7 @@ const CheckoutPage = () => {
       const today = new Date().toISOString().split('T')[0];
       const { data: trips, error: tripsError } = await supabase
         .from('trips')
-        .select(`*, route:routes(*), bus:buses(*)`)
+        .select(`id, route_id, bus_id, departure_date, departure_time, arrival_time, base_price, is_active, created_at, updated_at, arrival_date, title, trip_category, seat_capacity, status, route:routes(*), bus:buses(*)`)
         .eq('route_id', routeId)
         .eq('is_active', true)
         .gte('departure_date', today)
