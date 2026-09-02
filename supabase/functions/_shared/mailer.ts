@@ -24,6 +24,10 @@ export interface SendMailOptions {
   subject: string;
   html: string;
   attachments?: MailAttachment[];
+  /** Setzt X-Priority/Importance-Header für hohe Priorität */
+  priority?: "high" | "normal";
+  /** Zusätzliche SMTP-Header */
+  headers?: Record<string, string>;
   /** Logging-Kontext */
   template: string;
   bookingNumber?: string | null;
