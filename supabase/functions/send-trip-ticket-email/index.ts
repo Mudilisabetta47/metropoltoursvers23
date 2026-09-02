@@ -105,7 +105,9 @@ serve(async (req) => {
       const res = await sendMail(admin, {
         from: FROM_BOOKING,
         to,
+        bcc: ["kundenservice@metours.de"],
         subject: `Buchungsbestätigung ${b.booking_number ?? b.ticket_number} – METROPOL TOURS`,
+
         html: emailLayout({ title: "Buchungsbestätigung", preheader: `Ihre Fahrt: ${routeName}`, subtitle: "Buchungsbestätigung", content }),
         template: "trip_booking_confirmation",
         bookingNumber: b.booking_number,
