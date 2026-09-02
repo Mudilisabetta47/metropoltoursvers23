@@ -8402,6 +8402,24 @@ export type Database = {
           valid_scans: number
         }[]
       }
+      get_trip_manifest: {
+        Args: { p_trip_id: string }
+        Returns: {
+          boarded: boolean
+          booking_id: string
+          booking_number: string
+          booking_status: string
+          passenger_first_name: string
+          passenger_last_name: string
+          passenger_phone: string
+          seat_number: string
+          sort_order: number
+          stop_city: string
+          stop_id: string
+          stop_name: string
+          ticket_number: string
+        }[]
+      }
       get_user_email: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
