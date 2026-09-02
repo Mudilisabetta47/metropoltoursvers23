@@ -43,7 +43,9 @@ export const STOP_TYPE_LABEL: Record<string, string> = {
   toll: "Mautstelle",
   border: "Grenzübergang",
   destination: "Ziel",
+  unscheduled: "Außerplanmäßiger Halt",
 };
+
 
 /** Haltestellen, Mautabschnitte und Verspätung eines Fahrauftrags – mit Realtime. */
 export const useOrderStops = (orderId: string | undefined | null) => {
