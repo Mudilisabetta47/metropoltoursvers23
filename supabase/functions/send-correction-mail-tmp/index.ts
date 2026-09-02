@@ -134,7 +134,9 @@ serve(async (req) => {
         records: records.map((r) => ({ record: r?.record, status: r?.status })),
       };
     } catch (e) {
-      return json({ error: `Mailversand abgebrochen: Mailserver nicht erreichbar (${(e as Error).message}).` }, 502);
+      if ((e as Error).message !== "__skip_domain_check__") {
+        return json({ error: `Mailversand abgebrochen: Mailserver nicht erreichbar (${(e as Error).message}).` }, 502);
+      }
     }
     if (body?.preflightOnly) return json({ preflight });
 
