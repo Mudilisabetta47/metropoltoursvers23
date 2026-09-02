@@ -72,7 +72,20 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
   }
 
   const delay = registry?.current_delay_min || 0;
-  const running = trip.status === "running";
+  const departAt = new Date(`${trip.departure_date}T${trip.departure_time || "00:00:00"}`);
+  const arriveAt = trip.arrival_date ? new Date(`${trip.arrival_date}T${trip.arrival_time || "00:00:00"}`) : null;
+  const beforeDeparture = now < departAt.getTime();
+  const running = trip.status === "running" || (!beforeDeparture && trip.status !== "completed" && (!arriveAt || now < arriveAt.getTime()));
+  const arrived = trip.status === "completed" || (!!arriveAt && now >= arriveAt.getTime() && trip.status !== "running");
+
+  const statusLabel = beforeDeparture ? "Geplant" : running ? "Unterwegs" : arrived ? "Angekommen" : "Geplant";
+  const statusClass = beforeDeparture ? "bg-blue-500" : running ? "bg-emerald-500" : "bg-zinc-500";
+
+  const diff = departAt.getTime() - now;
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const countdown = d > 0 ? `${d} Tag${d === 1 ? "" : "e"}, ${h} Std.` : h > 0 ? `${h} Std. ${m} Min.` : `${Math.max(m, 0)} Min.`;
 
   return (
     <div className="min-h-screen bg-white">
@@ -88,17 +101,25 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-bold text-zinc-900">{trip.title || "Ihre Fahrt"}</h1>
-            <Badge className={running ? "bg-emerald-500" : trip.status === "completed" ? "bg-zinc-500" : "bg-blue-500"}>
-              {running ? "Unterwegs" : trip.status === "completed" ? "Angekommen" : "Geplant"}
-            </Badge>
+            <Badge className={statusClass}>{statusLabel}</Badge>
             {delay > 0 && <Badge className="bg-amber-500">+{delay} Min. Verspätung</Badge>}
           </div>
           <p className="text-zinc-500 mt-1 flex items-center gap-2 text-sm">
             <Clock className="w-4 h-4" />
-            Abfahrt {format(new Date(trip.departure_date), "dd.MM.yyyy", { locale: de })} · {trip.departure_time?.slice(0, 5)} Uhr
+            Abfahrt {format(departAt, "EEEE, dd.MM.yyyy", { locale: de })} · {trip.departure_time?.slice(0, 5)} Uhr
+            {arriveAt && <> · Ankunft {format(arriveAt, "dd.MM.yyyy", { locale: de })} · {trip.arrival_time?.slice(0, 5)} Uhr</>}
           </p>
           {registry?.trip_uid && <p className="text-xs font-mono text-zinc-400 mt-1">{registry.trip_uid}</p>}
         </div>
+
+        {beforeDeparture && (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4">
+            <p className="text-sm text-emerald-800">Die Fahrt hat noch nicht begonnen.</p>
+            <p className="text-2xl font-bold text-emerald-900 mt-1">Abfahrt in {countdown}</p>
+            <p className="text-xs text-emerald-700 mt-1">Die Live-Ortung wird automatisch aktiv, sobald der Bus losfährt.</p>
+          </div>
+        )}
+
 
         <div className="rounded-2xl overflow-hidden border border-zinc-200 h-[320px]">
           {token && position ? (
