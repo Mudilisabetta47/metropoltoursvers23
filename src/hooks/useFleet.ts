@@ -54,7 +54,12 @@ export interface DispatchOrder {
   second_driver_user_id: string | null;
   toll_data_available: boolean | null;
   is_test: boolean;
+  /** Verknüpfte Fahrt (Linien-/Promotionfahrt) für die öffentliche Live-Verfolgung. */
+  trip_id?: string | null;
+  /** Ab diesem Zeitpunkt wird der Live-Standort für Fahrgäste veröffentlicht. */
+  live_tracking_from?: string | null;
 }
+
 
 
 export interface FleetPosition {
