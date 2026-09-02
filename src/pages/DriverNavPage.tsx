@@ -98,6 +98,28 @@ const DriverNavPage = () => {
   );
   const manifest = useTripManifest(user?.id, manifestDate);
 
+  // Öffentliche Live-Verfolgung: nur für die verknüpfte Fahrt und erst ab Freigabezeit
+  const trackingFromMs = useMemo(() => {
+    const raw = activeOrder?.live_tracking_from ?? activeOrder?.departure_at ?? null;
+    return raw ? new Date(raw).getTime() : null;
+  }, [activeOrder?.live_tracking_from, activeOrder?.departure_at]);
+  const [clock, setClock] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setClock(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
+  const trackingReleased = trackingFromMs == null || clock >= trackingFromMs;
+  const liveGps = useLiveGpsBroadcast({
+    tripId: activeOrder?.trip_id ?? null,
+    active: Boolean(activeOrder?.trip_id) && trackingReleased && activeOrder?.status !== "arrived",
+    status:
+      activeOrder?.status === "en_route" ? "on_route"
+        : activeOrder?.status === "paused" ? "break"
+        : activeOrder?.status === "arrived" ? "arrived" : "ready",
+  });
+
+
+
 
   // Online/Offline
   useEffect(() => {
