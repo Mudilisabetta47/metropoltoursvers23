@@ -6,6 +6,8 @@ import { de } from "date-fns/locale";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { STOP_TYPE_LABELS } from "@/lib/charterTrips";
+import { useLiveGpsBroadcast } from "@/hooks/useLiveGpsBroadcast";
+
 
 interface Trip {
   id: string;
