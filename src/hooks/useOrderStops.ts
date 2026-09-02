@@ -43,7 +43,9 @@ export const STOP_TYPE_LABEL: Record<string, string> = {
   toll: "Mautstelle",
   border: "Grenzübergang",
   destination: "Ziel",
+  unscheduled: "Außerplanmäßiger Halt",
 };
+
 
 /** Haltestellen, Mautabschnitte und Verspätung eines Fahrauftrags – mit Realtime. */
 export const useOrderStops = (orderId: string | undefined | null) => {
@@ -112,6 +114,66 @@ export const useOrderStops = (orderId: string | undefined | null) => {
     [stops, load],
   );
 
+  /** Außerplanmäßigen Halt an der aktuellen Position anlegen – erscheint sofort im Tracking. */
+  const addUnscheduledStop = useCallback(
+    async (input: {
+      name: string;
+      notes?: string | null;
+      lat?: number | null;
+      lng?: number | null;
+      arrivedNow?: boolean;
+    }) => {
+      if (!orderId) throw new Error("Kein aktiver Fahrauftrag");
+      const pending = stops.filter((s) => !s.actual_departure);
+      const insertAt = pending.length ? pending[0].sort_order : (stops.at(-1)?.sort_order ?? -1) + 1;
+
+      // Nachfolgende Halte nach hinten schieben, damit die Reihenfolge stimmt
+      await Promise.all(
+        stops
+          .filter((s) => s.sort_order >= insertAt)
+          .map((s) =>
+            db.from("dispatch_order_stops").update({ sort_order: s.sort_order + 1 }).eq("id", s.id),
+          ),
+      );
+
+      const now = new Date().toISOString();
+      const { data, error } = await db
+        .from("dispatch_order_stops")
+        .insert({
+          order_id: orderId,
+          sort_order: insertAt,
+          name: input.name.trim(),
+          notes: input.notes?.trim() || null,
+          stop_type: "unscheduled",
+          lat: input.lat ?? null,
+          lng: input.lng ?? null,
+          planned_arrival: now,
+          actual_arrival: input.arrivedNow === false ? null : now,
+          dwell_minutes: 0,
+        })
+        .select()
+        .maybeSingle();
+      if (error) throw error;
+      await load();
+      return data as OrderStop | null;
+    },
+    [orderId, stops, load],
+  );
+
+  /** Selbst angelegten außerplanmäßigen Halt wieder entfernen. */
+  const removeUnscheduledStop = useCallback(
+    async (stopId: string) => {
+      const { error } = await db
+        .from("dispatch_order_stops")
+        .delete()
+        .eq("id", stopId)
+        .eq("stop_type", "unscheduled");
+      if (error) throw error;
+      await load();
+    },
+    [load],
+  );
+
   /** Erwartete Ankunft je Halt inkl. aktueller Verspätung. */
   const expectedArrival = useCallback(
     (stop: OrderStop, delayMinutes: number) => {
@@ -122,8 +184,20 @@ export const useOrderStops = (orderId: string | undefined | null) => {
     [],
   );
 
-  return { stops, tolls, nextStop, isLoading, reload: load, markArrival, markDeparture, expectedArrival };
+  return {
+    stops,
+    tolls,
+    nextStop,
+    isLoading,
+    reload: load,
+    markArrival,
+    markDeparture,
+    expectedArrival,
+    addUnscheduledStop,
+    removeUnscheduledStop,
+  };
 };
+
 
 /** Mautabschnitte einer berechneten Route für den Auftrag speichern. */
 export const saveRouteTolls = async (

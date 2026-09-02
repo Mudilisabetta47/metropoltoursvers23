@@ -80,8 +80,11 @@ const DriverNavPage = () => {
   );
   const incoming = activeOrder?.status === "sent" ? activeOrder : undefined;
 
-  const { stops, tolls, nextStop, markArrival, markDeparture, reload: reloadStops } =
-    useOrderStops(activeOrder?.id);
+  const {
+    stops, tolls, nextStop, markArrival, markDeparture, reload: reloadStops,
+    addUnscheduledStop, removeUnscheduledStop,
+  } = useOrderStops(activeOrder?.id);
+
   const { compliance, today: dutyToday, startDriving, stopDriving, setMultiDriver } =
     useDrivingTime(user?.id);
   const delayMinutes = activeOrder?.delay_minutes ?? 0;
@@ -410,6 +413,35 @@ const DriverNavPage = () => {
       setRoute(null);
     });
 
+  /** Außerplanmäßigen Halt anlegen – inkl. GPS, Ereignisprotokoll und Meldung an die Zentrale. */
+  const addUnscheduled = ({ name, notes, useGps }: { name: string; notes: string; useGps: boolean }) =>
+    act(async () => {
+      if (!activeOrder) throw new Error("Kein aktiver Fahrauftrag");
+      const stop = await addUnscheduledStop({
+        name,
+        notes,
+        lat: useGps ? pos?.lat ?? null : null,
+        lng: useGps ? pos?.lng ?? null : null,
+      });
+      await logEvent("unscheduled_stop", { reason: name, note: notes, stopId: stop?.id });
+      if (user) {
+        await send(
+          `🟠 Außerplanmäßiger Halt: ${name}${notes.trim() ? ` – ${notes.trim()}` : ""}`,
+          user.id,
+          "driver",
+          activeOrder.id,
+        );
+      }
+      speak(`Außerplanmäßiger Halt ${name} gemeldet`, voice);
+      toast.success("Halt angelegt und an die Zentrale gemeldet");
+    });
+
+  const removeUnscheduled = (stopId: string) =>
+    act(async () => {
+      await removeUnscheduledStop(stopId);
+      toast.success("Halt entfernt");
+    });
+
   const navigateToStop = (stop: OrderStop) => {
     if (stop.lat == null || stop.lng == null) return;
     setManualTarget({ lat: Number(stop.lat), lng: Number(stop.lng) });
@@ -417,6 +449,7 @@ const DriverNavPage = () => {
     setSheetTab(null);
     toast.info(`Neues Zwischenziel: ${stop.name}`);
   };
+
 
   const reportProblem = () => activeOrder && user && act(async () => {
     const text = window.prompt("Was ist das Problem?") ?? "";
@@ -731,8 +764,13 @@ const DriverNavPage = () => {
                 onArrive={stopArrive}
                 onDepart={stopDepart}
                 onNavigate={navigateToStop}
+                onAddUnscheduled={addUnscheduled}
+                onRemoveUnscheduled={removeUnscheduled}
+                canEdit={!!activeOrder}
+                hasGps={!!pos}
                 busy={busy}
               />
+
             </TabsContent>
             <TabsContent value="manifest" className="mt-4">
               <ManifestPanel
