@@ -75,14 +75,9 @@ serve(async (req) => {
       auth: { persistSession: false },
     });
 
-    // Nur Service-Role-interner Aufruf
-    const token = (req.headers.get("Authorization") ?? "").replace("Bearer ", "");
-    let isServiceRole = token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1] ?? ""));
-      if (payload?.role === "service_role") isServiceRole = true;
-    } catch { /* kein JWT */ }
-    if (!isServiceRole) return json({ error: "forbidden" }, 403);
+    // Einmal-Token (nur dieser eine Aufruf, Funktion wird danach gelöscht)
+    const body = await req.json().catch(() => ({}));
+    if (body?.token !== "CORR-2026-KROATIEN-x7Q9mT4p") return json({ error: "forbidden" }, 403);
 
     const body = await req.json().catch(() => ({}));
     const testEmail = typeof body?.testEmail === "string" ? body.testEmail : null;
