@@ -84,12 +84,17 @@ serve(async (req) => {
     } catch { /* kein JWT */ }
     if (!isServiceRole) return json({ error: "forbidden" }, 403);
 
-    const { data: bookings, error } = await admin
+    const body = await req.json().catch(() => ({}));
+    const testEmail = typeof body?.testEmail === "string" ? body.testEmail : null;
+
+    let query = admin
       .from("bookings")
       .select("booking_number, passenger_email, passenger_first_name")
       .gte("booking_number", "MT-2026-001101")
       .lte("booking_number", "MT-2026-001134")
       .order("booking_number");
+    if (testEmail) query = query.eq("passenger_email", testEmail).limit(1);
+    const { data: bookings, error } = await query;
     if (error) return json({ error: error.message }, 500);
 
     const results: { booking: string; email: string; ok: boolean; err: string | null }[] = [];
