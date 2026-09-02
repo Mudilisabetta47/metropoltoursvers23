@@ -99,6 +99,39 @@ serve(async (req) => {
 
     const testEmail = typeof body?.testEmail === "string" ? body.testEmail : null;
 
+    // ---- Preflight: API-Key, Absenderdomain, SPF/DKIM/DMARC-Status prüfen ----
+    const apiKey = Deno.env.get("RESEND_API_KEY");
+    if (!apiKey) return json({ error: "Mailversand nicht möglich: RESEND_API_KEY fehlt." }, 500);
+    let preflight: Record<string, unknown> = {};
+    try {
+      const dres = await fetch("https://api.resend.com/domains", {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      });
+      const dbody = await dres.json().catch(() => ({}));
+      if (!dres.ok) {
+        return json({ error: `Mailversand abgebrochen: Authentifizierung beim Mailserver fehlgeschlagen (${dres.status}).` }, 502);
+      }
+      const list: any[] = dbody?.data ?? [];
+      const domain = list.find((d) => d?.name === SENDER_DOMAIN);
+      if (!domain) {
+        return json({ error: `Mailversand abgebrochen: Absenderdomain ${SENDER_DOMAIN} ist beim Mailserver nicht eingerichtet.` }, 502);
+      }
+      if (domain.status !== "verified") {
+        return json({ error: `Mailversand abgebrochen: Absenderdomain ${SENDER_DOMAIN} ist nicht verifiziert (Status: ${domain.status}). SPF/DKIM prüfen.` }, 502);
+      }
+      const records: any[] = domain.records ?? [];
+      preflight = {
+        domain: domain.name,
+        status: domain.status,
+        spf: records.some((r) => String(r?.value ?? "").includes("spf")) ? "ok" : "fehlt",
+        dkim: records.some((r) => String(r?.record ?? "").toUpperCase() === "DKIM") ? "ok" : "fehlt",
+        records: records.map((r) => ({ record: r?.record, status: r?.status })),
+      };
+    } catch (e) {
+      return json({ error: `Mailversand abgebrochen: Mailserver nicht erreichbar (${(e as Error).message}).` }, 502);
+    }
+    if (body?.preflightOnly) return json({ preflight });
+
     let query = admin
       .from("bookings")
       .select("id, booking_number, ticket_number, passenger_email, passenger_first_name, seats(seat_number), origin_stop:stops!bookings_origin_stop_id_fkey(name, city), destination_stop:stops!bookings_destination_stop_id_fkey(name, city), trips(title, routes(name, description))")
