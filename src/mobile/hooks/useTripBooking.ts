@@ -38,7 +38,7 @@ export const TRIP_CATEGORY_LABEL: Record<string, string> = {
   private: "Individuelle Fahrt",
   group: "Gruppenfahrt",
   special: "Sonderfahrt",
-  maiden: "Jungfernfahrt",
+  maiden: "Promotionfahrt 2026",
 };
 
 /** Buchbare Fahrten – Linien-, Charter- und Individualfahrten. */
