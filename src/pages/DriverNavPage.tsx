@@ -80,8 +80,11 @@ const DriverNavPage = () => {
   );
   const incoming = activeOrder?.status === "sent" ? activeOrder : undefined;
 
-  const { stops, tolls, nextStop, markArrival, markDeparture, reload: reloadStops } =
-    useOrderStops(activeOrder?.id);
+  const {
+    stops, tolls, nextStop, markArrival, markDeparture, reload: reloadStops,
+    addUnscheduledStop, removeUnscheduledStop,
+  } = useOrderStops(activeOrder?.id);
+
   const { compliance, today: dutyToday, startDriving, stopDriving, setMultiDriver } =
     useDrivingTime(user?.id);
   const delayMinutes = activeOrder?.delay_minutes ?? 0;
