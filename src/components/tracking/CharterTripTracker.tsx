@@ -29,11 +29,20 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
   const [position, setPosition] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(() => Date.now());
+  const mapRef = useRef<any>(null);
 
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 30000);
+    const t = setInterval(() => setNow(Date.now()), 10000);
     return () => clearInterval(t);
   }, []);
+
+  // Karte folgt der echten Busposition
+  useEffect(() => {
+    if (!position || !mapRef.current) return;
+    const map = mapRef.current.getMap?.() ?? mapRef.current;
+    map?.easeTo?.({ center: [Number(position.lng), Number(position.lat)], duration: 1200 });
+  }, [position?.lat, position?.lng]);
+
 
 
   useEffect(() => {
