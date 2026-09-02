@@ -79,7 +79,6 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     if (body?.token !== "CORR-2026-KROATIEN-x7Q9mT4p") return json({ error: "forbidden" }, 403);
 
-    const body = await req.json().catch(() => ({}));
     const testEmail = typeof body?.testEmail === "string" ? body.testEmail : null;
 
     let query = admin
