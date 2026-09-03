@@ -92,20 +92,27 @@ export default function BoardingSchedule({
               </div>
 
               <div className="mt-3 flex items-center gap-2 text-sm">
-                <Clock className="w-4 h-4 text-zinc-400" />
+                <Clock className={`w-4 h-4 ${delay > 0 ? "text-amber-500" : "text-zinc-400"}`} />
                 {dep ? (
                   <span className="text-zinc-900">
-                    <strong className="text-base">{format(dep, "HH:mm")} Uhr</strong>
+                    {delay > 0 && depPlanned && (
+                      <span className="text-zinc-400 line-through mr-1.5">{format(depPlanned, "HH:mm")}</span>
+                    )}
+                    <strong className={`text-base ${delay > 0 ? "text-amber-700" : ""}`}>{format(dep, "HH:mm")} Uhr</strong>
                     <span className="text-zinc-500"> · {format(dep, "EEEE, dd.MM.yyyy", { locale: de })}</span>
                   </span>
                 ) : arr ? (
                   <span className="text-zinc-600">
+                    {delay > 0 && arrPlanned && (
+                      <span className="text-zinc-400 line-through mr-1.5">{format(arrPlanned, "HH:mm")}</span>
+                    )}
                     an {format(arr, "dd.MM.yyyy HH:mm")} Uhr
                   </span>
                 ) : (
                   <span className="text-zinc-500">Abfahrtszeit folgt</span>
                 )}
               </div>
+
             </div>
           );
         })}
