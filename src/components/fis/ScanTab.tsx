@@ -182,10 +182,16 @@ const ScanTab = ({ userId }: { userId: string }) => {
           } catch (err: any) {
             lastError = err;
             const status: number | undefined = err?.status;
+            if (status === 401 && attempt === 1) {
+              // Token abgelaufen -> einmal erneuern und nochmal versuchen
+              await supabase.auth.refreshSession();
+              continue;
+            }
             const retryable = status === undefined || status === 429 || status >= 500;
             if (!retryable || attempt === MAX_ATTEMPTS) break;
             await sleep(400 * attempt);
           }
+
         }
       }
 
