@@ -24,6 +24,8 @@ export interface MyTrip {
   contact_email: string | null;
   tour: { id: string; destination: string; country: string | null; hero_image_url: string | null } | null;
   tour_date: { id: string; departure_date: string; return_date: string | null } | null;
+  /** Echter Zustiegsort (Stadt) des Kunden – nie hart codieren. */
+  origin: string | null;
   invoices: MyTripInvoice[];
   events: any[];
 }
@@ -71,7 +73,7 @@ export function useMyTrips() {
           supabase
             .from("tour_bookings")
             .select(
-              "id, booking_number, status, participants, total_price, payment_method, paid_at, created_at, contact_first_name, contact_last_name, contact_email, package_tours:tour_id (id, destination, country, hero_image_url), tour_dates:tour_date_id (id, departure_date, return_date)",
+              "id, booking_number, status, participants, total_price, payment_method, paid_at, created_at, contact_first_name, contact_last_name, contact_email, package_tours:tour_id (id, destination, country, hero_image_url), tour_dates:tour_date_id (id, departure_date, return_date), tour_pickup_stops:pickup_stop_id (city, location_name)",
             )
             .eq("user_id", userId)
             .order("created_at", { ascending: false })
@@ -79,7 +81,7 @@ export function useMyTrips() {
           supabase
             .from("bookings")
             .select(
-              "id, booking_number, ticket_number, status, payment_status, payment_method, price_paid, created_at, passenger_first_name, passenger_last_name, passenger_email, trips:trip_id (id, title, departure_date, arrival_date, routes (name))",
+              "id, booking_number, ticket_number, status, payment_status, payment_method, price_paid, created_at, passenger_first_name, passenger_last_name, passenger_email, stops:origin_stop_id (city, name), trips:trip_id (id, title, departure_date, arrival_date, routes (name))",
             )
             .eq("user_id", userId)
             .order("created_at", { ascending: false })
