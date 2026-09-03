@@ -26,6 +26,8 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
   const { toast } = useToast();
   const [trip, setTrip] = useState<any>(null);
   const [stops, setStops] = useState<any[]>([]);
+  const [liveStops, setLiveStops] = useState<any[]>([]);
+  const [liveRegistry, setLiveRegistry] = useState<any>(null);
   const [position, setPosition] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(() => Date.now());
@@ -43,7 +45,22 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
     map?.easeTo?.({ center: [Number(position.lng), Number(position.lat)], duration: 1200 });
   }, [position?.lat, position?.lng]);
 
-
+  // Live-Halte (inkl. außerplanmäßiger Halte) & aktuelle Verspätung regelmäßig laden
+  useEffect(() => {
+    let active = true;
+    const loadLive = async () => {
+      const [ls, reg] = await Promise.all([
+        (supabase as any).rpc("get_public_trip_live_stops", { p_trip_id: tripId }),
+        supabase.from("trip_registry").select("current_delay_min, delay_reason, delay_updated_at, status").eq("source_id", tripId).maybeSingle(),
+      ]);
+      if (!active) return;
+      setLiveStops((ls?.data as any[]) || []);
+      if (reg.data) setLiveRegistry(reg.data);
+    };
+    loadLive();
+    const t = setInterval(loadLive, 30000);
+    return () => { active = false; clearInterval(t); };
+  }, [tripId]);
 
   useEffect(() => {
     (async () => {
@@ -66,6 +83,7 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [tripId]);
+
 
   const share = async () => {
     const url = window.location.href;
@@ -99,7 +117,9 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
           ? `vor ${Math.round(positionAgeMs / 60000)} Min.`
           : `am ${format(new Date(position.updated_at), "dd.MM. HH:mm")} Uhr`;
 
-  const delay = registry?.current_delay_min || 0;
+  const delay = Number(liveRegistry?.current_delay_min ?? registry?.current_delay_min ?? 0) || 0;
+  const delayReason = liveRegistry?.delay_reason ?? registry?.delay_reason ?? null;
+  const unscheduledStops = liveStops.filter((s: any) => s.stop_type === "unscheduled");
 
   const departAt = new Date(`${trip.departure_date}T${trip.departure_time || "00:00:00"}`);
   const arriveAt = trip.arrival_date ? new Date(`${trip.arrival_date}T${trip.arrival_time || "00:00:00"}`) : null;
@@ -181,6 +201,11 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
                     <div className="w-3 h-3 rounded-full bg-white border-2 border-emerald-600 shadow" title={s.label} />
                   </Marker>
                 ))}
+                {unscheduledStops.filter((s: any) => s.lat != null && s.lng != null).map((s: any) => (
+                  <Marker key={`u-${s.id}`} longitude={Number(s.lng)} latitude={Number(s.lat)}>
+                    <div className="w-4 h-4 rounded-full bg-amber-500 border-2 border-white shadow" title={`Außerplanmäßiger Halt: ${s.name}`} />
+                  </Marker>
+                ))}
                 <Marker longitude={position.lng} latitude={position.lat}>
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg ring-4 transition-transform ${liveActive ? "bg-emerald-500 ring-emerald-500/30" : "bg-zinc-400 ring-zinc-400/30"}`}
@@ -204,9 +229,41 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
         </div>
 
 
+        {delay > 0 && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
+            <p className="text-sm font-semibold text-amber-900 flex items-center gap-2">
+              <Clock className="w-4 h-4" /> Aktuelle Verspätung: +{delay} Minuten
+            </p>
+            {delayReason && <p className="text-sm text-amber-800 mt-1">Grund: {delayReason}</p>}
+            <p className="text-xs text-amber-700 mt-1">Vom Fahrer gemeldet – die Ankunftszeiten verschieben sich entsprechend.</p>
+          </div>
+        )}
 
+        {unscheduledStops.length > 0 && (
+          <section className="rounded-2xl border border-amber-200 bg-white px-5 py-4">
+            <h2 className="text-base font-semibold text-zinc-900 mb-2">Außerplanmäßige Halte</h2>
+            <ul className="space-y-2">
+              {unscheduledStops.map((s: any) => (
+                <li key={s.id} className="flex items-start gap-2 text-sm">
+                  <span className="mt-1.5 w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
+                  <div>
+                    <p className="font-medium text-zinc-900">{s.name}</p>
+                    <p className="text-zinc-500 text-xs">
+                      {s.actual_arrival
+                        ? `Halt seit ${format(new Date(s.actual_arrival), "dd.MM. HH:mm")} Uhr`
+                        : "Halt angekündigt"}
+                      {s.actual_departure && ` · weiter ab ${format(new Date(s.actual_departure), "HH:mm")} Uhr`}
+                    </p>
+                    {s.notes && <p className="text-zinc-600 text-xs mt-0.5">{s.notes}</p>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <BoardingSchedule stops={stops} />
+
 
         <section>
           <h2 className="text-lg font-semibold text-zinc-900 mb-3">Reiseplan</h2>

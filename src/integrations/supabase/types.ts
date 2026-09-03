@@ -8406,6 +8406,22 @@ export type Database = {
           token: string
         }[]
       }
+      get_public_trip_live_stops: {
+        Args: { p_trip_id: string }
+        Returns: {
+          actual_arrival: string
+          actual_departure: string
+          id: string
+          lat: number
+          lng: number
+          name: string
+          notes: string
+          planned_arrival: string
+          planned_departure: string
+          sort_order: number
+          stop_type: string
+        }[]
+      }
       get_scanner_stats_hourly: {
         Args: never
         Returns: {
