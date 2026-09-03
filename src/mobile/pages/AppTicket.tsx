@@ -105,7 +105,9 @@ export default function AppTicket() {
                 <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/45">
                   Abfahrt
                 </p>
-                <p className="truncate text-[22px] font-extrabold leading-tight">Hannover</p>
+                <p className="truncate text-[22px] font-extrabold leading-tight">
+                  {trip?.origin ?? "Hannover"}
+                </p>
                 <p className="text-[12px] font-semibold text-white/60">
                   {departure ? format(parseISO(departure), "dd.MM.yyyy", { locale: de }) : "–"}
                 </p>
