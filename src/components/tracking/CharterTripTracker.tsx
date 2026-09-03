@@ -26,6 +26,8 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
   const { toast } = useToast();
   const [trip, setTrip] = useState<any>(null);
   const [stops, setStops] = useState<any[]>([]);
+  const [liveStops, setLiveStops] = useState<any[]>([]);
+  const [liveRegistry, setLiveRegistry] = useState<any>(null);
   const [position, setPosition] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(() => Date.now());
