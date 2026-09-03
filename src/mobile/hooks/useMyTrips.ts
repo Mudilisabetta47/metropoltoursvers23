@@ -105,6 +105,7 @@ export function useMyTrips() {
           contact_email: b.contact_email,
           tour: b.package_tours ?? null,
           tour_date: b.tour_dates ?? null,
+          origin: b.tour_pickup_stops?.city ?? b.tour_pickup_stops?.location_name ?? null,
           invoices: [],
           events: [],
         }));
@@ -140,6 +141,7 @@ export function useMyTrips() {
             tour_date: b.trips?.departure_date
               ? { id: b.trips.id, departure_date: b.trips.departure_date, return_date: b.trips.arrival_date ?? null }
               : null,
+            origin: b.stops?.city ?? b.stops?.name ?? null,
             invoices: [],
             events: [],
           });
@@ -183,6 +185,7 @@ export function useMyTrips() {
             contact_first_name: b.contact_first_name,
             contact_last_name: b.contact_last_name,
             destination: b.tour?.destination ?? null,
+            origin: b.origin ?? null,
             departure_date: b.tour_date?.departure_date ?? null,
             return_date: b.tour_date?.return_date ?? null,
           })),
@@ -213,6 +216,7 @@ export function useMyTrips() {
               tour_date: c.departure_date
                 ? { id: "", departure_date: c.departure_date, return_date: c.return_date }
                 : null,
+              origin: c.origin ?? null,
               invoices: [],
               events: [],
             })),
