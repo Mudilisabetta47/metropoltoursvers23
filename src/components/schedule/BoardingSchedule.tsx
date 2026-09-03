@@ -33,6 +33,8 @@ interface Props {
   stops: BoardingStop[];
   title?: string;
   subtitle?: string;
+  /** Aktuelle Verspätung in Minuten – verschiebt die angezeigten Zeiten. */
+  delayMinutes?: number;
 }
 
 /** Übersicht aller Zustiegsorte mit Abfahrtszeit und Steig. */
@@ -40,20 +42,32 @@ export default function BoardingSchedule({
   stops,
   title = "Zustiegsorte & Abfahrtszeiten",
   subtitle = "Bitte seien Sie 15 Minuten vor Abfahrt am Zustiegsort.",
+  delayMinutes = 0,
 }: Props) {
   const list = boardingStops(stops);
   if (list.length === 0) return null;
+
+  const delay = Number(delayMinutes) || 0;
+  const shift = (d: Date) => new Date(d.getTime() + delay * 60000);
 
   return (
     <section>
       <h2 className="text-lg font-semibold text-zinc-900">{title}</h2>
       <p className="text-sm text-zinc-500 mt-0.5">{subtitle}</p>
+      {delay > 0 && (
+        <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900">
+          <Clock className="w-3 h-3" /> +{delay} Min. Verspätung – Zeiten neu berechnet
+        </p>
+      )}
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         {list.map((s, i) => {
           const platform = platformOf(s);
-          const dep = s.planned_departure ? new Date(s.planned_departure) : null;
-          const arr = s.planned_arrival ? new Date(s.planned_arrival) : null;
+          const depPlanned = s.planned_departure ? new Date(s.planned_departure) : null;
+          const arrPlanned = s.planned_arrival ? new Date(s.planned_arrival) : null;
+          const dep = depPlanned && delay > 0 ? shift(depPlanned) : depPlanned;
+          const arr = arrPlanned && delay > 0 ? shift(arrPlanned) : arrPlanned;
+
           return (
             <div
               key={s.id ?? `${s.label}-${i}`}
