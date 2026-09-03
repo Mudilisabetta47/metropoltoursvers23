@@ -229,9 +229,41 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
         </div>
 
 
+        {delay > 0 && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
+            <p className="text-sm font-semibold text-amber-900 flex items-center gap-2">
+              <Clock className="w-4 h-4" /> Aktuelle Verspätung: +{delay} Minuten
+            </p>
+            {delayReason && <p className="text-sm text-amber-800 mt-1">Grund: {delayReason}</p>}
+            <p className="text-xs text-amber-700 mt-1">Vom Fahrer gemeldet – die Ankunftszeiten verschieben sich entsprechend.</p>
+          </div>
+        )}
 
+        {unscheduledStops.length > 0 && (
+          <section className="rounded-2xl border border-amber-200 bg-white px-5 py-4">
+            <h2 className="text-base font-semibold text-zinc-900 mb-2">Außerplanmäßige Halte</h2>
+            <ul className="space-y-2">
+              {unscheduledStops.map((s: any) => (
+                <li key={s.id} className="flex items-start gap-2 text-sm">
+                  <span className="mt-1.5 w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
+                  <div>
+                    <p className="font-medium text-zinc-900">{s.name}</p>
+                    <p className="text-zinc-500 text-xs">
+                      {s.actual_arrival
+                        ? `Halt seit ${format(new Date(s.actual_arrival), "dd.MM. HH:mm")} Uhr`
+                        : "Halt angekündigt"}
+                      {s.actual_departure && ` · weiter ab ${format(new Date(s.actual_departure), "HH:mm")} Uhr`}
+                    </p>
+                    {s.notes && <p className="text-zinc-600 text-xs mt-0.5">{s.notes}</p>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <BoardingSchedule stops={stops} />
+
 
         <section>
           <h2 className="text-lg font-semibold text-zinc-900 mb-3">Reiseplan</h2>
