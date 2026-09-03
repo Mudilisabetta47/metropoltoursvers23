@@ -262,35 +262,52 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
           </section>
         )}
 
-        <BoardingSchedule stops={stops} />
+        <BoardingSchedule stops={stops} delayMinutes={delay} />
 
 
         <section>
           <h2 className="text-lg font-semibold text-zinc-900 mb-3">Reiseplan</h2>
+          {delay > 0 && (
+            <p className="text-xs text-amber-700 mb-2">Alle Zeiten sind um +{delay} Min. verschoben (aktuelle Verspätung).</p>
+          )}
           {stops.length === 0 ? (
             <p className="text-sm text-zinc-500">Für diese Fahrt ist noch kein Fahrplan hinterlegt.</p>
           ) : (
             <ol className="relative border-l-2 border-emerald-200 ml-3 space-y-5">
-              {stops.map(s => (
+              {stops.map(s => {
+                const shift = (v: string) => new Date(new Date(v).getTime() + delay * 60000);
+                return (
                 <li key={s.id} className="ml-5">
                   <span className="absolute -left-[9px] w-4 h-4 rounded-full bg-emerald-500 border-2 border-white" />
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium text-zinc-900">{s.label}</span>
                     <Badge variant="outline" className="text-xs">{STOP_TYPE_LABELS[s.stop_type] || s.stop_type}</Badge>
                     {platformOf(s) && <Badge className="text-xs bg-emerald-600 hover:bg-emerald-600">{platformOf(s)}</Badge>}
+                    {delay > 0 && <Badge className="text-xs bg-amber-500 hover:bg-amber-500">+{delay} Min.</Badge>}
                   </div>
-                  <div className="text-sm text-zinc-500 flex items-center gap-2 mt-0.5">
+                  <div className="text-sm text-zinc-500 flex flex-wrap items-center gap-2 mt-0.5">
                     <MapPin className="w-3 h-3" />
-                    {s.planned_arrival && <>an {format(new Date(s.planned_arrival), "dd.MM. HH:mm")}</>}
-                    {s.planned_arrival && s.planned_departure && " · "}
-                    {s.planned_departure && <>ab {format(new Date(s.planned_departure), "dd.MM. HH:mm")}</>}
+                    {s.planned_arrival && (
+                      <span>
+                        an {delay > 0 && <span className="line-through text-zinc-400 mr-1">{format(new Date(s.planned_arrival), "HH:mm")}</span>}
+                        <span className={delay > 0 ? "text-amber-700 font-medium" : ""}>{format(shift(s.planned_arrival), "dd.MM. HH:mm")}</span>
+                      </span>
+                    )}
+                    {s.planned_departure && (
+                      <span>
+                        ab {delay > 0 && <span className="line-through text-zinc-400 mr-1">{format(new Date(s.planned_departure), "HH:mm")}</span>}
+                        <span className={delay > 0 ? "text-amber-700 font-medium" : ""}>{format(shift(s.planned_departure), "dd.MM. HH:mm")}</span>
+                      </span>
+                    )}
                     {!s.planned_arrival && !s.planned_departure && "Zeit folgt"}
                   </div>
                 </li>
-              ))}
+                );
+              })}
             </ol>
           )}
         </section>
+
       </main>
     </div>
   );
