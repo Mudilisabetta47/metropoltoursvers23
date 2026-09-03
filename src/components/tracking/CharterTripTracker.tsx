@@ -201,6 +201,11 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
                     <div className="w-3 h-3 rounded-full bg-white border-2 border-emerald-600 shadow" title={s.label} />
                   </Marker>
                 ))}
+                {unscheduledStops.filter((s: any) => s.lat != null && s.lng != null).map((s: any) => (
+                  <Marker key={`u-${s.id}`} longitude={Number(s.lng)} latitude={Number(s.lat)}>
+                    <div className="w-4 h-4 rounded-full bg-amber-500 border-2 border-white shadow" title={`Außerplanmäßiger Halt: ${s.name}`} />
+                  </Marker>
+                ))}
                 <Marker longitude={position.lng} latitude={position.lat}>
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg ring-4 transition-transform ${liveActive ? "bg-emerald-500 ring-emerald-500/30" : "bg-zinc-400 ring-zinc-400/30"}`}
