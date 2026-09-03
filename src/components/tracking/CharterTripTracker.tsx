@@ -117,7 +117,9 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
           ? `vor ${Math.round(positionAgeMs / 60000)} Min.`
           : `am ${format(new Date(position.updated_at), "dd.MM. HH:mm")} Uhr`;
 
-  const delay = registry?.current_delay_min || 0;
+  const delay = Number(liveRegistry?.current_delay_min ?? registry?.current_delay_min ?? 0) || 0;
+  const delayReason = liveRegistry?.delay_reason ?? registry?.delay_reason ?? null;
+  const unscheduledStops = liveStops.filter((s: any) => s.stop_type === "unscheduled");
 
   const departAt = new Date(`${trip.departure_date}T${trip.departure_time || "00:00:00"}`);
   const arriveAt = trip.arrival_date ? new Date(`${trip.arrival_date}T${trip.arrival_time || "00:00:00"}`) : null;
