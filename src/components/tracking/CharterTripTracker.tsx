@@ -43,7 +43,22 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
     map?.easeTo?.({ center: [Number(position.lng), Number(position.lat)], duration: 1200 });
   }, [position?.lat, position?.lng]);
 
-
+  // Live-Halte (inkl. außerplanmäßiger Halte) & aktuelle Verspätung regelmäßig laden
+  useEffect(() => {
+    let active = true;
+    const loadLive = async () => {
+      const [ls, reg] = await Promise.all([
+        (supabase as any).rpc("get_public_trip_live_stops", { p_trip_id: tripId }),
+        supabase.from("trip_registry").select("current_delay_min, delay_reason, delay_updated_at, status").eq("source_id", tripId).maybeSingle(),
+      ]);
+      if (!active) return;
+      setLiveStops((ls?.data as any[]) || []);
+      if (reg.data) setLiveRegistry(reg.data);
+    };
+    loadLive();
+    const t = setInterval(loadLive, 30000);
+    return () => { active = false; clearInterval(t); };
+  }, [tripId]);
 
   useEffect(() => {
     (async () => {
@@ -66,6 +81,7 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [tripId]);
+
 
   const share = async () => {
     const url = window.location.href;
