@@ -58,10 +58,18 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Ruft die Edge Function auf und liest bei Fehlern den echten Body/Status aus. */
 async function invokeScan(payload: string): Promise<any> {
+  // Sitzung vor jedem Scan sicherstellen (abgelaufene Tokens = 401 im Bus)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const expiresAt = sessionData.session?.expires_at ?? 0;
+  if (!sessionData.session || expiresAt * 1000 - Date.now() < 120_000) {
+    await supabase.auth.refreshSession();
+  }
+
   const { data, error } = await supabase.functions.invoke("process-ticket-scan", {
     body: { qr_payload: payload },
   });
   if (!error) return data;
+
 
   let status: number | undefined;
   let detail = error.message || "Unbekannter Fehler";
@@ -174,10 +182,16 @@ const ScanTab = ({ userId }: { userId: string }) => {
           } catch (err: any) {
             lastError = err;
             const status: number | undefined = err?.status;
+            if (status === 401 && attempt === 1) {
+              // Token abgelaufen -> einmal erneuern und nochmal versuchen
+              await supabase.auth.refreshSession();
+              continue;
+            }
             const retryable = status === undefined || status === 429 || status >= 500;
             if (!retryable || attempt === MAX_ATTEMPTS) break;
             await sleep(400 * attempt);
           }
+
         }
       }
 
