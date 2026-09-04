@@ -55,6 +55,7 @@ export const useTripManifest = (userId: string | undefined | null, date: string 
     }
 
     // 1) Fahrt des Tages finden: direkte Zuweisung am Trip oder über die Schicht
+    const nowIso = new Date().toISOString();
     const [tripRes, shiftRes] = await Promise.all([
       db
         .from("trips")
@@ -66,25 +67,33 @@ export const useTripManifest = (userId: string | undefined | null, date: string 
         .maybeSingle(),
       db
         .from("employee_shifts")
-        .select("assigned_trip_id, shift_date, shift_end")
+        .select("assigned_trip_id, shift_date, shift_start, shift_end")
         .eq("user_id", userId)
-        // Schicht des Tages ODER Schicht von gestern, die noch läuft
-        .or(`shift_date.eq.${date},shift_end.gte.${new Date().toISOString()}`)
+        // Schicht des Tages ODER frühere Schicht, die noch läuft
+        .lte("shift_date", date)
+        .or(`shift_date.eq.${date},shift_end.gte.${nowIso}`)
         .not("assigned_trip_id", "is", null)
+        // laufende/aktuelle Schicht zuerst (nicht die künftige Rückfahrt)
         .order("shift_date", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
+        .limit(5),
     ]);
 
     let found: ManifestTrip | null = tripRes.data ?? null;
-    if (!found && shiftRes.data?.assigned_trip_id) {
+    const shifts: any[] = shiftRes.data ?? [];
+    // aktuell laufende Schicht bevorzugen, sonst die des Tages
+    const activeShift =
+      shifts.find((s) => (!s.shift_start || s.shift_start <= nowIso) && (!s.shift_end || s.shift_end >= nowIso)) ??
+      shifts.find((s) => s.shift_date === date) ??
+      null;
+    if (!found && activeShift?.assigned_trip_id) {
       const { data } = await db
         .from("trips")
         .select("id, title, departure_date, departure_time")
-        .eq("id", shiftRes.data.assigned_trip_id)
+        .eq("id", activeShift.assigned_trip_id)
         .maybeSingle();
       found = data ?? null;
     }
+
     setTrip(found);
 
     // 2) Manifest laden (Zugriff serverseitig abgesichert)
