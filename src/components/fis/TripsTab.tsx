@@ -38,7 +38,7 @@ const TripsTab = ({ userId }: { userId: string }) => {
         .from("employee_shifts")
         .select("*")
         .eq("user_id", userId)
-        .gte("shift_date", today)
+        .or(`shift_date.gte.${today},shift_end.gte.${new Date().toISOString()}`)
         .order("shift_date", { ascending: true })
         .order("shift_start", { ascending: true });
 
