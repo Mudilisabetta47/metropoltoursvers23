@@ -144,8 +144,7 @@ serve(async (req) => {
       .from("bookings")
       .select("id, booking_number, ticket_number, passenger_email, passenger_first_name, seats(seat_number), origin_stop:stops!bookings_origin_stop_id_fkey(name, city), destination_stop:stops!bookings_destination_stop_id_fkey(name, city), trips(title, routes(name, description))")
       .eq("trip_id", OUTBOUND_TRIP_ID)
-      .gte("booking_number", "MT-2026-001030")
-      .lte("booking_number", "MT-2026-001058")
+      .or("and(booking_number.gte.MT-2026-001030,booking_number.lte.MT-2026-001058),booking_number.eq.MT-2026-001016")
       .order("booking_number");
     if (testEmail) query = query.eq("passenger_email", testEmail).limit(1);
     const { data: bookings, error } = await query;
