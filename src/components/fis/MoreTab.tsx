@@ -17,7 +17,7 @@ const MoreTab = ({ userId }: { userId: string }) => {
         .from("employee_shifts")
         .select("assigned_trip_id")
         .eq("user_id", userId)
-        .gte("shift_date", today)
+        .or(`shift_date.gte.${today},shift_end.gte.${new Date().toISOString()}`)
         .limit(1)
         .maybeSingle();
       if (!shift?.assigned_trip_id) return;

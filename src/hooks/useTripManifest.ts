@@ -66,10 +66,12 @@ export const useTripManifest = (userId: string | undefined | null, date: string 
         .maybeSingle(),
       db
         .from("employee_shifts")
-        .select("assigned_trip_id")
+        .select("assigned_trip_id, shift_date, shift_end")
         .eq("user_id", userId)
-        .eq("shift_date", date)
+        // Schicht des Tages ODER Schicht von gestern, die noch läuft
+        .or(`shift_date.eq.${date},shift_end.gte.${new Date().toISOString()}`)
         .not("assigned_trip_id", "is", null)
+        .order("shift_date", { ascending: false })
         .limit(1)
         .maybeSingle(),
     ]);

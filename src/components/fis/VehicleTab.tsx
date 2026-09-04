@@ -18,7 +18,7 @@ const VehicleTab = ({ userId }: { userId: string }) => {
       .from("employee_shifts")
       .select("assigned_bus_id")
       .eq("user_id", userId)
-      .gte("shift_date", today)
+      .or(`shift_date.gte.${today},shift_end.gte.${new Date().toISOString()}`)
       .order("shift_date", { ascending: true })
       .limit(1)
       .maybeSingle();
