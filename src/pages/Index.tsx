@@ -8,6 +8,7 @@ import BrandShowcaseSection from "@/components/home/BrandShowcaseSection";
 import WeekendTripsSection from "@/components/home/WeekendTripsSection";
 
 import TestimonialsSection from "@/components/home/TestimonialsSection";
+import TikTokSection from "@/components/home/TikTokSection";
 import NewsletterSection from "@/components/home/NewsletterSection";
 import CTASection from "@/components/home/CTASection";
 import NearestStopFinder from "@/components/home/NearestStopFinder";
