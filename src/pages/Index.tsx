@@ -35,6 +35,7 @@ const Index = () => {
         <WeekendTripsSection />
         
         <NearestStopFinder />
+        <TikTokSection />
         <TestimonialsSection />
         <NewsletterSection />
         <CTASection />
