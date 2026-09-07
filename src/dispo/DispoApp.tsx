@@ -25,6 +25,8 @@ export default function DispoApp() {
       <Route path="auftraege" element={<DispoOrders />} />
       <Route path="angebote" element={<DispoOffers />} />
       <Route path="angebot/:id" element={<DispoOfferDetail />} />
+      <Route path="rechnungen" element={<DispoInvoices />} />
+      <Route path="rechnung/:id" element={<DispoInvoiceDetail />} />
       <Route path="postfach" element={<DispoInbox />} />
       <Route path="kunden" element={<DispoCustomers />} />
       <Route path="assistent" element={<DispoAssistant />} />
