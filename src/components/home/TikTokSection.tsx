@@ -64,6 +64,53 @@ function TikTokEmbed({ videoId }: { videoId: string }) {
   );
 }
 
+/** Profil-Feed (neueste Videos automatisch) – ebenfalls erst nach Zustimmung. */
+function TikTokProfileEmbed({ handle }: { handle: string }) {
+  const [consented, setConsented] = useState(false);
+  const profileUrl = `https://www.tiktok.com/@${handle}`;
+
+  if (!consented) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setConsented(true);
+          loadTikTokScript();
+        }}
+        className="group mx-auto flex w-full max-w-2xl flex-col items-center justify-center gap-4 rounded-2xl border border-border bg-muted/40 p-10 text-center transition-colors hover:border-primary/50 hover:bg-muted/60"
+      >
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform group-hover:scale-110">
+          <Play className="h-6 w-6 fill-current" />
+        </span>
+        <span className="text-base font-semibold text-foreground">Neueste TikTok-Videos laden</span>
+        <span className="flex items-start gap-1.5 text-xs leading-relaxed text-muted-foreground">
+          <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          Mit dem Laden werden Daten an TikTok übertragen. Details in der Datenschutzerklärung.
+        </span>
+      </button>
+    );
+  }
+
+  return (
+    <div className="mx-auto w-full max-w-2xl">
+      <blockquote
+        className="tiktok-embed w-full"
+        cite={profileUrl}
+        data-unique-id={handle}
+        data-embed-type="creator"
+        style={{ maxWidth: 780, minWidth: 288 }}
+      >
+        <section>
+          <a target="_blank" rel="noopener noreferrer" href={profileUrl}>
+            @{handle}
+          </a>
+        </section>
+      </blockquote>
+    </div>
+  );
+}
+
+
 const TikTokSection = () => {
   const { meta } = useSiteSection("home_tiktok");
   const videoIds = Array.isArray(meta.video_ids)
