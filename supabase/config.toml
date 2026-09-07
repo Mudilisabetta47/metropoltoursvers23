@@ -76,3 +76,7 @@ project_id = "wberoibxqpffhnyvjnci"
     verify_jwt = false
   [functions.send-trip-ticket-email]
     verify_jwt = false
+  [functions.dispo-ai]
+    verify_jwt = true
+  [functions.dispo-mail-sync]
+    verify_jwt = true
