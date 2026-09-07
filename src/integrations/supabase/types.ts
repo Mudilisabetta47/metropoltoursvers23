@@ -2652,6 +2652,146 @@ export type Database = {
           },
         ]
       }
+      dispo_invoice_items: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          line_total: number
+          position: number
+          quantity: number
+          unit: string
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id: string
+          line_total?: number
+          position?: number
+          quantity?: number
+          unit?: string
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          line_total?: number
+          position?: number
+          quantity?: number
+          unit?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispo_invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "dispo_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dispo_invoices: {
+        Row: {
+          address: string | null
+          company: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string
+          due_date: string | null
+          email: string | null
+          gross_amount: number
+          id: string
+          intro_text: string | null
+          invoice_date: string
+          invoice_number: string
+          net_amount: number
+          notes: string | null
+          order_id: string | null
+          outro_text: string | null
+          paid_at: string | null
+          payment_method: string | null
+          status: string
+          subject: string | null
+          updated_at: string
+          vat_amount: number
+          vat_rate: number
+        }
+        Insert: {
+          address?: string | null
+          company?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string
+          due_date?: string | null
+          email?: string | null
+          gross_amount?: number
+          id?: string
+          intro_text?: string | null
+          invoice_date?: string
+          invoice_number: string
+          net_amount?: number
+          notes?: string | null
+          order_id?: string | null
+          outro_text?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+          vat_amount?: number
+          vat_rate?: number
+        }
+        Update: {
+          address?: string | null
+          company?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string
+          due_date?: string | null
+          email?: string | null
+          gross_amount?: number
+          id?: string
+          intro_text?: string | null
+          invoice_date?: string
+          invoice_number?: string
+          net_amount?: number
+          notes?: string | null
+          order_id?: string | null
+          outro_text?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+          vat_amount?: number
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispo_invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "dispo_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispo_invoices_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dispo_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dispo_offers: {
         Row: {
           created_at: string
@@ -8777,6 +8917,7 @@ export type Database = {
       generate_complaint_number: { Args: never; Returns: string }
       generate_contract_number: { Args: never; Returns: string }
       generate_dispatch_order_number: { Args: never; Returns: string }
+      generate_dispo_invoice_number: { Args: never; Returns: string }
       generate_dispo_offer_number: { Args: never; Returns: string }
       generate_dispo_order_number: { Args: never; Returns: string }
       generate_inquiry_number: { Args: never; Returns: string }
