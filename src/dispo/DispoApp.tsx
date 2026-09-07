@@ -29,6 +29,8 @@ export default function DispoApp() {
       <Route path="busse" element={<DispoBuses />} />
       <Route path="fahrer" element={<DispoDrivers />} />
       <Route path="kalkulation" element={<DispoCalc />} />
+      <Route path="ki-training" element={<DispoTraining />} />
+
       <Route path="einstellungen" element={<DispoSettings />} />
       <Route path="*" element={<Navigate to="/dispo" replace />} />
     </Routes>
