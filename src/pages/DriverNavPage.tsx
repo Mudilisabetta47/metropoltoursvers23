@@ -122,6 +122,26 @@ const DriverNavPage = () => {
         : activeOrder?.status === "arrived" ? "arrived" : "ready",
   });
 
+  // Direkter Draht zur öffentlichen Verfolgungsseite (Halte, Verspätung, Status)
+  const { viewers, publish } = useDriverLiveChannel(activeOrder?.trip_id ?? null);
+  const [trackingUid, setTrackingUid] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    const tripId = activeOrder?.trip_id;
+    if (!tripId) { setTrackingUid(null); return; }
+    (async () => {
+      const { data } = await db
+        .from("trip_registry")
+        .select("trip_uid")
+        .eq("source_id", tripId)
+        .maybeSingle();
+      if (active) setTrackingUid(data?.trip_uid ?? null);
+    })();
+    return () => { active = false; };
+  }, [activeOrder?.trip_id]);
+
+
+
 
 
 
