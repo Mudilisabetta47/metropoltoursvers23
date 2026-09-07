@@ -70,7 +70,7 @@ export default function DispoSettings() {
       <div className="space-y-4">
         <Section
           title="E-Mail-Postfächer"
-          right={<button className="dispo-btn dispo-btn-ghost" onClick={() => setShowForm((v) => !v)}><Plus className="h-4 w-4" /> Postfach</button>}
+          actions={<button className="dispo-btn dispo-btn-ghost" onClick={() => setShowForm((v) => !v)}><Plus className="h-4 w-4" /> Postfach</button>}
         >
           {accounts.length === 0 ? (
             <EmptyState text="Noch kein Postfach hinterlegt." />
