@@ -103,7 +103,7 @@ function parseMessage(raw: string, uid: string): FetchedMail {
     .replace(/=\r?\n/g, "")
     .replace(/\r\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
-    .slice(0, 20000)
+    .slice(0, 8000)
     .trim();
 
   return {
@@ -127,11 +127,11 @@ async function fetchImap(account: Record<string, any>, password: string): Promis
     const sinceStr = `${since.getDate()}-${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][since.getMonth()]}-${since.getFullYear()}`;
     const searchRes = await client.cmd(`UID SEARCH SINCE ${sinceStr}`);
     const uids = (searchRes.match(/^\* SEARCH([\d\s]*)/m)?.[1] ?? "").trim().split(/\s+/).filter(Boolean);
-    const recent = uids.slice(-30);
+    const recent = uids.slice(-10);
 
     const mails: FetchedMail[] = [];
     for (const uid of recent) {
-      const res = await client.cmd(`UID FETCH ${uid} (BODY.PEEK[])`);
+      const res = await client.cmd(`UID FETCH ${uid} (BODY.PEEK[]<0.60000>)`);
       const start = res.indexOf("\r\n");
       const raw = res.slice(start + 2);
       mails.push(parseMessage(raw, uid));
