@@ -5,6 +5,8 @@ import DispoCalendar from "./pages/DispoCalendar";
 import DispoOrders from "./pages/DispoOrders";
 import DispoOffers from "./pages/DispoOffers";
 import DispoOfferDetail from "./pages/DispoOfferDetail";
+import DispoInvoices from "./pages/DispoInvoices";
+import DispoInvoiceDetail from "./pages/DispoInvoiceDetail";
 import DispoInbox from "./pages/DispoInbox";
 import DispoCustomers from "./pages/DispoCustomers";
 import DispoAssistant from "./pages/DispoAssistant";
