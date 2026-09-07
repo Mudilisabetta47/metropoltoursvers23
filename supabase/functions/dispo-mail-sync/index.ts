@@ -116,32 +116,46 @@ function parseMessage(raw: string, uid: string): FetchedMail {
   };
 }
 
-async function fetchImap(account: Record<string, any>, password: string): Promise<FetchedMail[]> {
+async function fetchImap(
+  account: Record<string, any>,
+  password: string,
+  opts: { days: number; limit: number; known: Set<string> },
+): Promise<{ mails: FetchedMail[]; total: number; remaining: number }> {
   const client = new SimpleImap(account.imap_host, account.imap_port ?? 993);
   await client.connect();
   try {
     const user = account.username || account.email_address;
     await client.cmd(`LOGIN "${user}" "${password.replace(/(["\\])/g, "\\$1")}"`);
     await client.cmd(`SELECT INBOX`);
-    const since = new Date(Date.now() - 14 * 86400000);
+    const since = new Date(Date.now() - opts.days * 86400000);
     const sinceStr = `${since.getDate()}-${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][since.getMonth()]}-${since.getFullYear()}`;
     const searchRes = await client.cmd(`UID SEARCH SINCE ${sinceStr}`);
     const uids = (searchRes.match(/^\* SEARCH([\d\s]*)/m)?.[1] ?? "").trim().split(/\s+/).filter(Boolean);
-    const recent = uids.slice(-10);
+    // Nur noch nicht importierte Nachrichten holen – neueste zuerst.
+    const missing = uids.filter((u) => !opts.known.has(u)).reverse();
+    const batch = missing.slice(0, opts.limit);
 
     const mails: FetchedMail[] = [];
-    for (const uid of recent) {
+    for (const uid of batch) {
       const res = await client.cmd(`UID FETCH ${uid} (BODY.PEEK[]<0.60000>)`);
       const start = res.indexOf("\r\n");
       const raw = res.slice(start + 2);
       mails.push(parseMessage(raw, uid));
     }
     try { await client.cmd("LOGOUT"); } catch { /* ignore */ }
-    return mails;
+    return { mails, total: uids.length, remaining: Math.max(0, missing.length - batch.length) };
   } finally {
     client.close();
   }
 }
+
+/** Werbe-/Portalmails, die nicht in die Disposition gehören. */
+const BLOCKED = ["busly"];
+const isBlocked = (m: FetchedMail) => {
+  const hay = `${m.from_email ?? ""} ${m.from_name ?? ""} ${m.subject ?? ""}`.toLowerCase();
+  return BLOCKED.some((b) => hay.includes(b));
+};
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -150,12 +164,18 @@ Deno.serve(async (req) => {
   const auth = await requireStaff(req, admin, ["admin", "office"]);
   if (!auth.ok) return json({ error: auth.error }, auth.status);
 
+  const body = await req.json().catch(() => ({}));
+  const days = Math.min(Math.max(Number(body?.days) || 90, 1), 365);
+  const limit = Math.min(Math.max(Number(body?.limit) || 40, 1), 60);
+
   const { data: accounts } = await admin.from("dispo_email_accounts").select("*").eq("is_active", true);
   if (!accounts?.length) {
-    return json({ imported: 0, problems: ["Kein aktives Postfach hinterlegt. Bitte in den Einstellungen anlegen."] });
+    return json({ imported: 0, remaining: 0, problems: ["Kein aktives Postfach hinterlegt. Bitte in den Einstellungen anlegen."] });
   }
 
   let imported = 0;
+  let skipped = 0;
+  let remaining = 0;
   const problems: string[] = [];
 
   for (const account of accounts) {
@@ -180,16 +200,22 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const mails = await fetchImap(account, password);
-      for (const m of mails) {
-        const { data: exists } = await admin
-          .from("dispo_emails")
-          .select("id")
-          .eq("account_id", account.id)
-          .eq("message_uid", m.uid)
-          .maybeSingle();
-        if (exists) continue;
-        const { error } = await admin.from("dispo_emails").insert({
+      const { data: knownRows } = await admin
+        .from("dispo_emails")
+        .select("message_uid")
+        .eq("account_id", account.id)
+        .limit(5000);
+      const known = new Set((knownRows ?? []).map((r: any) => String(r.message_uid)));
+
+      const result = await fetchImap(account, password, { days, limit, known });
+      remaining += result.remaining;
+
+      const rows = result.mails
+        .filter((m) => {
+          if (isBlocked(m)) { skipped++; return false; }
+          return true;
+        })
+        .map((m) => ({
           account_id: account.id,
           message_uid: m.uid,
           folder: "inbox",
@@ -200,8 +226,14 @@ Deno.serve(async (req) => {
           subject: m.subject,
           body_text: m.body_text,
           received_at: m.received_at,
-        });
-        if (!error) imported++;
+        }));
+
+      if (rows.length) {
+        const { error, count } = await admin
+          .from("dispo_emails")
+          .insert(rows, { count: "exact" });
+        if (error) problems.push(`${account.email_address}: ${error.message}`);
+        else imported += count ?? rows.length;
       }
 
       await admin.from("dispo_email_accounts")
@@ -215,5 +247,6 @@ Deno.serve(async (req) => {
     }
   }
 
-  return json({ imported, problems });
+  return json({ imported, skipped, remaining, problems });
 });
+

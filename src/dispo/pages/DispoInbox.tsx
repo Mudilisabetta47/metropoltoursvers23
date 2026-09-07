@@ -36,12 +36,31 @@ export default function DispoInbox() {
 
   const syncMail = async () => {
     setBusy(true);
-    const { data, error } = await supabase.functions.invoke("dispo-mail-sync", { body: {} });
-    setBusy(false);
-    if (error) return toast.error(`Abruf fehlgeschlagen: ${error.message}`);
-    toast.success(`${data?.imported ?? 0} neue E-Mails abgerufen`);
-    reload();
+    let total = 0;
+    let runs = 0;
+    try {
+      // Solange weiterladen, bis alle Nachrichten der letzten 90 Tage abgerufen sind.
+      while (runs < 15) {
+        runs++;
+        const { data, error } = await supabase.functions.invoke("dispo-mail-sync", {
+          body: { days: 90, limit: 40 },
+        });
+        if (error) {
+          toast.error(`Abruf fehlgeschlagen: ${error.message}`);
+          break;
+        }
+        total += data?.imported ?? 0;
+        if (data?.problems?.length) toast.warning(String(data.problems[0]));
+        if (!data?.remaining) break;
+        toast.info(`${total} E-Mails geladen – es folgen noch ${data.remaining}…`);
+      }
+      toast.success(`${total} neue E-Mails abgerufen`);
+      reload();
+    } finally {
+      setBusy(false);
+    }
   };
+
 
   const analyse = async (mail: DispoEmail) => {
     setBusy(true);
