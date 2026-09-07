@@ -13,7 +13,7 @@ export default function DispoCalc() {
   const rows: [string, string][] = [
     ["Diesel", eur(r.diesel)],
     ["Fahrerkosten", eur(r.driverCost)],
-    ["Maut / Park / Sonstiges", eur(r.toll + r.parking + r.otherCost)],
+    ["Maut / Park / Sonstiges", eur(c.toll + c.parking + c.otherCost)],
     ["Gesamtkosten", eur(r.totalCost)],
     ["Nettoverkaufspreis", eur(r.priceNet)],
     ["MwSt.", eur(r.vat)],
@@ -22,7 +22,7 @@ export default function DispoCalc() {
     ["Auszahlung", eur(r.payout)],
     ["Deckungsbeitrag", eur(r.margin)],
     ["Gewinn pro Person", eur(r.profitPerPerson)],
-    ["Gewinn in Prozent", `${r.profitPercent.toFixed(1)} %`],
+    ["Gewinn in Prozent", `${r.marginPercentReal.toFixed(1)} %`],
   ];
 
   return (
