@@ -535,12 +535,14 @@ const DriverNavPage = () => {
         );
       }
       speak(`Außerplanmäßiger Halt ${name} gemeldet`, voice);
-      toast.success("Halt angelegt und an die Zentrale gemeldet");
+      publish("unscheduled_stop", { name });
+      toast.success("Halt angelegt – sofort im Live-Tracking sichtbar");
     });
 
   const removeUnscheduled = (stopId: string) =>
     act(async () => {
       await removeUnscheduledStop(stopId);
+      publish("stops_changed", { stopId });
       toast.success("Halt entfernt");
     });
 
