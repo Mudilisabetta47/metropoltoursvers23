@@ -57,7 +57,7 @@ export default function AdminCharterTripDetail() {
       supabase.from("trip_schedule_stops").select("*").eq("trip_id", tripId).order("sort_order"),
       supabase.from("employee_shifts").select("*").eq("assigned_trip_id", tripId).order("shift_start"),
       supabase.from("bookings").select("*, seats(seat_number)").eq("trip_id", tripId).order("created_at"),
-      supabase.from("bus_positions_live").select("*").eq("trip_id", tripId).maybeSingle(),
+      supabase.from("bus_positions_live").select("id, trip_id, bus_id, lat, lng, heading, speed_kmh, next_stop_id, eta_next_stop, delay_minutes, status, updated_at").eq("trip_id", tripId).maybeSingle(),
     ]);
     setRegistry(reg.data);
     setSchedule(sch.data || []);
