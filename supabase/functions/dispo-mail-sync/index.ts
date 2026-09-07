@@ -164,12 +164,18 @@ Deno.serve(async (req) => {
   const auth = await requireStaff(req, admin, ["admin", "office"]);
   if (!auth.ok) return json({ error: auth.error }, auth.status);
 
+  const body = await req.json().catch(() => ({}));
+  const days = Math.min(Math.max(Number(body?.days) || 90, 1), 365);
+  const limit = Math.min(Math.max(Number(body?.limit) || 40, 1), 60);
+
   const { data: accounts } = await admin.from("dispo_email_accounts").select("*").eq("is_active", true);
   if (!accounts?.length) {
-    return json({ imported: 0, problems: ["Kein aktives Postfach hinterlegt. Bitte in den Einstellungen anlegen."] });
+    return json({ imported: 0, remaining: 0, problems: ["Kein aktives Postfach hinterlegt. Bitte in den Einstellungen anlegen."] });
   }
 
   let imported = 0;
+  let skipped = 0;
+  let remaining = 0;
   const problems: string[] = [];
 
   for (const account of accounts) {
@@ -194,16 +200,22 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const mails = await fetchImap(account, password);
-      for (const m of mails) {
-        const { data: exists } = await admin
-          .from("dispo_emails")
-          .select("id")
-          .eq("account_id", account.id)
-          .eq("message_uid", m.uid)
-          .maybeSingle();
-        if (exists) continue;
-        const { error } = await admin.from("dispo_emails").insert({
+      const { data: knownRows } = await admin
+        .from("dispo_emails")
+        .select("message_uid")
+        .eq("account_id", account.id)
+        .limit(5000);
+      const known = new Set((knownRows ?? []).map((r: any) => String(r.message_uid)));
+
+      const result = await fetchImap(account, password, { days, limit, known });
+      remaining += result.remaining;
+
+      const rows = result.mails
+        .filter((m) => {
+          if (isBlocked(m)) { skipped++; return false; }
+          return true;
+        })
+        .map((m) => ({
           account_id: account.id,
           message_uid: m.uid,
           folder: "inbox",
@@ -214,8 +226,14 @@ Deno.serve(async (req) => {
           subject: m.subject,
           body_text: m.body_text,
           received_at: m.received_at,
-        });
-        if (!error) imported++;
+        }));
+
+      if (rows.length) {
+        const { error, count } = await admin
+          .from("dispo_emails")
+          .insert(rows, { count: "exact" });
+        if (error) problems.push(`${account.email_address}: ${error.message}`);
+        else imported += count ?? rows.length;
       }
 
       await admin.from("dispo_email_accounts")
@@ -229,5 +247,6 @@ Deno.serve(async (req) => {
     }
   }
 
-  return json({ imported, problems });
+  return json({ imported, skipped, remaining, problems });
 });
+
