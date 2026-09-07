@@ -83,28 +83,106 @@ function decodeHeader(value: string): string {
     .trim();
 }
 
+function decodeBase64(data: string): Uint8Array {
+  const clean = data.replace(/[^A-Za-z0-9+/=]/g, "");
+  try { return Uint8Array.from(atob(clean), (c) => c.charCodeAt(0)); } catch { return new Uint8Array(); }
+}
+
+function decodeQuotedPrintable(data: string): Uint8Array {
+  const text = data.replace(/=\r?\n/g, "");
+  const out: number[] = [];
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === "=" && /[0-9A-Fa-f]{2}/.test(text.slice(i + 1, i + 3))) {
+      out.push(parseInt(text.slice(i + 1, i + 3), 16));
+      i += 2;
+    } else {
+      out.push(text.charCodeAt(i) & 0xff);
+    }
+  }
+  return new Uint8Array(out);
+}
+
+function decodeBody(body: string, encoding: string, charset: string): string {
+  const enc = encoding.toLowerCase();
+  let bytes: Uint8Array;
+  if (enc.includes("base64")) bytes = decodeBase64(body);
+  else if (enc.includes("quoted-printable")) bytes = decodeQuotedPrintable(body);
+  else return body;
+  let cs = charset.toLowerCase().replace(/["']/g, "").trim() || "utf-8";
+  if (cs === "us-ascii" || cs === "ascii") cs = "utf-8";
+  try { return new TextDecoder(cs).decode(bytes); } catch { return new TextDecoder("utf-8").decode(bytes); }
+}
+
+const htmlToText = (html: string) =>
+  html
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<\/(p|div|tr|li|h[1-6])>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#(\d+);/g, (_m, d) => String.fromCharCode(Number(d)));
+
+interface MimePart { headers: string; body: string }
+
+function splitHeaders(raw: string): MimePart {
+  const idx = raw.search(/\r?\n\r?\n/);
+  if (idx < 0) return { headers: raw, body: "" };
+  const sep = raw.slice(idx).startsWith("\r\n\r\n") ? 4 : 2;
+  return { headers: raw.slice(0, idx).replace(/\r?\n[ \t]+/g, " "), body: raw.slice(idx + sep) };
+}
+
+const headerValue = (headers: string, name: string) => {
+  const m = headers.match(new RegExp(`^${name}:\\s*(.*)$`, "im"));
+  return m ? m[1].trim() : "";
+};
+
+/** Läuft rekursiv durch MIME-Teile und liefert den besten lesbaren Text. */
+function extractText(raw: string, depth = 0): string {
+  if (depth > 6) return "";
+  const { headers, body } = splitHeaders(raw);
+  const ctype = headerValue(headers, "Content-Type") || "text/plain";
+  const cte = headerValue(headers, "Content-Transfer-Encoding");
+  const charset = ctype.match(/charset=([^;]+)/i)?.[1] ?? "utf-8";
+
+  if (/^multipart\//i.test(ctype)) {
+    const boundary = ctype.match(/boundary="?([^";]+)"?/i)?.[1];
+    if (!boundary) return "";
+    const parts = body.split(new RegExp(`--${boundary.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(--)?\r?\n?`))
+      .filter((p) => p && p.trim() && p !== "--");
+    const texts = parts.map((p) => extractText(p, depth + 1)).filter(Boolean);
+    const alternative = /alternative/i.test(ctype);
+    if (alternative) {
+      // Reiner Text bevorzugt, sonst der längste Teil.
+      return texts.sort((a, b) => b.length - a.length)[0] ?? "";
+    }
+    return texts.join("\n\n");
+  }
+
+  if (/^text\/html/i.test(ctype)) return htmlToText(decodeBody(body, cte, charset));
+  if (/^text\//i.test(ctype) || !ctype) return decodeBody(body, cte, charset);
+  return "";
+}
+
 function parseMessage(raw: string, uid: string): FetchedMail {
-  const splitIndex = raw.indexOf("\r\n\r\n");
-  const headerBlock = (splitIndex >= 0 ? raw.slice(0, splitIndex) : raw).replace(/\r\n[ \t]+/g, " ");
-  const body = splitIndex >= 0 ? raw.slice(splitIndex + 4) : "";
-  const header = (name: string) => {
-    const m = headerBlock.match(new RegExp(`^${name}:\\s*(.+)$`, "im"));
-    return m ? decodeHeader(m[1]) : "";
-  };
+  const { headers: headerBlock } = splitHeaders(raw);
+  const header = (name: string) => decodeHeader(headerValue(headerBlock, name));
   const from = header("From");
   const emailMatch = from.match(/<([^>]+)>/) ?? from.match(/([^\s<>]+@[^\s<>]+)/);
   const nameMatch = from.replace(/<[^>]*>/, "").replace(/"/g, "").trim();
   const dateHeader = header("Date");
   const parsedDate = dateHeader ? new Date(dateHeader) : new Date();
 
-  const text = body
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/=\r?\n/g, "")
+  const text = extractText(raw)
     .replace(/\r\n/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
-    .slice(0, 8000)
-    .trim();
+    .trim()
+    .slice(0, 12000);
 
   return {
     uid,
@@ -115,6 +193,7 @@ function parseMessage(raw: string, uid: string): FetchedMail {
     received_at: isNaN(parsedDate.getTime()) ? new Date().toISOString() : parsedDate.toISOString(),
   };
 }
+
 
 async function fetchImap(
   account: Record<string, any>,
@@ -137,7 +216,7 @@ async function fetchImap(
 
     const mails: FetchedMail[] = [];
     for (const uid of batch) {
-      const res = await client.cmd(`UID FETCH ${uid} (BODY.PEEK[]<0.60000>)`);
+      const res = await client.cmd(`UID FETCH ${uid} (BODY.PEEK[]<0.200000>)`);
       const start = res.indexOf("\r\n");
       const raw = res.slice(start + 2);
       mails.push(parseMessage(raw, uid));
