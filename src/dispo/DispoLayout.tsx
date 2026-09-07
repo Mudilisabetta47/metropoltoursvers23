@@ -18,6 +18,7 @@ const NAV = [
       { to: "/dispo/kalender", label: "Dispo-Kalender", icon: CalendarDays },
       { to: "/dispo/auftraege", label: "Aufträge", icon: ClipboardList },
       { to: "/dispo/angebote", label: "Angebote", icon: FileText },
+      { to: "/dispo/rechnungen", label: "Rechnungen", icon: Receipt },
     ],
   },
   {
