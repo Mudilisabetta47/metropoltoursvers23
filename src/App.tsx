@@ -103,6 +103,7 @@ const AdminPayroll = lazy(() => import("./pages/AdminPayroll"));
 const AdminB2BCustomers = lazy(() => import("./pages/AdminB2BCustomers"));
 const AdminComplaints = lazy(() => import("./pages/AdminComplaints"));
 const AdminDispoBoard = lazy(() => import("./pages/AdminDispoBoard"));
+const DispoApp = lazy(() => import("./dispo/DispoApp"));
 const AdminDispatch = lazy(() => import("./pages/AdminDispatch"));
 const AdminFleetControl = lazy(() => import("./pages/AdminFleetControl"));
 const DriverNavPage = lazy(() => import("./pages/DriverNavPage"));
@@ -316,6 +317,7 @@ const App = () => (
               <Route path="/admin/b2b" element={<AdminB2BCustomers />} />
               <Route path="/admin/complaints" element={<AdminComplaints />} />
               <Route path="/admin/dispo-board" element={<AdminDispoBoard />} />
+              <Route path="/dispo/*" element={<DispoApp />} />
               <Route path="/admin/dispatch" element={<AdminDispatch />} />
               <Route path="/admin/leitstelle" element={<AdminFleetControl />} />
               <Route path="/ops" element={<Navigate to="/admin/ops" replace />} />
