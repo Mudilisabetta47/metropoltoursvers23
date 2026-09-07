@@ -2,7 +2,7 @@ import { ReactNode, useMemo, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, CalendarDays, ClipboardList, Mail, Bus, Users, FileText,
-  Calculator, Sparkles, Building2, Search, LogOut, Settings, Menu, X, ArrowLeft,
+  Calculator, Sparkles, Building2, Search, LogOut, Settings, Menu, X, ArrowLeft, GraduationCap,
 } from "lucide-react";
 import { LogoLight } from "@/components/brand/Logo";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,6 +26,8 @@ const NAV = [
       { to: "/dispo/postfach", label: "Postfach", icon: Mail },
       { to: "/dispo/kunden", label: "Kunden (CRM)", icon: Building2 },
       { to: "/dispo/assistent", label: "KI-Assistent", icon: Sparkles },
+      { to: "/dispo/ki-training", label: "KI-Training", icon: GraduationCap },
+
     ],
   },
   {

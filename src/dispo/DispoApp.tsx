@@ -11,7 +11,9 @@ import DispoAssistant from "./pages/DispoAssistant";
 import DispoBuses from "./pages/DispoBuses";
 import DispoDrivers from "./pages/DispoDrivers";
 import DispoCalc from "./pages/DispoCalc";
+import DispoTraining from "./pages/DispoTraining";
 import DispoSettings from "./pages/DispoSettings";
+
 
 export default function DispoApp() {
   return (
