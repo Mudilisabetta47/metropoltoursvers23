@@ -216,7 +216,7 @@ async function fetchImap(
 
     const mails: FetchedMail[] = [];
     for (const uid of batch) {
-      const res = await client.cmd(`UID FETCH ${uid} (BODY.PEEK[]<0.60000>)`);
+      const res = await client.cmd(`UID FETCH ${uid} (BODY.PEEK[]<0.200000>)`);
       const start = res.indexOf("\r\n");
       const raw = res.slice(start + 2);
       mails.push(parseMessage(raw, uid));
