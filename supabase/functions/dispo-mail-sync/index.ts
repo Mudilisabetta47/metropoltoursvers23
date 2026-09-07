@@ -116,32 +116,46 @@ function parseMessage(raw: string, uid: string): FetchedMail {
   };
 }
 
-async function fetchImap(account: Record<string, any>, password: string): Promise<FetchedMail[]> {
+async function fetchImap(
+  account: Record<string, any>,
+  password: string,
+  opts: { days: number; limit: number; known: Set<string> },
+): Promise<{ mails: FetchedMail[]; total: number; remaining: number }> {
   const client = new SimpleImap(account.imap_host, account.imap_port ?? 993);
   await client.connect();
   try {
     const user = account.username || account.email_address;
     await client.cmd(`LOGIN "${user}" "${password.replace(/(["\\])/g, "\\$1")}"`);
     await client.cmd(`SELECT INBOX`);
-    const since = new Date(Date.now() - 14 * 86400000);
+    const since = new Date(Date.now() - opts.days * 86400000);
     const sinceStr = `${since.getDate()}-${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][since.getMonth()]}-${since.getFullYear()}`;
     const searchRes = await client.cmd(`UID SEARCH SINCE ${sinceStr}`);
     const uids = (searchRes.match(/^\* SEARCH([\d\s]*)/m)?.[1] ?? "").trim().split(/\s+/).filter(Boolean);
-    const recent = uids.slice(-10);
+    // Nur noch nicht importierte Nachrichten holen – neueste zuerst.
+    const missing = uids.filter((u) => !opts.known.has(u)).reverse();
+    const batch = missing.slice(0, opts.limit);
 
     const mails: FetchedMail[] = [];
-    for (const uid of recent) {
+    for (const uid of batch) {
       const res = await client.cmd(`UID FETCH ${uid} (BODY.PEEK[]<0.60000>)`);
       const start = res.indexOf("\r\n");
       const raw = res.slice(start + 2);
       mails.push(parseMessage(raw, uid));
     }
     try { await client.cmd("LOGOUT"); } catch { /* ignore */ }
-    return mails;
+    return { mails, total: uids.length, remaining: Math.max(0, missing.length - batch.length) };
   } finally {
     client.close();
   }
 }
+
+/** Werbe-/Portalmails, die nicht in die Disposition gehören. */
+const BLOCKED = ["busly"];
+const isBlocked = (m: FetchedMail) => {
+  const hay = `${m.from_email ?? ""} ${m.from_name ?? ""} ${m.subject ?? ""}`.toLowerCase();
+  return BLOCKED.some((b) => hay.includes(b));
+};
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
