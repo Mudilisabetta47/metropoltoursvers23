@@ -2407,6 +2407,388 @@ export type Database = {
           },
         ]
       }
+      dispo_customers: {
+        Row: {
+          address: string | null
+          city: string | null
+          company: string | null
+          contact_person: string | null
+          created_at: string
+          email: string | null
+          id: string
+          last_contact_at: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          postal_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          company?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_contact_at?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          company?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_contact_at?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      dispo_email_accounts: {
+        Row: {
+          created_at: string
+          email_address: string
+          id: string
+          imap_host: string | null
+          imap_port: number | null
+          imap_secure: boolean
+          is_active: boolean
+          label: string
+          last_sync_at: string | null
+          last_sync_status: string | null
+          provider: string
+          secret_name: string | null
+          smtp_host: string | null
+          smtp_port: number | null
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          email_address: string
+          id?: string
+          imap_host?: string | null
+          imap_port?: number | null
+          imap_secure?: boolean
+          is_active?: boolean
+          label: string
+          last_sync_at?: string | null
+          last_sync_status?: string | null
+          provider?: string
+          secret_name?: string | null
+          smtp_host?: string | null
+          smtp_port?: number | null
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          email_address?: string
+          id?: string
+          imap_host?: string | null
+          imap_port?: number | null
+          imap_secure?: boolean
+          is_active?: boolean
+          label?: string
+          last_sync_at?: string | null
+          last_sync_status?: string | null
+          provider?: string
+          secret_name?: string | null
+          smtp_host?: string | null
+          smtp_port?: number | null
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      dispo_emails: {
+        Row: {
+          account_id: string | null
+          ai_confidence: number | null
+          ai_status: string
+          body_html: string | null
+          body_text: string | null
+          created_at: string
+          direction: string
+          extracted: Json
+          folder: string
+          from_email: string | null
+          from_name: string | null
+          id: string
+          is_inquiry: boolean
+          is_read: boolean
+          message_uid: string | null
+          order_id: string | null
+          received_at: string
+          subject: string | null
+          to_email: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          ai_confidence?: number | null
+          ai_status?: string
+          body_html?: string | null
+          body_text?: string | null
+          created_at?: string
+          direction?: string
+          extracted?: Json
+          folder?: string
+          from_email?: string | null
+          from_name?: string | null
+          id?: string
+          is_inquiry?: boolean
+          is_read?: boolean
+          message_uid?: string | null
+          order_id?: string | null
+          received_at?: string
+          subject?: string | null
+          to_email?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          ai_confidence?: number | null
+          ai_status?: string
+          body_html?: string | null
+          body_text?: string | null
+          created_at?: string
+          direction?: string
+          extracted?: Json
+          folder?: string
+          from_email?: string | null
+          from_name?: string | null
+          id?: string
+          is_inquiry?: boolean
+          is_read?: boolean
+          message_uid?: string | null
+          order_id?: string | null
+          received_at?: string
+          subject?: string | null
+          to_email?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispo_emails_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "dispo_email_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispo_emails_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dispo_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dispo_offers: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          discount_percent: number
+          id: string
+          inclusions: string | null
+          items: Json
+          notes: string | null
+          offer_number: string
+          order_id: string
+          pdf_url: string | null
+          price_gross: number
+          price_net: number
+          sent_at: string | null
+          status: string
+          updated_at: string
+          valid_until: string | null
+          vat_rate: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          discount_percent?: number
+          id?: string
+          inclusions?: string | null
+          items?: Json
+          notes?: string | null
+          offer_number: string
+          order_id: string
+          pdf_url?: string | null
+          price_gross?: number
+          price_net?: number
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          valid_until?: string | null
+          vat_rate?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          discount_percent?: number
+          id?: string
+          inclusions?: string | null
+          items?: Json
+          notes?: string | null
+          offer_number?: string
+          order_id?: string
+          pdf_url?: string | null
+          price_gross?: number
+          price_net?: number
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          valid_until?: string | null
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispo_offers_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dispo_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dispo_orders: {
+        Row: {
+          bus_id: string | null
+          calculation: Json
+          company: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string
+          departure_date: string | null
+          departure_time: string | null
+          destination: string | null
+          distance_km: number | null
+          driver_user_id: string | null
+          duration_min: number | null
+          email: string | null
+          estimated_cost: number
+          id: string
+          luggage: string | null
+          margin: number
+          notes: string | null
+          order_number: string
+          origin: string | null
+          passengers: number
+          payout: number
+          phone: string | null
+          platform_fee: number
+          price_gross: number
+          price_net: number
+          requirements: string | null
+          return_date: string | null
+          return_time: string | null
+          second_driver_user_id: string | null
+          source: string
+          status: string
+          updated_at: string
+          vat_rate: number
+          waypoints: Json
+        }
+        Insert: {
+          bus_id?: string | null
+          calculation?: Json
+          company?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name: string
+          departure_date?: string | null
+          departure_time?: string | null
+          destination?: string | null
+          distance_km?: number | null
+          driver_user_id?: string | null
+          duration_min?: number | null
+          email?: string | null
+          estimated_cost?: number
+          id?: string
+          luggage?: string | null
+          margin?: number
+          notes?: string | null
+          order_number: string
+          origin?: string | null
+          passengers?: number
+          payout?: number
+          phone?: string | null
+          platform_fee?: number
+          price_gross?: number
+          price_net?: number
+          requirements?: string | null
+          return_date?: string | null
+          return_time?: string | null
+          second_driver_user_id?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          vat_rate?: number
+          waypoints?: Json
+        }
+        Update: {
+          bus_id?: string | null
+          calculation?: Json
+          company?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string
+          departure_date?: string | null
+          departure_time?: string | null
+          destination?: string | null
+          distance_km?: number | null
+          driver_user_id?: string | null
+          duration_min?: number | null
+          email?: string | null
+          estimated_cost?: number
+          id?: string
+          luggage?: string | null
+          margin?: number
+          notes?: string | null
+          order_number?: string
+          origin?: string | null
+          passengers?: number
+          payout?: number
+          phone?: string | null
+          platform_fee?: number
+          price_gross?: number
+          price_net?: number
+          requirements?: string | null
+          return_date?: string | null
+          return_time?: string | null
+          second_driver_user_id?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          vat_rate?: number
+          waypoints?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispo_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "dispo_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       driver_checklists: {
         Row: {
           all_ok: boolean
@@ -8339,6 +8721,8 @@ export type Database = {
       generate_complaint_number: { Args: never; Returns: string }
       generate_contract_number: { Args: never; Returns: string }
       generate_dispatch_order_number: { Args: never; Returns: string }
+      generate_dispo_offer_number: { Args: never; Returns: string }
+      generate_dispo_order_number: { Args: never; Returns: string }
       generate_inquiry_number: { Args: never; Returns: string }
       generate_line_trip_number: { Args: never; Returns: string }
       generate_personnel_number: { Args: never; Returns: string }
