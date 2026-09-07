@@ -10,6 +10,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { useLiveGpsBroadcast } from "@/hooks/useLiveGpsBroadcast";
+import { useDriverLiveChannel } from "@/hooks/useTripLiveChannel";
 import { useForceDarkCockpit } from "@/hooks/useForceDarkCockpit";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -120,6 +121,26 @@ const DriverNavPage = () => {
         : activeOrder?.status === "paused" ? "break"
         : activeOrder?.status === "arrived" ? "arrived" : "ready",
   });
+
+  // Direkter Draht zur öffentlichen Verfolgungsseite (Halte, Verspätung, Status)
+  const { viewers, publish } = useDriverLiveChannel(activeOrder?.trip_id ?? null);
+  const [trackingUid, setTrackingUid] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    const tripId = activeOrder?.trip_id;
+    if (!tripId) { setTrackingUid(null); return; }
+    (async () => {
+      const { data } = await db
+        .from("trip_registry")
+        .select("trip_uid")
+        .eq("source_id", tripId)
+        .maybeSingle();
+      if (active) setTrackingUid(data?.trip_uid ?? null);
+    })();
+    return () => { active = false; };
+  }, [activeOrder?.trip_id]);
+
+
 
 
 
@@ -464,6 +485,7 @@ const DriverNavPage = () => {
         "driver",
         activeOrder.id,
       );
+      publish("delay_changed", { minutes, reason });
       toast.success(minutes > 0 ? `Verspätung von ${minutes} min gemeldet` : "Als pünktlich gemeldet");
       setSheetTab(null);
     });
@@ -482,12 +504,14 @@ const DriverNavPage = () => {
     act(async () => {
       await markArrival(stopId);
       await logEvent("stop_arrival", { stopId });
+      publish("stop_arrival", { stopId });
     });
 
   const stopDepart = (stopId: string) =>
     act(async () => {
       await markDeparture(stopId);
       await logEvent("stop_departure", { stopId });
+      publish("stop_departure", { stopId });
       setRoute(null);
     });
 
@@ -511,12 +535,14 @@ const DriverNavPage = () => {
         );
       }
       speak(`Außerplanmäßiger Halt ${name} gemeldet`, voice);
-      toast.success("Halt angelegt und an die Zentrale gemeldet");
+      publish("unscheduled_stop", { name });
+      toast.success("Halt angelegt – sofort im Live-Tracking sichtbar");
     });
 
   const removeUnscheduled = (stopId: string) =>
     act(async () => {
       await removeUnscheduledStop(stopId);
+      publish("stops_changed", { stopId });
       toast.success("Halt entfernt");
     });
 
