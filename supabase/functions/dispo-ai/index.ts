@@ -55,6 +55,34 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const action = body.action as string;
 
+    // Lernbeispiele aus der eigenen Trainingsdatenbank laden (few-shot).
+    const loadExamples = async () => {
+      const pick = async (isInquiry: boolean) => {
+        const { data } = await admin
+          .from("dispo_ai_examples")
+          .select("subject, body_text, from_email, is_inquiry, extracted")
+          .eq("use_for_training", true)
+          .eq("is_inquiry", isInquiry)
+          .order("created_at", { ascending: false })
+          .limit(8);
+        return data ?? [];
+      };
+      const [pos, neg] = await Promise.all([pick(true), pick(false)]);
+      return [...pos, ...neg];
+    };
+
+    const exampleMessages = (examples: any[]) =>
+      examples.flatMap((ex) => [
+        {
+          role: "user",
+          content: `Absender: ${ex.from_email ?? ""}\nBetreff: ${ex.subject ?? ""}\n\n${String(ex.body_text ?? "").slice(0, 2500)}`,
+        },
+        {
+          role: "assistant",
+          content: JSON.stringify({ is_inquiry: ex.is_inquiry, confidence: 1, ...(ex.extracted ?? {}) }),
+        },
+      ]);
+
     if (action === "parse_email") {
       const { data: mail } = await admin
         .from("dispo_emails")
@@ -62,6 +90,8 @@ Deno.serve(async (req) => {
         .eq("id", body.email_id)
         .maybeSingle();
       if (!mail) return json({ error: "E-Mail nicht gefunden" }, 404);
+
+      const examples = await loadExamples();
 
       const result = await callAi(
         [
@@ -74,8 +104,12 @@ Deno.serve(async (req) => {
               '"departure_date":"YYYY-MM-DD","departure_time":"HH:MM","origin":string,"destination":string,' +
               '"return_date":"YYYY-MM-DD","return_time":"HH:MM","passengers":number,"waypoints":[string],' +
               '"requirements":string,"luggage":string,"vehicle_wishes":string}. ' +
-              "Unbekannte Felder als leeren String oder 0. Keine Erklärungen, kein Fließtext.",
+              "Unbekannte Felder als leeren String oder 0. Keine Erklärungen, kein Fließtext. " +
+              (examples.length
+                ? `Orientiere dich an den ${examples.length} vom Disponenten geprüften Beispielen in diesem Verlauf.`
+                : ""),
           },
+          ...exampleMessages(examples),
           {
             role: "user",
             content: `Absender: ${mail.from_name ?? ""} <${mail.from_email ?? ""}>\nBetreff: ${mail.subject ?? ""}\n\n${mail.body_text ?? ""}`,
@@ -83,6 +117,7 @@ Deno.serve(async (req) => {
         ],
         apiKey,
       );
+
       if (!result.ok) return json({ error: "KI-Fehler", detail: result.error }, result.status);
 
       const parsed = extractJson(result.content);

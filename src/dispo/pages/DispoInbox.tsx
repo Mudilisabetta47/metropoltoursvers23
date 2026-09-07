@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bot, RefreshCw, Sparkles, FileText, Reply, Mail } from "lucide-react";
+import { Bot, RefreshCw, Sparkles, FileText, Reply, Mail, ThumbsUp, ThumbsDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import DispoLayout from "../DispoLayout";
@@ -115,6 +115,27 @@ export default function DispoInbox() {
     setDraft(data?.reply ?? "");
   };
 
+  // Rückmeldung des Disponenten wird als Lernbeispiel gespeichert.
+  const learn = async (mail: DispoEmail, isInquiry: boolean) => {
+    const { error } = await db.from("dispo_ai_examples").insert({
+      source_email_id: mail.id,
+      subject: mail.subject,
+      body_text: mail.body_text ?? "",
+      from_email: mail.from_email,
+      is_inquiry: isInquiry,
+      label: isInquiry ? "anfrage" : "keine_anfrage",
+      extracted: isInquiry ? mail.extracted ?? {} : {},
+    });
+    if (error) return toast.error(error.message);
+    await db.from("dispo_emails").update({
+      is_inquiry: isInquiry,
+      ai_status: isInquiry ? "anfrage_bestaetigt" : "keine_anfrage",
+      folder: isInquiry ? "anfragen" : mail.folder,
+    }).eq("id", mail.id);
+    toast.success(isInquiry ? "Als Busanfrage gelernt" : "Als „keine Anfrage“ gelernt");
+    reload();
+  };
+
   const markRead = async (mail: DispoEmail) => {
     setActiveId(mail.id);
     if (!mail.is_read) {
@@ -122,6 +143,7 @@ export default function DispoInbox() {
       reload();
     }
   };
+
 
   const linkedOrder = orders.find((o) => o.id === active?.order_id);
 
@@ -196,6 +218,13 @@ export default function DispoInbox() {
                 <button className="dispo-btn dispo-btn-ghost" onClick={() => prepareReply(active)} disabled={busy}>
                   <Reply className="h-4 w-4" /> Antwort vorbereiten
                 </button>
+                <button className="dispo-btn dispo-btn-ghost" onClick={() => learn(active, true)}>
+                  <ThumbsUp className="h-4 w-4" /> Ist eine Anfrage (lernen)
+                </button>
+                <button className="dispo-btn dispo-btn-ghost" onClick={() => learn(active, false)}>
+                  <ThumbsDown className="h-4 w-4" /> Keine Anfrage (lernen)
+                </button>
+
                 {linkedOrder && (
                   <button className="dispo-btn dispo-btn-ghost" onClick={() => navigate(`/dispo/auftraege?id=${linkedOrder.id}`)}>
                     Auftrag {linkedOrder.order_number} öffnen

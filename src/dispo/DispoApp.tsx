@@ -11,7 +11,9 @@ import DispoAssistant from "./pages/DispoAssistant";
 import DispoBuses from "./pages/DispoBuses";
 import DispoDrivers from "./pages/DispoDrivers";
 import DispoCalc from "./pages/DispoCalc";
+import DispoTraining from "./pages/DispoTraining";
 import DispoSettings from "./pages/DispoSettings";
+
 
 export default function DispoApp() {
   return (
@@ -27,6 +29,8 @@ export default function DispoApp() {
       <Route path="busse" element={<DispoBuses />} />
       <Route path="fahrer" element={<DispoDrivers />} />
       <Route path="kalkulation" element={<DispoCalc />} />
+      <Route path="ki-training" element={<DispoTraining />} />
+
       <Route path="einstellungen" element={<DispoSettings />} />
       <Route path="*" element={<Navigate to="/dispo" replace />} />
     </Routes>
