@@ -67,7 +67,7 @@ export default function CharterTripTracker({ tripId, registry }: Props) {
       const [t, s, p] = await Promise.all([
         supabase.from("trips").select("id, title, departure_date, departure_time, arrival_date, arrival_time, status, trip_category").eq("id", tripId).maybeSingle(),
         supabase.from("trip_schedule_stops").select("*").eq("trip_id", tripId).order("sort_order"),
-        supabase.from("bus_positions_live").select("*").eq("trip_id", tripId).maybeSingle(),
+        supabase.from("bus_positions_live").select("id, trip_id, bus_id, lat, lng, heading, speed_kmh, next_stop_id, eta_next_stop, delay_minutes, status, updated_at").eq("trip_id", tripId).maybeSingle(),
       ]);
       setTrip(t.data);
       setStops(s.data || []);

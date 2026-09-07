@@ -70,7 +70,7 @@ export default function TrackTripPage() {
       supabase.from("bus_lines").select("*").eq("id", t.line_id).maybeSingle(),
       supabase.from("line_stops").select("*").eq("line_id", t.line_id).order("stop_order"),
       supabase.from("line_trip_stops").select("*").eq("trip_id", t.id),
-      supabase.from("bus_positions_live").select("*").eq("trip_id", t.id).maybeSingle(),
+      supabase.from("bus_positions_live").select("id, trip_id, bus_id, lat, lng, heading, speed_kmh, next_stop_id, eta_next_stop, delay_minutes, status, updated_at").eq("trip_id", t.id).maybeSingle(),
     ]);
     setLine(l.data);
     setStops(s.data || []);
