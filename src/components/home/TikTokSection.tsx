@@ -163,36 +163,24 @@ const TikTokSection = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.45 }}
-            className="mx-auto max-w-xl rounded-2xl border border-border bg-card p-8 text-center"
           >
-            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-foreground text-background">
-              <Music2 className="h-8 w-8" />
-            </span>
-            <h3 className="mt-5 text-xl font-semibold text-foreground">
-              Folge uns auf TikTok
-            </h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Neue Videos von unseren Reisen, dem Team und unseren Bussen – direkt in deinem Feed.
-            </p>
-            <Button asChild size="lg" className="mt-6 gap-2">
-              <a href={profileUrl} target="_blank" rel="noopener noreferrer">
-                @{handle} folgen
-                <ExternalLink className="h-4 w-4" />
-              </a>
-            </Button>
+            <TikTokProfileEmbed handle={handle} />
+            <div className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Music2 className="h-4 w-4" />
+              Neueste Videos direkt von @{handle}
+            </div>
           </motion.div>
         )}
 
-        {videoIds.length > 0 && (
-          <div className="mt-10 text-center">
-            <Button asChild variant="outline" className="gap-2">
-              <a href={profileUrl} target="_blank" rel="noopener noreferrer">
-                Alle Videos auf TikTok
-                <ExternalLink className="h-4 w-4" />
-              </a>
-            </Button>
-          </div>
-        )}
+        <div className="mt-10 text-center">
+          <Button asChild variant="outline" className="gap-2">
+            <a href={profileUrl} target="_blank" rel="noopener noreferrer">
+              Alle Videos auf TikTok
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          </Button>
+        </div>
+
       </div>
     </section>
   );
