@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bot, RefreshCw, Sparkles, FileText, Reply, Mail } from "lucide-react";
+import { Bot, RefreshCw, Sparkles, FileText, Reply, Mail, ThumbsUp, ThumbsDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import DispoLayout from "../DispoLayout";
@@ -218,6 +218,13 @@ export default function DispoInbox() {
                 <button className="dispo-btn dispo-btn-ghost" onClick={() => prepareReply(active)} disabled={busy}>
                   <Reply className="h-4 w-4" /> Antwort vorbereiten
                 </button>
+                <button className="dispo-btn dispo-btn-ghost" onClick={() => learn(active, true)}>
+                  <ThumbsUp className="h-4 w-4" /> Ist eine Anfrage (lernen)
+                </button>
+                <button className="dispo-btn dispo-btn-ghost" onClick={() => learn(active, false)}>
+                  <ThumbsDown className="h-4 w-4" /> Keine Anfrage (lernen)
+                </button>
+
                 {linkedOrder && (
                   <button className="dispo-btn dispo-btn-ghost" onClick={() => navigate(`/dispo/auftraege?id=${linkedOrder.id}`)}>
                     Auftrag {linkedOrder.order_number} öffnen
