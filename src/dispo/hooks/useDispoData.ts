@@ -112,7 +112,7 @@ export function useDispoData() {
   useEffect(() => {
     load();
     const channel = supabase
-      .channel("dispo-cockpit")
+      .channel(`dispo-cockpit-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "dispo_orders" }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "dispo_emails" }, () => load())
       .subscribe();
