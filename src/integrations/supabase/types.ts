@@ -2407,6 +2407,62 @@ export type Database = {
           },
         ]
       }
+      dispo_ai_examples: {
+        Row: {
+          body_text: string
+          created_at: string
+          created_by: string | null
+          extracted: Json
+          from_email: string | null
+          id: string
+          is_inquiry: boolean
+          label: string
+          note: string | null
+          source_email_id: string | null
+          subject: string | null
+          updated_at: string
+          use_for_training: boolean
+        }
+        Insert: {
+          body_text: string
+          created_at?: string
+          created_by?: string | null
+          extracted?: Json
+          from_email?: string | null
+          id?: string
+          is_inquiry: boolean
+          label?: string
+          note?: string | null
+          source_email_id?: string | null
+          subject?: string | null
+          updated_at?: string
+          use_for_training?: boolean
+        }
+        Update: {
+          body_text?: string
+          created_at?: string
+          created_by?: string | null
+          extracted?: Json
+          from_email?: string | null
+          id?: string
+          is_inquiry?: boolean
+          label?: string
+          note?: string | null
+          source_email_id?: string | null
+          subject?: string | null
+          updated_at?: string
+          use_for_training?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispo_ai_examples_source_email_id_fkey"
+            columns: ["source_email_id"]
+            isOneToOne: false
+            referencedRelation: "dispo_emails"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dispo_customers: {
         Row: {
           address: string | null
