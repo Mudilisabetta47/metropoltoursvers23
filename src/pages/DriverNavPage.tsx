@@ -10,6 +10,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { useLiveGpsBroadcast } from "@/hooks/useLiveGpsBroadcast";
+import { useDriverLiveChannel } from "@/hooks/useTripLiveChannel";
 import { useForceDarkCockpit } from "@/hooks/useForceDarkCockpit";
 import { supabase } from "@/integrations/supabase/client";
 import {
