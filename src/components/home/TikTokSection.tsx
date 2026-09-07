@@ -64,6 +64,53 @@ function TikTokEmbed({ videoId }: { videoId: string }) {
   );
 }
 
+/** Profil-Feed (neueste Videos automatisch) – ebenfalls erst nach Zustimmung. */
+function TikTokProfileEmbed({ handle }: { handle: string }) {
+  const [consented, setConsented] = useState(false);
+  const profileUrl = `https://www.tiktok.com/@${handle}`;
+
+  if (!consented) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setConsented(true);
+          loadTikTokScript();
+        }}
+        className="group mx-auto flex w-full max-w-2xl flex-col items-center justify-center gap-4 rounded-2xl border border-border bg-muted/40 p-10 text-center transition-colors hover:border-primary/50 hover:bg-muted/60"
+      >
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform group-hover:scale-110">
+          <Play className="h-6 w-6 fill-current" />
+        </span>
+        <span className="text-base font-semibold text-foreground">Neueste TikTok-Videos laden</span>
+        <span className="flex items-start gap-1.5 text-xs leading-relaxed text-muted-foreground">
+          <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          Mit dem Laden werden Daten an TikTok übertragen. Details in der Datenschutzerklärung.
+        </span>
+      </button>
+    );
+  }
+
+  return (
+    <div className="mx-auto w-full max-w-2xl">
+      <blockquote
+        className="tiktok-embed w-full"
+        cite={profileUrl}
+        data-unique-id={handle}
+        data-embed-type="creator"
+        style={{ maxWidth: 780, minWidth: 288 }}
+      >
+        <section>
+          <a target="_blank" rel="noopener noreferrer" href={profileUrl}>
+            @{handle}
+          </a>
+        </section>
+      </blockquote>
+    </div>
+  );
+}
+
+
 const TikTokSection = () => {
   const { meta } = useSiteSection("home_tiktok");
   const videoIds = Array.isArray(meta.video_ids)
@@ -116,36 +163,24 @@ const TikTokSection = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.45 }}
-            className="mx-auto max-w-xl rounded-2xl border border-border bg-card p-8 text-center"
           >
-            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-foreground text-background">
-              <Music2 className="h-8 w-8" />
-            </span>
-            <h3 className="mt-5 text-xl font-semibold text-foreground">
-              Folge uns auf TikTok
-            </h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Neue Videos von unseren Reisen, dem Team und unseren Bussen – direkt in deinem Feed.
-            </p>
-            <Button asChild size="lg" className="mt-6 gap-2">
-              <a href={profileUrl} target="_blank" rel="noopener noreferrer">
-                @{handle} folgen
-                <ExternalLink className="h-4 w-4" />
-              </a>
-            </Button>
+            <TikTokProfileEmbed handle={handle} />
+            <div className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Music2 className="h-4 w-4" />
+              Neueste Videos direkt von @{handle}
+            </div>
           </motion.div>
         )}
 
-        {videoIds.length > 0 && (
-          <div className="mt-10 text-center">
-            <Button asChild variant="outline" className="gap-2">
-              <a href={profileUrl} target="_blank" rel="noopener noreferrer">
-                Alle Videos auf TikTok
-                <ExternalLink className="h-4 w-4" />
-              </a>
-            </Button>
-          </div>
-        )}
+        <div className="mt-10 text-center">
+          <Button asChild variant="outline" className="gap-2">
+            <a href={profileUrl} target="_blank" rel="noopener noreferrer">
+              Alle Videos auf TikTok
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          </Button>
+        </div>
+
       </div>
     </section>
   );
