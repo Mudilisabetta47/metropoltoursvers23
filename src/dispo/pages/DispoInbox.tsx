@@ -115,6 +115,27 @@ export default function DispoInbox() {
     setDraft(data?.reply ?? "");
   };
 
+  // Rückmeldung des Disponenten wird als Lernbeispiel gespeichert.
+  const learn = async (mail: DispoEmail, isInquiry: boolean) => {
+    const { error } = await db.from("dispo_ai_examples").insert({
+      source_email_id: mail.id,
+      subject: mail.subject,
+      body_text: mail.body_text ?? "",
+      from_email: mail.from_email,
+      is_inquiry: isInquiry,
+      label: isInquiry ? "anfrage" : "keine_anfrage",
+      extracted: isInquiry ? mail.extracted ?? {} : {},
+    });
+    if (error) return toast.error(error.message);
+    await db.from("dispo_emails").update({
+      is_inquiry: isInquiry,
+      ai_status: isInquiry ? "anfrage_bestaetigt" : "keine_anfrage",
+      folder: isInquiry ? "anfragen" : mail.folder,
+    }).eq("id", mail.id);
+    toast.success(isInquiry ? "Als Busanfrage gelernt" : "Als „keine Anfrage“ gelernt");
+    reload();
+  };
+
   const markRead = async (mail: DispoEmail) => {
     setActiveId(mail.id);
     if (!mail.is_read) {
@@ -122,6 +143,7 @@ export default function DispoInbox() {
       reload();
     }
   };
+
 
   const linkedOrder = orders.find((o) => o.id === active?.order_id);
 
