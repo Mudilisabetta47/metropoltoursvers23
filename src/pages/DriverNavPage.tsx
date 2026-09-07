@@ -485,6 +485,7 @@ const DriverNavPage = () => {
         "driver",
         activeOrder.id,
       );
+      publish("delay_changed", { minutes, reason });
       toast.success(minutes > 0 ? `Verspätung von ${minutes} min gemeldet` : "Als pünktlich gemeldet");
       setSheetTab(null);
     });
@@ -503,12 +504,14 @@ const DriverNavPage = () => {
     act(async () => {
       await markArrival(stopId);
       await logEvent("stop_arrival", { stopId });
+      publish("stop_arrival", { stopId });
     });
 
   const stopDepart = (stopId: string) =>
     act(async () => {
       await markDeparture(stopId);
       await logEvent("stop_departure", { stopId });
+      publish("stop_departure", { stopId });
       setRoute(null);
     });
 
