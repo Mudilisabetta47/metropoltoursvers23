@@ -376,26 +376,39 @@ const WeekendTripDetailPage = () => {
                   <h3 className="mb-4 flex items-center gap-2 font-bold text-foreground">
                     <Check className="h-4 w-4 text-primary" /> Inklusive
                   </h3>
-                  <ul className="space-y-2.5">
-                    {(trip.inclusions || []).map((item, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />{item}
-                      </li>
-                    ))}
-                  </ul>
+                  {trip.inclusions?.length > 0 ? (
+                    <ul className="space-y-2.5">
+                      {trip.inclusions.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />{item}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Die genauen Leistungen zu diesem Trip nennen wir Ihnen gern persönlich – rufen Sie uns einfach an.
+                    </p>
+                  )}
                 </div>
                 <div className="rounded-3xl border border-border bg-muted/40 p-6">
                   <h3 className="mb-4 flex items-center gap-2 font-bold text-foreground">
                     <X className="h-4 w-4 text-muted-foreground" /> Nicht inklusive
                   </h3>
-                  <ul className="space-y-2.5">
-                    {(trip.not_included || []).map((item, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <X className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/60" />{item}
-                      </li>
-                    ))}
-                  </ul>
+                  {trip.not_included?.length > 0 ? (
+                    <ul className="space-y-2.5">
+                      {trip.not_included.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <X className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/60" />{item}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Persönliche Ausgaben, Eintritte und Verpflegung vor Ort sind nicht im Preis enthalten.
+                    </p>
+                  )}
                 </div>
+
               </div>
 
               {/* Komfort */}
