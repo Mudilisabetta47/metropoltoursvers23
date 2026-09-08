@@ -2,6 +2,8 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { InfoBanner } from "@/components/home/InfoBanner";
 import HeroSlider from "@/components/home/HeroSlider";
+import BusStorySection from "@/components/home/BusStorySection";
+import BusDiscoverSection from "@/components/home/BusDiscoverSection";
 import FeaturesSection from "@/components/home/FeaturesSection";
 import BrandShowcaseSection from "@/components/home/BrandShowcaseSection";
 
@@ -29,6 +31,8 @@ const Index = () => {
       <main className="flex-1">
         <InfoBanner />
         <HeroSlider />
+        <BusStorySection />
+        <BusDiscoverSection />
         <FeaturesSection />
         <BrandShowcaseSection />
         {/* Pauschalreisen vorübergehend deaktiviert – Fokus auf Gruppenanfragen */}
