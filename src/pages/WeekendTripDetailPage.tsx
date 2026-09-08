@@ -162,7 +162,16 @@ const WeekendTripDetailPage = () => {
         path={`/wochenendtrips/${trip.slug}`}
         image={heroImage}
         jsonLd={[
-          weekendTripJsonLd(trip as any),
+          weekendTripJsonLd({
+            destination: trip.destination,
+            country: trip.country,
+            departureCity: trip.departure_city,
+            slug: trip.slug,
+            description: trip.short_description || `Wochenendtrip nach ${trip.destination}`,
+            image: heroImage,
+            price: Number(trip.base_price || 0),
+            isBookable: true,
+          }),
           breadcrumbJsonLd([
             { name: "Start", path: "/" },
             { name: "Wochenendtrips", path: "/wochenendtrips" },
