@@ -160,6 +160,15 @@ export async function fetchLandingOffers(): Promise<LandingOffer[]> {
         "id, destination, slug, country, short_description, image_url, hero_image_url, base_price, departure_city, departure_point, departure_time, via_stops, tags, duration",
       )
       .eq("is_active", true),
+    supabase
+      .from("trips")
+      .select(
+        "id, title, departure_date, departure_time, arrival_date, base_price, seat_capacity, status, trip_category, routes(name, description)",
+      )
+      .eq("is_active", true)
+      .gte("departure_date", today)
+      .order("departure_date", { ascending: true })
+      .limit(50),
   ]);
 
   const offers: LandingOffer[] = [];
