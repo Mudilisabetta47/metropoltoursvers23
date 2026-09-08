@@ -265,6 +265,83 @@ const AdminWeekendTripBuilder = () => {
                       className="bg-[#151920] border-[#2a3040] mt-1" placeholder="z.B. ZOB Hamburg" />
                   </div>
                 </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label className="text-white text-xs">Abfahrtszeit am Startort</Label>
+                    <Input value={trip.departure_time || ''} onChange={e => updateField('departure_time', e.target.value)}
+                      className="bg-[#151920] border-[#2a3040] mt-1" placeholder="z.B. 18:00" />
+                  </div>
+                  <div className="col-span-2">
+                    <Label className="text-white text-xs">Rückfahrt-Info</Label>
+                    <Input value={trip.return_info || ''} onChange={e => updateField('return_info', e.target.value)}
+                      className="bg-[#151920] border-[#2a3040] mt-1" placeholder="z.B. Sonntag 18:00 Uhr ab Zentrum, Ankunft ca. 23:30 Uhr" />
+                  </div>
+                </div>
+
+                <Separator className="bg-[#2a3040]" />
+
+                <div className="space-y-4 rounded-lg border border-[#2a3040] bg-[#151920] p-4">
+                  <div className="flex items-center gap-2">
+                    <Switch checked={trip.accommodation_available} onCheckedChange={v => updateField('accommodation_available', v)} />
+                    <Label className="text-sm text-zinc-300">Unterkunft optional buchbar (Basispreis = nur Fahrt)</Label>
+                  </div>
+                  {trip.accommodation_available && (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-4 gap-4">
+                        <div>
+                          <Label className="text-white text-xs">Aufpreis Doppelzimmer (€ p.P.)</Label>
+                          <Input type="number" value={trip.price_double_room}
+                            onChange={e => updateField('price_double_room', parseFloat(e.target.value) || 0)}
+                            className="bg-[#1a1f2a] border-[#2a3040] mt-1" />
+                        </div>
+                        <div>
+                          <Label className="text-white text-xs">Aufpreis Einzelzimmer (€ p.P.)</Label>
+                          <Input type="number" value={trip.price_single_room}
+                            onChange={e => updateField('price_single_room', parseFloat(e.target.value) || 0)}
+                            className="bg-[#1a1f2a] border-[#2a3040] mt-1" />
+                        </div>
+                        <div>
+                          <Label className="text-white text-xs">Nächte</Label>
+                          <Input type="number" value={trip.accommodation_nights ?? ''}
+                            onChange={e => updateField('accommodation_nights', e.target.value === '' ? null : parseInt(e.target.value))}
+                            className="bg-[#1a1f2a] border-[#2a3040] mt-1" placeholder="z.B. 2" />
+                        </div>
+                        <div>
+                          <Label className="text-white text-xs">Hotel-Sterne</Label>
+                          <Input type="number" min={1} max={5} value={trip.hotel_stars ?? ''}
+                            onChange={e => updateField('hotel_stars', e.target.value === '' ? null : parseInt(e.target.value))}
+                            className="bg-[#1a1f2a] border-[#2a3040] mt-1" placeholder="1-5" />
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-white text-xs">Hotelname</Label>
+                        <Input value={trip.hotel_name || ''} onChange={e => updateField('hotel_name', e.target.value)}
+                          className="bg-[#1a1f2a] border-[#2a3040] mt-1" placeholder="z.B. Hotel Central" />
+                      </div>
+                      <div>
+                        <Label className="text-white text-xs">Hotelbeschreibung</Label>
+                        <Textarea value={trip.hotel_description || ''} onChange={e => updateField('hotel_description', e.target.value)}
+                          className="bg-[#1a1f2a] border-[#2a3040] mt-1" rows={3}
+                          placeholder="Lage, Frühstück, Entfernung zum Zentrum …" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-white text-xs">Layout der Detailseite</Label>
+                  <Select value={trip.layout_variant} onValueChange={v => updateField('layout_variant', v)}>
+                    <SelectTrigger className="bg-[#151920] border-[#2a3040] mt-1">
+                      <SelectValue placeholder="Layout wählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="classic">Klassisch – klar & ruhig</SelectItem>
+                      <SelectItem value="editorial">Editorial – Magazin-Stil</SelectItem>
+                      <SelectItem value="bold">Bold – große Typo, plakativ</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <Separator className="bg-[#2a3040]" />
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2">
@@ -467,7 +544,7 @@ const AdminWeekendTripBuilder = () => {
                 {(trip.via_stops || []).map((stop, i) => (
                   <div key={i} className="flex items-center gap-3 bg-[#151920] rounded-lg p-3 border border-[#2a3040]">
                     <MapPin className="w-4 h-4 text-amber-400 shrink-0" />
-                    <div className="grid grid-cols-3 gap-3 flex-1">
+                    <div className="grid grid-cols-4 gap-3 flex-1">
                       <Input value={stop.city} onChange={e => {
                         const updated = [...trip.via_stops];
                         updated[i] = { ...stop, city: e.target.value };
@@ -478,6 +555,11 @@ const AdminWeekendTripBuilder = () => {
                         updated[i] = { ...stop, name: e.target.value };
                         updateField('via_stops', updated);
                       }} className="bg-[#1a1f2a] border-[#2a3040]" placeholder="Haltestelle" />
+                      <Input value={stop.departure_time || ''} onChange={e => {
+                        const updated = [...trip.via_stops];
+                        updated[i] = { ...stop, departure_time: e.target.value };
+                        updateField('via_stops', updated);
+                      }} className="bg-[#1a1f2a] border-[#2a3040]" placeholder="Abfahrt z.B. 19:30" />
                       <div className="flex items-center gap-2">
                         <Input type="number" value={stop.surcharge} onChange={e => {
                           const updated = [...trip.via_stops];
@@ -490,7 +572,7 @@ const AdminWeekendTripBuilder = () => {
                     </div>
                   </div>
                 ))}
-                <Button variant="outline" size="sm" onClick={() => updateField('via_stops', [...(trip.via_stops || []), { city: '', name: '', surcharge: 0 }])}
+                <Button variant="outline" size="sm" onClick={() => updateField('via_stops', [...(trip.via_stops || []), { city: '', name: '', surcharge: 0, departure_time: '' }])}
                   className="border-[#2a3040] text-zinc-400 hover:text-white">
                   <Plus className="w-3.5 h-3.5 mr-1" />Haltestelle hinzufügen
                 </Button>
