@@ -332,13 +332,15 @@ const WeekendTripDetailPage = () => {
               </div>
 
               {/* Reiseart */}
-              {trip.accommodation_available && (
-                <div>
-                  <h2 className="text-2xl font-bold text-foreground md:text-3xl">Nur Fahrt oder mit Unterkunft?</h2>
-                  <p className="mt-2 text-muted-foreground">
-                    Die Busfahrt ist der Basispreis. Eine Übernachtung buchen Sie optional dazu.
-                  </p>
-                  <div className="mt-6">
+              <div>
+                <h2 className="text-2xl font-bold text-foreground md:text-3xl">Nur Fahrt oder mit Unterkunft?</h2>
+                <p className="mt-2 text-muted-foreground">
+                  {trip.accommodation_available
+                    ? "Die Busfahrt ist der Basispreis. Eine Übernachtung buchen Sie optional dazu."
+                    : "Für diesen Trip buchen Sie die Busfahrt – die Unterkunft wählen Sie frei selbst."}
+                </p>
+                <div className="mt-6">
+                  {trip.accommodation_available ? (
                     <StayOptions
                       basePrice={Number(trip.base_price) + stopSurcharge}
                       doubleSurcharge={Number(trip.price_double_room || 0)}
@@ -350,9 +352,23 @@ const WeekendTripDetailPage = () => {
                       value={stay}
                       onChange={setStay}
                     />
-                  </div>
+                  ) : (
+                    <div className="flex items-start gap-4 rounded-2xl border border-primary/30 bg-primary/5 p-5">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                        <Bus className="h-5 w-5" />
+                      </span>
+                      <div>
+                        <p className="font-semibold text-foreground">Nur Fahrt – Hin- und Rückfahrt im Komfortbus</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Für {trip.destination} bieten wir aktuell keine Hotelpakete an. Sie fahren bequem mit uns
+                          {trip.departure_city ? ` ab ${trip.departure_city}` : ""} und übernachten dort, wo es Ihnen am besten gefällt.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
+
 
               {/* Leistungen */}
               <div className="grid gap-6 md:grid-cols-2">
