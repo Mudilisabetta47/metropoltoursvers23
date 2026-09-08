@@ -100,7 +100,8 @@ const WeekendTripsPage = () => {
         {/* HERO */}
         <section className="relative min-h-[560px] py-16 md:h-[62vh] md:min-h-[480px] md:py-0">
           <img src={weekendHero} alt="Wochenendtrips durch Europa im Reisebus" className="absolute inset-0 h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/65 to-black/60" />
+          <div className="absolute inset-0 bg-black/25" />
           <div className="container relative mx-auto flex h-full flex-col justify-end px-4 pb-8 pt-6 md:pb-12">
             <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl">
               <Badge className="mb-4 border-0 bg-primary text-primary-foreground">
