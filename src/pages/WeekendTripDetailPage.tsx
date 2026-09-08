@@ -167,8 +167,9 @@ const WeekendTripDetailPage = () => {
     variant === "bold"
       ? "from-black via-black/60 to-transparent"
       : variant === "editorial"
-        ? "from-background via-background/40 to-transparent"
+        ? "from-black/90 via-black/45 to-black/10"
         : "from-black/85 via-black/35 to-transparent";
+
 
   return (
     <div className="min-h-screen bg-background">
