@@ -18,6 +18,7 @@ import { breadcrumbJsonLd, weekendTripJsonLd } from "@/lib/seo";
 import ShareButton from "@/components/common/ShareButton";
 import { cn } from "@/lib/utils";
 import { BoardingTimeline, StayOptions, WeekendStop, StayChoice, formatEuro } from "@/components/weekend/WeekendPieces";
+import TourSurroundingsSection from "@/components/tours/TourSurroundingsSection";
 
 interface BookableDeparture {
   id: string;
@@ -240,6 +241,29 @@ const WeekendTripDetailPage = () => {
         <section className="container mx-auto px-4 py-12 lg:py-16">
           <div className="grid gap-10 lg:grid-cols-[1fr_400px]">
             <div className="space-y-12">
+              {/* Auf einen Blick */}
+              <div>
+                <h2 className="text-2xl font-bold text-foreground md:text-3xl">Auf einen Blick</h2>
+                <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+                  {[
+                    { icon: MapPin, label: "Ziel", value: `${trip.destination}${trip.country ? `, ${trip.country}` : ""}` },
+                    { icon: Bus, label: "Abfahrt ab", value: trip.departure_point || trip.departure_city },
+                    { icon: Clock, label: "Abfahrtszeit", value: trip.departure_time ? `${trip.departure_time} Uhr` : "wird bekannt gegeben" },
+                    { icon: Ruler, label: "Fahrtzeit", value: trip.duration || trip.distance || "ca. 1 Nacht" },
+                    { icon: Calendar, label: "Übernachtungen", value: trip.accommodation_available ? `${trip.accommodation_nights || 1} optional` : "Nur Fahrt" },
+                    { icon: Sparkles, label: "Unterkunft", value: trip.accommodation_available ? (trip.hotel_name || "Hotel optional buchbar") : "nicht enthalten" },
+                    { icon: Check, label: "Zustiege", value: `${viaStops.length + 1} Orte` },
+                    { icon: ArrowRight, label: "Rückfahrt", value: trip.return_info || "siehe Fahrplan" },
+                  ].map((f) => (
+                    <div key={f.label} className="rounded-2xl border border-border bg-card p-4">
+                      <f.icon className="mb-2 h-4 w-4 text-primary" />
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">{f.label}</p>
+                      <p className="mt-1 text-sm font-semibold text-foreground line-clamp-2">{f.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Beschreibung */}
               {(trip.full_description || trip.highlights?.length > 0) && (
                 <div className={cn(variant === "editorial" && "border-l-2 border-primary/40 pl-6")}>
@@ -263,6 +287,7 @@ const WeekendTripDetailPage = () => {
                   )}
                 </div>
               )}
+
 
               {/* Zustieg & Abfahrtszeiten */}
               <div>
@@ -359,6 +384,15 @@ const WeekendTripDetailPage = () => {
                   ))}
                 </div>
               )}
+
+              {/* Was ist in der Nähe */}
+              <TourSurroundingsSection
+                destination={trip.destination}
+                location={trip.destination}
+                country={trip.country}
+                hotelName={trip.hotel_name}
+              />
+
             </div>
 
             {/* BUCHUNGS-SIDEBAR */}
