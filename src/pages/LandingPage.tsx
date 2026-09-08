@@ -20,6 +20,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import SEO from "@/components/seo/SEO";
+import LandingOffers from "@/components/landing/LandingOffers";
 import NotFound from "@/pages/NotFound";
 import { breadcrumbJsonLd, faqJsonLd, COMPANY, SITE_NAME, SITE_URL, absoluteUrl } from "@/lib/seo";
 import { landingBySlug, type LandingContent } from "@/content/landing";
@@ -167,6 +168,9 @@ export function LandingView({ content }: { content: LandingContent }) {
             </motion.div>
           </div>
         </section>
+
+        {/* Echte Fahrten aus dem Backend */}
+        <LandingOffers slug={content.slug} title={content.h1} />
 
         {/* Warum wir */}
         <Section>
