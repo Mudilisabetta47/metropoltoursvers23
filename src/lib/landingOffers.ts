@@ -238,5 +238,32 @@ export async function fetchLandingOffers(): Promise<LandingOffer[]> {
     });
   });
 
+  (trips.data ?? []).forEach((t: any) => {
+    if (t.status === "cancelled" || t.status === "completed") return;
+    const routeName: string = t.routes?.name ?? t.title ?? "";
+    if (!routeName) return;
+    const parts = routeName.split(/[–—\-→>]+/).map((p: string) => p.trim()).filter(Boolean);
+    const origin = parts.length > 1 ? parts[0] : null;
+    const target = parts.length > 1 ? parts[parts.length - 1] : routeName;
+
+    offers.push({
+      id: t.id,
+      kind: "trip",
+      title: target,
+      url: "/search",
+      image: null,
+      country: null,
+      location: target,
+      departureCity: origin,
+      departureDate: t.departure_date ?? null,
+      returnDate: t.arrival_date ?? null,
+      departureTime: t.departure_time ? String(t.departure_time).slice(0, 5) : null,
+      price: t.base_price != null ? Number(t.base_price) : null,
+      seatsLeft: null,
+      description: t.routes?.description ?? null,
+      tokens: [routeName, origin, target, t.trip_category, ...parts].map(norm).filter(Boolean),
+    });
+  });
+
   return offers;
 }
