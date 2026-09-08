@@ -111,6 +111,21 @@ const WeekendTripDetailPage = () => {
   const heroImage = trip?.hero_image_url || trip?.image_url || "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1600&q=80";
   const variant = trip?.layout_variant || "classic";
 
+  // Reine Zahlenwerte aus dem Admin lesbar machen ("13" -> "ca. 13 Std.", "1050" -> "1.050 km")
+  const durationLabel = (() => {
+    const raw = (trip?.duration || "").trim();
+    if (!raw) return null;
+    return /^[\d.,]+$/.test(raw) ? `ca. ${raw.replace(".", ",")} Std.` : raw;
+  })();
+  const distanceLabel = (() => {
+    const raw = (trip?.distance || "").trim();
+    if (!raw) return null;
+    if (!/^[\d.,\s]+$/.test(raw)) return raw;
+    const n = Number(raw.replace(/[^\d]/g, ""));
+    return Number.isFinite(n) && n > 0 ? `${n.toLocaleString("de-DE")} km` : raw;
+  })();
+
+
   const stopSurcharge = selectedStopIndex >= 0 ? Number(viaStops[selectedStopIndex]?.surcharge || 0) : 0;
   const stayExtra = stay === "double" ? Number(trip?.price_double_room || 0) : stay === "single" ? Number(trip?.price_single_room || 0) : 0;
   const pricePerPerson = Number(trip?.base_price || 0) + stopSurcharge + stayExtra;
