@@ -18,6 +18,7 @@ import { breadcrumbJsonLd, weekendTripJsonLd } from "@/lib/seo";
 import ShareButton from "@/components/common/ShareButton";
 import { cn } from "@/lib/utils";
 import { BoardingTimeline, StayOptions, WeekendStop, StayChoice, formatEuro } from "@/components/weekend/WeekendPieces";
+import TourSurroundingsSection from "@/components/tours/TourSurroundingsSection";
 
 interface BookableDeparture {
   id: string;
