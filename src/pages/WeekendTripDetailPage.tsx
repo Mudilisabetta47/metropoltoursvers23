@@ -167,8 +167,9 @@ const WeekendTripDetailPage = () => {
     variant === "bold"
       ? "from-black via-black/60 to-transparent"
       : variant === "editorial"
-        ? "from-background via-background/40 to-transparent"
+        ? "from-black/90 via-black/45 to-black/10"
         : "from-black/85 via-black/35 to-transparent";
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -228,7 +229,7 @@ const WeekendTripDetailPage = () => {
 
               <h1
                 className={cn(
-                  "text-white",
+                  "text-white drop-shadow-[0_2px_18px_rgba(0,0,0,0.55)]",
                   variant === "editorial"
                     ? "text-5xl font-light tracking-tight md:text-7xl"
                     : variant === "bold"
@@ -239,10 +240,10 @@ const WeekendTripDetailPage = () => {
                 {trip.destination}
               </h1>
               {trip.short_description && (
-                <p className="mt-4 max-w-2xl text-lg text-white/85">{trip.short_description}</p>
+                <p className="mt-4 max-w-2xl text-lg text-white/90 drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">{trip.short_description}</p>
               )}
 
-              <div className="mt-6 flex flex-wrap items-center gap-4 text-white/85">
+              <div className="mt-6 flex flex-wrap items-center gap-4 text-white/90 drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
                 {durationLabel && <span className="inline-flex items-center gap-2 text-sm"><Clock className="h-4 w-4 text-primary" />{durationLabel} Fahrt</span>}
                 {distanceLabel && <span className="inline-flex items-center gap-2 text-sm"><Ruler className="h-4 w-4 text-primary" />{distanceLabel}</span>}
                 <span className="inline-flex items-center gap-2 text-sm"><MapPin className="h-4 w-4 text-primary" />ab {trip.departure_city}</span>
