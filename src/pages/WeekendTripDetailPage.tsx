@@ -383,6 +383,15 @@ const WeekendTripDetailPage = () => {
                   ))}
                 </div>
               )}
+
+              {/* Was ist in der Nähe */}
+              <TourSurroundingsSection
+                destination={trip.destination}
+                location={trip.destination}
+                country={trip.country}
+                hotelName={trip.hotel_name}
+              />
+
             </div>
 
             {/* BUCHUNGS-SIDEBAR */}
