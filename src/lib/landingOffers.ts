@@ -5,7 +5,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 
-export type OfferKind = "tour" | "weekend";
+export type OfferKind = "tour" | "weekend" | "trip";
 
 export interface LandingOffer {
   id: string;
@@ -141,7 +141,7 @@ const todayIso = () => new Date().toISOString().slice(0, 10);
 export async function fetchLandingOffers(): Promise<LandingOffer[]> {
   const today = todayIso();
 
-  const [tours, dates, weekend] = await Promise.all([
+  const [tours, dates, weekend, trips] = await Promise.all([
     supabase
       .from("package_tours")
       .select(
