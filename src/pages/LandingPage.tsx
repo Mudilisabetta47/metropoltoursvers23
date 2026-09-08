@@ -168,6 +168,9 @@ export function LandingView({ content }: { content: LandingContent }) {
           </div>
         </section>
 
+        {/* Echte Fahrten aus dem Backend */}
+        <LandingOffers slug={content.slug} title={content.h1} />
+
         {/* Warum wir */}
         <Section>
           <h2 className="text-3xl md:text-4xl font-bold mb-10">Warum Metropol Tours?</h2>
