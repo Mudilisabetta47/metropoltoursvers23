@@ -243,8 +243,8 @@ const WeekendTripDetailPage = () => {
               )}
 
               <div className="mt-6 flex flex-wrap items-center gap-4 text-white/85">
-                {trip.duration && <span className="inline-flex items-center gap-2 text-sm"><Clock className="h-4 w-4 text-primary" />{trip.duration} Fahrt</span>}
-                {trip.distance && <span className="inline-flex items-center gap-2 text-sm"><Ruler className="h-4 w-4 text-primary" />{trip.distance}</span>}
+                {durationLabel && <span className="inline-flex items-center gap-2 text-sm"><Clock className="h-4 w-4 text-primary" />{durationLabel} Fahrt</span>}
+                {distanceLabel && <span className="inline-flex items-center gap-2 text-sm"><Ruler className="h-4 w-4 text-primary" />{distanceLabel}</span>}
                 <span className="inline-flex items-center gap-2 text-sm"><MapPin className="h-4 w-4 text-primary" />ab {trip.departure_city}</span>
                 <ShareButton title={`Wochenendtrip ${trip.destination}`} />
               </div>
@@ -264,7 +264,7 @@ const WeekendTripDetailPage = () => {
                     { icon: MapPin, label: "Ziel", value: `${trip.destination}${trip.country ? `, ${trip.country}` : ""}` },
                     { icon: Bus, label: "Abfahrt ab", value: trip.departure_point || trip.departure_city },
                     { icon: Clock, label: "Abfahrtszeit", value: trip.departure_time ? `${trip.departure_time} Uhr` : "wird bekannt gegeben" },
-                    { icon: Ruler, label: "Fahrtzeit", value: trip.duration || trip.distance || "ca. 1 Nacht" },
+                    { icon: Ruler, label: "Fahrtzeit", value: durationLabel || distanceLabel || "ca. 1 Nacht" },
                     { icon: Calendar, label: "Übernachtungen", value: trip.accommodation_available ? `${trip.accommodation_nights || 1} optional` : "Nur Fahrt" },
                     { icon: Sparkles, label: "Unterkunft", value: trip.accommodation_available ? (trip.hotel_name || "Hotel optional buchbar") : "nicht enthalten" },
                     { icon: Check, label: "Zustiege", value: `${viaStops.length + 1} Orte` },
@@ -305,7 +305,7 @@ const WeekendTripDetailPage = () => {
                     <div className="mt-6 grid gap-3 sm:grid-cols-2">
                       {[
                         { icon: Bus, title: "Direkt ab " + trip.departure_city, text: trip.departure_point ? `Zustieg: ${trip.departure_point}` : "Bequemer Zustieg im Komfortbus" },
-                        { icon: Clock, title: "Fahrtzeit", text: trip.duration ? `${trip.duration} Fahrt` : "Nachtfahrt – Sie kommen ausgeruht an" },
+                        { icon: Clock, title: "Fahrtzeit", text: durationLabel ? `${durationLabel} Fahrt` : "Nachtfahrt – Sie kommen ausgeruht an" },
                         { icon: MapPin, title: `Ziel: ${trip.destination}`, text: trip.country || "Städtetrip in Europa" },
                         { icon: Sparkles, title: trip.accommodation_available ? "Unterkunft optional" : "Nur Fahrt buchbar", text: trip.accommodation_available ? "Hotel bequem dazubuchen" : "Unterkunft wählen Sie selbst" },
                       ].map((f) => (
