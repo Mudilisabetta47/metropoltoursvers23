@@ -265,15 +265,17 @@ const WeekendTripDetailPage = () => {
               </div>
 
               {/* Beschreibung */}
-              {(trip.full_description || trip.highlights?.length > 0) && (
+              {(trip.full_description || trip.short_description || trip.highlights?.length > 0) && (
                 <div className={cn(variant === "editorial" && "border-l-2 border-primary/40 pl-6")}>
                   <h2 className="text-2xl font-bold text-foreground md:text-3xl">
                     {variant === "bold" ? "Darum lohnt sich das Wochenende" : `Ihr Wochenende in ${trip.destination}`}
                   </h2>
-                  {trip.full_description && (
-                    <p className="mt-4 whitespace-pre-line text-muted-foreground leading-relaxed">{trip.full_description}</p>
+                  {(trip.full_description || trip.short_description) && (
+                    <p className="mt-4 whitespace-pre-line text-muted-foreground leading-relaxed">
+                      {trip.full_description || trip.short_description}
+                    </p>
                   )}
-                  {trip.highlights?.length > 0 && (
+                  {trip.highlights?.length > 0 ? (
                     <div className="mt-6 grid gap-3 sm:grid-cols-2">
                       {trip.highlights.map((h, i) => (
                         <div key={i} className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4">
@@ -284,9 +286,29 @@ const WeekendTripDetailPage = () => {
                         </div>
                       ))}
                     </div>
+                  ) : (
+                    <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                      {[
+                        { icon: Bus, title: "Direkt ab " + trip.departure_city, text: trip.departure_point ? `Zustieg: ${trip.departure_point}` : "Bequemer Zustieg im Komfortbus" },
+                        { icon: Clock, title: "Fahrtzeit", text: trip.duration ? `${trip.duration} Fahrt` : "Nachtfahrt – Sie kommen ausgeruht an" },
+                        { icon: MapPin, title: `Ziel: ${trip.destination}`, text: trip.country || "Städtetrip in Europa" },
+                        { icon: Sparkles, title: trip.accommodation_available ? "Unterkunft optional" : "Nur Fahrt buchbar", text: trip.accommodation_available ? "Hotel bequem dazubuchen" : "Unterkunft wählen Sie selbst" },
+                      ].map((f) => (
+                        <div key={f.title} className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4">
+                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                            <f.icon className="h-4 w-4" />
+                          </span>
+                          <span>
+                            <span className="block text-sm font-semibold text-foreground">{f.title}</span>
+                            <span className="block text-sm text-muted-foreground">{f.text}</span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               )}
+
 
 
               {/* Zustieg & Abfahrtszeiten */}
@@ -310,13 +332,15 @@ const WeekendTripDetailPage = () => {
               </div>
 
               {/* Reiseart */}
-              {trip.accommodation_available && (
-                <div>
-                  <h2 className="text-2xl font-bold text-foreground md:text-3xl">Nur Fahrt oder mit Unterkunft?</h2>
-                  <p className="mt-2 text-muted-foreground">
-                    Die Busfahrt ist der Basispreis. Eine Übernachtung buchen Sie optional dazu.
-                  </p>
-                  <div className="mt-6">
+              <div>
+                <h2 className="text-2xl font-bold text-foreground md:text-3xl">Nur Fahrt oder mit Unterkunft?</h2>
+                <p className="mt-2 text-muted-foreground">
+                  {trip.accommodation_available
+                    ? "Die Busfahrt ist der Basispreis. Eine Übernachtung buchen Sie optional dazu."
+                    : "Für diesen Trip buchen Sie die Busfahrt – die Unterkunft wählen Sie frei selbst."}
+                </p>
+                <div className="mt-6">
+                  {trip.accommodation_available ? (
                     <StayOptions
                       basePrice={Number(trip.base_price) + stopSurcharge}
                       doubleSurcharge={Number(trip.price_double_room || 0)}
@@ -328,9 +352,23 @@ const WeekendTripDetailPage = () => {
                       value={stay}
                       onChange={setStay}
                     />
-                  </div>
+                  ) : (
+                    <div className="flex items-start gap-4 rounded-2xl border border-primary/30 bg-primary/5 p-5">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                        <Bus className="h-5 w-5" />
+                      </span>
+                      <div>
+                        <p className="font-semibold text-foreground">Nur Fahrt – Hin- und Rückfahrt im Komfortbus</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Für {trip.destination} bieten wir aktuell keine Hotelpakete an. Sie fahren bequem mit uns
+                          {trip.departure_city ? ` ab ${trip.departure_city}` : ""} und übernachten dort, wo es Ihnen am besten gefällt.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
+
 
               {/* Leistungen */}
               <div className="grid gap-6 md:grid-cols-2">
@@ -338,26 +376,39 @@ const WeekendTripDetailPage = () => {
                   <h3 className="mb-4 flex items-center gap-2 font-bold text-foreground">
                     <Check className="h-4 w-4 text-primary" /> Inklusive
                   </h3>
-                  <ul className="space-y-2.5">
-                    {(trip.inclusions || []).map((item, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />{item}
-                      </li>
-                    ))}
-                  </ul>
+                  {trip.inclusions?.length > 0 ? (
+                    <ul className="space-y-2.5">
+                      {trip.inclusions.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />{item}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Die genauen Leistungen zu diesem Trip nennen wir Ihnen gern persönlich – rufen Sie uns einfach an.
+                    </p>
+                  )}
                 </div>
                 <div className="rounded-3xl border border-border bg-muted/40 p-6">
                   <h3 className="mb-4 flex items-center gap-2 font-bold text-foreground">
                     <X className="h-4 w-4 text-muted-foreground" /> Nicht inklusive
                   </h3>
-                  <ul className="space-y-2.5">
-                    {(trip.not_included || []).map((item, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <X className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/60" />{item}
-                      </li>
-                    ))}
-                  </ul>
+                  {trip.not_included?.length > 0 ? (
+                    <ul className="space-y-2.5">
+                      {trip.not_included.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <X className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/60" />{item}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Persönliche Ausgaben, Eintritte und Verpflegung vor Ort sind nicht im Preis enthalten.
+                    </p>
+                  )}
                 </div>
+
               </div>
 
               {/* Komfort */}
