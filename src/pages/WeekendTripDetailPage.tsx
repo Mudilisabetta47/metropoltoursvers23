@@ -1,14 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
-  Loader2, ChevronLeft, ChevronRight, MapPin, Heart,
-  Calendar, Clock, Users, Bus, ArrowRight, Star, Wifi, Plug,
-  Armchair, Check, X, TrendingUp, Minus, Plus
+  Loader2, MapPin, Calendar, Clock, Bus, ArrowRight, Check, X,
+  Wifi, Plug, Armchair, Minus, Plus, Ruler, Sparkles, ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import Header from "@/components/layout/Header";
@@ -17,7 +16,8 @@ import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/seo/SEO";
 import { breadcrumbJsonLd, weekendTripJsonLd } from "@/lib/seo";
 import ShareButton from "@/components/common/ShareButton";
-
+import { cn } from "@/lib/utils";
+import { BoardingTimeline, StayOptions, WeekendStop, StayChoice, formatEuro } from "@/components/weekend/WeekendPieces";
 
 interface BookableDeparture {
   id: string;
@@ -46,16 +46,26 @@ interface WeekendTrip {
   route_id: string | null;
   departure_city: string;
   departure_point: string | null;
-  via_stops: { city: string; name: string; surcharge: number }[];
+  departure_time: string | null;
+  return_info: string | null;
+  via_stops: WeekendStop[];
+  accommodation_available: boolean;
+  accommodation_nights: number | null;
+  hotel_name: string | null;
+  hotel_stars: number | null;
+  hotel_description: string | null;
+  price_double_room: number;
+  price_single_room: number;
+  layout_variant: "classic" | "editorial" | "bold" | string;
   is_active: boolean;
 }
 
 const WeekendTripDetailPage = () => {
   const { destination } = useParams<{ destination: string }>();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("leistungen");
   const [participants, setParticipants] = useState(2);
-  const [selectedStopIndex, setSelectedStopIndex] = useState(0);
+  const [selectedStopIndex, setSelectedStopIndex] = useState(-1);
+  const [stay, setStay] = useState<StayChoice>("none");
 
   const { data: trip, isLoading } = useQuery({
     queryKey: ["weekend-trip-detail", destination],
@@ -76,561 +86,368 @@ const WeekendTripDetailPage = () => {
     queryKey: ["weekend-trip-departure", trip?.route_id, selectedStopIndex],
     queryFn: async () => {
       if (!trip?.route_id) return null;
-
       const today = new Date().toISOString().slice(0, 10);
       const [{ data: departures, error: departureError }, { data: stops, error: stopsError }] = await Promise.all([
-        supabase
-          .from("trips")
-          .select("id, departure_date, departure_time")
-          .eq("route_id", trip.route_id)
-          .eq("is_active", true)
-          .gte("departure_date", today)
-          .order("departure_date")
-          .order("departure_time")
-          .limit(1),
-        supabase
-          .from("stops")
-          .select("id, city, stop_order")
-          .eq("route_id", trip.route_id)
-          .order("stop_order"),
+        supabase.from("trips").select("id, departure_date, departure_time")
+          .eq("route_id", trip.route_id).eq("is_active", true)
+          .gte("departure_date", today).order("departure_date").order("departure_time").limit(1),
+        supabase.from("stops").select("id, city, stop_order").eq("route_id", trip.route_id).order("stop_order"),
       ]);
-
       if (departureError) throw departureError;
       if (stopsError) throw stopsError;
       if (!departures?.[0] || !stops || stops.length < 2) return null;
 
-      const selectedCity = selectedStopIndex >= 0
-        ? trip.via_stops[selectedStopIndex]?.city
-        : trip.departure_city;
-      const origin = stops.find((stop) => stop.city.toLocaleLowerCase("de") === selectedCity?.toLocaleLowerCase("de")) || stops[0];
+      const selectedCity = selectedStopIndex >= 0 ? trip.via_stops?.[selectedStopIndex]?.city : trip.departure_city;
+      const origin = stops.find((s) => s.city.toLocaleLowerCase("de") === selectedCity?.toLocaleLowerCase("de")) || stops[0];
       const destinationStop = stops[stops.length - 1];
       if (!origin || !destinationStop || origin.stop_order >= destinationStop.stop_order) return null;
-
-      return {
-        ...departures[0],
-        originStopId: origin.id,
-        destinationStopId: destinationStop.id,
-      } as BookableDeparture;
+      return { ...departures[0], originStopId: origin.id, destinationStopId: destinationStop.id } as BookableDeparture;
     },
     enabled: Boolean(trip?.route_id),
   });
 
-  const heroImage = trip?.hero_image_url || trip?.image_url || "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=80";
-  const viaStops = trip?.via_stops || [];
-  const selectedStop = viaStops[selectedStopIndex] || null;
-  const surcharge = selectedStop?.surcharge || 0;
-  const pricePerPerson = trip ? Math.round(trip.base_price + surcharge) : 0;
+  const viaStops: WeekendStop[] = trip?.via_stops || [];
+  const heroImage = trip?.hero_image_url || trip?.image_url || "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1600&q=80";
+  const variant = trip?.layout_variant || "classic";
+
+  const stopSurcharge = selectedStopIndex >= 0 ? Number(viaStops[selectedStopIndex]?.surcharge || 0) : 0;
+  const stayExtra = stay === "double" ? Number(trip?.price_double_room || 0) : stay === "single" ? Number(trip?.price_single_room || 0) : 0;
+  const pricePerPerson = Number(trip?.base_price || 0) + stopSurcharge + stayExtra;
   const totalPrice = pricePerPerson * participants;
 
-  const tabs = [
-    { id: "leistungen", label: "Leistungen" },
-    { id: "route", label: "Route & Zustiege" },
-    { id: "infos", label: "Wichtige Infos" },
-  ];
+  const selectedBoarding = useMemo(() => {
+    if (!trip) return null;
+    if (selectedStopIndex >= 0) return viaStops[selectedStopIndex] || null;
+    return {
+      city: trip.departure_city,
+      name: trip.departure_point || trip.departure_city,
+      surcharge: 0,
+      departure_time: trip.departure_time,
+    } as WeekendStop;
+  }, [trip, selectedStopIndex, viaStops]);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Header />
-        <main className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-10 h-10 animate-spin text-primary" />
-        </main>
-        <Footer />
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   if (!trip) {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
+      <div className="min-h-screen bg-background">
         <Header />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-center px-4">
-            <h1 className="text-2xl font-bold mb-4">Ziel nicht gefunden</h1>
-            <p className="text-muted-foreground mb-6">Dieses Wochenendtrip-Ziel ist leider nicht verfügbar.</p>
-            <Button onClick={() => navigate("/wochenendtrips")} variant="outline">
-              <ChevronLeft className="w-4 h-4 mr-2" />Zurück zur Übersicht
-            </Button>
-          </div>
+        <main className="container mx-auto px-4 py-32 text-center">
+          <h1 className="text-2xl font-bold mb-4">Wochenendtrip nicht gefunden</h1>
+          <Button onClick={() => navigate("/wochenendtrips")} variant="outline">Zurück zur Übersicht</Button>
         </main>
         <Footer />
       </div>
     );
   }
 
+  const heroTone =
+    variant === "bold"
+      ? "from-black via-black/60 to-transparent"
+      : variant === "editorial"
+        ? "from-background via-background/40 to-transparent"
+        : "from-black/85 via-black/35 to-transparent";
+
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen bg-background">
       <SEO
-        title={`Wochenendtrip ${trip.destination} ab ${trip.departure_city} mit dem Bus`}
-        description={
-          trip.short_description?.slice(0, 155) ||
-          `Kurztrip nach ${trip.destination} (${trip.country}) mit dem Reisebus ab ${trip.departure_city}. Termine, Leistungen und Zustiegsorte bei Metropol Tours.`
-        }
+        title={`Wochenendtrip ${trip.destination} ab ${trip.departure_city} | Metropol Tours`}
+        description={trip.short_description || `Wochenendtrip nach ${trip.destination} ab ${trip.base_price} € – Busfahrt, optional mit Unterkunft.`}
         path={`/wochenendtrips/${trip.slug}`}
-        image={trip.hero_image_url || trip.image_url || undefined}
+        image={heroImage}
         jsonLd={[
+          weekendTripJsonLd(trip as any),
           breadcrumbJsonLd([
-            { name: "Startseite", path: "/" },
+            { name: "Start", path: "/" },
             { name: "Wochenendtrips", path: "/wochenendtrips" },
             { name: trip.destination, path: `/wochenendtrips/${trip.slug}` },
           ]),
-          weekendTripJsonLd({
-            destination: trip.destination,
-            country: trip.country,
-            departureCity: trip.departure_city,
-            slug: trip.slug,
-            description:
-              trip.short_description ||
-              `Kurztrip nach ${trip.destination} (${trip.country}) mit dem Reisebus ab ${trip.departure_city}.`,
-            image: trip.hero_image_url || trip.image_url,
-            price: pricePerPerson,
-            isBookable: !!bookableDeparture,
-          }),
         ]}
       />
       <Header />
-      <main className="flex-1 pt-16 lg:pt-20">
-        {/* Hero */}
-        <section className="relative">
-          <div className="relative h-[50vh] lg:h-[60vh] min-h-[400px] max-h-[600px] overflow-hidden">
-            <img src={heroImage} alt={trip.destination} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
 
-            {/* Breadcrumb */}
-            <div className="absolute top-0 left-0 right-0 pt-4">
-              <div className="container mx-auto px-4">
-                <nav className="flex items-center gap-2 text-sm text-white/80">
-                  <Link to="/" className="hover:text-white transition-colors font-medium">METROPOL TOURS</Link>
-                  <ChevronRight className="w-4 h-4" />
-                  <Link to="/wochenendtrips" className="hover:text-white transition-colors">Wochenendtrips</Link>
-                  <ChevronRight className="w-4 h-4" />
-                  <span className="text-white">{trip.destination}</span>
-                </nav>
+      <main>
+        {/* HERO */}
+        <section className={cn("relative", variant === "editorial" ? "h-[62vh] min-h-[440px]" : "h-[78vh] min-h-[520px]")}>
+          <img src={heroImage} alt={`Wochenendtrip nach ${trip.destination}`} className="absolute inset-0 h-full w-full object-cover" />
+          <div className={cn("absolute inset-0 bg-gradient-to-t", heroTone)} />
+          <div className="container relative mx-auto flex h-full flex-col justify-end px-4 pb-12">
+            <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl">
+              <nav className="mb-4 flex items-center gap-2 text-sm text-white/70">
+                <Link to="/" className="hover:text-white">Start</Link>
+                <ChevronRight className="h-3 w-3" />
+                <Link to="/wochenendtrips" className="hover:text-white">Wochenendtrips</Link>
+                <ChevronRight className="h-3 w-3" />
+                <span className="text-white">{trip.destination}</span>
+              </nav>
+
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <Badge className="border-0 bg-primary text-primary-foreground">
+                  <Bus className="mr-1 h-3 w-3" /> Wochenendtrip
+                </Badge>
+                {trip.accommodation_available && (
+                  <Badge variant="secondary" className="border-0 bg-white/15 text-white backdrop-blur">
+                    <Sparkles className="mr-1 h-3 w-3" /> Optional mit Unterkunft
+                  </Badge>
+                )}
+                <Badge variant="secondary" className="border-0 bg-white/15 text-white backdrop-blur">
+                  <MapPin className="mr-1 h-3 w-3" /> {trip.country}
+                </Badge>
               </div>
-            </div>
 
-            {/* Hero Content */}
-            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
-              className="absolute bottom-0 left-0 right-0 pb-8">
-              <div className="container mx-auto px-4">
-                <div className="max-w-4xl">
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <Badge className="bg-accent text-accent-foreground shadow-lg">
-                      <Calendar className="w-3 h-3 mr-1" />Wochenendtrip
-                    </Badge>
-                  </div>
-                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 drop-shadow-lg">{trip.destination}</h1>
-                  <div className="flex flex-wrap items-center gap-4 text-white/90 mb-4">
-                    {trip.distance && <div className="flex items-center gap-1.5"><MapPin className="w-4 h-4" /><span>{trip.distance}</span></div>}
-                    {trip.duration && <div className="flex items-center gap-1.5"><Clock className="w-4 h-4" /><span>Fahrzeit: {trip.duration}</span></div>}
-                    <div className="flex items-center gap-0.5">
-                      {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />)}
-                      <span className="ml-1 text-sm">(4.7)</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-3 mb-5">
-                    {[{ icon: Bus, label: "Komfortbus inkl." }, { icon: Wifi, label: "WLAN an Bord" }, { icon: Plug, label: "Steckdosen" }].map((p) => (
-                      <div key={p.label} className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-2 text-white text-sm">
-                        <p.icon className="w-4 h-4" /><span>{p.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="inline-flex items-end gap-2 bg-card/95 backdrop-blur rounded-xl px-5 py-3 shadow-xl">
-                    <span className="text-muted-foreground text-sm">ab</span>
-                    <span className="text-3xl font-bold text-primary">{trip.base_price}€</span>
-                    <span className="text-muted-foreground text-sm pb-1">pro Person</span>
-                  </div>
-                </div>
+              <h1
+                className={cn(
+                  "text-white",
+                  variant === "editorial"
+                    ? "text-5xl font-light tracking-tight md:text-7xl"
+                    : variant === "bold"
+                      ? "text-5xl font-black uppercase tracking-tighter md:text-8xl"
+                      : "text-4xl font-bold md:text-6xl",
+                )}
+              >
+                {trip.destination}
+              </h1>
+              {trip.short_description && (
+                <p className="mt-4 max-w-2xl text-lg text-white/85">{trip.short_description}</p>
+              )}
+
+              <div className="mt-6 flex flex-wrap items-center gap-4 text-white/85">
+                {trip.duration && <span className="inline-flex items-center gap-2 text-sm"><Clock className="h-4 w-4 text-primary" />{trip.duration} Fahrt</span>}
+                {trip.distance && <span className="inline-flex items-center gap-2 text-sm"><Ruler className="h-4 w-4 text-primary" />{trip.distance}</span>}
+                <span className="inline-flex items-center gap-2 text-sm"><MapPin className="h-4 w-4 text-primary" />ab {trip.departure_city}</span>
+                <ShareButton title={`Wochenendtrip ${trip.destination}`} />
               </div>
             </motion.div>
-
-            {/* Action Buttons */}
-            <div className="absolute top-4 right-4 flex items-center gap-2">
-              <ShareButton
-                variant="secondary"
-                title={`${trip.destination} – Metropol Tours`}
-                text={`Schau dir diesen Wochenendtrip an: ${trip.destination}`}
-                className="bg-card/90 backdrop-blur hover:bg-card shadow-lg gap-2"
-              />
-
-              <Button variant="secondary" size="sm" className="bg-card/90 backdrop-blur hover:bg-card shadow-lg gap-2">
-                <Heart className="w-4 h-4" /><span className="hidden sm:inline">Merken</span>
-              </Button>
-            </div>
           </div>
-
-          {/* Description Bar */}
-          {trip.full_description && (
-            <div className="bg-muted/50 border-b border-border">
-              <div className="container mx-auto px-4 py-4">
-                <p className="text-muted-foreground max-w-3xl">{trip.full_description}</p>
-              </div>
-            </div>
-          )}
         </section>
 
-        {/* Tab Nav */}
-        <nav className="sticky top-16 lg:top-20 z-40 bg-card border-b border-border" style={{ boxShadow: "var(--shadow-sm)" }}>
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1 overflow-x-auto py-2">
-                {tabs.map((tab) => (
-                  <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                    className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors relative ${
-                      activeTab === tab.id ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                    }`}>
-                    {tab.label}
-                    {activeTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />}
-                  </button>
-                ))}
-              </div>
-              <div className="hidden md:flex items-center gap-3 pl-4 border-l border-border">
-                <div className="flex items-center gap-2 text-sm">
-                  <TrendingUp className="w-4 h-4 text-accent" />
-                  <span className="text-muted-foreground">Dynamische Preise</span>
+        {/* CONTENT */}
+        <section className="container mx-auto px-4 py-12 lg:py-16">
+          <div className="grid gap-10 lg:grid-cols-[1fr_400px]">
+            <div className="space-y-12">
+              {/* Beschreibung */}
+              {(trip.full_description || trip.highlights?.length > 0) && (
+                <div className={cn(variant === "editorial" && "border-l-2 border-primary/40 pl-6")}>
+                  <h2 className="text-2xl font-bold text-foreground md:text-3xl">
+                    {variant === "bold" ? "Darum lohnt sich das Wochenende" : `Ihr Wochenende in ${trip.destination}`}
+                  </h2>
+                  {trip.full_description && (
+                    <p className="mt-4 whitespace-pre-line text-muted-foreground leading-relaxed">{trip.full_description}</p>
+                  )}
+                  {trip.highlights?.length > 0 && (
+                    <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                      {trip.highlights.map((h, i) => (
+                        <div key={i} className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4">
+                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                            {i + 1}
+                          </span>
+                          <span className="text-sm text-foreground">{h}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Zustieg & Abfahrtszeiten */}
+              <div>
+                <h2 className="text-2xl font-bold text-foreground md:text-3xl">Zustieg & Abfahrtszeiten</h2>
+                <p className="mt-2 text-muted-foreground">
+                  Wählen Sie Ihren Zustiegsort – der Preis passt sich automatisch an.
+                </p>
+                <div className="mt-6">
+                  <BoardingTimeline
+                    departureCity={trip.departure_city}
+                    departurePoint={trip.departure_point}
+                    departureTime={trip.departure_time}
+                    destination={trip.destination}
+                    stops={viaStops}
+                    selectedIndex={selectedStopIndex}
+                    onSelect={setSelectedStopIndex}
+                    returnInfo={trip.return_info}
+                  />
                 </div>
               </div>
-            </div>
-          </div>
-        </nav>
 
-        {/* Main Content */}
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Left Content */}
-            <div className="lg:col-span-2 space-y-8">
-              {trip.full_description && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-                  <Card className="border border-border rounded-2xl">
-                    <CardContent className="p-6">
-                      <p className="text-muted-foreground leading-relaxed">{trip.full_description}</p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+              {/* Reiseart */}
+              {trip.accommodation_available && (
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground md:text-3xl">Nur Fahrt oder mit Unterkunft?</h2>
+                  <p className="mt-2 text-muted-foreground">
+                    Die Busfahrt ist der Basispreis. Eine Übernachtung buchen Sie optional dazu.
+                  </p>
+                  <div className="mt-6">
+                    <StayOptions
+                      basePrice={Number(trip.base_price) + stopSurcharge}
+                      doubleSurcharge={Number(trip.price_double_room || 0)}
+                      singleSurcharge={Number(trip.price_single_room || 0)}
+                      nights={trip.accommodation_nights}
+                      hotelName={trip.hotel_name}
+                      hotelStars={trip.hotel_stars}
+                      hotelDescription={trip.hotel_description}
+                      value={stay}
+                      onChange={setStay}
+                    />
+                  </div>
+                </div>
               )}
 
-              {/* Tab: Leistungen */}
-              {activeTab === "leistungen" && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-                  {trip.inclusions.length > 0 && (
-                    <Card className="border border-border rounded-2xl">
-                      <CardHeader className="pb-4">
-                        <h3 className="text-lg font-bold flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Check className="w-4 h-4 text-primary" />
-                          </div>
-                          Inklusive Leistungen
-                        </h3>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {trip.inclusions.map((item) => (
-                            <div key={item} className="flex items-center gap-3 p-3 rounded-xl bg-primary/5">
-                              <Check className="w-4 h-4 text-primary shrink-0" />
-                              <span className="text-sm">{item}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {trip.not_included.length > 0 && (
-                    <Card className="border border-border rounded-2xl">
-                      <CardHeader className="pb-4">
-                        <h3 className="text-lg font-bold flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-                            <X className="w-4 h-4 text-muted-foreground" />
-                          </div>
-                          Nicht enthalten
-                        </h3>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <div className="space-y-2">
-                          {trip.not_included.map((item) => (
-                            <div key={item} className="flex items-center gap-3 p-3 rounded-xl bg-muted/50">
-                              <X className="w-4 h-4 text-muted-foreground shrink-0" />
-                              <span className="text-sm text-muted-foreground">{item}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  <Card className="border border-primary/20 rounded-2xl bg-primary/5">
-                    <CardContent className="p-6">
-                      <h3 className="font-bold mb-4 flex items-center gap-2">
-                        <Bus className="w-5 h-5 text-primary" />Reisekomfort
-                      </h3>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {[{ icon: Wifi, label: "WLAN" }, { icon: Plug, label: "Steckdosen" }, { icon: Armchair, label: "Komfortsitze" }, { icon: Users, label: "45 Plätze" }].map((c) => (
-                          <div key={c.label} className="flex items-center gap-2">
-                            <c.icon className="w-5 h-5 text-primary" />
-                            <span className="text-sm">{c.label}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )}
-
-              {/* Tab: Route */}
-              {activeTab === "route" && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-                  <Card className="border border-border rounded-2xl">
-                    <CardHeader className="pb-4">
-                      <h3 className="text-lg font-bold">Route & Zustiege</h3>
-                      <p className="text-sm text-muted-foreground">Wählen Sie Ihren Zustiegsort.</p>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="space-y-3">
-                        {/* Departure */}
-                        <div onClick={() => setSelectedStopIndex(-1)}
-                          className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${
-                            selectedStopIndex === -1 ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
-                          }`}>
-                          <div className="flex items-center gap-3 flex-1">
-                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${selectedStopIndex === -1 ? "border-primary" : "border-muted-foreground/50"}`}>
-                              {selectedStopIndex === -1 && <div className="w-2 h-2 rounded-full bg-primary" />}
-                            </div>
-                            <div>
-                              <p className="font-medium">{trip.departure_point || trip.departure_city}</p>
-                              <p className="text-sm text-muted-foreground">Startpunkt</p>
-                            </div>
-                          </div>
-                          <Badge variant="secondary" className="bg-primary/10 text-primary">Basispreis</Badge>
-                        </div>
-
-                        {/* Via stops */}
-                        {viaStops.map((stop, idx) => (
-                          <div key={idx} onClick={() => setSelectedStopIndex(idx)}
-                            className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${
-                              selectedStopIndex === idx ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
-                            }`}>
-                            <div className="flex items-center gap-3 flex-1">
-                              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${selectedStopIndex === idx ? "border-primary" : "border-muted-foreground/50"}`}>
-                                {selectedStopIndex === idx && <div className="w-2 h-2 rounded-full bg-primary" />}
-                              </div>
-                              <div>
-                                <p className="font-medium">{stop.name}</p>
-                                <p className="text-sm text-muted-foreground">{stop.city}</p>
-                              </div>
-                            </div>
-                            {stop.surcharge !== 0 && (
-                              <Badge variant="secondary" className={stop.surcharge > 0 ? "bg-amber-500/10 text-amber-500" : "bg-primary/10 text-primary"}>
-                                {stop.surcharge > 0 ? `+${stop.surcharge}€` : `${stop.surcharge}€`}
-                              </Badge>
-                            )}
-                          </div>
-                        ))}
-
-                        {/* Destination */}
-                        <div className="flex items-center gap-4 p-4 rounded-xl border-2 bg-primary/10 border-primary/30 cursor-default">
-                          <div className="flex items-center gap-3 flex-1">
-                            <MapPin className="w-4 h-4 text-primary" />
-                            <div>
-                              <p className="font-medium text-primary">{trip.destination}</p>
-                              <p className="text-sm text-muted-foreground">Ziel</p>
-                            </div>
-                          </div>
-                          <Badge className="bg-primary border-0">Ziel</Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Route visualization */}
-                  <Card className="border border-border rounded-2xl">
-                    <CardContent className="p-6">
-                      <h4 className="font-bold mb-4">Streckenverlauf</h4>
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <div className="flex flex-col items-center">
-                          <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-                            <Bus className="w-4 h-4" />
-                          </div>
-                          <span className="text-xs mt-2 text-center font-medium">{trip.departure_city}</span>
-                        </div>
-                        {viaStops.map((stop, idx) => (
-                          <div key={idx} className="flex items-center">
-                            <ArrowRight className="w-6 h-6 mx-2 text-muted-foreground/30" />
-                            <div className="flex flex-col items-center">
-                              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                                <div className="w-2 h-2 rounded-full bg-muted-foreground" />
-                              </div>
-                              <span className="text-xs mt-2 text-center font-medium">{stop.city}</span>
-                            </div>
-                          </div>
-                        ))}
-                        <div className="flex items-center">
-                          <ArrowRight className="w-6 h-6 mx-2 text-muted-foreground/30" />
-                          <div className="flex flex-col items-center">
-                            <div className="w-8 h-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center">
-                              <MapPin className="w-4 h-4" />
-                            </div>
-                            <span className="text-xs mt-2 text-center font-medium">{trip.destination}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )}
-
-              {/* Tab: Infos */}
-              {activeTab === "infos" && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <Card className="border border-border rounded-2xl">
-                    <CardHeader><h3 className="text-lg font-bold">Wichtige Informationen</h3></CardHeader>
-                    <CardContent className="space-y-4">
-                      {[
-                        { title: "Reisedokumente", text: "Für diese Reise benötigen Sie einen gültigen Personalausweis oder Reisepass." },
-                        { title: "Stornierung", text: "Kostenlose Stornierung bis 7 Tage vor Abfahrt. Danach fallen Stornogebühren an." },
-                        { title: "Gepäck", text: "1 Handgepäckstück (max. 8kg) ist inklusive. Zusätzliches Gepäck kann gegen Aufpreis mitgenommen werden." },
-                        { title: "Dynamische Preisgestaltung", text: "Unsere Preise passen sich der Nachfrage an. Je früher Sie buchen, desto günstiger." },
-                      ].map((info, i) => (
-                        <div key={info.title}>
-                          {i > 0 && <Separator className="mb-4" />}
-                          <h4 className="font-bold mb-2">{info.title}</h4>
-                          <p className="text-sm text-muted-foreground">{info.text}</p>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )}
-
-              {/* Highlights */}
-              {trip.highlights.length > 0 && (
-                <Card className="border border-border rounded-2xl">
-                  <CardHeader><h3 className="text-lg font-bold flex items-center gap-2"><Star className="w-5 h-5 text-amber-400" />Highlights</h3></CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {trip.highlights.map((h) => (
-                        <div key={h} className="flex items-center gap-2 p-3 bg-amber-500/5 rounded-xl">
-                          <Star className="w-4 h-4 text-amber-400 shrink-0" />
-                          <span className="text-sm font-medium">{h}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
-            {/* Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-[calc(theme(spacing.20)+theme(spacing.16))] lg:top-[calc(theme(spacing.20)+theme(spacing.20))]">
-                <Card className="border-2 border-primary/20 rounded-2xl overflow-hidden" style={{ boxShadow: "var(--shadow-elevated)" }}>
-                  <CardHeader className="bg-gradient-to-br from-primary/5 to-primary/10 border-b border-border pb-4">
-                    <h3 className="text-lg font-bold text-foreground">Dein Angebot:</h3>
-                  </CardHeader>
-                  <CardContent className="p-5 space-y-4">
-                    <div className="flex items-start gap-3">
-                      <MapPin className="w-5 h-5 text-primary mt-0.5" />
-                      <div>
-                        <p className="font-bold text-foreground">{trip.destination}</p>
-                        <p className="text-sm text-muted-foreground">Wochenendtrip ab {trip.departure_city}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <Bus className="w-5 h-5 text-primary mt-0.5" />
-                      <div>
-                        <p className="font-bold text-foreground">
-                          Zustieg: {selectedStopIndex >= 0 ? viaStops[selectedStopIndex]?.city : trip.departure_city}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {selectedStopIndex >= 0 ? viaStops[selectedStopIndex]?.name : trip.departure_point || trip.departure_city}
-                        </p>
-                      </div>
-                    </div>
-                    {trip.duration && (
-                      <div className="flex items-center gap-3">
-                        <Clock className="w-5 h-5 text-primary" />
-                        <p className="text-sm text-foreground">Fahrzeit: {trip.duration}</p>
-                      </div>
-                    )}
-                    {bookableDeparture && (
-                      <div className="flex items-center gap-3">
-                        <Calendar className="w-5 h-5 text-primary" />
-                        <div>
-                          <p className="font-bold text-foreground">
-                            {new Intl.DateTimeFormat("de-DE", { dateStyle: "long" }).format(new Date(`${bookableDeparture.departure_date}T12:00:00`))}
-                          </p>
-                          <p className="text-sm text-muted-foreground">Abfahrt {bookableDeparture.departure_time.slice(0, 5)} Uhr</p>
-                        </div>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-3">
-                      <Users className="w-5 h-5 text-primary" />
-                      <div className="flex-1">
-                        <p className="font-bold text-foreground">{participants} Personen</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setParticipants(Math.max(1, participants - 1))} disabled={participants <= 1}>
-                          <Minus className="w-4 h-4" />
-                        </Button>
-                        <span className="w-8 text-center font-bold">{participants}</span>
-                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setParticipants(Math.min(10, participants + 1))} disabled={participants >= 10}>
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    <div className="bg-muted/50 rounded-xl p-4">
-                      <div className="flex items-end justify-between mb-1">
-                        <span className="text-sm text-muted-foreground">pro Person</span>
-                        <span className="text-3xl font-bold text-primary">{pricePerPerson} €</span>
-                      </div>
-                      {participants > 1 && (
-                        <div className="flex items-end justify-between">
-                          <span className="text-sm text-muted-foreground">Gesamtpreis ({participants} Pers.)</span>
-                          <span className="text-lg font-bold text-foreground">{totalPrice} €</span>
-                        </div>
-                      )}
-                      {surcharge !== 0 && (
-                        <div className="mt-2 text-xs text-primary font-medium">
-                          {surcharge < 0 ? `✓ ${Math.abs(surcharge)}€ Rabatt durch Zustieg` : `+ ${surcharge}€ Aufpreis`}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2 text-xs text-accent bg-accent/10 p-3 rounded-xl">
-                      <TrendingUp className="w-4 h-4 shrink-0" />
-                      <span>Preis kann sich je nach Auslastung ändern</span>
-                    </div>
-
-                    <Button size="lg" className="w-full text-lg font-bold py-6 shadow-lg"
-                      disabled={isLoadingDeparture || !bookableDeparture}
-                      onClick={() => {
-                        if (!bookableDeparture) return;
-                        const params = new URLSearchParams({
-                          tripId: bookableDeparture.id,
-                          fromStopId: bookableDeparture.originStopId,
-                          toStopId: bookableDeparture.destinationStopId,
-                          passengers: participants.toString(),
-                        });
-                        navigate(`/checkout?${params.toString()}`);
-                      }}>
-                      {isLoadingDeparture ? "Termin wird geprüft…" : bookableDeparture ? "Jetzt buchen" : "Derzeit kein Termin buchbar"}
-                    </Button>
-
-                    <div className="text-center text-xs text-muted-foreground">
-                      <p>✓ Sichere Zahlung • ✓ Kostenlose Stornierung</p>
-                    </div>
-                  </CardContent>
-                </Card>
+              {/* Leistungen */}
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="rounded-3xl border border-border bg-card p-6">
+                  <h3 className="mb-4 flex items-center gap-2 font-bold text-foreground">
+                    <Check className="h-4 w-4 text-primary" /> Inklusive
+                  </h3>
+                  <ul className="space-y-2.5">
+                    {(trip.inclusions || []).map((item, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />{item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="rounded-3xl border border-border bg-muted/40 p-6">
+                  <h3 className="mb-4 flex items-center gap-2 font-bold text-foreground">
+                    <X className="h-4 w-4 text-muted-foreground" /> Nicht inklusive
+                  </h3>
+                  <ul className="space-y-2.5">
+                    {(trip.not_included || []).map((item, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <X className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/60" />{item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
+
+              {/* Komfort */}
+              <div className="grid grid-cols-3 gap-4">
+                {[{ icon: Wifi, label: "Kostenloses WLAN" }, { icon: Plug, label: "Steckdose am Platz" }, { icon: Armchair, label: "Komfortsitze" }].map((f) => (
+                  <div key={f.label} className="rounded-2xl border border-border bg-card p-4 text-center">
+                    <f.icon className="mx-auto mb-2 h-5 w-5 text-primary" />
+                    <span className="text-xs font-medium text-muted-foreground">{f.label}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Galerie */}
+              {trip.gallery_images?.length > 0 && (
+                <div className={cn("grid gap-4", variant === "editorial" ? "sm:grid-cols-3" : "sm:grid-cols-2")}>
+                  {trip.gallery_images.map((img, i) => (
+                    <img
+                      key={i}
+                      src={img}
+                      alt={`${trip.destination} Impression ${i + 1}`}
+                      loading="lazy"
+                      className={cn("w-full rounded-2xl object-cover", variant === "editorial" && i === 0 ? "sm:col-span-2 aspect-[16/10]" : "aspect-[4/3]")}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* BUCHUNGS-SIDEBAR */}
+            <div>
+              <Card className="sticky top-24 overflow-hidden rounded-3xl border-border shadow-xl">
+                <div className="bg-primary/10 px-6 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-primary">Ihr Preis</p>
+                  <div className="mt-1 flex items-end gap-2">
+                    <span className="text-4xl font-bold text-foreground">{formatEuro(pricePerPerson)}</span>
+                    <span className="pb-1 text-sm text-muted-foreground">pro Person</span>
+                  </div>
+                </div>
+                <CardContent className="space-y-5 p-6">
+                  <div className="space-y-2 text-sm">
+                    <Row label="Zustieg" value={selectedBoarding?.name || trip.departure_city} />
+                    {selectedBoarding?.departure_time && <Row label="Abfahrt" value={`${selectedBoarding.departure_time} Uhr`} />}
+                    <Row
+                      label="Reiseart"
+                      value={stay === "none" ? "Nur Busfahrt" : stay === "double" ? "Fahrt + Doppelzimmer" : "Fahrt + Einzelzimmer"}
+                    />
+                    {bookableDeparture && (
+                      <Row
+                        label="Nächster Termin"
+                        value={new Date(bookableDeparture.departure_date).toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" })}
+                      />
+                    )}
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-foreground">Personen</span>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setParticipants(Math.max(1, participants - 1))} disabled={participants <= 1}>
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="w-8 text-center font-bold">{participants}</span>
+                      <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setParticipants(Math.min(10, participants + 1))} disabled={participants >= 10}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl bg-muted/60 p-4">
+                    <div className="flex items-end justify-between">
+                      <span className="text-sm text-muted-foreground">Gesamt ({participants} Pers.)</span>
+                      <span className="text-2xl font-bold text-primary">{formatEuro(totalPrice)}</span>
+                    </div>
+                    {stopSurcharge !== 0 && (
+                      <p className="mt-2 text-xs font-medium text-primary">
+                        {stopSurcharge < 0 ? `${formatEuro(Math.abs(stopSurcharge))} Rabatt durch Zustieg` : `+ ${formatEuro(stopSurcharge)} Zustieg`}
+                      </p>
+                    )}
+                    {stayExtra > 0 && <p className="mt-1 text-xs text-muted-foreground">inkl. Unterkunft + {formatEuro(stayExtra)} p. P.</p>}
+                  </div>
+
+                  <Button
+                    size="lg"
+                    className="w-full py-6 text-lg font-bold shadow-lg"
+                    disabled={isLoadingDeparture || !bookableDeparture}
+                    onClick={() => {
+                      if (!bookableDeparture) return;
+                      const params = new URLSearchParams({
+                        tripId: bookableDeparture.id,
+                        fromStopId: bookableDeparture.originStopId,
+                        toStopId: bookableDeparture.destinationStopId,
+                        passengers: participants.toString(),
+                        unterkunft: stay,
+                      });
+                      navigate(`/checkout?${params.toString()}`);
+                    }}
+                  >
+                    {isLoadingDeparture ? "Termin wird geprüft…" : bookableDeparture ? "Jetzt buchen" : "Derzeit kein Termin buchbar"}
+                    {bookableDeparture && !isLoadingDeparture && <ArrowRight className="ml-2 h-5 w-5" />}
+                  </Button>
+
+                  {stay !== "none" && (
+                    <p className="text-center text-xs text-muted-foreground">
+                      Die Unterkunft wird nach der Buchung von uns bestätigt.
+                    </p>
+                  )}
+                  <p className="text-center text-xs text-muted-foreground">Sichere Zahlung · Sitzplatzgarantie</p>
+                </CardContent>
+              </Card>
             </div>
           </div>
-        </div>
+        </section>
       </main>
       <Footer />
     </div>
   );
 };
+
+const Row = ({ label, value }: { label: string; value: string }) => (
+  <div className="flex items-start justify-between gap-4">
+    <span className="text-muted-foreground">{label}</span>
+    <span className="text-right font-medium text-foreground">{value}</span>
+  </div>
+);
 
 export default WeekendTripDetailPage;
