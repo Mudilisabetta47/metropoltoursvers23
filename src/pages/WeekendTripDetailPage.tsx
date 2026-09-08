@@ -227,16 +227,7 @@ const WeekendTripDetailPage = () => {
                 </Badge>
               </div>
 
-              <h1
-                className={cn(
-                  "text-white drop-shadow-[0_2px_18px_rgba(0,0,0,0.55)]",
-                  variant === "editorial"
-                    ? "text-5xl font-light tracking-tight md:text-7xl"
-                    : variant === "bold"
-                      ? "text-5xl font-black uppercase tracking-tighter md:text-8xl"
-                      : "text-4xl font-bold md:text-6xl",
-                )}
-              >
+              <h1 className="text-4xl font-bold text-white drop-shadow-[0_2px_18px_rgba(0,0,0,0.55)] md:text-6xl">
                 {trip.destination}
               </h1>
               {trip.short_description && (
