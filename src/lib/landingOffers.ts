@@ -5,7 +5,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 
-export type OfferKind = "tour" | "weekend";
+export type OfferKind = "tour" | "weekend" | "trip";
 
 export interface LandingOffer {
   id: string;
@@ -141,7 +141,7 @@ const todayIso = () => new Date().toISOString().slice(0, 10);
 export async function fetchLandingOffers(): Promise<LandingOffer[]> {
   const today = todayIso();
 
-  const [tours, dates, weekend] = await Promise.all([
+  const [tours, dates, weekend, trips] = await Promise.all([
     supabase
       .from("package_tours")
       .select(
@@ -160,6 +160,15 @@ export async function fetchLandingOffers(): Promise<LandingOffer[]> {
         "id, destination, slug, country, short_description, image_url, hero_image_url, base_price, departure_city, departure_point, departure_time, via_stops, tags, duration",
       )
       .eq("is_active", true),
+    supabase
+      .from("trips")
+      .select(
+        "id, title, departure_date, departure_time, arrival_date, base_price, seat_capacity, status, trip_category, routes(name, description)",
+      )
+      .eq("is_active", true)
+      .gte("departure_date", today)
+      .order("departure_date", { ascending: true })
+      .limit(50),
   ]);
 
   const offers: LandingOffer[] = [];
@@ -226,6 +235,33 @@ export async function fetchLandingOffers(): Promise<LandingOffer[]> {
       tokens: [w.destination, w.country, w.departure_city, w.departure_point, ...via, ...(w.tags ?? [])]
         .map(norm)
         .filter(Boolean),
+    });
+  });
+
+  (trips.data ?? []).forEach((t: any) => {
+    if (t.status === "cancelled" || t.status === "completed") return;
+    const routeName: string = t.routes?.name ?? t.title ?? "";
+    if (!routeName) return;
+    const parts = routeName.split(/[–—\-→>]+/).map((p: string) => p.trim()).filter(Boolean);
+    const origin = parts.length > 1 ? parts[0] : null;
+    const target = parts.length > 1 ? parts[parts.length - 1] : routeName;
+
+    offers.push({
+      id: t.id,
+      kind: "trip",
+      title: target,
+      url: "/search",
+      image: null,
+      country: null,
+      location: target,
+      departureCity: origin,
+      departureDate: t.departure_date ?? null,
+      returnDate: t.arrival_date ?? null,
+      departureTime: t.departure_time ? String(t.departure_time).slice(0, 5) : null,
+      price: t.base_price != null ? Number(t.base_price) : null,
+      seatsLeft: null,
+      description: t.routes?.description ?? null,
+      tokens: [routeName, origin, target, t.trip_category, ...parts].map(norm).filter(Boolean),
     });
   });
 
