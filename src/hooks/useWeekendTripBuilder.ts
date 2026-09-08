@@ -28,13 +28,25 @@ export interface WeekendTripData {
   meta_title: string | null;
   meta_description: string | null;
   tags: string[];
+  departure_time: string | null;
+  return_info: string | null;
+  accommodation_available: boolean;
+  accommodation_nights: number | null;
+  hotel_name: string | null;
+  hotel_stars: number | null;
+  hotel_description: string | null;
+  price_double_room: number;
+  price_single_room: number;
+  layout_variant: string;
 }
 
 export interface ViaStop {
   city: string;
   name: string;
   surcharge: number;
+  departure_time?: string | null;
 }
+
 
 const defaultTrip: WeekendTripData = {
   destination: '',
@@ -64,7 +76,18 @@ const defaultTrip: WeekendTripData = {
   meta_title: null,
   meta_description: null,
   tags: [],
+  departure_time: null,
+  return_info: null,
+  accommodation_available: false,
+  accommodation_nights: null,
+  hotel_name: null,
+  hotel_stars: null,
+  hotel_description: null,
+  price_double_room: 0,
+  price_single_room: 0,
+  layout_variant: 'classic',
 };
+
 
 export const useWeekendTripBuilder = (tripId?: string) => {
   const { toast } = useToast();
