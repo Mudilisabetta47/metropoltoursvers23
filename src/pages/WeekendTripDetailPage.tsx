@@ -265,15 +265,17 @@ const WeekendTripDetailPage = () => {
               </div>
 
               {/* Beschreibung */}
-              {(trip.full_description || trip.highlights?.length > 0) && (
+              {(trip.full_description || trip.short_description || trip.highlights?.length > 0) && (
                 <div className={cn(variant === "editorial" && "border-l-2 border-primary/40 pl-6")}>
                   <h2 className="text-2xl font-bold text-foreground md:text-3xl">
                     {variant === "bold" ? "Darum lohnt sich das Wochenende" : `Ihr Wochenende in ${trip.destination}`}
                   </h2>
-                  {trip.full_description && (
-                    <p className="mt-4 whitespace-pre-line text-muted-foreground leading-relaxed">{trip.full_description}</p>
+                  {(trip.full_description || trip.short_description) && (
+                    <p className="mt-4 whitespace-pre-line text-muted-foreground leading-relaxed">
+                      {trip.full_description || trip.short_description}
+                    </p>
                   )}
-                  {trip.highlights?.length > 0 && (
+                  {trip.highlights?.length > 0 ? (
                     <div className="mt-6 grid gap-3 sm:grid-cols-2">
                       {trip.highlights.map((h, i) => (
                         <div key={i} className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4">
@@ -284,9 +286,29 @@ const WeekendTripDetailPage = () => {
                         </div>
                       ))}
                     </div>
+                  ) : (
+                    <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                      {[
+                        { icon: Bus, title: "Direkt ab " + trip.departure_city, text: trip.departure_point ? `Zustieg: ${trip.departure_point}` : "Bequemer Zustieg im Komfortbus" },
+                        { icon: Clock, title: "Fahrtzeit", text: trip.duration ? `${trip.duration} Fahrt` : "Nachtfahrt – Sie kommen ausgeruht an" },
+                        { icon: MapPin, title: `Ziel: ${trip.destination}`, text: trip.country || "Städtetrip in Europa" },
+                        { icon: Sparkles, title: trip.accommodation_available ? "Unterkunft optional" : "Nur Fahrt buchbar", text: trip.accommodation_available ? "Hotel bequem dazubuchen" : "Unterkunft wählen Sie selbst" },
+                      ].map((f) => (
+                        <div key={f.title} className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4">
+                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                            <f.icon className="h-4 w-4" />
+                          </span>
+                          <span>
+                            <span className="block text-sm font-semibold text-foreground">{f.title}</span>
+                            <span className="block text-sm text-muted-foreground">{f.text}</span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               )}
+
 
 
               {/* Zustieg & Abfahrtszeiten */}
