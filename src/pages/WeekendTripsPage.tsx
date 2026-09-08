@@ -98,35 +98,39 @@ const WeekendTripsPage = () => {
 
       <main>
         {/* HERO */}
-        <section className="relative h-[58vh] min-h-[420px]">
+        <section className="relative min-h-[560px] py-16 md:h-[62vh] md:min-h-[480px] md:py-0">
           <img src={weekendHero} alt="Wochenendtrips durch Europa im Reisebus" className="absolute inset-0 h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/50 to-black/20" />
-          <div className="container relative mx-auto flex h-full flex-col justify-end px-4 pb-12">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/65 to-black/60" />
+          <div className="absolute inset-0 bg-black/15" />
+          <div className="container relative mx-auto flex h-full flex-col justify-end px-4 pb-8 pt-6 md:pb-12">
             <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl">
               <Badge className="mb-4 border-0 bg-primary text-primary-foreground">
                 <Bus className="mr-1 h-3 w-3" /> Kurzurlaub mit Zeitgefühl
               </Badge>
-              <h1 className="text-4xl font-bold text-white md:text-6xl">
+              <h1 className="text-[2rem] font-bold leading-[1.1] text-white sm:text-4xl md:text-6xl">
                 Wochenendtrips durch Europa
               </h1>
-              <p className="mt-4 text-lg text-white/85">
+              <p className="mt-3 text-base leading-relaxed text-white/85 md:mt-4 md:text-lg">
                 Freitagabend einsteigen, Sonntag zurück. Sie buchen nur die Fahrt – die Unterkunft
                 nehmen Sie optional dazu.
               </p>
 
-              <div className="mt-7 flex flex-col gap-3 rounded-2xl bg-white/10 p-3 backdrop-blur-md sm:flex-row">
+              <div className="mt-6 flex flex-col gap-2.5 rounded-2xl border border-white/15 bg-black/45 p-2.5 shadow-2xl backdrop-blur-xl sm:flex-row md:mt-7">
                 <div className="relative flex-1">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/60" />
+                  <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Ziel oder Zustiegsort suchen"
-                    className="h-12 border-white/20 bg-white/10 pl-9 text-white placeholder:text-white/60"
+                    className="h-12 rounded-xl border-0 bg-background pl-10 text-base text-foreground shadow-sm placeholder:text-muted-foreground"
                   />
                 </div>
                 <Button
                   variant={onlyStay ? "default" : "secondary"}
-                  className="h-12"
+                  className={cn(
+                    "h-12 w-full rounded-xl text-base font-semibold sm:w-auto",
+                    !onlyStay && "bg-background text-foreground hover:bg-background/90",
+                  )}
                   onClick={() => setOnlyStay((v) => !v)}
                 >
                   <BedDouble className="mr-2 h-4 w-4" />
@@ -134,6 +138,7 @@ const WeekendTripsPage = () => {
                 </Button>
               </div>
             </motion.div>
+
           </div>
         </section>
 
