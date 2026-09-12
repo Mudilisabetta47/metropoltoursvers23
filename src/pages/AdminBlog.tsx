@@ -58,7 +58,7 @@ const AdminBlog = () => {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")
       .slice(0, 80);
-    const values = { ...editing, slug };
+    const values = { ...editing, slug } as any;
     const q = editing.id
       ? supabase.from("blog_posts").update(values).eq("id", editing.id)
       : supabase.from("blog_posts").insert(values);
