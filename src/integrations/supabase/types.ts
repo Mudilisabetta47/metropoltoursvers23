@@ -746,6 +746,57 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_posts: {
+        Row: {
+          author_name: string | null
+          content: string | null
+          created_at: string
+          excerpt: string | null
+          hero_image_url: string | null
+          id: string
+          is_published: boolean
+          meta_description: string | null
+          meta_title: string | null
+          published_at: string | null
+          slug: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_name?: string | null
+          content?: string | null
+          created_at?: string
+          excerpt?: string | null
+          hero_image_url?: string | null
+          id?: string
+          is_published?: boolean
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          slug: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_name?: string | null
+          content?: string | null
+          created_at?: string
+          excerpt?: string | null
+          hero_image_url?: string | null
+          id?: string
+          is_published?: boolean
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          slug?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       booking_access_tokens: {
         Row: {
           created_at: string
@@ -1929,6 +1980,7 @@ export type Database = {
       }
       customer_reviews: {
         Row: {
+          author_name: string | null
           booking_id: string | null
           cleanliness_rating: number | null
           comfort_rating: number | null
@@ -1942,6 +1994,7 @@ export type Database = {
           punctuality_rating: number | null
           reply_at: string | null
           reply_text: string | null
+          source: string | null
           stars: number
           title: string | null
           tour_date_id: string | null
@@ -1949,6 +2002,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          author_name?: string | null
           booking_id?: string | null
           cleanliness_rating?: number | null
           comfort_rating?: number | null
@@ -1962,6 +2016,7 @@ export type Database = {
           punctuality_rating?: number | null
           reply_at?: string | null
           reply_text?: string | null
+          source?: string | null
           stars: number
           title?: string | null
           tour_date_id?: string | null
@@ -1969,6 +2024,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          author_name?: string | null
           booking_id?: string | null
           cleanliness_rating?: number | null
           comfort_rating?: number | null
@@ -1982,6 +2038,7 @@ export type Database = {
           punctuality_rating?: number | null
           reply_at?: string | null
           reply_text?: string | null
+          source?: string | null
           stars?: number
           title?: string | null
           tour_date_id?: string | null
@@ -8905,6 +8962,10 @@ export type Database = {
       }
     }
     Functions: {
+      activate_gift_vouchers: {
+        Args: { _order_number: string }
+        Returns: number
+      }
       calculate_refund: {
         Args: { p_booking_id: string; p_departure_date?: string }
         Returns: {
