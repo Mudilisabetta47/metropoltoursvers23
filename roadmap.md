@@ -1,11 +1,6 @@
 # Roadmap
 
-## Open tasks
-- [x] Email update prepared (28 Aug 2026) — ready for review; publish to complete it.
-- [ ] Add additional Hamburg landing pages (`/reisebus-mieten-hamburg`, `/busvermietung-hamburg`) to match Hannover/Bremen variants.
-- [x] Fix iOS booking error "c.json is not a function" (invoke response handling).
-- [x] Enforce and verify invoice as the only payment method in the iOS/mobile checkout.
-- [ ] Korrektur-Mail Rückfahrt 10.09.: erst Test an Admin, dann alle 34 (BCC kundenservice@metours.de)
-
-- [x] Fahrer-Fahrplan PDF (FA-2026-29253) inkl. Lenk-/Ruhezeiten und 3-Fahrer-Rotation (Wechsel Würzburg)
-- [x] Admin-PDF Fahrauftrag FA-2026-29253 mit Kartenansicht (Navi-Route)
+## Laufend: Website-Verbesserungen (Busunternehmen)
+- [x] Gästebewertungen: TestimonialsSection DB-basiert (customer_reviews), Fake-Texte entfernt, Admin-Moderation /admin/bewertungen, JSON-LD Sterne (nur mit echten Bewertungen)
+- [x] Reise-Blog: blog_posts Tabelle + RLS, /blog + /blog/:slug (react-markdown, JSON-LD Article), Admin /admin/blog, Sitemap + Footer, 2 Startartikel
+- [x] Geschenkgutscheine: Shop-Produkt mit Varianten 25/50/75/100 €, Code-Erstellung in shop-create-order (GT-XXXX, inaktiv), Aktivierung bei Zahlungseingang (AdminShop → activate_gift_vouchers), Seite /gutscheine, Footer

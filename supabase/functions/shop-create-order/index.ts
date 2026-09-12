@@ -231,6 +231,47 @@ serve(async (req) => {
       if (cRow) await supabase.from("shop_coupons").update({ redemptions: (cRow.redemptions ?? 0) + 1 }).eq("id", cRow.id);
     }
 
+    // ---- Geschenkgutscheine (SKU GT-VOUCHER): individuelle Codes erzeugen ----
+    // Codes sind zunächst inaktiv und werden nach Zahlungseingang (Admin-Shop) aktiviert.
+    const voucherCodes: string[] = [];
+    const voucherDesc = `Geschenkgutschein - Bestellung ${orderNumber}`;
+    const voucherValidUntil = new Date(Date.now() + 3 * 365 * 24 * 3600 * 1000).toISOString();
+    for (const item of orderItems) {
+      if (item.sku !== "GT-VOUCHER") continue;
+      const qty = Math.max(1, Math.floor(Number(item.quantity) || 1));
+      for (let k = 0; k < qty; k++) {
+        let code = "";
+        for (let attempt = 0; attempt < 5; attempt++) {
+          code = "GT-" +
+            Array.from(crypto.getRandomValues(new Uint8Array(4)))
+              .map((b) => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32])
+              .join("");
+          const { data: existing } = await supabase.from("coupons").select("id").ilike("code", code).maybeSingle();
+          if (!existing) break;
+        }
+        const { error: cErr } = await supabase.from("coupons").insert({
+          code,
+          amount_off: Number(item.unit_price),
+          currency: "EUR",
+          description: voucherDesc,
+          is_active: false,
+          max_redemptions: 1,
+          valid_until: voucherValidUntil,
+        });
+        if (!cErr) {
+          await supabase.from("shop_coupons").insert({
+            code,
+            amount_off: Number(item.unit_price),
+            description: voucherDesc,
+            is_active: false,
+            max_redemptions: 1,
+            valid_until: voucherValidUntil,
+          });
+          voucherCodes.push(code);
+        }
+      }
+    }
+
     // ---- E-Mail ----
     const resendKey = Deno.env.get("RESEND_API_KEY");
     if (resendKey) {
@@ -254,6 +295,11 @@ serve(async (req) => {
       <tr><td>Versand${shippingName ? ` (${esc(shippingName)})` : ""}</td><td align="right">${eur(shippingCost)}</td></tr>
       <tr><td style="padding-top:8px;font-size:18px"><strong>Gesamt</strong></td><td align="right" style="padding-top:8px;font-size:18px"><strong>${eur(total)}</strong></td></tr>
     </table>
+    ${voucherCodes.length ? `<div style="background:#ecfdf5;border:1px solid #86efac;border-radius:10px;padding:16px;margin:16px 0">
+      <p style="margin:0 0 8px;font-weight:bold">🎁 Ihr Geschenkgutschein</p>
+      ${voucherCodes.map((c) => `<p style="margin:4px 0;font-family:monospace;font-size:18px;letter-spacing:1px">${esc(c)}</p>`).join("")}
+      <p style="margin:8px 0 0;font-size:13px;color:#475569">Der Gutschein wird nach Zahlungseingang aktiviert und ist dann 3 Jahre gültig. Einlösbar auf alle Busreisen auf metours.de – einfach im Buchungsprozess unter „Gutscheincode“ eingeben.</p>
+    </div>` : ""}
     <p style="color:#475569;font-size:14px">Zahlungsart: <strong>${esc(pm.name)}</strong></p>
     <p style="color:#475569;font-size:14px">Lieferadresse:<br>${esc(shipping.first_name)} ${esc(shipping.last_name)}<br>${esc(shipping.street)} ${esc(shipping.house_number)}<br>${esc(shipping.zip)} ${esc(shipping.city)}<br>${esc(shipping.country)}</p>
     <p style="color:#94a3b8;font-size:12px;margin-top:24px">METROPOL TOURS · metours.de</p>

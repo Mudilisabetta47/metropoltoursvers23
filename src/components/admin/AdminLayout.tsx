@@ -8,7 +8,7 @@ import {
   ChevronRight, Sparkles, Activity, Command, ChevronsLeft,
   ChevronsRight, Menu, X, IdCard, Wallet, Building2, MessageCircleWarning, Tv, Wrench, TrendingUp,
   Sun, Moon, MonitorSmartphone, Briefcase, FileSignature, Receipt, Fuel, Scale,
-  Gauge, Radio, CalendarClock, AlertTriangle, ClipboardCheck, BookOpen, Tag, Clock, ShoppingBag,
+  Gauge, Radio, CalendarClock, AlertTriangle, ClipboardCheck, BookOpen, Tag, Clock, ShoppingBag, Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -95,6 +95,7 @@ const menuSections: MenuSection[] = [
       { path: "/admin/customers", label: "Privatkunden", icon: UserCheck, allowedRoles: BOOKING_STAFF },
       { path: "/admin/b2b", label: "B2B-Kunden", icon: Building2, allowedRoles: MANAGEMENT },
       { path: "/admin/complaints", label: "Reklamationen", icon: MessageCircleWarning, allowedRoles: BOOKING_STAFF },
+      { path: "/admin/bewertungen", label: "Gästebewertungen", icon: Star, allowedRoles: MANAGEMENT },
     ],
   },
   {
@@ -103,6 +104,7 @@ const menuSections: MenuSection[] = [
       { path: "/admin/tour-builder", label: "Reisen", icon: Map, allowedRoles: MANAGEMENT },
       { path: "/admin/weekend-trip-builder", label: "Wochenend-Reisen", icon: Sparkles, allowedRoles: MANAGEMENT },
       { path: "/admin/shop", label: "Online-Shop", icon: ShoppingBag, allowedRoles: MANAGEMENT },
+      { path: "/admin/blog", label: "Magazin / Blog", icon: BookOpen, allowedRoles: MANAGEMENT },
       { path: "/admin/coupons", label: "Gutscheine & Aktionen", icon: Tag, allowedRoles: MANAGEMENT },
       { path: "/admin/dynamic-pricing", label: "Preise & Kontingente", icon: TrendingUp, allowedRoles: MANAGEMENT },
     ],

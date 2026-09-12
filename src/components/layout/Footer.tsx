@@ -15,7 +15,8 @@ const Footer = () => {
       { name: "Busreisen", path: "/busreisen" },
       { name: "Fahrplan & Zustiegsorte", path: "/fahrplan" },
       { name: "Wochenendtrips", path: "/wochenendtrips" },
-      { name: "Pauschalreisen", path: "/reisen" },
+      { name: "Reise-Magazin", path: "/blog" },
+      { name: "Geschenkgutschein", path: "/gutscheine" },
 
       { name: "Linienfahrten", path: "/search" },
       { name: "Gruppenreisen", path: "/gruppenreisen" },

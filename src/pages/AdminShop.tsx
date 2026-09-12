@@ -181,10 +181,23 @@ export default function AdminShop() {
     load();
   };
 
-  const updateOrder = async (id: string, patch: { status?: string; tracking_number?: string }) => {
+  const updateOrder = async (id: string, patch: { status?: string; tracking_number?: string; payment_status?: string }) => {
     const { error } = await supabase.from("shop_orders").update(patch).eq("id", id);
     if (error) return toast({ title: "Fehler", description: error.message, variant: "destructive" });
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, ...patch } as ShopOrder : o)));
+
+    // Geschenkgutschein-Codes einer Bestellung aktivieren, sobald die Zahlung als eingegangen markiert wird
+    if (patch.payment_status === "paid") {
+      const order = orders.find((o) => o.id === id);
+      if (order) {
+        const { data, error: rpcError } = await supabase.rpc("activate_gift_vouchers", { _order_number: order.order_number });
+        if (rpcError) {
+          toast({ title: "Gutschein-Aktivierung fehlgeschlagen", description: rpcError.message, variant: "destructive" });
+        } else if (Number(data) > 0) {
+          toast({ title: "Geschenkgutschein aktiviert", description: `${data} Gutscheincode(s) sind jetzt einlösbar.` });
+        }
+      }
+    }
   };
 
   return (
@@ -281,9 +294,14 @@ export default function AdminShop() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={cn("px-2 py-1 rounded-md text-xs font-medium", PAYMENT_STATUS[o.payment_status]?.className)}>
-                      {PAYMENT_STATUS[o.payment_status]?.label || o.payment_status}
-                    </span>
+                    <Select value={o.payment_status || "unpaid"} onValueChange={(v) => updateOrder(o.id, { payment_status: v })}>
+                      <SelectTrigger className="w-40 h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(PAYMENT_STATUS).map(([k, v]) => (
+                          <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <Select value={o.status} onValueChange={(v) => updateOrder(o.id, { status: v })}>
                       <SelectTrigger className="w-44 h-9"><SelectValue /></SelectTrigger>
                       <SelectContent>

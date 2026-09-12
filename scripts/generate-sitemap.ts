@@ -27,6 +27,8 @@ const staticEntries: SitemapEntry[] = [
   { path: "/busreisen", changefreq: "weekly", priority: "0.9" },
   { path: "/business", changefreq: "monthly", priority: "0.9" },
   { path: "/wochenendtrips", changefreq: "weekly", priority: "0.8" },
+  { path: "/blog", changefreq: "weekly", priority: "0.6" },
+  { path: "/gutscheine", changefreq: "monthly", priority: "0.6" },
   { path: "/reisen", changefreq: "monthly", priority: "0.7" },
   { path: "/service", changefreq: "monthly", priority: "0.7" },
   // SEO-Landingpages (Busvermietung / Personenbeförderung)
@@ -89,6 +91,19 @@ async function loadDynamicEntries(): Promise<SitemapEntry[]> {
     .eq("category", "weekend");
   if (packageError) console.warn("sitemap: package_tours weekend:", packageError.message);
   for (const t of packageTrips || []) addTrip(t.slug);
+
+  // Blog-Artikel (Reise-Magazin)
+  const { data: posts, error: postsError } = await supabase
+    .from("blog_posts")
+    .select("slug")
+    .eq("is_published", true);
+  if (postsError) console.warn("sitemap: blog_posts:", postsError.message);
+  for (const p of posts || []) {
+    const normalized = String(p.slug || "").trim().toLowerCase();
+    if (!normalized || seen.has(normalized)) continue;
+    seen.add(normalized);
+    entries.push({ path: `/blog/${normalized}`, changefreq: "monthly", priority: "0.6" });
+  }
 
   return entries;
 }
