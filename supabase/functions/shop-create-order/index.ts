@@ -295,6 +295,11 @@ serve(async (req) => {
       <tr><td>Versand${shippingName ? ` (${esc(shippingName)})` : ""}</td><td align="right">${eur(shippingCost)}</td></tr>
       <tr><td style="padding-top:8px;font-size:18px"><strong>Gesamt</strong></td><td align="right" style="padding-top:8px;font-size:18px"><strong>${eur(total)}</strong></td></tr>
     </table>
+    ${voucherCodes.length ? `<div style="background:#ecfdf5;border:1px solid #86efac;border-radius:10px;padding:16px;margin:16px 0">
+      <p style="margin:0 0 8px;font-weight:bold">🎁 Ihr Geschenkgutschein</p>
+      ${voucherCodes.map((c) => `<p style="margin:4px 0;font-family:monospace;font-size:18px;letter-spacing:1px">${esc(c)}</p>`).join("")}
+      <p style="margin:8px 0 0;font-size:13px;color:#475569">Der Gutschein wird nach Zahlungseingang aktiviert und ist dann 3 Jahre gültig. Einlösbar auf alle Busreisen auf metours.de – einfach im Buchungsprozess unter „Gutscheincode“ eingeben.</p>
+    </div>` : ""}
     <p style="color:#475569;font-size:14px">Zahlungsart: <strong>${esc(pm.name)}</strong></p>
     <p style="color:#475569;font-size:14px">Lieferadresse:<br>${esc(shipping.first_name)} ${esc(shipping.last_name)}<br>${esc(shipping.street)} ${esc(shipping.house_number)}<br>${esc(shipping.zip)} ${esc(shipping.city)}<br>${esc(shipping.country)}</p>
     <p style="color:#94a3b8;font-size:12px;margin-top:24px">METROPOL TOURS · metours.de</p>

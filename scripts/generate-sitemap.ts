@@ -27,6 +27,8 @@ const staticEntries: SitemapEntry[] = [
   { path: "/busreisen", changefreq: "weekly", priority: "0.9" },
   { path: "/business", changefreq: "monthly", priority: "0.9" },
   { path: "/wochenendtrips", changefreq: "weekly", priority: "0.8" },
+  { path: "/blog", changefreq: "weekly", priority: "0.6" },
+  { path: "/gutscheine", changefreq: "monthly", priority: "0.6" },
   { path: "/reisen", changefreq: "monthly", priority: "0.7" },
   { path: "/service", changefreq: "monthly", priority: "0.7" },
   // SEO-Landingpages (Busvermietung / Personenbeförderung)
