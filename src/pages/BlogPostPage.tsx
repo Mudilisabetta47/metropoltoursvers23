@@ -93,7 +93,8 @@ const BlogPostPage = () => {
         {post.hero_image_url ? (
           <img src={post.hero_image_url} alt={post.title} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/25 via-primary/10 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/25 via-primary/10 to-background" />
+
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/10" />
         <div className="container relative mx-auto h-full flex flex-col justify-end px-4 pb-10">
