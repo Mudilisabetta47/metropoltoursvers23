@@ -231,6 +231,47 @@ serve(async (req) => {
       if (cRow) await supabase.from("shop_coupons").update({ redemptions: (cRow.redemptions ?? 0) + 1 }).eq("id", cRow.id);
     }
 
+    // ---- Geschenkgutscheine (SKU GT-VOUCHER): individuelle Codes erzeugen ----
+    // Codes sind zunächst inaktiv und werden nach Zahlungseingang (Admin-Shop) aktiviert.
+    const voucherCodes: string[] = [];
+    const voucherDesc = `Geschenkgutschein - Bestellung ${orderNumber}`;
+    const voucherValidUntil = new Date(Date.now() + 3 * 365 * 24 * 3600 * 1000).toISOString();
+    for (const item of orderItems) {
+      if (item.sku !== "GT-VOUCHER") continue;
+      const qty = Math.max(1, Math.floor(Number(item.quantity) || 1));
+      for (let k = 0; k < qty; k++) {
+        let code = "";
+        for (let attempt = 0; attempt < 5; attempt++) {
+          code = "GT-" +
+            Array.from(crypto.getRandomValues(new Uint8Array(4)))
+              .map((b) => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32])
+              .join("");
+          const { data: existing } = await supabase.from("coupons").select("id").ilike("code", code).maybeSingle();
+          if (!existing) break;
+        }
+        const { error: cErr } = await supabase.from("coupons").insert({
+          code,
+          amount_off: Number(item.unit_price),
+          currency: "EUR",
+          description: voucherDesc,
+          is_active: false,
+          max_redemptions: 1,
+          valid_until: voucherValidUntil,
+        });
+        if (!cErr) {
+          await supabase.from("shop_coupons").insert({
+            code,
+            amount_off: Number(item.unit_price),
+            description: voucherDesc,
+            is_active: false,
+            max_redemptions: 1,
+            valid_until: voucherValidUntil,
+          });
+          voucherCodes.push(code);
+        }
+      }
+    }
+
     // ---- E-Mail ----
     const resendKey = Deno.env.get("RESEND_API_KEY");
     if (resendKey) {
