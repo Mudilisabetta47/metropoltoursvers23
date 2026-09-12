@@ -65,7 +65,9 @@ const BlogPostPage = () => {
       mainEntityOfPage: absoluteUrl(`/blog/${post.slug}`),
     });
     document.head.appendChild(el);
-    return () => document.head.removeChild(el);
+    return () => {
+      document.head.removeChild(el);
+    };
   }, [post]);
 
   if (loading) {

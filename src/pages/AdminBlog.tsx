@@ -80,7 +80,7 @@ const AdminBlog = () => {
     load();
   };
 
-  const f = (field: keyof BlogPost, value: string) =>
+  const f = (field: keyof BlogPost, value: any) =>
     setEditing((e) => ({ ...e, [field]: value }));
 
   return (

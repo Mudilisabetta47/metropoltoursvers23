@@ -63,8 +63,8 @@ const GiftVoucherPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
           {[
             { icon: Mail, title: "Per E-Mail geliefert", text: "Der Gutscheincode kommt bequem in Ihr Postfach – ideal als Last-Minute-Geschenk." },
-            { icon: Clock, text: "3 Jahre gültig", text: "Der Beschenkte kann in Ruhe entscheiden, wohin die Reise gehen soll." },
-            { icon: ShieldCheck, text: "Überall einlösbar", text: "Auf alle Busreisen, Wochenendtrips und Pauschalreisen auf metours.de." },
+            { icon: Clock, title: "3 Jahre gültig", text: "Der Beschenkte kann in Ruhe entscheiden, wohin die Reise gehen soll." },
+            { icon: ShieldCheck, title: "Überall einlösbar", text: "Auf alle Busreisen, Wochenendtrips und Pauschalreisen auf metours.de." },
           ].map((b) => (
             <div key={b.title} className="rounded-2xl bg-card border border-border/60 p-6 text-center">
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
