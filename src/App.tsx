@@ -26,6 +26,9 @@ const BusreisenPage = lazy(() => import("./pages/BusreisenPage"));
 const ReisenPage = lazy(() => import("./pages/ReisenPage"));
 
 const BusinessServicesPage = lazy(() => import("./pages/BusinessServicesPage"));
+const GiftVoucherPage = lazy(() => import("./pages/GiftVoucherPage"));
+const BlogPage = lazy(() => import("./pages/BlogPage"));
+const BlogPostPage = lazy(() => import("./pages/BlogPostPage"));
 const BookingsPage = lazy(() => import("./pages/BookingsPage"));
 const TrackBookingPage = lazy(() => import("./pages/TrackBookingPage"));
 const FahrplanPage = lazy(() => import("./pages/FahrplanPage"));
@@ -66,6 +69,8 @@ const AdminInquiriesPage = lazy(() => import("./pages/AdminInquiriesPage"));
 const AdminInquiryDetail = lazy(() => import("./pages/AdminInquiryDetail"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminCMS = lazy(() => import("./pages/AdminCMS"));
+const AdminBlog = lazy(() => import("./pages/AdminBlog"));
+const AdminReviews = lazy(() => import("./pages/AdminReviews"));
 const AdminMobileApp = lazy(() => import("./pages/AdminMobileApp"));
 const AdminTourBuilder = lazy(() => import("./pages/AdminTourBuilder"));
 const OperationsDashboard = lazy(() => import("./pages/OperationsDashboard"));
@@ -220,6 +225,9 @@ const App = () => (
               <Route path="/shop/bestellung/:orderNumber" element={<ShopOrderConfirmationPage />} />
               <Route path="/shop/wunschliste" element={<ShopWishlistPage />} />
               <Route path="/shop/bestellungen" element={<ShopOrdersPage />} />
+              <Route path="/gutscheine" element={<GiftVoucherPage />} />
+              <Route path="/blog" element={<BlogPage />} />
+              <Route path="/blog/:slug" element={<BlogPostPage />} />
               <Route path="/admin/shop" element={<AdminShop />} />
 
               <Route path="/search" element={<SearchPage />} />
@@ -286,6 +294,8 @@ const App = () => (
               <Route path="/admin/templates" element={<AdminTemplates />} />
               <Route path="/admin/legal" element={<AdminLegal />} />
               <Route path="/admin/cms" element={<AdminCMS />} />
+              <Route path="/admin/blog" element={<AdminBlog />} />
+              <Route path="/admin/bewertungen" element={<AdminReviews />} />
               <Route path="/admin/app" element={<AdminMobileApp />} />
 
               <Route path="/admin/tour-builder" element={<AdminTourBuilder />} />
