@@ -92,6 +92,19 @@ async function loadDynamicEntries(): Promise<SitemapEntry[]> {
   if (packageError) console.warn("sitemap: package_tours weekend:", packageError.message);
   for (const t of packageTrips || []) addTrip(t.slug);
 
+  // Blog-Artikel (Reise-Magazin)
+  const { data: posts, error: postsError } = await supabase
+    .from("blog_posts")
+    .select("slug")
+    .eq("is_published", true);
+  if (postsError) console.warn("sitemap: blog_posts:", postsError.message);
+  for (const p of posts || []) {
+    const normalized = String(p.slug || "").trim().toLowerCase();
+    if (!normalized || seen.has(normalized)) continue;
+    seen.add(normalized);
+    entries.push({ path: `/blog/${normalized}`, changefreq: "monthly", priority: "0.6" });
+  }
+
   return entries;
 }
 
