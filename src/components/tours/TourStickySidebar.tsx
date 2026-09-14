@@ -53,6 +53,7 @@ const TourStickySidebar = ({
 
   const pricePerPerson = calculatePrice();
   const totalPrice = pricePerPerson * participants;
+  const hasPrice = Number.isFinite(pricePerPerson) && pricePerPerson > 0;
 
   const handleBooking = () => {
     if (!bookable) return;
@@ -143,9 +144,9 @@ const TourStickySidebar = ({
           <div className="bg-muted/50 rounded-lg p-4">
             <div className="flex items-end justify-between mb-1">
               <span className="text-sm text-muted-foreground">pro Person ab</span>
-              <span className="text-3xl font-bold text-primary">{pricePerPerson.toFixed(0)} €</span>
+              <span className="text-3xl font-bold text-primary">{hasPrice ? `${pricePerPerson.toFixed(0)} €` : "Auf Anfrage"}</span>
             </div>
-            {participants > 1 && (
+            {hasPrice && participants > 1 && (
               <div className="flex items-end justify-between">
                 <span className="text-sm text-muted-foreground">Sie zahlen heute ({participants} Pers.)</span>
                 <span className="text-lg font-semibold text-foreground">{totalPrice.toFixed(0)} €</span>
