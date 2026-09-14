@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { 
   Calendar, Users, Luggage, Shield, Check,
-  Minus, Plus, AlertCircle, Zap, Lock, Mail
+  Minus, Plus, AlertCircle, Lock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -191,8 +191,8 @@ const TourStickySidebar = ({
           {/* Trust Signals */}
           <div className="space-y-1.5 text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
-              <Zap className="w-3.5 h-3.5 text-primary" />
-              <span>Sofortbestätigung</span>
+              <Check className="w-3.5 h-3.5 text-primary" />
+              <span>Auswahl vor Abschluss prüfen</span>
             </div>
             <div className="flex items-center gap-2">
               <Shield className="w-3.5 h-3.5 text-primary" />
