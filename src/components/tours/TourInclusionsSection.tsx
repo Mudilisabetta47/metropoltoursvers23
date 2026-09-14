@@ -5,6 +5,7 @@ import { TourInclusion, TourTariff } from "@/hooks/useTourBuilder";
 
 interface TourInclusionsSectionProps {
   inclusions: TourInclusion[];
+  includedServices?: string[] | null;
   tariffs: TourTariff[];
   selectedTariff: TourTariff | null;
   onSelectTariff: (tariff: TourTariff) => void;
@@ -15,7 +16,7 @@ const iconMap: Record<string, React.ElementType> = {
   'Hotel': Hotel, 'Coffee': Coffee, 'Bus': Bus, 'default': Check,
 };
 
-const TourInclusionsSection = ({ inclusions, tariffs, selectedTariff, onSelectTariff }: TourInclusionsSectionProps) => {
+const TourInclusionsSection = ({ inclusions, includedServices, tariffs, selectedTariff, onSelectTariff }: TourInclusionsSectionProps) => {
   const includedItems = inclusions.filter(i => i.category === 'included');
   const optionalItems = inclusions.filter(i => i.category === 'optional');
   const notIncludedItems = inclusions.filter(i => i.category === 'not_included');
@@ -23,13 +24,11 @@ const TourInclusionsSection = ({ inclusions, tariffs, selectedTariff, onSelectTa
   return (
     <section id="section-leistungen" className="space-y-6 scroll-mt-36">
       {/* Options Table (Booking-style "Zimmer") */}
-      <Card className="rounded-2xl border-border/60 shadow-sm">
+      {tariffs.length > 0 && <Card className="rounded-2xl border-border/60 shadow-sm">
         <CardHeader className="pb-4">
           <p className="text-xs uppercase tracking-[0.18em] text-primary font-semibold mb-2">Tarifauswahl</p>
           <CardTitle className="text-2xl font-semibold">Wählen Sie Ihre Option</CardTitle>
-          <CardDescription className="mt-1">
-            Alle Tarife beinhalten Bus, Hotel & Frühstück – Sie entscheiden über Komfort & Flexibilität.
-          </CardDescription>
+          <CardDescription className="mt-1">Vergleichen Sie die hinterlegten Tarifdetails dieser Reise.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {/* Table Header */}
@@ -105,10 +104,10 @@ const TourInclusionsSection = ({ inclusions, tariffs, selectedTariff, onSelectTa
             })}
           </div>
         </CardContent>
-      </Card>
+      </Card>}
 
       {/* Included Services */}
-      <Card>
+      {(includedItems.length > 0 || (includedServices?.length || 0) > 0) && <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl font-bold">
             <Check className="w-6 h-6 text-primary" />
@@ -117,18 +116,13 @@ const TourInclusionsSection = ({ inclusions, tariffs, selectedTariff, onSelectTa
         </CardHeader>
         <CardContent>
           <div className="grid sm:grid-cols-2 gap-3">
-            {[
-              { icon: Hotel, title: "Übernachtung", desc: "Im Hotel oder Apartment inkl." },
-              { icon: Coffee, title: "Frühstück", desc: "Täglich im Hotel inkl." },
-              { icon: Bus, title: "Busreise", desc: "Hin- und Rückfahrt im Komfortbus" },
-            ].map((item, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-primary/5">
+            {(includedServices || []).map((service, i) => (
+              <div key={`${service}-${i}`} className="flex items-start gap-3 p-3 rounded-lg bg-primary/5">
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <item.icon className="w-4 h-4 text-primary" />
+                  <Check className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <p className="font-medium text-foreground">{item.title}</p>
-                  <p className="text-sm text-muted-foreground">{item.desc}</p>
+                  <p className="font-medium text-foreground">{service}</p>
                 </div>
               </div>
             ))}
@@ -148,7 +142,7 @@ const TourInclusionsSection = ({ inclusions, tariffs, selectedTariff, onSelectTa
             })}
           </div>
         </CardContent>
-      </Card>
+      </Card>}
 
       {/* Optional */}
       {optionalItems.length > 0 && (
