@@ -187,7 +187,7 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice, onShowMap, onBook }: To
 
             {/* Price and actions */}
             <div className="flex flex-col items-start gap-3 md:items-end shrink-0">
-              {typeof lowestPrice === "number" && Number.isFinite(lowestPrice) && (
+              {typeof lowestPrice === "number" && Number.isFinite(lowestPrice) && lowestPrice > 0 && (
                 <div className="md:text-right">
                   <p className="text-xs font-medium uppercase text-muted-foreground">Preis pro Person</p>
                   <p className="text-3xl font-bold text-primary">ab {formatPrice(lowestPrice)}</p>

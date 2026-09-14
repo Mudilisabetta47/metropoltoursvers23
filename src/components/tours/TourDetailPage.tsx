@@ -159,9 +159,11 @@ const TourDetailPage = () => {
     );
   }
 
-  const lowestPrice = tourData.dates.length > 0
-    ? Math.min(...tourData.dates.map(d => d.price_basic))
-    : tourData.tour.price_from;
+  const storedPrices = [
+    ...tourData.dates.map((date) => date.price_basic),
+    tourData.tour.price_from,
+  ].filter((price) => typeof price === "number" && Number.isFinite(price) && price > 0);
+  const lowestPrice = storedPrices.length > 0 ? Math.min(...storedPrices) : 0;
 
   const availableSeats = selectedDate
     ? selectedDate.total_seats - selectedDate.booked_seats
@@ -239,7 +241,11 @@ const TourDetailPage = () => {
         />
 
         {/* Tab Navigation */}
-        <TourTabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+        <TourTabNavigation
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          showProgram={Boolean(tourData.tour.itinerary?.length)}
+        />
 
         {/* Main Content */}
         <div className="max-w-[1240px] mx-auto px-4 py-8">
@@ -290,11 +296,11 @@ const TourDetailPage = () => {
                   <TourRoutesSection routes={tourData.routes} luggageAddons={tourData.luggageAddons} />
                 </div>
               )}
+              {activeTab === "programm" && (
+                <TourItinerarySection itinerary={tourData.tour.itinerary} />
+              )}
               {activeTab === "infos" && (
-                <div className="space-y-8">
-                  <TourItinerarySection itinerary={tourData.tour.itinerary} />
-                  <TourInfoSection tour={tourData.tour} />
-                </div>
+                <TourInfoSection tour={tourData.tour} />
               )}
               {activeTab === "agb" && (
                 <TourLegalSection legalSections={tourData.legalSections} tariffs={tourData.tariffs} />
@@ -347,7 +353,7 @@ const TourDetailPage = () => {
         <div className="mx-auto flex max-w-[1240px] items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-xs text-muted-foreground">ab Preis pro Person</p>
-            <p className="truncate text-lg font-bold text-primary">{formatPrice(lowestPrice)}</p>
+            <p className="truncate text-lg font-bold text-primary">{lowestPrice > 0 ? formatPrice(lowestPrice) : "Preis auf Anfrage"}</p>
           </div>
           <Button size="lg" onClick={openBooking} className="shrink-0 gap-2">
             {isTourBookable(tourData.tour as any) ? (selectedDate ? "Jetzt buchen" : "Termin wählen") : "Anfragen"}

@@ -47,7 +47,7 @@ const TourOverviewSection = ({ tour, selectedDate, routes, lowestPrice }: TourOv
     } : null,
     routes.length > 0 ? { label: "Anreise", value: "Reisebus", icon: Bus } : null,
     tour.hotel_name ? { label: "Unterkunft", value: tour.hotel_name, icon: Hotel } : null,
-    Number.isFinite(lowestPrice) ? { label: "Preis", value: `ab ${formatPrice(lowestPrice)} p. P.`, icon: Euro } : null,
+    Number.isFinite(lowestPrice) && lowestPrice > 0 ? { label: "Preis", value: `ab ${formatPrice(lowestPrice)} p. P.`, icon: Euro } : null,
   ].filter((fact): fact is NonNullable<typeof fact> => Boolean(fact));
 
   if (facts.length === 0) return null;
