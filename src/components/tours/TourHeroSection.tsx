@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MapPin, Heart, ChevronRight, Clock, Bus, Hotel, Coffee, Images, X, ChevronLeft as ChevronLeftIcon, Sun, ShieldCheck, Lock, BadgeCheck, Wallet, Phone } from "lucide-react";
+import { MapPin, Heart, ChevronRight, Clock, Images, X, ChevronLeft as ChevronLeftIcon, ShieldCheck, Lock, BadgeCheck, Wallet, Phone, CalendarDays, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -8,6 +8,8 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { ExtendedPackageTour } from "@/hooks/useTourBuilder";
 import MapboxLocationMap from "@/components/maps/MapboxLocationMap";
 import ShareButton from "@/components/common/ShareButton";
+import { format, parseISO } from "date-fns";
+import { de } from "date-fns/locale";
 
 
 interface TourHeroSectionProps {
@@ -15,9 +17,10 @@ interface TourHeroSectionProps {
   heroImage: string;
   lowestPrice?: number;
   onShowMap?: () => void;
+  onBook?: () => void;
 }
 
-const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap }: TourHeroSectionProps) => {
+const TourHeroSection = ({ tour, heroImage, lowestPrice, onShowMap, onBook }: TourHeroSectionProps) => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
@@ -90,10 +93,7 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
       if (img && !allImages.includes(img)) allImages.push(img);
     });
   }
-  // Pad with hero fallback if needed
-  while (allImages.length < 5) {
-    allImages.push(heroImage);
-  }
+  if (allImages.length === 0) allImages.push(heroImage);
 
   const mainImage = allImages[0] || heroImage;
   const sideImages = allImages.slice(1, 5);
@@ -103,15 +103,17 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
     setLightboxOpen(true);
   };
 
-  // Rating data (could come from DB in future)
-  const rating = 8.7;
-  const ratingLabel = rating >= 9 ? "Ausgezeichnet" : rating >= 8 ? "Hervorragend" : rating >= 7 ? "Sehr gut" : "Gut";
-  const reviewCount = 312;
-  const subscores = [
-    { label: "Lage", score: 9.1 },
-    { label: "Komfort", score: 8.8 },
-    { label: "Preis/Leistung", score: 8.5 },
-  ];
+  const formatDate = (value?: string | null) => {
+    if (!value) return null;
+    try { return format(parseISO(value), "dd.MM.yyyy", { locale: de }); }
+    catch { return value; }
+  };
+  const formatPrice = (value: number) => new Intl.NumberFormat("de-DE", {
+    style: "currency", currency: "EUR", minimumFractionDigits: 2,
+  }).format(value);
+  const departure = formatDate(tour.departure_date);
+  const arrival = formatDate(tour.return_date);
+  const nights = tour.duration_days > 1 ? tour.duration_days - 1 : null;
 
   return (
     <section>
@@ -148,24 +150,24 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
                 )}
               </div>
 
-              <h1 className="text-2xl md:text-[2rem] font-bold text-foreground leading-tight tracking-tight mb-2">
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground leading-tight mb-2">
                 {tour.destination}
-                <span className="text-muted-foreground font-medium"> · {tour.duration_days} Tage</span>
               </h1>
 
-              {/* Hotel-Style: Sonnen-Sterne · Adresse · Karte anzeigen */}
+              {tour.short_description && (
+                <p className="mb-3 max-w-3xl text-base leading-relaxed text-muted-foreground">{tour.short_description}</p>
+              )}
+
+              {/* Destination and map */}
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm mb-3">
-                <div className="flex items-center gap-0.5" aria-label="5 Sterne Komfort">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Sun key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <span className="text-border">|</span>
-                <span className="flex items-center gap-1.5 text-foreground">
-                  <MapPin className="w-4 h-4 text-muted-foreground" />
-                  {tour.location}{tour.country ? `, ${tour.country}` : ''}
-                </span>
-                <span className="text-muted-foreground">·</span>
+                {(tour.location || tour.country) && <span className="flex items-center gap-1.5 text-foreground">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  {[tour.location, tour.country].filter(Boolean).join(", ")}
+                </span>}
+                {departure && <span className="flex items-center gap-1.5 text-foreground">
+                  <CalendarDays className="w-4 h-4 text-primary" />
+                  {departure}{arrival && arrival !== departure ? ` – ${arrival}` : ""}
+                </span>}
                 <button
                   type="button"
                   className="text-primary hover:underline font-medium"
@@ -175,26 +177,26 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
                 </button>
               </div>
 
-              {/* Inklusiv-Chips */}
+              {/* Compact trip facts */}
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground bg-primary/10 border border-primary/20 rounded-full px-2.5 py-1">
-                  <Bus className="w-3.5 h-3.5 text-primary" /> Komfort-Bus inkl.
-                </span>
-                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground bg-primary/10 border border-primary/20 rounded-full px-2.5 py-1">
-                  <Hotel className="w-3.5 h-3.5 text-primary" /> Hotel inkl.
-                </span>
-                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground bg-primary/10 border border-primary/20 rounded-full px-2.5 py-1">
-                  <Coffee className="w-3.5 h-3.5 text-primary" /> Frühstück inkl.
-                </span>
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-muted/50 border border-border rounded-full px-2.5 py-1">
-                  <Clock className="w-3.5 h-3.5" /> {tour.duration_days} Tage / {Math.max((tour.duration_days || 1) - 1, 0)} Nächte
+                  <Clock className="w-3.5 h-3.5" /> {tour.duration_days} Tage{nights ? ` · ${nights} Nächte` : ""}
                 </span>
               </div>
             </div>
 
-            {/* Actions + Rating */}
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="flex gap-2">
+            {/* Price and actions */}
+            <div className="flex flex-col items-start gap-3 md:items-end shrink-0">
+              {typeof lowestPrice === "number" && Number.isFinite(lowestPrice) && (
+                <div className="md:text-right">
+                  <p className="text-xs font-medium uppercase text-muted-foreground">Preis pro Person</p>
+                  <p className="text-3xl font-bold text-primary">ab {formatPrice(lowestPrice)}</p>
+                </div>
+              )}
+              <div className="flex flex-wrap gap-2">
+                <Button size="lg" onClick={onBook} className="gap-2">
+                  Jetzt buchen <ArrowRight className="h-4 w-4" />
+                </Button>
                 <ShareButton
                   title={`${tour.destination} – Metropol Tours`}
                   text={`Schau dir diese Busreise nach ${tour.destination} an:`}
@@ -209,17 +211,6 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
                   <Heart className={`w-4 h-4 ${isSaved ? 'fill-destructive text-destructive' : ''}`} /> Merken
                 </Button>
               </div>
-
-              {/* Rating Badge */}
-              <div className="flex items-center gap-2">
-                <div className="text-right hidden sm:block">
-                  <p className="text-sm font-semibold text-foreground">{ratingLabel}</p>
-                  <p className="text-xs text-muted-foreground">{reviewCount} Bewertungen</p>
-                </div>
-                <div className="w-11 h-11 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg shadow-md shadow-primary/30">
-                  {rating}
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -227,10 +218,10 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
 
       {/* Gallery Grid */}
       <div className="max-w-[1240px] mx-auto px-4 pt-4">
-        <div className="grid grid-cols-4 grid-rows-2 gap-2 h-[300px] md:h-[420px] rounded-xl overflow-hidden">
+        <div className={`grid gap-2 h-[300px] md:h-[420px] rounded-xl overflow-hidden ${sideImages.length > 0 ? "grid-cols-4 grid-rows-2" : "grid-cols-1"}`}>
           {/* Main large image */}
           <div
-            className="col-span-2 row-span-2 relative cursor-pointer group"
+            className={`${sideImages.length > 0 ? "col-span-2 row-span-2" : "col-span-1"} relative cursor-pointer group`}
             onClick={() => openLightbox(0)}
           >
             <img src={mainImage} alt={`${tour.destination} – Hauptbild der Busreise`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -265,48 +256,6 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
           <Button variant="outline" size="sm" onClick={() => openLightbox(0)} className="gap-1.5 text-xs">
             <Images className="w-3.5 h-3.5" />
             Alle Fotos anzeigen
-          </Button>
-        </div>
-      </div>
-
-      {/* Review Subscores Bar */}
-      <div className="max-w-[1240px] mx-auto px-4 mt-4">
-        <div className="bg-card rounded-xl border border-border p-4 flex flex-col sm:flex-row sm:items-center gap-4">
-          {/* Main Score */}
-          <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold text-2xl">
-              {rating}
-            </div>
-            <div>
-              <p className="font-bold text-foreground text-lg">{ratingLabel}</p>
-              <p className="text-sm text-muted-foreground">{reviewCount} Bewertungen</p>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="hidden sm:block w-px h-10 bg-border" />
-
-          {/* Subscores */}
-          <div className="flex flex-1 gap-6">
-            {subscores.map((sub) => (
-              <div key={sub.label} className="flex-1">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-muted-foreground">{sub.label}</span>
-                  <span className="text-sm font-semibold text-foreground">{sub.score}</span>
-                </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary rounded-full transition-all"
-                    style={{ width: `${(sub.score / 10) * 100}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* CTA */}
-          <Button variant="outline" size="sm" className="shrink-0 text-xs">
-            Bewertungen lesen
           </Button>
         </div>
       </div>
@@ -353,13 +302,6 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
         </div>
       </div>
 
-      {/* Short description */}
-      {tour.short_description && (
-        <div className="max-w-[1240px] mx-auto px-4 mt-4">
-          <p className="text-foreground/80 text-base leading-relaxed">{tour.short_description}</p>
-        </div>
-      )}
-
       {/* Persönliche Beratung – seriöser Touch */}
       <div className="max-w-[1240px] mx-auto px-4 mt-4">
         <div className="rounded-xl border border-border bg-gradient-to-r from-primary/5 via-card to-card px-4 py-3 flex flex-wrap items-center justify-between gap-3">
@@ -373,7 +315,7 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice: _lowestPrice, onShowMap
             </div>
           </div>
           <a
-            href="tel:+4951112345670"
+            href="tel:+4951180781106"
             className="text-sm font-bold text-primary hover:underline shrink-0"
           >
             +49 511 80781106
