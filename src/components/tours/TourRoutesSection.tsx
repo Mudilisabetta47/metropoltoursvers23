@@ -52,11 +52,7 @@ const TourRoutesSection = ({ routes, luggageAddons, onSelectStop }: TourRoutesSe
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {routes.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>Zustiegsorte werden noch bekannt gegeben.</p>
-            </div>
-          ) : routes.length === 1 ? (
+          {routes.length === 0 ? null : routes.length === 1 ? (
             // Single route - show directly without tabs
             <RouteContent 
               route={routes[0]} 
@@ -253,12 +249,7 @@ const RouteContent = ({ route, onSelectStop }: RouteContentProps) => {
             })}
           </div>
         </div>
-      ) : (
-        <div className="text-center py-8 text-muted-foreground bg-muted/50 rounded-xl">
-          <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">Genaue Zustiegsorte werden nach der Buchung mitgeteilt.</p>
-        </div>
-      )}
+      ) : null}
     </div>
   );
 };

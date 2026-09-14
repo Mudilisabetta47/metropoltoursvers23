@@ -1,4 +1,4 @@
-import { Check, X, Plus, Luggage, Armchair, RefreshCcw, Hotel, Coffee, Bus } from "lucide-react";
+import { Check, X, Plus, Luggage, Armchair, RefreshCcw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TourInclusion, TourTariff } from "@/hooks/useTourBuilder";
@@ -13,7 +13,7 @@ interface TourInclusionsSectionProps {
 
 const iconMap: Record<string, React.ElementType> = {
   'Check': Check, 'X': X, 'Plus': Plus, 'Luggage': Luggage,
-  'Hotel': Hotel, 'Coffee': Coffee, 'Bus': Bus, 'default': Check,
+  'default': Check,
 };
 
 const TourInclusionsSection = ({ inclusions, includedServices, tariffs, selectedTariff, onSelectTariff }: TourInclusionsSectionProps) => {

@@ -196,11 +196,11 @@ const TourStickySidebar = ({
             </div>
             <div className="flex items-center gap-2">
               <Shield className="w-3.5 h-3.5 text-primary" />
-              <span>Sichere Zahlung (Stripe)</span>
+              <span>Geschützte Buchungsdaten</span>
             </div>
             <div className="flex items-center gap-2">
               <Check className="w-3.5 h-3.5 text-primary" />
-              <span>Bestpreis-Garantie</span>
+              <span>Transparente Preisübersicht</span>
             </div>
           </div>
         </CardContent>

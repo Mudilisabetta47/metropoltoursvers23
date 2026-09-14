@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Loader2, ChevronLeft, Lock } from "lucide-react";
+import { Loader2, ChevronLeft, Lock, ArrowRight } from "lucide-react";
 import { isTourBookable, TOUR_NOT_BOOKABLE_TITLE, TOUR_NOT_BOOKABLE_TEXT } from "@/lib/tourAvailability";
 
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,8 @@ import TourRoutesSection from "./TourRoutesSection";
 import TourInfoSection from "./TourInfoSection";
 import TourLegalSection from "./TourLegalSection";
 import TourSurroundingsSection from "./TourSurroundingsSection";
+import TourOverviewSection from "./TourOverviewSection";
+import TourItinerarySection from "./TourItinerarySection";
 
 import {
   TourTariff, TourDate, TourRoute, TourInclusion, TourLegal, TourLuggageAddon, ExtendedPackageTour
@@ -165,6 +167,29 @@ const TourDetailPage = () => {
     ? selectedDate.total_seats - selectedDate.booked_seats
     : 0;
 
+  const openBooking = () => {
+    if (!isTourBookable(tourData.tour as any)) {
+      document.getElementById("booking-panel")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    if (!selectedDate) {
+      setActiveTab("termine");
+      setTimeout(() => document.getElementById("section-termine")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+      return;
+    }
+    const params = new URLSearchParams({
+      tour: tourData.tour.id,
+      date: selectedDate.id,
+      tariff: selectedTariff?.id || "",
+      pax: participants.toString(),
+    });
+    navigate(`/reisen/checkout?${params.toString()}`);
+  };
+
+  const formatPrice = (value: number) => new Intl.NumberFormat("de-DE", {
+    style: "currency", currency: "EUR", minimumFractionDigits: 2,
+  }).format(value);
+
   return (
     <div className="min-h-screen flex flex-col bg-muted/30">
       <SEO
@@ -204,6 +229,7 @@ const TourDetailPage = () => {
           tour={tourData.tour}
           heroImage={getHeroImage()}
           lowestPrice={lowestPrice}
+          onBook={openBooking}
           onShowMap={() => {
             setActiveTab("route");
             setTimeout(() => {
@@ -220,6 +246,13 @@ const TourDetailPage = () => {
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Left 2/3 */}
             <div className="lg:col-span-2 space-y-8">
+              <TourOverviewSection
+                tour={tourData.tour}
+                selectedDate={selectedDate}
+                routes={tourData.routes}
+                lowestPrice={lowestPrice}
+              />
+
               {/* Social Proof */}
               <TourSocialProof
                 tourId={tourData.tour.id}
@@ -238,6 +271,7 @@ const TourDetailPage = () => {
               {activeTab === "leistungen" && (
                 <TourInclusionsSection
                   inclusions={tourData.inclusions}
+                  includedServices={tourData.tour.included_services}
                   tariffs={tourData.tariffs}
                   selectedTariff={selectedTariff}
                   onSelectTariff={setSelectedTariff}
@@ -257,7 +291,10 @@ const TourDetailPage = () => {
                 </div>
               )}
               {activeTab === "infos" && (
-                <TourInfoSection tour={tourData.tour} />
+                <div className="space-y-8">
+                  <TourItinerarySection itinerary={tourData.tour.itinerary} />
+                  <TourInfoSection tour={tourData.tour} />
+                </div>
               )}
               {activeTab === "agb" && (
                 <TourLegalSection legalSections={tourData.legalSections} tariffs={tourData.tariffs} />
@@ -290,7 +327,7 @@ const TourDetailPage = () => {
             </div>
 
             {/* Right Sidebar */}
-            <div className="lg:col-span-1">
+            <div id="booking-panel" className="lg:col-span-1 scroll-mt-36">
               <TourStickySidebar
                 tour={tourData.tour}
                 selectedDate={selectedDate}
@@ -306,6 +343,18 @@ const TourDetailPage = () => {
           </div>
         </div>
       </main>
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/95 p-3 shadow-xl backdrop-blur lg:hidden">
+        <div className="mx-auto flex max-w-[1240px] items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-muted-foreground">ab Preis pro Person</p>
+            <p className="truncate text-lg font-bold text-primary">{formatPrice(lowestPrice)}</p>
+          </div>
+          <Button size="lg" onClick={openBooking} className="shrink-0 gap-2">
+            {isTourBookable(tourData.tour as any) ? (selectedDate ? "Jetzt buchen" : "Termin wählen") : "Anfragen"}
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
       <Footer />
     </div>
   );
