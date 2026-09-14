@@ -3,17 +3,19 @@ import { Button } from "@/components/ui/button";
 interface TourTabNavigationProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  showProgram?: boolean;
 }
 
 const tabs = [
   { id: 'leistungen', label: 'Optionen & Leistungen' },
   { id: 'termine', label: 'Verfügbarkeit' },
   { id: 'route', label: 'Route & Zustiege' },
+  { id: 'programm', label: 'Reiseprogramm' },
   { id: 'infos', label: 'Infos' },
   { id: 'agb', label: 'Storno & Reiseschutz' },
 ];
 
-const TourTabNavigation = ({ activeTab, onTabChange }: TourTabNavigationProps) => {
+const TourTabNavigation = ({ activeTab, onTabChange, showProgram = false }: TourTabNavigationProps) => {
   const scrollToSection = (tabId: string) => {
     onTabChange(tabId);
     const element = document.getElementById(`section-${tabId}`);
@@ -27,7 +29,7 @@ const TourTabNavigation = ({ activeTab, onTabChange }: TourTabNavigationProps) =
       <div className="max-w-[1240px] mx-auto px-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide">
-            {tabs.map((tab) => (
+            {tabs.filter((tab) => tab.id !== "programm" || showProgram).map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => scrollToSection(tab.id)}

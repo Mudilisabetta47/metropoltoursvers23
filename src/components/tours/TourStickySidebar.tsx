@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { 
   Calendar, Users, Luggage, Shield, Check,
-  Minus, Plus, AlertCircle, Zap, Lock, Mail
+  Minus, Plus, AlertCircle, Lock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -53,6 +53,7 @@ const TourStickySidebar = ({
 
   const pricePerPerson = calculatePrice();
   const totalPrice = pricePerPerson * participants;
+  const hasPrice = Number.isFinite(pricePerPerson) && pricePerPerson > 0;
 
   const handleBooking = () => {
     if (!bookable) return;
@@ -143,9 +144,9 @@ const TourStickySidebar = ({
           <div className="bg-muted/50 rounded-lg p-4">
             <div className="flex items-end justify-between mb-1">
               <span className="text-sm text-muted-foreground">pro Person ab</span>
-              <span className="text-3xl font-bold text-primary">{pricePerPerson.toFixed(0)} €</span>
+              <span className="text-3xl font-bold text-primary">{hasPrice ? `${pricePerPerson.toFixed(0)} €` : "Auf Anfrage"}</span>
             </div>
-            {participants > 1 && (
+            {hasPrice && participants > 1 && (
               <div className="flex items-end justify-between">
                 <span className="text-sm text-muted-foreground">Sie zahlen heute ({participants} Pers.)</span>
                 <span className="text-lg font-semibold text-foreground">{totalPrice.toFixed(0)} €</span>
@@ -191,16 +192,16 @@ const TourStickySidebar = ({
           {/* Trust Signals */}
           <div className="space-y-1.5 text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
-              <Zap className="w-3.5 h-3.5 text-primary" />
-              <span>Sofortbestätigung</span>
+              <Check className="w-3.5 h-3.5 text-primary" />
+              <span>Auswahl vor Abschluss prüfen</span>
             </div>
             <div className="flex items-center gap-2">
               <Shield className="w-3.5 h-3.5 text-primary" />
-              <span>Sichere Zahlung (Stripe)</span>
+              <span>Geschützte Buchungsdaten</span>
             </div>
             <div className="flex items-center gap-2">
               <Check className="w-3.5 h-3.5 text-primary" />
-              <span>Bestpreis-Garantie</span>
+              <span>Transparente Preisübersicht</span>
             </div>
           </div>
         </CardContent>

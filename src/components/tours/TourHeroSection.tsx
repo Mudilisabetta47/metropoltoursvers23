@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MapPin, Heart, ChevronRight, Clock, Images, X, ChevronLeft as ChevronLeftIcon, ShieldCheck, Lock, BadgeCheck, Wallet, Phone, CalendarDays, ArrowRight } from "lucide-react";
+import { MapPin, Heart, ChevronRight, Clock, Images, X, ChevronLeft as ChevronLeftIcon, ShieldCheck, BadgeCheck, Phone, CalendarDays, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -187,7 +187,7 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice, onShowMap, onBook }: To
 
             {/* Price and actions */}
             <div className="flex flex-col items-start gap-3 md:items-end shrink-0">
-              {typeof lowestPrice === "number" && Number.isFinite(lowestPrice) && (
+              {typeof lowestPrice === "number" && Number.isFinite(lowestPrice) && lowestPrice > 0 && (
                 <div className="md:text-right">
                   <p className="text-xs font-medium uppercase text-muted-foreground">Preis pro Person</p>
                   <p className="text-3xl font-bold text-primary">ab {formatPrice(lowestPrice)}</p>
@@ -262,14 +262,14 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice, onShowMap, onBook }: To
 
       {/* Trust-Bar – seriöse Vertrauenssignale */}
       <div className="max-w-[1240px] mx-auto px-4 mt-4">
-        <div className="bg-card rounded-xl border border-border px-4 py-3 grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-card rounded-xl border border-border px-4 py-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground leading-tight">Reisesicherungsschein</p>
-              <p className="text-xs text-muted-foreground leading-tight">100 % Insolvenzschutz inkl.</p>
+              <p className="text-sm font-semibold text-foreground leading-tight">METROPOL TOURS</p>
+              <p className="text-xs text-muted-foreground leading-tight">Persönlich organisierte Busreisen</p>
             </div>
           </div>
           <div className="flex items-center gap-2.5">
@@ -277,26 +277,8 @@ const TourHeroSection = ({ tour, heroImage, lowestPrice, onShowMap, onBook }: To
               <BadgeCheck className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground leading-tight">Kostenlose Stornierung</p>
-              <p className="text-xs text-muted-foreground leading-tight">Bis 14 Tage vor Abreise</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-              <Lock className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground leading-tight">SSL-verschlüsselt</p>
-              <p className="text-xs text-muted-foreground leading-tight">Sichere Zahlung & DSGVO</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-              <Wallet className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground leading-tight">Bestpreis-Garantie</p>
-              <p className="text-xs text-muted-foreground leading-tight">Keine versteckten Gebühren</p>
+              <p className="text-sm font-semibold text-foreground leading-tight">Sicher anfragen & buchen</p>
+              <p className="text-xs text-muted-foreground leading-tight">Geschützte Übertragung Ihrer Daten</p>
             </div>
           </div>
         </div>
