@@ -67,7 +67,7 @@ const TestimonialsSection = () => {
       aggregateRating: {
         "@type": "AggregateRating",
         ratingValue: Math.round(avg * 10) / 10,
-        reviewCount: reviews.length,
+        reviewCount: count,
         bestRating: 5,
         worstRating: 1,
       },
@@ -87,7 +87,7 @@ const TestimonialsSection = () => {
     return () => {
       document.head.removeChild(el);
     };
-  }, [reviews]);
+  }, [reviews, stats]);
 
   useEffect(() => {
     if (!auto || reviews.length < 2) return;
