@@ -565,7 +565,7 @@ const CheckoutPage = () => {
 
           <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {/* Main Content */}
-            <div className="lg:col-span-2">
+            <div className={cn("lg:col-span-2", currentStep === "payment" && "lg:col-span-3")}>
               {/* Step 1: Seat Selection */}
               {currentStep === "seats" && (
                 <SeatMap
@@ -812,7 +812,7 @@ const CheckoutPage = () => {
                     </Button>
                   )}
                   <Button variant="accent" size="lg" onClick={handleNextStep} disabled={isProcessing}>
-                    {isProcessing ? "Wird verarbeitet..." : currentStep === "payment" ? "Jetzt buchen" : "Weiter"}
+                    {isProcessing ? "Wird verarbeitet..." : "Weiter"}
                     {!isProcessing && <ArrowRight className="w-4 h-4 ml-2" />}
                   </Button>
                 </div>

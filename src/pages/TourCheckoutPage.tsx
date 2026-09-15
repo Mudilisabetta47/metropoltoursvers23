@@ -558,7 +558,7 @@ const TourCheckoutPage = () => {
 
           <div className="grid lg:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
             {/* Main Content */}
-            <div className="lg:col-span-2 space-y-5">
+            <div className={cn("lg:col-span-2 space-y-5", currentStep === "payment" && "lg:col-span-3")}>
               <AnimatePresence mode="wait">
                 {/* === STEP 1: SUMMARY === */}
                 {currentStep === "summary" && (
@@ -1090,8 +1090,6 @@ const TourCheckoutPage = () => {
                       >
                         {isProcessing ? (
                           <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Wird verarbeitet…</>
-                        ) : currentStep === "payment" ? (
-                          <><Lock className="w-4 h-4 mr-2" />Jetzt kostenpflichtig buchen</>
                         ) : (
                           <>Weiter<ChevronRight className="w-4 h-4 ml-2" /></>
                         )}
