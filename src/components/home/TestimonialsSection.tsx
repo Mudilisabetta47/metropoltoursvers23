@@ -24,6 +24,7 @@ interface PublishedReview {
  */
 const TestimonialsSection = () => {
   const [reviews, setReviews] = useState<PublishedReview[]>([]);
+  const [stats, setStats] = useState<{ count: number; avg: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
   const [auto, setAuto] = useState(true);
@@ -38,13 +39,25 @@ const TestimonialsSection = () => {
         .limit(12);
       setReviews((data ?? []) as PublishedReview[]);
       setLoading(false);
+
+      // Gesamtstatistik über ALLE veröffentlichten Bewertungen (für Google-Sterne)
+      const { data: allStars } = await supabase
+        .from("customer_reviews")
+        .select("stars")
+        .eq("is_published", true);
+      if (allStars && allStars.length) {
+        const sum = allStars.reduce((s, r) => s + (r.stars ?? 0), 0);
+        setStats({ count: allStars.length, avg: sum / allStars.length });
+      }
     })();
   }, []);
 
   // Strukturierte Daten für Google (Sterne in Suchergebnissen)
   useEffect(() => {
     if (!reviews.length) return;
-    const avg = reviews.reduce((s, r) => s + (r.stars ?? 0), 0) / reviews.length;
+    const avg = stats?.avg ?? reviews.reduce((s, r) => s + (r.stars ?? 0), 0) / reviews.length;
+    const count = stats?.count ?? reviews.length;
+
     const jsonLd = {
       "@context": "https://schema.org",
       "@type": "TravelAgency",
