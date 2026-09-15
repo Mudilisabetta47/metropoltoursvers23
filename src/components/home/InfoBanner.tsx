@@ -19,15 +19,18 @@ export function InfoBanner() {
               <Bus className="h-[18px] w-[18px]" />
             </div>
             <p className="text-sm sm:text-[15px] leading-snug text-foreground">
-              <span className="font-semibold">Unsere Promotionfahrt 2026 nach{" "}</span>
-              <span className="font-semibold text-primary">Novalja</span>
-              <span className="mx-1.5 text-muted-foreground">·</span>
-              <span>Ab dem</span>{" "}
+              <span className="font-semibold">
+                Pauschalreisen & Kurztrips ab{" "}
+              </span>
               <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-xs sm:text-sm font-semibold text-primary">
-                03.09.2026
+                2027
               </span>{" "}
+              <span className="font-semibold text-primary">
+                mit wöchentlichen Terminen
+              </span>
+              <span className="mx-1.5 text-muted-foreground">·</span>
               <span className="text-muted-foreground hidden sm:inline">
-                geht es los – unsere erste Fahrt nach Novalja (Kroatien).
+                Unsere Reisepläne für das kommende Jahr sind in Planung – die ersten Freigaben folgen ab 2027.
               </span>
             </p>
           </div>
@@ -38,7 +41,7 @@ export function InfoBanner() {
             className="w-full sm:w-auto shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
           >
             <Link to="/reisen">
-              Jetzt Fahrt entdecken
+              Reisen entdecken
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </Button>
