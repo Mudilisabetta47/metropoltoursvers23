@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { Star, BadgeCheck, Quote } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { SITE_URL, SITE_NAME } from "@/lib/seo";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 
 interface PublishedReview {
   id: string;
