@@ -6,7 +6,7 @@
  * Tracking- und NoIndex-Seiten werden bewusst nicht aufgenommen.
  */
 
-import { writeFileSync } from "fs";
+import { writeFileSync, readFileSync } from "fs";
 import { resolve } from "path";
 import { createClient } from "@supabase/supabase-js";
 
@@ -28,6 +28,7 @@ const staticEntries: SitemapEntry[] = [
   { path: "/business", changefreq: "monthly", priority: "0.9" },
   { path: "/wochenendtrips", changefreq: "weekly", priority: "0.8" },
   { path: "/blog", changefreq: "weekly", priority: "0.6" },
+  { path: "/bewertungen", changefreq: "weekly", priority: "0.7" },
   { path: "/gutscheine", changefreq: "monthly", priority: "0.6" },
   { path: "/reisen", changefreq: "monthly", priority: "0.7" },
   { path: "/service", changefreq: "monthly", priority: "0.7" },
@@ -148,4 +149,59 @@ async function main() {
   console.log(`sitemap.xml geschrieben (${entries.length} URLs)`);
 }
 
-main();
+/**
+ * Schreibt die echte Gesamtbewertung (AggregateRating) als statisches JSON-LD
+ * in index.html – damit Google die Sterne auch ohne JavaScript sieht.
+ */
+async function updateReviewJsonLd() {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return;
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  const { data, error } = await supabase
+    .from("customer_reviews")
+    .select("stars")
+    .eq("is_published", true);
+  if (error) {
+    console.warn("reviews jsonld:", error.message);
+    return;
+  }
+  const rows = (data || []).filter((r) => typeof r.stars === "number");
+  const indexPath = resolve("index.html");
+  const html = readFileSync(indexPath, "utf8");
+  const start = "<!-- REVIEWS_JSONLD_START (automatisch aus echten Bewertungen erzeugt – nicht manuell ändern) -->";
+  const end = "<!-- REVIEWS_JSONLD_END -->";
+  const si = html.indexOf(start);
+  const ei = html.indexOf(end);
+  if (si === -1 || ei === -1) return;
+
+  let block = `${start}\n    ${end}`;
+  if (rows.length) {
+    const avg = Math.round((rows.reduce((s, r) => s + (r.stars as number), 0) / rows.length) * 10) / 10;
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "TravelAgency",
+      "@id": `${BASE_URL}/#organization`,
+      name: "METROPOL TOURS",
+      url: BASE_URL,
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: avg,
+        reviewCount: rows.length,
+        bestRating: 5,
+        worstRating: 1,
+      },
+    };
+    block = [
+      start,
+      `    <script type="application/ld+json">`,
+      `    ${JSON.stringify(jsonLd, null, 2).split("\n").join("\n    ")}`,
+      `    </script>`,
+      `    ${end}`,
+    ].join("\n");
+    console.log(`index.html: AggregateRating ${avg} (${rows.length} Bewertungen)`);
+  }
+
+  writeFileSync(indexPath, html.slice(0, si) + block + html.slice(ei + end.length));
+}
+
+main().then(() => updateReviewJsonLd());
+

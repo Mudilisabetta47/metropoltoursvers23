@@ -16,6 +16,7 @@ const Footer = () => {
       { name: "Fahrplan & Zustiegsorte", path: "/fahrplan" },
       { name: "Wochenendtrips", path: "/wochenendtrips" },
       { name: "Reise-Magazin", path: "/blog" },
+      { name: "Bewertungen", path: "/bewertungen" },
       { name: "Geschenkgutschein", path: "/gutscheine" },
 
       { name: "Linienfahrten", path: "/search" },
