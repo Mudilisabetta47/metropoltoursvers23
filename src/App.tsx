@@ -28,6 +28,7 @@ const ReisenPage = lazy(() => import("./pages/ReisenPage"));
 const BusinessServicesPage = lazy(() => import("./pages/BusinessServicesPage"));
 const GiftVoucherPage = lazy(() => import("./pages/GiftVoucherPage"));
 const BlogPage = lazy(() => import("./pages/BlogPage"));
+const ReviewsPage = lazy(() => import("./pages/ReviewsPage"));
 const BlogPostPage = lazy(() => import("./pages/BlogPostPage"));
 const BookingsPage = lazy(() => import("./pages/BookingsPage"));
 const TrackBookingPage = lazy(() => import("./pages/TrackBookingPage"));
@@ -227,6 +228,7 @@ const App = () => (
               <Route path="/shop/bestellungen" element={<ShopOrdersPage />} />
               <Route path="/gutscheine" element={<GiftVoucherPage />} />
               <Route path="/blog" element={<BlogPage />} />
+              <Route path="/bewertungen" element={<ReviewsPage />} />
               <Route path="/blog/:slug" element={<BlogPostPage />} />
               <Route path="/admin/shop" element={<AdminShop />} />
 
