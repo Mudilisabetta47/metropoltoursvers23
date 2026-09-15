@@ -41,7 +41,7 @@ export function InfoBanner() {
             className="w-full sm:w-auto shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
           >
             <Link to="/reisen">
-              Jetzt Fahrt entdecken
+              Reisen entdecken
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </Button>
