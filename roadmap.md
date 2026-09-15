@@ -10,3 +10,9 @@
 - [x] Bestehende Leistungen, Reiseprogramm und Zustiegsorte vollständig darstellen
 - [x] Desktop- und Mobile-Buchungsführung verbessern
 - [x] Alle Pauschalreisen über das gemeinsame Template auf Desktop und Mobil prüfen
+
+## Laufend: Premium-Checkout
+- [ ] Gemeinsame interaktive METROPOL-Zahlungskarte in beide Web-Checkouts integrieren
+- [ ] Bestehende Stripe-/PayPal-Zahlung und reale Buchungsdaten anbinden
+- [ ] Responsive Darstellung und Sicherheitsfund prüfen
+- [ ] Eingebettete Stripe-Kartenfelder aktivieren (blockiert: veröffentlichbarer Stripe-Schlüssel wurde nicht hinterlegt)
