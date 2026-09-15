@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { PaymentBrandLogos } from "@/components/checkout/PaymentBrandLogos";
+import InteractivePaymentCard from "@/components/checkout/InteractivePaymentCard";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
@@ -558,7 +558,7 @@ const TourCheckoutPage = () => {
 
           <div className="grid lg:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
             {/* Main Content */}
-            <div className="lg:col-span-2 space-y-5">
+            <div className={cn("lg:col-span-2 space-y-5", currentStep === "payment" && "lg:col-span-3")}>
               <AnimatePresence mode="wait">
                 {/* === STEP 1: SUMMARY === */}
                 {currentStep === "summary" && (
@@ -886,91 +886,28 @@ const TourCheckoutPage = () => {
 
                 {/* === STEP 3: PAYMENT === */}
                 {currentStep === "payment" && (
-                  <motion.div key="payment" {...fadeIn} className="space-y-5">
-                    {/* Payment Methods */}
-                    <Card className="border-border/60 shadow-sm">
-                      <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Wallet className="w-5 h-5 text-primary" />
-                          Zahlungsart
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        {([
-                          { key: "stripe" as PaymentMethod, icon: CreditCard, label: "Kreditkarte", desc: "Visa · Mastercard · American Express", badge: "Sofort", brands: ["visa", "mastercard", "amex"] as const },
-                          { key: "paypal" as PaymentMethod, icon: Wallet, label: "PayPal", desc: "Schnell & sicher mit PayPal bezahlen", badge: "Sofort", brands: ["paypal"] as const },
-                        ]).map((method) => (
-                          <motion.div
-                            key={method.key}
-                            whileHover={{ scale: 1.005 }}
-                            whileTap={{ scale: 0.995 }}
-                            onClick={() => setSelectedPaymentMethod(method.key)}
-                            className={cn(
-                              "flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200",
-                              selectedPaymentMethod === method.key
-                                ? "border-primary bg-primary/5 shadow-sm shadow-primary/10"
-                                : "border-border hover:border-primary/40"
-                            )}
-                          >
-                            <div className={cn(
-                              "w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-colors",
-                              selectedPaymentMethod === method.key ? "bg-primary/10" : "bg-muted"
-                            )}>
-                              <method.icon className={cn("w-6 h-6", selectedPaymentMethod === method.key ? "text-primary" : "text-muted-foreground")} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <p className="font-semibold text-foreground">{method.label}</p>
-                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{method.badge}</Badge>
-                              </div>
-                              <p className="text-sm text-muted-foreground">{method.desc}</p>
-                              <PaymentBrandLogos brands={[...method.brands]} className="mt-2" />
-                            </div>
-
-                            <div className={cn(
-                              "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0",
-                              selectedPaymentMethod === method.key ? "border-primary" : "border-muted-foreground/30"
-                            )}>
-                              {selectedPaymentMethod === method.key && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
-                            </div>
-                          </motion.div>
-                        ))}
-                      </CardContent>
-                    </Card>
-
-                    {/* Booking Overview */}
-                    <Card className="border-border/60 shadow-sm">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-lg">Buchungsübersicht</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="grid sm:grid-cols-2 gap-3">
-                          {[
-                            { label: "Reise", value: tour.destination, icon: MapPin },
-                            { label: "Termin", value: formatDate(selectedDate.departure_date), icon: Calendar },
-                            { label: "Tarif", value: selectedTariff.name, icon: Star },
-                            { label: "Reisende", value: `${participants} Person(en)`, icon: Users },
-                          ].map((item) => (
-                            <div key={item.label} className="flex items-center gap-3 p-3 bg-muted/40 rounded-lg">
-                              <item.icon className="w-4 h-4 text-primary shrink-0" />
-                              <div>
-                                <p className="text-xs text-muted-foreground">{item.label}</p>
-                                <p className="text-sm font-semibold text-foreground">{item.value}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-
-                        <div className="p-3 bg-muted/40 rounded-lg">
-                          <p className="text-xs text-muted-foreground mb-1">Hauptkontakt</p>
-                          <p className="text-sm font-semibold text-foreground">{passengerInfo[0]?.firstName} {passengerInfo[0]?.lastName} · {passengerInfo[0]?.email}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Legal Checkboxes */}
-                    <Card className="border-border/60 shadow-sm">
-                      <CardContent className="p-5 space-y-4">
+                  <motion.div key="payment" {...fadeIn} className="lg:col-span-3">
+                    <InteractivePaymentCard
+                      total={totalPrice}
+                      route={`${selectedPickupStop?.city || "Zustieg"} → ${tour.destination}`}
+                      date={`${formatDate(selectedDate.departure_date)}${selectedDate.return_date ? ` – ${formatDate(selectedDate.return_date)}` : ""}`}
+                      passengers={participants}
+                      bookingId={bookingNumber}
+                      customerName={`${passengerInfo[0]?.firstName || ""} ${passengerInfo[0]?.lastName || ""}`}
+                      extras={[
+                        { label: "Tarif", value: selectedTariff.name },
+                        ...(selectedPickupStop ? [{ label: "Zustieg", value: `${selectedPickupStop.city}, ${formatTime(selectedPickupStop.departure_time)} Uhr` }] : []),
+                        ...(addonsTotal > 0 ? [{ label: "Zusatzgepäck", value: addonsTotal.toLocaleString("de-DE", { style: "currency", currency: "EUR" }) }] : []),
+                        ...(extrasTotal > 0 ? [{ label: "Zusatzleistungen", value: extrasTotal.toLocaleString("de-DE", { style: "currency", currency: "EUR" }) }] : []),
+                        ...(appliedCoupon ? [{ label: `Gutschein ${appliedCoupon.code}`, value: `−${discountAmount.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}` }] : []),
+                      ]}
+                      paymentMethod={selectedPaymentMethod === "stripe" ? "card" : "paypal"}
+                      onPaymentMethodChange={(method) => setSelectedPaymentMethod(method === "card" ? "stripe" : "paypal")}
+                      onPay={handleNextStep}
+                      loading={isProcessing}
+                      disabled={!agreeTerms || !agreePrivacy}
+                      legal={
+                        <div className="mt-5 space-y-4 rounded-lg bg-muted/40 p-4">
                         <div className="flex items-start gap-3">
                           <Checkbox id="terms" checked={agreeTerms} onCheckedChange={(c) => setAgreeTerms(c as boolean)} className="mt-0.5" />
                           <Label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer leading-relaxed">
@@ -989,8 +926,9 @@ const TourCheckoutPage = () => {
                             Ich bestätige die Reiseinformationen zur Pauschalreise (optional)
                           </Label>
                         </div>
-                      </CardContent>
-                    </Card>
+                        </div>
+                      }
+                    />
                   </motion.div>
                 )}
 
@@ -1070,7 +1008,7 @@ const TourCheckoutPage = () => {
             </div>
 
             {/* === SIDEBAR === */}
-            {currentStep !== "confirmation" && (
+            {currentStep !== "confirmation" && currentStep !== "payment" && (
               <div className="lg:col-span-1">
                 <div className="sticky top-28 space-y-4">
                   <Card className="border-2 border-primary/20 shadow-lg overflow-hidden">
@@ -1152,8 +1090,6 @@ const TourCheckoutPage = () => {
                       >
                         {isProcessing ? (
                           <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Wird verarbeitet…</>
-                        ) : currentStep === "payment" ? (
-                          <><Lock className="w-4 h-4 mr-2" />Jetzt kostenpflichtig buchen</>
                         ) : (
                           <>Weiter<ChevronRight className="w-4 h-4 ml-2" /></>
                         )}

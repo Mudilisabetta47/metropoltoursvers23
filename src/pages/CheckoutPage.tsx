@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { PaymentBrandLogos } from "@/components/checkout/PaymentBrandLogos";
+import InteractivePaymentCard from "@/components/checkout/InteractivePaymentCard";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -565,7 +565,7 @@ const CheckoutPage = () => {
 
           <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {/* Main Content */}
-            <div className="lg:col-span-2">
+            <div className={cn("lg:col-span-2", currentStep === "payment" && "lg:col-span-3")}>
               {/* Step 1: Seat Selection */}
               {currentStep === "seats" && (
                 <SeatMap
@@ -689,70 +689,31 @@ const CheckoutPage = () => {
 
               {/* Step 4: Payment */}
               {currentStep === "payment" && (
-                <div className="bg-card rounded-xl shadow-card p-6 lg:p-8">
-                  <h2 className="text-2xl font-bold text-foreground mb-6">Zahlungsmethode</h2>
-                  
-                  <div className="space-y-4 mb-8">
-                    {[
-                      { id: "card", label: "Kredit-/Debitkarte", sub: "Visa · Mastercard · American Express", icon: <CreditCard className="w-5 h-5" />, brands: ["visa", "mastercard", "amex"] as const },
-                      { id: "paypal", label: "PayPal", sub: "Schnell & sicher mit PayPal bezahlen", icon: <CreditCard className="w-5 h-5" />, brands: ["paypal"] as const },
-                    ].map((method) => (
-
-                      <div
-                        key={method.id}
-                        onClick={() => setPaymentMethod(method.id as any)}
-                        className={cn(
-                          "p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-4",
-                          paymentMethod === method.id
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/50"
-                        )}
-                      >
-                        <div className={cn(
-                          "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
-                          paymentMethod === method.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                        )}>
-                          {method.icon}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="font-medium text-foreground block">{method.label}</span>
-                          <span className="text-sm text-muted-foreground">{method.sub}</span>
-                          <PaymentBrandLogos brands={[...method.brands]} className="mt-2" />
-                        </div>
+                <div className="lg:col-span-3">
+                  <InteractivePaymentCard
+                    total={totalPrice}
+                    route={`${originStop.name} → ${destinationStop.name}`}
+                    date={`${format(departureDate, "dd.MM.yyyy", { locale: de })}, ${trip.departure_time.substring(0, 5)} Uhr`}
+                    passengers={passengers}
+                    bookingId={bookingNumbers.join(", ") || null}
+                    customerName={`${passengerInfo[0]?.firstName || ""} ${passengerInfo[0]?.lastName || ""}`}
+                    seats={passengerInfo.filter((passenger) => passenger.seatNumber).map((passenger) => passenger.seatNumber)}
+                    extras={extras.filter((extra) => extra.selected).map((extra) => ({ label: extra.name, value: `${passengers} × ${extra.price.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}` }))}
+                    paymentMethod={paymentMethod}
+                    onPaymentMethodChange={setPaymentMethod}
+                    onPay={handleNextStep}
+                    loading={isProcessing}
+                    disabled={!agreeTerms || agbAvailable === false}
+                    error={agbAvailable === false ? "Buchung derzeit nicht möglich – die AGB werden gerade finalisiert." : null}
+                    legal={
+                      <div className="mt-5 flex items-start gap-3">
+                        <Checkbox id="terms" checked={agreeTerms} disabled={agbAvailable === false} onCheckedChange={(checked) => setAgreeTerms(Boolean(checked))} />
+                        <Label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer leading-relaxed">
+                          Ich akzeptiere die <a href="/terms" className="text-primary hover:underline">AGB</a> und die <a href="/privacy" className="text-primary hover:underline">Datenschutzerklärung</a>.
+                        </Label>
                       </div>
-                    ))}
-
-                  </div>
-
-                  <div className="space-y-4 p-4 bg-muted/50 rounded-xl text-sm text-muted-foreground">
-                    Die Zahlung erfolgt über unseren zertifizierten Zahlungsanbieter Stripe. Nach dem Klick auf
-                    „Jetzt buchen" werden Sie sicher weitergeleitet und Ihre Buchung wird nach erfolgreicher Zahlung
-                    automatisch bestätigt.
-                  </div>
-
-
-
-
-
-
-                  {agbAvailable === false && (
-                    <div className="mt-6 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
-                      Buchung derzeit nicht möglich – die AGB werden gerade finalisiert. Bitte melden Sie sich unter{' '}
-                      <a href="mailto:kundenservice@metours.de" className="underline">kundenservice@metours.de</a>.
-                    </div>
-                  )}
-                  <div className="mt-8 flex items-start gap-3">
-                    <Checkbox
-                      id="terms"
-                      checked={agreeTerms}
-                      disabled={agbAvailable === false}
-                      onCheckedChange={(checked) => setAgreeTerms(checked as boolean)}
-                    />
-                    <Label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer">
-                      Ich akzeptiere die <a href="/terms" className="text-primary hover:underline">AGB</a> und die{" "}
-                      <a href="/privacy" className="text-primary hover:underline">Datenschutzerklärung</a>.
-                    </Label>
-                  </div>
+                    }
+                  />
                 </div>
               )}
 
@@ -837,7 +798,7 @@ const CheckoutPage = () => {
               )}
 
               {/* Navigation Buttons */}
-              {currentStep !== "confirmation" && (
+              {currentStep !== "confirmation" && currentStep !== "payment" && (
                 <div className="flex justify-between mt-6">
                   {currentStep !== "seats" ? (
                     <Button variant="ghost" onClick={handlePrevStep}>
@@ -851,7 +812,7 @@ const CheckoutPage = () => {
                     </Button>
                   )}
                   <Button variant="accent" size="lg" onClick={handleNextStep} disabled={isProcessing}>
-                    {isProcessing ? "Wird verarbeitet..." : currentStep === "payment" ? "Jetzt buchen" : "Weiter"}
+                    {isProcessing ? "Wird verarbeitet..." : "Weiter"}
                     {!isProcessing && <ArrowRight className="w-4 h-4 ml-2" />}
                   </Button>
                 </div>
@@ -859,7 +820,7 @@ const CheckoutPage = () => {
             </div>
 
             {/* Sidebar - Trip Summary */}
-            <div className="lg:col-span-1">
+            <div className={cn("lg:col-span-1", currentStep === "payment" && "hidden")}>
               <div className="bg-card rounded-xl shadow-card p-6 sticky top-24">
                 <h3 className="font-semibold text-foreground mb-4">Ihre Reise</h3>
                 
