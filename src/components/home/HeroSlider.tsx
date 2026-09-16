@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
-import sliderPauschalreisen from "@/assets/metropol-bus-hero.jpg";
+import sliderPauschalreisen from "@/assets/metropol-night-highway-slider.png.asset.json";
 import sliderWochenendtrips from "@/assets/slider-wochenendtrips.jpg";
 import sliderGruppenreisen from "@/assets/slider-gruppenreisen.jpg";
 import sliderStrandurlaub from "@/assets/slider-strandurlaub.jpg";
@@ -31,8 +31,8 @@ interface Slide {
 
 const slides: Slide[] = [
   {
-    image: sliderPauschalreisen,
-    alt: "Grüner METROPOL TOURS Reisebus auf einer Landstraße – individuelle Busreisen ab Hannover",
+    image: sliderPauschalreisen.url,
+    alt: "Grüner METROPOL TOURS Reisebus auf einer nächtlichen Bergstraße",
     badge: "Gruppenreisen auf Anfrage",
     title: "Ihre individuelle",
     highlight: "Busreise",
