@@ -11,6 +11,7 @@ busvermietungBremen,
   reisebusMietenHamburg,
   busvermietungHamburg,
 } from "./standorte";
+import { staedtePages } from "./staedte";
 import {
   busMieten,
   reisebusMitFahrer,
@@ -44,6 +45,7 @@ busvermietungBremen,
   flughafentransfer,
   shuttleService,
   busCharter,
+  ...staedtePages,
 ];
 
 export const landingBySlug: Record<string, LandingContent> = Object.fromEntries(
