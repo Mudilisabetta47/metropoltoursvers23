@@ -45,6 +45,7 @@ busvermietungBremen,
   flughafentransfer,
   shuttleService,
   busCharter,
+  ...staedtePages,
 ];
 
 export const landingBySlug: Record<string, LandingContent> = Object.fromEntries(
