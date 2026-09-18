@@ -32,6 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { supabase } from "@/integrations/supabase/client";
 import { breadcrumbJsonLd, COMPANY, SITE_NAME, SITE_URL, absoluteUrl } from "@/lib/seo";
+import partnerBusImage from "@/assets/metropol-night-highway-slider.png.asset.json";
 
 const partnerSchema = z.object({
   company: z.string().trim().min(2, "Bitte Firmenname angeben").max(120),
@@ -202,25 +203,48 @@ export default function PartnerPage() {
       <main>
         <section className="py-16 md:py-24">
           <div className="container mx-auto px-4 max-w-6xl">
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="max-w-3xl"
-            >
-              <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
-                <Handshake className="h-4 w-4" />
-                Kooperation für Busunternehmen & Reisebüros
-              </span>
-              <h1 className="mt-6 text-4xl md:text-5xl font-bold tracking-tight">
-                Partner von Metropol Tours werden
-              </h1>
-              <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
-                Wir sind ein inhabergeführtes Busunternehmen aus Hannover und arbeiten mit
-                Busunternehmen, Reisebüros und Agenturen in Deutschland und Europa zusammen. Senden
-                Sie uns Ihr Profil – wir melden uns persönlich zurück.
-              </p>
-            </motion.div>
+            <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_1fr]">
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="max-w-3xl"
+              >
+                <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
+                  <Handshake className="h-4 w-4" />
+                  Kooperation für Busunternehmen & Reisebüros
+                </span>
+                <h1 className="mt-6 text-4xl md:text-5xl font-bold tracking-tight">
+                  Partner von Metropol Tours werden
+                </h1>
+                <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
+                  Wir sind ein inhabergeführtes Busunternehmen aus Hannover und arbeiten mit
+                  Busunternehmen, Reisebüros und Agenturen in Deutschland und Europa zusammen.
+                  Senden Sie uns Ihr Profil – wir melden uns persönlich zurück.
+                </p>
+              </motion.div>
+
+              <motion.figure
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.15 }}
+                className="relative overflow-hidden rounded-3xl border border-border shadow-lg"
+              >
+                <img
+                  src={partnerBusImage.url}
+                  alt="Grüner METROPOL TOURS Reisebus – unsere moderne Flotte"
+                  className="aspect-[4/3] w-full object-cover"
+                  loading="lazy"
+                />
+                <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-5 pt-10 text-white">
+                  <p className="text-sm font-semibold">Unsere Flotte</p>
+                  <p className="mt-1 text-xs text-white/85">
+                    Moderne Reisebusse von 8 bis 59 Sitzplätzen – komfortabel und sicher unterwegs
+                    in ganz Europa.
+                  </p>
+                </figcaption>
+              </motion.figure>
+            </div>
 
             <div className="mt-12 grid gap-6 md:grid-cols-3">
               {BENEFITS.map((b) => (
