@@ -53,6 +53,7 @@ const staticEntries: SitemapEntry[] = [
   { path: "/shuttle-service", changefreq: "monthly", priority: "0.8" },
   { path: "/bus-charter", changefreq: "monthly", priority: "0.7" },
   // Stadt-Landingpages (Stufe 1)
+  { path: "/partner", changefreq: "monthly", priority: "0.7" },
   { path: "/busunternehmen", changefreq: "monthly", priority: "0.8" },
   { path: "/busunternehmen-berlin", changefreq: "monthly", priority: "0.8" },
   { path: "/busunternehmen-muenchen", changefreq: "monthly", priority: "0.8" },
