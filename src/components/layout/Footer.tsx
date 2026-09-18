@@ -32,6 +32,7 @@ const Footer = () => {
       { name: "Shuttle-Service", path: "/shuttle-service" },
       { name: "Flughafentransfer", path: "/flughafentransfer" },
       { name: "Bus-Charter", path: "/bus-charter" },
+      { name: "Partner werden", path: "/partner" },
     ],
 
     service: [

@@ -128,6 +128,7 @@ const AdminContracts = lazy(() => import("./pages/AdminContracts"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const BusunternehmenHubPage = lazy(() => import("./pages/BusunternehmenHubPage"));
+const PartnerPage = lazy(() => import("./pages/PartnerPage"));
 const AdminStub = lazy(() => import("./pages/AdminStub"));
 const AdminLines = lazy(() => import("./pages/AdminLines"));
 const AdminLineTrips = lazy(() => import("./pages/AdminLineTrips"));
@@ -353,6 +354,7 @@ const App = () => (
               <Route path="/fahrplan" element={<FahrplanPage />} />
               <Route path="/verfolge" element={<TrackTripLandingPage />} />
               <Route path="/busunternehmen" element={<BusunternehmenHubPage />} />
+              <Route path="/partner" element={<PartnerPage />} />
               <Route path="/verfolge/:tripNumber" element={<TrackTripPage />} />
               <Route path="/fahrer/navi" element={<DriverNavPage />} />
               <Route path="/admin/driver-nav" element={<DriverNavPage />} />
