@@ -14,8 +14,32 @@ const TourInfoSection = ({ tour }: TourInfoSectionProps) => {
   const hasTags = Boolean(tour.tags?.length);
   const hasNotes = Boolean(tour.documents_required || tour.insurance_info);
 
+  const hasAnyContent = hasDescription || hasHighlights || hasTags || hasNotes;
+
   return (
     <section id="section-infos" className="space-y-6 scroll-mt-36">
+      {!hasAnyContent && (
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Info className="h-5 w-5 text-primary" />
+              Weitere Informationen zu {tour.destination}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm leading-relaxed text-muted-foreground">
+            <p>
+              Für diese Reise liegen noch keine ausführlichen Zusatzinformationen vor. Die genauen
+              Leistungen, Termine und Zustiegsorte finden Sie in den übrigen Reitern dieser Seite.
+            </p>
+            <p>
+              Sie haben Fragen zu Ablauf, Reisedokumenten oder Reiseschutz? Unser Team berät Sie
+              persönlich unter <span className="font-medium text-foreground">+49 511 80781106</span> oder
+              per E-Mail an <span className="font-medium text-foreground">kundenservice@metours.de</span>.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {(hasDescription || hasHighlights || hasTags) && (
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
