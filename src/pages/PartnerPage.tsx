@@ -181,7 +181,7 @@ export default function PartnerPage() {
           from_name: `${data.contact} (${data.company})`,
         },
       });
-      if (error) throw error;
+      if (error) console.warn("partner inquiry mail forward failed", error);
 
       setSent(true);
       toast({
