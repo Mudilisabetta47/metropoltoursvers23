@@ -361,7 +361,9 @@ const TourDetailPage = () => {
           </Button>
         </div>
       </div>
-      <Footer />
+      <div className="pb-24 lg:pb-0">
+        <Footer />
+      </div>
     </div>
   );
 };
