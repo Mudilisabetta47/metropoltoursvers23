@@ -137,6 +137,30 @@ export default function PartnerPage() {
       const typeLabel =
         PARTNER_TYPES.find((t) => t.value === data.partnerType)?.label ?? data.partnerType;
 
+      const mailBody = [
+        `Art der Zusammenarbeit: ${typeLabel}`,
+        `Unternehmen: ${data.company}`,
+        `Ansprechpartner: ${data.contact}`,
+        `E-Mail: ${data.email}`,
+        data.phone && `Telefon: ${data.phone}`,
+        data.country && `Land / Region: ${data.country}`,
+        data.website && `Website: ${data.website}`,
+        `\nNachricht:\n${data.message}`,
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      const { error: inboxError } = await (supabase as any).from("admin_mailbox").insert({
+        subject: `Partneranfrage – ${data.company}`,
+        body: mailBody,
+        sender_name: `${data.contact} (${data.company})`,
+        sender_email: data.email,
+        source_type: "partner_inquiry",
+        folder: "inbox",
+        tags: ["partneranfrage", data.partnerType],
+      });
+      if (inboxError) throw inboxError;
+
       const { error } = await supabase.functions.invoke("notify-inbox", {
         body: {
           type: "partner_inquiry",
@@ -157,7 +181,7 @@ export default function PartnerPage() {
           from_name: `${data.contact} (${data.company})`,
         },
       });
-      if (error) throw error;
+      if (error) console.warn("partner inquiry mail forward failed", error);
 
       setSent(true);
       toast({

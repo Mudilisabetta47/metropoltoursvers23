@@ -887,6 +887,12 @@ const TourCheckoutPage = () => {
                 {/* === STEP 3: PAYMENT === */}
                 {currentStep === "payment" && (
                   <motion.div key="payment" {...fadeIn} className="lg:col-span-3">
+                    <div className="mb-4">
+                      <Button variant="ghost" onClick={handlePrevStep} disabled={isProcessing}>
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Zurück zu den Reisedaten
+                      </Button>
+                    </div>
                     <InteractivePaymentCard
                       total={totalPrice}
                       route={`${selectedPickupStop?.city || "Zustieg"} → ${tour.destination}`}

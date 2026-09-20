@@ -690,6 +690,12 @@ const CheckoutPage = () => {
               {/* Step 4: Payment */}
               {currentStep === "payment" && (
                 <div className="lg:col-span-3">
+                  <div className="mb-4">
+                    <Button variant="ghost" onClick={handlePrevStep} disabled={isProcessing}>
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Zurück zu den Reisedaten
+                    </Button>
+                  </div>
                   <InteractivePaymentCard
                     total={totalPrice}
                     route={`${originStop.name} → ${destinationStop.name}`}

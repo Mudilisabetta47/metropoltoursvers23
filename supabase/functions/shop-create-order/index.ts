@@ -124,6 +124,9 @@ serve(async (req) => {
       }
 
       const unitPrice = Number(product.price) + Number(variant?.price_modifier ?? 0);
+      if (!(unitPrice > 0)) {
+        return json({ error: `Bitte wählen Sie eine Variante für "${product.name}" aus.` }, 400);
+      }
       const lineTotal = Math.round(unitPrice * qty * 100) / 100;
       subtotal += lineTotal;
 

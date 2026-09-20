@@ -71,15 +71,26 @@ export default function ProductCard({ product, isSaved, onToggleWishlist, onQuic
         )}
         <div className="mt-auto pt-2 flex items-end justify-between gap-2">
           <div>
-            <div className="text-lg font-bold text-foreground">{formatEur(product.price)}</div>
+            <div className="text-lg font-bold text-foreground">
+              {Number(product.price) > 0 ? formatEur(product.price) : "Preis je nach Auswahl"}
+            </div>
             {discount > 0 && (
               <div className="text-xs text-muted-foreground line-through">{formatEur(product.compare_at_price!)}</div>
             )}
           </div>
-          {onQuickAdd && (
-            <Button size="sm" disabled={soldOut} onClick={() => onQuickAdd(product)} className="rounded-full gap-1.5">
-              <ShoppingBag className="w-4 h-4" />
-              <span className="hidden sm:inline">In den Warenkorb</span>
+          {Number(product.price) > 0 ? (
+            onQuickAdd && (
+              <Button size="sm" disabled={soldOut} onClick={() => onQuickAdd(product)} className="rounded-full gap-1.5">
+                <ShoppingBag className="w-4 h-4" />
+                <span className="hidden sm:inline">In den Warenkorb</span>
+              </Button>
+            )
+          ) : (
+            <Button asChild size="sm" disabled={soldOut} className="rounded-full gap-1.5">
+              <Link to={`/shop/produkt/${product.slug}`}>
+                <ShoppingBag className="w-4 h-4" />
+                <span className="hidden sm:inline">Auswählen</span>
+              </Link>
             </Button>
           )}
         </div>

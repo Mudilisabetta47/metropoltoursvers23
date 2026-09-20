@@ -213,7 +213,7 @@ const TourDetailPage = () => {
         ]}
       />
       <Header />
-      <main className="flex-1 pt-16 lg:pt-20">
+      <main className="flex-1 pt-16 lg:pt-20 pb-24 lg:pb-0">
         {!isTourBookable(tourData.tour as any) && (
           <div className="max-w-[1240px] mx-auto px-4 pt-4">
             <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
@@ -361,7 +361,9 @@ const TourDetailPage = () => {
           </Button>
         </div>
       </div>
-      <Footer />
+      <div className="pb-24 lg:pb-0">
+        <Footer />
+      </div>
     </div>
   );
 };

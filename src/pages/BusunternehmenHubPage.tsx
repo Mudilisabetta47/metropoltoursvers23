@@ -10,8 +10,8 @@ import { landingPages } from "@/content/landing";
 
 const CITY_SLUGS = [
   { slug: "busunternehmen-hannover", city: "Hannover", note: "Unser Unternehmenssitz" },
-  { slug: "busunternehmen-bremen", city: "Bremen" },
-  { slug: "busunternehmen-hamburg", city: "Hamburg" },
+  { slug: "bus-mieten-bremen", city: "Bremen" },
+  { slug: "bus-mieten-hamburg", city: "Hamburg" },
   { slug: "busunternehmen-berlin", city: "Berlin" },
   { slug: "busunternehmen-muenchen", city: "München" },
   { slug: "busunternehmen-koeln", city: "Köln" },
