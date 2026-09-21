@@ -737,7 +737,12 @@ const CheckoutPage = () => {
                     bookingId={bookingNumbers.join(", ") || null}
                     customerName={`${passengerInfo[0]?.firstName || ""} ${passengerInfo[0]?.lastName || ""}`}
                     seats={passengerInfo.filter((passenger) => passenger.seatNumber).map((passenger) => passenger.seatNumber)}
-                    extras={extras.filter((extra) => extra.selected).map((extra) => ({ label: extra.name, value: `${passengers} × ${extra.price.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}` }))}
+                    extras={[
+                      ...extras.filter((extra) => extra.selected).map((extra) => ({ label: extra.name, value: `${passengers} × ${extra.price.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}` })),
+                      ...(accommodationPrice > 0
+                        ? [{ label: accommodationLabel, value: `${passengers} × ${accommodationPrice.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}` }]
+                        : []),
+                    ]}
                     paymentMethod={paymentMethod}
                     onPaymentMethodChange={setPaymentMethod}
                     onPay={handleNextStep}
