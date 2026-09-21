@@ -909,6 +909,12 @@ const CheckoutPage = () => {
                       <span className="text-foreground">€{(extra.price * passengers).toFixed(2)}</span>
                     </div>
                   ))}
+                  {accommodationPrice > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">{passengers}x {accommodationLabel}</span>
+                      <span className="text-foreground">€{accommodationTotal.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="h-px bg-border my-3" />
                   <div className="flex justify-between text-lg font-bold">
                     <span className="text-foreground">Gesamt</span>
