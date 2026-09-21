@@ -72,6 +72,14 @@ const CheckoutPage = () => {
   const fromCity = searchParams.get("from") || "";
   const toCity = searchParams.get("to") || "";
   const passengers = parseInt(searchParams.get("passengers") || "1");
+  // Wochenendtrip: gewählte Unterkunft (Zimmerart) wird serverseitig bepreist
+  const stayChoiceParam = searchParams.get("unterkunft") || "none";
+  const stayChoice = stayChoiceParam === "double" || stayChoiceParam === "single" ? stayChoiceParam : "none";
+  const weekendTripId = searchParams.get("weekendTripId") || "";
+  const [accommodationPrice, setAccommodationPrice] = useState(0);
+  const accommodationLabel = stayChoice === "double" ? "Unterkunft (Doppelzimmer)" : "Unterkunft (Einzelzimmer)";
+  const accommodationExtraId = stayChoice === "double" ? "accommodation_double" : "accommodation_single";
+  
   
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("seats");
   const [trip, setTrip] = useState<TripDetails | null>(null);
