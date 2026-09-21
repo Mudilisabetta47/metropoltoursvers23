@@ -312,7 +312,8 @@ const CheckoutPage = () => {
 
   const basePrice = price * passengers;
   const extrasPrice = extras.filter(e => e.selected).reduce((sum, e) => sum + e.price * passengers, 0);
-  const totalPrice = basePrice + extrasPrice;
+  const accommodationTotal = accommodationPrice * passengers;
+  const totalPrice = basePrice + extrasPrice + accommodationTotal;
 
   const steps: { key: CheckoutStep; label: string }[] = [
     { key: "seats", label: "Sitzplatz" },
