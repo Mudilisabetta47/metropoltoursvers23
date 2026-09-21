@@ -11,6 +11,11 @@ const corsHeaders = {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Allowlist for bookable extras (server side pricing – never trust the client)
+const ACCOMMODATION_COLUMNS: Record<string, string> = {
+  accommodation_double: "price_double_room",
+  accommodation_single: "price_single_room",
+};
+
 const EXTRA_PRICES: Record<string, number> = {
   luggage: 9.99,
   pet: 14.99,
