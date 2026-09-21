@@ -395,11 +395,16 @@ const CheckoutPage = () => {
         if (ticketError) throw ticketError;
 
         // Create booking
-        const selectedExtras = extras.filter(e => e.selected).map(e => ({
-          id: e.id,
-          name: e.name,
-          price: e.price
-        }));
+        const selectedExtras = [
+          ...extras.filter(e => e.selected).map(e => ({
+            id: e.id,
+            name: e.name,
+            price: e.price
+          })),
+          ...(accommodationPrice > 0
+            ? [{ id: accommodationExtraId, name: accommodationLabel, price: accommodationPrice }]
+            : []),
+        ];
 
         // Use trip.id and stop.id from loaded data (works for both direct and route-based bookings)
         const { data: bookingData, error: bookingError } = await supabase
