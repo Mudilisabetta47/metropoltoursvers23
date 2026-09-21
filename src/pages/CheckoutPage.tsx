@@ -72,6 +72,14 @@ const CheckoutPage = () => {
   const fromCity = searchParams.get("from") || "";
   const toCity = searchParams.get("to") || "";
   const passengers = parseInt(searchParams.get("passengers") || "1");
+  // Wochenendtrip: gewählte Unterkunft (Zimmerart) wird serverseitig bepreist
+  const stayChoiceParam = searchParams.get("unterkunft") || "none";
+  const stayChoice = stayChoiceParam === "double" || stayChoiceParam === "single" ? stayChoiceParam : "none";
+  const weekendTripId = searchParams.get("weekendTripId") || "";
+  const [accommodationPrice, setAccommodationPrice] = useState(0);
+  const accommodationLabel = stayChoice === "double" ? "Unterkunft (Doppelzimmer)" : "Unterkunft (Einzelzimmer)";
+  const accommodationExtraId = stayChoice === "double" ? "accommodation_double" : "accommodation_single";
+  
   
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("seats");
   const [trip, setTrip] = useState<TripDetails | null>(null);
@@ -116,6 +124,25 @@ const CheckoutPage = () => {
       .maybeSingle()
       .then(({ data }) => setAgbAvailable(!!data));
   }, []);
+
+  // Wochenendtrip mit Unterkunft: Zimmeraufpreis aus dem Reisedatensatz laden (nicht aus der URL)
+  useEffect(() => {
+    if (stayChoice === "none") { setAccommodationPrice(0); return; }
+    let cancelled = false;
+    (async () => {
+      let query = (supabase as any)
+        .from("weekend_trips")
+        .select("id, price_double_room, price_single_room")
+        .eq("is_active", true)
+        .limit(1);
+      query = weekendTripId ? query.eq("id", weekendTripId) : query.eq("route_id", routeId || "");
+      const { data } = await query.maybeSingle();
+      if (cancelled) return;
+      const raw = stayChoice === "double" ? Number(data?.price_double_room ?? 0) : Number(data?.price_single_room ?? 0);
+      setAccommodationPrice(Number.isFinite(raw) && raw > 0 ? raw : 0);
+    })();
+    return () => { cancelled = true; };
+  }, [stayChoice, weekendTripId, routeId]);
 
   // Rückkehr von Stripe: Zahlung serverseitig verifizieren und Buchung bestätigen
   useEffect(() => {
@@ -304,7 +331,8 @@ const CheckoutPage = () => {
 
   const basePrice = price * passengers;
   const extrasPrice = extras.filter(e => e.selected).reduce((sum, e) => sum + e.price * passengers, 0);
-  const totalPrice = basePrice + extrasPrice;
+  const accommodationTotal = accommodationPrice * passengers;
+  const totalPrice = basePrice + extrasPrice + accommodationTotal;
 
   const steps: { key: CheckoutStep; label: string }[] = [
     { key: "seats", label: "Sitzplatz" },
@@ -367,11 +395,16 @@ const CheckoutPage = () => {
         if (ticketError) throw ticketError;
 
         // Create booking
-        const selectedExtras = extras.filter(e => e.selected).map(e => ({
-          id: e.id,
-          name: e.name,
-          price: e.price
-        }));
+        const selectedExtras = [
+          ...extras.filter(e => e.selected).map(e => ({
+            id: e.id,
+            name: e.name,
+            price: e.price
+          })),
+          ...(accommodationPrice > 0
+            ? [{ id: accommodationExtraId, name: accommodationLabel, price: accommodationPrice }]
+            : []),
+        ];
 
         // Use trip.id and stop.id from loaded data (works for both direct and route-based bookings)
         const { data: bookingData, error: bookingError } = await supabase
@@ -387,7 +420,7 @@ const CheckoutPage = () => {
             passenger_last_name: passenger.lastName,
             passenger_email: passenger.email,
             passenger_phone: passenger.phone || null,
-            price_paid: price + extras.filter(e => e.selected).reduce((sum, e) => sum + e.price, 0),
+            price_paid: price + selectedExtras.reduce((sum, e) => sum + e.price, 0),
             status: 'pending',
             payment_status: 'unpaid',
             payment_method: paymentMethod,
@@ -704,7 +737,12 @@ const CheckoutPage = () => {
                     bookingId={bookingNumbers.join(", ") || null}
                     customerName={`${passengerInfo[0]?.firstName || ""} ${passengerInfo[0]?.lastName || ""}`}
                     seats={passengerInfo.filter((passenger) => passenger.seatNumber).map((passenger) => passenger.seatNumber)}
-                    extras={extras.filter((extra) => extra.selected).map((extra) => ({ label: extra.name, value: `${passengers} × ${extra.price.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}` }))}
+                    extras={[
+                      ...extras.filter((extra) => extra.selected).map((extra) => ({ label: extra.name, value: `${passengers} × ${extra.price.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}` })),
+                      ...(accommodationPrice > 0
+                        ? [{ label: accommodationLabel, value: `${passengers} × ${accommodationPrice.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}` }]
+                        : []),
+                    ]}
                     paymentMethod={paymentMethod}
                     onPaymentMethodChange={setPaymentMethod}
                     onPay={handleNextStep}
@@ -876,6 +914,12 @@ const CheckoutPage = () => {
                       <span className="text-foreground">€{(extra.price * passengers).toFixed(2)}</span>
                     </div>
                   ))}
+                  {accommodationPrice > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">{passengers}x {accommodationLabel}</span>
+                      <span className="text-foreground">€{accommodationTotal.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="h-px bg-border my-3" />
                   <div className="flex justify-between text-lg font-bold">
                     <span className="text-foreground">Gesamt</span>

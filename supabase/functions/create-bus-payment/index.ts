@@ -11,6 +11,11 @@ const corsHeaders = {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Allowlist for bookable extras (server side pricing – never trust the client)
+const ACCOMMODATION_COLUMNS: Record<string, string> = {
+  accommodation_double: "price_double_room",
+  accommodation_single: "price_single_room",
+};
+
 const EXTRA_PRICES: Record<string, number> = {
   luggage: 9.99,
   pet: 14.99,
@@ -77,8 +82,22 @@ serve(async (req) => {
       let amount = Number(base ?? 0);
       const extras = Array.isArray(b.extras) ? b.extras : [];
       for (const e of extras) {
-        const price = EXTRA_PRICES[String((e as { id?: string })?.id ?? "")];
-        if (price) amount += price;
+        const id = String((e as { id?: string })?.id ?? "");
+        const price = EXTRA_PRICES[id];
+        if (price) { amount += price; continue; }
+        // Wochenendtrip-Unterkunft: Preis immer aus weekend_trips, nie vom Client
+        const column = ACCOMMODATION_COLUMNS[id];
+        if (!column) continue;
+        const { data: tripRow } = await admin.from("trips").select("route_id").eq("id", b.trip_id).maybeSingle();
+        if (!tripRow?.route_id) continue;
+        const { data: weekendTrip } = await admin
+          .from("weekend_trips")
+          .select("price_double_room, price_single_room")
+          .eq("route_id", tripRow.route_id)
+          .eq("is_active", true)
+          .maybeSingle();
+        const roomPrice = Number((weekendTrip as Record<string, unknown> | null)?.[column] ?? 0);
+        if (roomPrice > 0) amount += roomPrice;
       }
       if (!(amount > 0)) {
         return new Response(JSON.stringify({ error: "Preis konnte nicht ermittelt werden" }), {

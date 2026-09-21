@@ -519,6 +519,7 @@ const WeekendTripDetailPage = () => {
                         toStopId: bookableDeparture.destinationStopId,
                         passengers: participants.toString(),
                         unterkunft: stay,
+                        weekendTripId: trip.id,
                       });
                       navigate(`/checkout?${params.toString()}`);
                     }}
