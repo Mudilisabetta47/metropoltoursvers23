@@ -125,6 +125,25 @@ const CheckoutPage = () => {
       .then(({ data }) => setAgbAvailable(!!data));
   }, []);
 
+  // Wochenendtrip mit Unterkunft: Zimmeraufpreis aus dem Reisedatensatz laden (nicht aus der URL)
+  useEffect(() => {
+    if (stayChoice === "none") { setAccommodationPrice(0); return; }
+    let cancelled = false;
+    (async () => {
+      let query = (supabase as any)
+        .from("weekend_trips")
+        .select("id, price_double_room, price_single_room")
+        .eq("is_active", true)
+        .limit(1);
+      query = weekendTripId ? query.eq("id", weekendTripId) : query.eq("route_id", routeId || "");
+      const { data } = await query.maybeSingle();
+      if (cancelled) return;
+      const raw = stayChoice === "double" ? Number(data?.price_double_room ?? 0) : Number(data?.price_single_room ?? 0);
+      setAccommodationPrice(Number.isFinite(raw) && raw > 0 ? raw : 0);
+    })();
+    return () => { cancelled = true; };
+  }, [stayChoice, weekendTripId, routeId]);
+
   // Rückkehr von Stripe: Zahlung serverseitig verifizieren und Buchung bestätigen
   useEffect(() => {
     const stripeSession = searchParams.get('session_id');
