@@ -420,7 +420,7 @@ const CheckoutPage = () => {
             passenger_last_name: passenger.lastName,
             passenger_email: passenger.email,
             passenger_phone: passenger.phone || null,
-            price_paid: price + extras.filter(e => e.selected).reduce((sum, e) => sum + e.price, 0),
+            price_paid: price + selectedExtras.reduce((sum, e) => sum + e.price, 0),
             status: 'pending',
             payment_status: 'unpaid',
             payment_method: paymentMethod,
