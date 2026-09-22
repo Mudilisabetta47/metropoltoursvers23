@@ -17,9 +17,8 @@ interface PublishedReview {
 /**
  * Gästebewertungen – ausschließlich echte, veröffentlichte Bewertungen aus der
  * Datenbank (customer_reviews). Ohne veröffentlichte Bewertungen wird die
- * Sektion ausgeblendet – es gibt keine erfundenen Testimonials.
- * Enthält echte Bewertungen vorhanden, wird strukturiertes Data (JSON-LD,
- * AggregateRating + Review) ausgegeben, damit Google Sterne anzeigen kann.
+ * Sektion ausgeblendet – es gibt keine erfundenen Testimonials. Es wird kein
+ * Review-/AggregateRating-JSON-LD für das eigene Unternehmen ausgegeben.
  */
 const TestimonialsSection = () => {
   const [reviews, setReviews] = useState<PublishedReview[]>([]);

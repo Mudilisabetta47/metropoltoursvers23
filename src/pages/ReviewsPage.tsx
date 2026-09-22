@@ -40,8 +40,8 @@ const setMeta = (selector: string, attr: "name" | "property", key: string, conte
 
 /**
  * Öffentliche Bewertungsseite – zeigt ausschließlich echte, freigegebene
- * Bewertungen aus customer_reviews und gibt strukturierte Daten
- * (AggregateRating + Review) sowie Open-Graph-Tags für Google aus.
+ * Bewertungen aus customer_reviews und gibt Open-Graph-Tags aus (ohne
+ * Review-/AggregateRating-JSON-LD für das eigene Unternehmen).
  */
 const ReviewsPage = () => {
   const [reviews, setReviews] = useState<PublishedReview[]>([]);
