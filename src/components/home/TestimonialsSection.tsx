@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Star, Quote, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { SITE_URL, SITE_NAME } from "@/lib/seo";
 
 interface PublishedReview {
   id: string;
@@ -18,13 +17,11 @@ interface PublishedReview {
 /**
  * Gästebewertungen – ausschließlich echte, veröffentlichte Bewertungen aus der
  * Datenbank (customer_reviews). Ohne veröffentlichte Bewertungen wird die
- * Sektion ausgeblendet – es gibt keine erfundenen Testimonials.
- * Enthält echte Bewertungen vorhanden, wird strukturiertes Data (JSON-LD,
- * AggregateRating + Review) ausgegeben, damit Google Sterne anzeigen kann.
+ * Sektion ausgeblendet – es gibt keine erfundenen Testimonials. Es wird kein
+ * Review-/AggregateRating-JSON-LD für das eigene Unternehmen ausgegeben.
  */
 const TestimonialsSection = () => {
   const [reviews, setReviews] = useState<PublishedReview[]>([]);
-  const [stats, setStats] = useState<{ count: number; avg: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
   const [auto, setAuto] = useState(true);
@@ -39,55 +36,15 @@ const TestimonialsSection = () => {
         .limit(12);
       setReviews((data ?? []) as PublishedReview[]);
       setLoading(false);
-
-      // Gesamtstatistik über ALLE veröffentlichten Bewertungen (für Google-Sterne)
-      const { data: allStars } = await supabase
-        .from("customer_reviews")
-        .select("stars")
-        .eq("is_published", true);
-      if (allStars && allStars.length) {
-        const sum = allStars.reduce((s, r) => s + (r.stars ?? 0), 0);
-        setStats({ count: allStars.length, avg: sum / allStars.length });
-      }
     })();
   }, []);
 
-  // Strukturierte Daten für Google (Sterne in Suchergebnissen)
-  useEffect(() => {
-    if (!reviews.length) return;
-    const avg = stats?.avg ?? reviews.reduce((s, r) => s + (r.stars ?? 0), 0) / reviews.length;
-    const count = stats?.count ?? reviews.length;
 
-    const jsonLd = {
-      "@context": "https://schema.org",
-      "@type": "TravelAgency",
-      "@id": `${SITE_URL}/#organization`,
-      name: SITE_NAME,
-      url: SITE_URL,
-      aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: Math.round(avg * 10) / 10,
-        reviewCount: count,
-        bestRating: 5,
-        worstRating: 1,
-      },
-      review: reviews.slice(0, 5).map((r) => ({
-        "@type": "Review",
-        reviewRating: { "@type": "Rating", ratingValue: r.stars ?? 5, bestRating: 5, worstRating: 1 },
-        author: { "@type": "Person", name: r.author_name || "Gast" },
-        datePublished: r.created_at?.slice(0, 10),
-        name: r.title || undefined,
-        reviewBody: r.comment || undefined,
-      })),
-    };
-    const el = document.createElement("script");
-    el.type = "application/ld+json";
-    el.text = JSON.stringify(jsonLd);
-    document.head.appendChild(el);
-    return () => {
-      document.head.removeChild(el);
-    };
-  }, [reviews, stats]);
+  // Hinweis: Für die eigenen Kundenbewertungen wird bewusst KEIN Review-/
+  // AggregateRating-JSON-LD ausgegeben – selbst verwaltete Bewertungen über das
+  // eigene Unternehmen sind laut Google nicht für Review-Snippets zulässig und
+  // erzeugten mehrere AggregateRatings für dieselbe Entität.
+
 
   useEffect(() => {
     if (!auto || reviews.length < 2) return;
