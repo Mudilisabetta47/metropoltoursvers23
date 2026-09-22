@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Star, Quote, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { SITE_URL, SITE_NAME } from "@/lib/seo";
 
 interface PublishedReview {
   id: string;
@@ -24,7 +23,6 @@ interface PublishedReview {
  */
 const TestimonialsSection = () => {
   const [reviews, setReviews] = useState<PublishedReview[]>([]);
-  const [stats, setStats] = useState<{ count: number; avg: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
   const [auto, setAuto] = useState(true);
@@ -39,18 +37,9 @@ const TestimonialsSection = () => {
         .limit(12);
       setReviews((data ?? []) as PublishedReview[]);
       setLoading(false);
-
-      // Gesamtstatistik über ALLE veröffentlichten Bewertungen (für Google-Sterne)
-      const { data: allStars } = await supabase
-        .from("customer_reviews")
-        .select("stars")
-        .eq("is_published", true);
-      if (allStars && allStars.length) {
-        const sum = allStars.reduce((s, r) => s + (r.stars ?? 0), 0);
-        setStats({ count: allStars.length, avg: sum / allStars.length });
-      }
     })();
   }, []);
+
 
   // Hinweis: Für die eigenen Kundenbewertungen wird bewusst KEIN Review-/
   // AggregateRating-JSON-LD ausgegeben – selbst verwaltete Bewertungen über das
