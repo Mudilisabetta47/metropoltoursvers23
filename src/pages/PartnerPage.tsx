@@ -155,11 +155,13 @@ export default function PartnerPage() {
         body: mailBody,
         sender_name: `${data.contact} (${data.company})`,
         sender_email: data.email,
-        source_type: "partner_inquiry",
+        source_type: "business_inquiry",
         folder: "inbox",
         tags: ["partneranfrage", data.partnerType],
       });
-      if (inboxError) throw inboxError;
+      // Fehler beim Mailbox-Eintrag dürfen den Mailversand nicht blockieren –
+      // die Anfrage geht im Zweifel per E-Mail ein (notify-inbox unten).
+      if (inboxError) console.warn("partner inquiry mailbox insert failed", inboxError);
 
       const { error } = await supabase.functions.invoke("notify-inbox", {
         body: {
