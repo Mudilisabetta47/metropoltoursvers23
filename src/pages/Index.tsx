@@ -14,7 +14,7 @@ import CTASection from "@/components/home/CTASection";
 import NearestStopFinder from "@/components/home/NearestStopFinder";
 import ScrollToTopButton from "@/components/home/ScrollToTopButton";
 import SEO from "@/components/seo/SEO";
-import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
+
 
 const Index = () => {
   return (
