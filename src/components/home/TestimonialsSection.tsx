@@ -52,42 +52,11 @@ const TestimonialsSection = () => {
     })();
   }, []);
 
-  // Strukturierte Daten für Google (Sterne in Suchergebnissen)
-  useEffect(() => {
-    if (!reviews.length) return;
-    const avg = stats?.avg ?? reviews.reduce((s, r) => s + (r.stars ?? 0), 0) / reviews.length;
-    const count = stats?.count ?? reviews.length;
+  // Hinweis: Für die eigenen Kundenbewertungen wird bewusst KEIN Review-/
+  // AggregateRating-JSON-LD ausgegeben – selbst verwaltete Bewertungen über das
+  // eigene Unternehmen sind laut Google nicht für Review-Snippets zulässig und
+  // erzeugten mehrere AggregateRatings für dieselbe Entität.
 
-    const jsonLd = {
-      "@context": "https://schema.org",
-      "@type": "TravelAgency",
-      "@id": `${SITE_URL}/#organization`,
-      name: SITE_NAME,
-      url: SITE_URL,
-      aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: Math.round(avg * 10) / 10,
-        reviewCount: count,
-        bestRating: 5,
-        worstRating: 1,
-      },
-      review: reviews.slice(0, 5).map((r) => ({
-        "@type": "Review",
-        reviewRating: { "@type": "Rating", ratingValue: r.stars ?? 5, bestRating: 5, worstRating: 1 },
-        author: { "@type": "Person", name: r.author_name || "Gast" },
-        datePublished: r.created_at?.slice(0, 10),
-        name: r.title || undefined,
-        reviewBody: r.comment || undefined,
-      })),
-    };
-    const el = document.createElement("script");
-    el.type = "application/ld+json";
-    el.text = JSON.stringify(jsonLd);
-    document.head.appendChild(el);
-    return () => {
-      document.head.removeChild(el);
-    };
-  }, [reviews, stats]);
 
   useEffect(() => {
     if (!auto || reviews.length < 2) return;
