@@ -108,39 +108,10 @@ const ReviewsPage = () => {
     };
   }, [stats]);
 
-  // Structured Data: AggregateRating + einzelne Bewertungen
-  useEffect(() => {
-    if (!stats) return;
-    const jsonLd = {
-      "@context": "https://schema.org",
-      "@type": "TravelAgency",
-      "@id": `${SITE_URL}/#organization`,
-      name: SITE_NAME,
-      url: SITE_URL,
-      aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: stats.avg,
-        reviewCount: stats.count,
-        bestRating: 5,
-        worstRating: 1,
-      },
-      review: reviews.slice(0, 20).map((r) => ({
-        "@type": "Review",
-        reviewRating: { "@type": "Rating", ratingValue: r.stars ?? 5, bestRating: 5, worstRating: 1 },
-        author: { "@type": "Person", name: r.author_name || "Gast" },
-        datePublished: r.created_at?.slice(0, 10),
-        name: r.title || undefined,
-        reviewBody: r.comment || undefined,
-      })),
-    };
-    const el = document.createElement("script");
-    el.type = "application/ld+json";
-    el.text = JSON.stringify(jsonLd);
-    document.head.appendChild(el);
-    return () => {
-      document.head.removeChild(el);
-    };
-  }, [reviews, stats]);
+  // Kein Review-/AggregateRating-JSON-LD: selbst verwaltete Bewertungen über
+  // das eigene Unternehmen qualifizieren laut Google nicht für Review-Snippets.
+  // Die sichtbare Darstellung der Bewertungen bleibt unverändert.
+
 
   return (
     <div className="min-h-screen bg-background">
