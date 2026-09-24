@@ -97,9 +97,24 @@ Deno.serve(async (req) => {
 
     const html = `<!DOCTYPE html>
 <html lang="de">
-<head><meta charset="UTF-8"><title>Angebot ${offer.offer_number}</title></head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Angebot ${offer.offer_number}</title>
+  <style>
+    @page { size: A4 portrait; margin: 12mm; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: #fff; }
+    .offer-page { width: 186mm; min-height: 273mm; margin: 0 auto; padding: 8mm; }
+    table, tr, img { break-inside: avoid; page-break-inside: avoid; }
+    @media print {
+      html, body { width: 210mm; min-height: 297mm; }
+      .offer-page { margin: 0; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    }
+  </style>
+</head>
 <body style="margin:0;padding:0;font-family:'Helvetica Neue',Arial,sans-serif;color:#1a1a1a;background:#fff;">
-  <div style="max-width:680px;margin:0 auto;padding:40px 30px;">
+  <div class="offer-page">
 
     <!-- Header -->
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px;">

@@ -106,3 +106,53 @@
   padding: 0.15rem 0.35rem; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.15rem;
   border-left: 3px solid currentColor;
 }
+
+/* Angebots- und Rechnungsdruck: verbindliches DIN-A4-Hochformat. */
+@page {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
+@media print {
+  html,
+  body,
+  #root {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0;
+    background: #fff;
+  }
+
+  .dispo-root {
+    min-height: 0;
+    padding: 0;
+    background: #fff;
+  }
+
+  .dispo-root > div {
+    width: auto;
+    max-width: none;
+    margin: 0;
+  }
+
+  .dispo-print-sheet {
+    box-sizing: border-box;
+    width: 186mm;
+    min-height: 273mm;
+    margin: 0;
+    padding: 8mm;
+    border-radius: 0;
+    box-shadow: none;
+    color: #111827;
+    background: #fff;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .dispo-print-sheet table,
+  .dispo-print-sheet tr,
+  .dispo-print-sheet img {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
