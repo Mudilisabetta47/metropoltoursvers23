@@ -370,12 +370,15 @@ const BusinessServicesPage = () => {
         {/* Stats Strip */}
         <section className="py-16 bg-zinc-900">
           <div className="container mx-auto px-4">
+            <h2 className="text-center text-sm font-semibold uppercase tracking-widest text-primary mb-10">
+              Unsere Ziele
+            </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
               {[
-                { value: "50+", label: "Moderne Busse", icon: Bus },
-                { value: "100k+", label: "Zufriedene Kunden", icon: Users },
-                { value: "8-18 Uhr", label: "Erreichbarkeit", icon: Clock },
-                { value: "4.9★", label: "Kundenbewertung", icon: Star },
+                { value: "50+", label: "Moderne Busse – unser Ziel", icon: Bus },
+                { value: "100k+", label: "Zufriedene Kunden – unser Ziel", icon: Users },
+                { value: "8-18 Uhr", label: "Persönlich erreichbar", icon: Clock },
+                { value: "4.9★", label: "Kundenbewertung – unser Anspruch", icon: Star },
               ].map((stat, i) => (
                 <motion.div
                   key={i}
