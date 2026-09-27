@@ -25,7 +25,7 @@ import { useServiceTypes } from "@/hooks/useCMS";
 import ConsentCheckbox from "@/components/common/ConsentCheckbox";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import businessHero from "@/assets/metropol-bus-business.png.asset.json";
-import contactIllustration from "@/assets/contact-illustration.jpg.asset.json";
+import contactIllustration from "@/assets/metropol-frankfurt-paris-banner.jpg.asset.json";
 import SEO from "@/components/seo/SEO";
 import { breadcrumbJsonLd } from "@/lib/seo";
 
