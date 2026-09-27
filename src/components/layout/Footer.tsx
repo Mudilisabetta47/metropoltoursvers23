@@ -4,7 +4,7 @@ import {
   Clock, CreditCard, Shield, Award, Headphones
 } from "lucide-react";
 import { Logo, LogoLight } from "@/components/brand/Logo";
-import footerIllustration from "@/assets/contact-illustration.jpg.asset.json";
+import footerIllustration from "@/assets/metropol-frankfurt-paris-banner.jpg.asset.json";
 import { openCookieSettings } from "@/components/CookieBanner";
 
 const Footer = () => {
