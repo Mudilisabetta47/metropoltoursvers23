@@ -80,7 +80,7 @@ const Footer = () => {
         <img
           src={footerIllustration.url}
           alt="METROPOL TOURS – mit dem Bus durch Europa"
-          className="w-full h-20 sm:h-28 md:h-36 object-cover object-bottom select-none pointer-events-none"
+          className="w-full h-28 sm:h-40 md:h-56 object-cover object-center select-none pointer-events-none"
           loading="lazy"
         />
         <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-secondary to-transparent" />
