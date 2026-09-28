@@ -249,7 +249,7 @@ const TravelSearchBar = ({ tours, query, onQueryChange, onSearch, activeTab, onT
                     <span className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
                     <span className="absolute bottom-3 left-4 right-4">
                       <span className="block text-lg font-bold leading-tight text-white drop-shadow">{t.destination}</span>
-                      <span className="block text-xs text-white/85">{t.duration_days} Tage · ab {t.price_from} €</span>
+                      <span className="block text-xs text-white/85">{t.duration_days} Tage{t.price_from > 0 ? ` · ab ${t.price_from.toLocaleString("de-DE")} €` : ""}</span>
                     </span>
                   </button>
                 ))}

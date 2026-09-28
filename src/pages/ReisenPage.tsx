@@ -94,7 +94,12 @@ const FAQ_ITEMS = [
 
 const ReisenPage = () => {
   const navigate = useNavigate();
-  const { tours, isLoading } = usePackageTours();
+  const { tours: allTours, isLoading } = usePackageTours();
+  // Vergangene Termine ausblenden
+  const tours = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return allTours.filter(t => !t.departure_date || t.departure_date.slice(0, 10) >= today);
+  }, [allTours]);
   const catalogRef = useRef<HTMLDivElement>(null);
 
   // Search & filter state
@@ -729,11 +734,17 @@ const ReisenPage = () => {
                               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
                                 {tour.departure_date ? `Ab ${format(parseISO(tour.departure_date), "dd. MMM", { locale: de })}` : "Auf Anfrage"}
                               </p>
-                              <div className="flex items-baseline gap-1.5">
-                                <span className="text-xs text-muted-foreground">ab</span>
-                                <span className="font-serif text-3xl font-bold text-foreground">{tour.price_from}€</span>
-                              </div>
-                              <p className="text-[10px] text-muted-foreground">pro Person · alles inkl.</p>
+                              {tour.price_from > 0 ? (
+                                <>
+                                  <div className="flex items-baseline gap-1.5">
+                                    <span className="text-xs text-muted-foreground">ab</span>
+                                    <span className="font-serif text-3xl font-bold text-foreground">{tour.price_from.toLocaleString("de-DE")} €</span>
+                                  </div>
+                                  <p className="text-[10px] text-muted-foreground">pro Person · alles inkl.</p>
+                                </>
+                              ) : (
+                                <p className="font-serif text-xl font-bold text-foreground">Preis auf Anfrage</p>
+                              )}
                             </div>
                             <Button size="sm" className="rounded-xl"
                               onClick={() => navigate(`/reisen/${tour.slug || tour.id}`)}>
