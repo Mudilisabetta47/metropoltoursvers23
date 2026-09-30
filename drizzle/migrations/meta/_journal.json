@@ -8,6 +8,13 @@
       "when": 1790281314174,
       "tag": "0000_restrict_shop_product_images_to_authenticated_users",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790760014938,
+      "tag": "0001_restrict_trip_registry_public_read",
+      "breakpoints": true
     }
   ]
 }
