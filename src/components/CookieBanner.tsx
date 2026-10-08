@@ -37,6 +37,7 @@ export default function CookieBanner() {
       timestamp: new Date().toISOString()
     };
     localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consentWithTimestamp));
+    window.dispatchEvent(new Event('metropol-consent-changed'));
     setIsVisible(false);
   };
 
