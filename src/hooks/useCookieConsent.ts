@@ -14,15 +14,20 @@ export function useCookieConsent() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem(COOKIE_CONSENT_KEY);
-    if (stored) {
-      try {
-        setConsent(JSON.parse(stored));
-      } catch {
-        setConsent(null);
+    const read = () => {
+      const stored = localStorage.getItem(COOKIE_CONSENT_KEY);
+      if (stored) {
+        try {
+          setConsent(JSON.parse(stored));
+        } catch {
+          setConsent(null);
+        }
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    };
+    read();
+    window.addEventListener('metropol-consent-changed', read);
+    return () => window.removeEventListener('metropol-consent-changed', read);
   }, []);
 
   const hasAnalyticsConsent = consent?.analytics ?? false;
