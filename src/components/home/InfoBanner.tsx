@@ -3,7 +3,23 @@ import { Bus, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+// Wartungshinweis bis einschließlich Sonntag, 11.10.2026 (danach automatisch ausgeblendet)
+const MAINTENANCE_UNTIL = new Date("2026-10-12T00:00:00+02:00");
+
 export function InfoBanner() {
+  if (new Date() < MAINTENANCE_UNTIL) {
+    return (
+      <section className="relative w-full border-b border-primary/20 bg-primary/10 pt-16 lg:pt-20">
+        <div className="container mx-auto px-4 py-3 text-center text-sm sm:text-[15px] leading-snug text-foreground">
+          <span className="font-semibold">Wartungsarbeiten vom 09.10. bis 11.10.2026:</span>{" "}
+          Online-Buchungen sind in dieser Zeit leider nicht möglich. Per E-Mail sind wir weiterhin für Sie da:{" "}
+          <a href="mailto:kundenservice@metours.de" className="font-semibold text-primary underline underline-offset-2">
+            kundenservice@metours.de
+          </a>
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="relative w-full border-b border-primary/10 bg-gradient-to-r from-primary/[0.06] via-background to-primary/[0.04] pt-16 lg:pt-20">
       <div className="container mx-auto px-4 py-2.5 sm:py-3">
