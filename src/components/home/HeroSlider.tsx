@@ -42,7 +42,7 @@ const slides: Slide[] = [
     icon: Bus,
   },
   {
-    image: sliderWochenendtripNeu,
+    image: sliderKulturreisen,
     alt: "Beleuchteter europäischer Altstadtplatz am Abend – Wochenendtrip mit dem Reisebus",
     badge: "Ab 99 € pro Person",
     title: "Europa am",
