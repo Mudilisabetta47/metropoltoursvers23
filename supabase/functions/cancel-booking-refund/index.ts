@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { createMollieRefund } from "../_shared/mollie.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,7 +35,7 @@ serve(async (req) => {
     );
 
     const { data: booking, error: bErr } = await admin.from("bookings")
-      .select("id, user_id, ticket_number, price_paid, status, passenger_email, trip_id, extras")
+      .select("id, user_id, ticket_number, price_paid, status, passenger_email, trip_id, extras, payment_method, stripe_session_id")
       .eq("id", booking_id).maybeSingle();
     if (bErr || !booking) throw new Error(bErr?.message || "Buchung nicht gefunden");
 
@@ -74,6 +75,17 @@ serve(async (req) => {
       }
     }
 
+    // Mollie-Refund (Zahlungen über Mollie: tr_... in stripe_session_id)
+    let mollieRefundId: string | null = null;
+    if (!stripeRefundId && refundAmount > 0 && booking.payment_method === "mollie" && booking.stripe_session_id?.startsWith("tr_")) {
+      try {
+        const r = await createMollieRefund(booking.stripe_session_id, refundAmount);
+        mollieRefundId = r.id;
+      } catch (e) {
+        console.error("Mollie refund failed", e);
+      }
+    }
+
     // Status setzen
     await admin.from("bookings").update({ status: "cancelled" }).eq("id", booking_id);
 
@@ -84,7 +96,7 @@ serve(async (req) => {
       actor_type: isStaff ? "staff" : "customer",
       event_type: "cancelled",
       description: `Storno: ${refundPercent}% (${refundAmount.toFixed(2)} €) – ${refund?.tier_label ?? ""}${reason ? " · " + reason : ""}`,
-      metadata: { refund_amount: refundAmount, refund_percent: refundPercent, stripe_refund_id: stripeRefundId, reason },
+      metadata: { refund_amount: refundAmount, refund_percent: refundPercent, stripe_refund_id: stripeRefundId, mollie_refund_id: mollieRefundId, reason },
     });
 
     // Wartelistensystem: erste Person auf Trip benachrichtigen
@@ -92,7 +104,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       ok: true, refund_percent: refundPercent, refund_amount: refundAmount,
-      tier_label: refund?.tier_label, stripe_refund_id: stripeRefundId,
+      tier_label: refund?.tier_label, stripe_refund_id: stripeRefundId, mollie_refund_id: mollieRefundId,
     }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (err: any) {

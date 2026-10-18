@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { createMollieRefund } from "../_shared/mollie.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -83,6 +84,23 @@ serve(async (req) => {
         console.error("Stripe refund error:", stripeErr);
         // Continue with cancellation even if refund fails
         refundResult = { error: stripeErr.message };
+      }
+    }
+
+    // Process Mollie refund if payment was made via Mollie (tr_... in stripe_session_id)
+    if (!refundResult && booking.payment_method === "mollie" && booking.paid_at && booking.stripe_session_id?.startsWith("tr_")) {
+      try {
+        const body = refundType === "partial" ? await req.json().catch(() => ({})) : {};
+        const partialAmount = refundType === "partial" ? (body.refundAmount || 0) : 0;
+        const refund = await createMollieRefund(
+          booking.stripe_session_id,
+          partialAmount > 0 ? partialAmount : undefined,
+        );
+        refundResult = { id: refund.id, status: refund.status, amount: Number(refund.amount.value) * 100 };
+        refundAmount = Number(refund.amount.value);
+      } catch (mollieErr: any) {
+        console.error("Mollie refund error:", mollieErr);
+        refundResult = { error: mollieErr.message };
       }
     }
 

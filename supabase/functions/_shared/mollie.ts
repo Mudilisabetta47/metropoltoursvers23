@@ -54,6 +54,30 @@ export function createMolliePayment(params: {
   });
 }
 
+export interface MollieRefund {
+  id: string;
+  status: string; // queued | pending | processing | refunded | failed
+  amount: { currency: string; value: string };
+}
+
+export async function createMollieRefund(
+  paymentId: string,
+  amountEur?: number,
+): Promise<MollieRefund> {
+  if (!/^tr_[A-Za-z0-9]+$/.test(paymentId)) throw new Error("Ungültige Mollie-Zahlungs-ID");
+  const res = await fetch(`${MOLLIE_API}/payments/${encodeURIComponent(paymentId)}/refunds`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey()}`, "Content-Type": "application/json" },
+    body: JSON.stringify(amountEur != null ? { amount: { currency: "EUR", value: amountEur.toFixed(2) } } : {}),
+  });
+  const body = await res.text();
+  if (!res.ok) {
+    console.error(`Mollie refund error [${res.status}]: ${body}`);
+    throw new Error(`Mollie-Erstattung fehlgeschlagen (${res.status})`);
+  }
+  return JSON.parse(body) as MollieRefund;
+}
+
 export function getMolliePayment(id: string): Promise<MolliePayment> {
   if (!/^tr_[A-Za-z0-9]+$/.test(id)) throw new Error("Ungültige Mollie-Zahlungs-ID");
   return mollieFetch(`/payments/${encodeURIComponent(id)}`, { method: "GET" });
