@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Paris-Silvester-Special
-- [ ] Eigene Apple-inspirierte Seite für 30.12.2026–01.01.2027 mit Paris-Bildern erstellen
-- [ ] Startseitenhinweis, SEO und Sitemap anbinden; Anfrage ohne erfundene Preise ermöglichen
-- [ ] Seite und Anfrageweg auf Desktop und Mobil prüfen
+- [x] Eigene Apple-inspirierte Seite für 30.12.2026–01.01.2027 mit Paris-Bildern erstellen
+- [x] Startseitenhinweis, SEO und Sitemap anbinden; Anfrage ohne erfundene Preise ermöglichen
+- [x] Seite und E-Mail-Anfragelink auf Desktop und Mobil prüfen (kein Mailversand im Browsertest)
 
 ## Laufend: Website-Verbesserungen (Busunternehmen)
 - [x] Gästebewertungen: TestimonialsSection DB-basiert (customer_reviews), Fake-Texte entfernt, Admin-Moderation /admin/bewertungen, JSON-LD Sterne (nur mit echten Bewertungen)
