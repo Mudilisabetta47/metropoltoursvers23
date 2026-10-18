@@ -5,6 +5,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Scoped campaign tokens preserve the existing site and admin themes. */
+.paris-special {
+  --background: 0 0% 100%;
+  --foreground: 240 3% 12%;
+  --secondary: 240 4% 7%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 240 5% 96%;
+  --muted-foreground: 240 3% 43%;
+  --border: 240 4% 88%;
+  --paris-hero-overlay: linear-gradient(180deg, hsl(240 4% 4% / .66), hsl(240 4% 4% / .18) 60%, hsl(240 4% 4% / .32));
+  --paris-scene-overlay: linear-gradient(180deg, transparent 15%, hsl(240 4% 4% / .8));
+  letter-spacing: 0;
+}
+.paris-special h1, .paris-special h2, .paris-special h3 { letter-spacing: 0; }
+.paris-hero { height: min(820px, 76svh); min-height: 620px; }
+.paris-display { font-size: 88px; }
+.paris-hero-shade { background: var(--paris-hero-overlay); }
+.paris-scene-shade { background: var(--paris-scene-overlay); }
+@media (max-width: 767px) {
+  .paris-hero { height: 680px; min-height: 0; max-height: none; }
+  .paris-display { font-size: 52px; }
+  .paris-hero > img { object-position: 62% center; }
+}
+
 @layer base {
   :root {
     /* Brand Colors - Fresh Green Theme */

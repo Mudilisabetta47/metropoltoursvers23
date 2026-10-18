@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Bus, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { parisSpecial } from "@/content/parisSpecial";
 
 // Wartungshinweis bis einschließlich Sonntag, 11.10.2026 (danach automatisch ausgeblendet)
 const MAINTENANCE_UNTIL = new Date("2026-10-12T00:00:00+02:00");
@@ -16,6 +17,16 @@ export function InfoBanner() {
           <a href="mailto:kundenservice@metours.de" className="font-semibold text-primary underline underline-offset-2">
             kundenservice@metours.de
           </a>
+        </div>
+      </section>
+    );
+  }
+  if (new Date() < new Date("2027-01-02T00:00:00+01:00")) {
+    return (
+      <section className="border-b border-primary/20 bg-primary/5 pt-16 lg:pt-20">
+        <div className="container mx-auto flex flex-col items-center justify-between gap-3 px-4 py-3 sm:flex-row">
+          <p className="text-center text-sm sm:text-left"><span className="font-semibold">Silvester Night in Paris</span><span className="mx-2 text-muted-foreground">·</span><span className="text-muted-foreground">{parisSpecial.dateLabel}</span></p>
+          <Button asChild size="sm" className="shrink-0"><Link to={parisSpecial.path}>Paris-Special entdecken <ArrowRight className="h-4 w-4" /></Link></Button>
         </div>
       </section>
     );
