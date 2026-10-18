@@ -35,7 +35,7 @@ serve(async (req) => {
     );
 
     const { data: booking, error: bErr } = await admin.from("bookings")
-      .select("id, user_id, ticket_number, price_paid, status, passenger_email, trip_id, extras")
+      .select("id, user_id, ticket_number, price_paid, status, passenger_email, trip_id, extras, payment_method, stripe_session_id")
       .eq("id", booking_id).maybeSingle();
     if (bErr || !booking) throw new Error(bErr?.message || "Buchung nicht gefunden");
 
