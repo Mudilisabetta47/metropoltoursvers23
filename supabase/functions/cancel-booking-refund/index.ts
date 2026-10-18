@@ -96,7 +96,7 @@ serve(async (req) => {
       actor_type: isStaff ? "staff" : "customer",
       event_type: "cancelled",
       description: `Storno: ${refundPercent}% (${refundAmount.toFixed(2)} €) – ${refund?.tier_label ?? ""}${reason ? " · " + reason : ""}`,
-      metadata: { refund_amount: refundAmount, refund_percent: refundPercent, stripe_refund_id: stripeRefundId, reason },
+      metadata: { refund_amount: refundAmount, refund_percent: refundPercent, stripe_refund_id: stripeRefundId, mollie_refund_id: mollieRefundId, reason },
     });
 
     // Wartelistensystem: erste Person auf Trip benachrichtigen
