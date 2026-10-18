@@ -104,7 +104,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       ok: true, refund_percent: refundPercent, refund_amount: refundAmount,
-      tier_label: refund?.tier_label, stripe_refund_id: stripeRefundId,
+      tier_label: refund?.tier_label, stripe_refund_id: stripeRefundId, mollie_refund_id: mollieRefundId,
     }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (err: any) {
