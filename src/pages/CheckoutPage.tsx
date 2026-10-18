@@ -107,7 +107,7 @@ const CheckoutPage = () => {
     { id: "insurance", name: "Reiseversicherung", description: "Stornierung & Gepäckschutz", price: 7.99, icon: <Shield className="w-5 h-5" />, selected: false },
   ]);
 
-  const [paymentMethod, setPaymentMethod] = useState<"mollie">("mollie");
+  const [paymentMethod, setPaymentMethod] = useState<PremiumPaymentMethod>("mollie");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [bookingIds, setBookingIds] = useState<string[]>([]);
