@@ -43,8 +43,8 @@ const slides: Slide[] = [
     icon: Bus,
   },
   {
-    image: sliderKulturreisen,
-    alt: "Beleuchteter europäischer Altstadtplatz am Abend – Wochenendtrip mit dem Reisebus",
+    image: sliderBusReal,
+    alt: "METROPOL TOURS Reisebus auf einer Europareise – Wochenendtrips mit dem Bus",
     badge: "Ab 99 € pro Person",
     title: "Europa am",
     highlight: "Wochenende",
