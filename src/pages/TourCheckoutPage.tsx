@@ -35,7 +35,7 @@ import {
 import { isTourBookable, TOUR_NOT_BOOKABLE_TITLE, TOUR_NOT_BOOKABLE_TEXT } from "@/lib/tourAvailability";
 
 
-type PaymentMethod = "paypal" | "stripe";
+type PaymentMethod = "mollie";
 type CheckoutStep = "summary" | "passengers" | "payment" | "confirmation";
 
 interface PassengerInfo {
@@ -113,7 +113,7 @@ const TourCheckoutPage = () => {
   const [billing, setBilling] = useState<BillingAddress>(EMPTY_BILLING);
   const [billingSameAsContact, setBillingSameAsContact] = useState(true);
   const [agreeTerms, setAgreeTerms] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("paypal");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("mollie");
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [agreeTravelInfo, setAgreeTravelInfo] = useState(false);
   const [bookingNumber, setBookingNumber] = useState<string | null>(null);
@@ -381,15 +381,12 @@ const TourCheckoutPage = () => {
       if (seatsError) console.warn("Seat reservation skipped:", seatsError.message);
       else if (!seatsReserved) console.warn("Seats could not be reserved - may be sold out");
 
-      if (selectedPaymentMethod === "stripe") {
-        const { data: stripeData, error: stripeError } = await supabase.functions.invoke("create-tour-payment", { body: { bookingId: bookingData.id, couponCode: appliedCoupon?.code || null } });
-        if (stripeError || !stripeData?.url) throw new Error(stripeData?.error || "Kreditkarten-Zahlung konnte nicht erstellt werden");
-        window.location.href = stripeData.url; return;
-      }
-      if (selectedPaymentMethod === "paypal") {
-        const { data: paypalData, error: paypalError } = await supabase.functions.invoke("create-paypal-order", { body: { bookingId: bookingData.id, couponCode: appliedCoupon?.code || null } });
-        if (paypalError || !paypalData?.approveUrl) throw new Error(paypalData?.error || "PayPal-Zahlung konnte nicht erstellt werden");
-        window.location.href = paypalData.approveUrl; return;
+      if (selectedPaymentMethod === "mollie") {
+        const { data: mollieData, error: mollieError } = await supabase.functions.invoke("create-tour-payment", { body: { bookingId: bookingData.id, couponCode: appliedCoupon?.code || null, method: "mollie" } });
+        if (mollieError || !mollieData?.url) throw new Error(mollieData?.error || "Zahlung konnte nicht erstellt werden");
+        // Mollie hängt keine Zahlungs-ID an die Rücksprung-URL – lokal merken
+        if (mollieData.sessionId) sessionStorage.setItem("mt_mollie_payment", mollieData.sessionId);
+        window.location.href = mollieData.url; return;
       }
       setBookingNumber(bookingData.booking_number); setBookingId(bookingData.id); setCurrentStep("confirmation");
       toast.success("Buchung erfolgreich erstellt!");
