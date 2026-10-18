@@ -290,7 +290,6 @@ const Footer = () => {
             Busreise mit modernsten Reisebussen, kostenlosem WLAN und erstklassigem Service.
           </p>
         </div>
-      </div>
 
         {/* Payment methods */}
         <div className="mt-6 pt-6 border-t border-muted-foreground/10 flex flex-col sm:flex-row items-start sm:items-center gap-3">
