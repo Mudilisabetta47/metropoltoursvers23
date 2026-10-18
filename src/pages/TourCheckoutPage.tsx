@@ -472,7 +472,7 @@ const TourCheckoutPage = () => {
     );
   }
 
-  const paymentMethodLabel = selectedPaymentMethod === "paypal" ? "PayPal" : "Kreditkarte";
+  const paymentMethodLabel = "Mollie (Kreditkarte, SEPA, Klarna u. a.)";
 
 
   return (
@@ -910,8 +910,8 @@ const TourCheckoutPage = () => {
                         ...(extrasTotal > 0 ? [{ label: "Zusatzleistungen", value: extrasTotal.toLocaleString("de-DE", { style: "currency", currency: "EUR" }) }] : []),
                         ...(appliedCoupon ? [{ label: `Gutschein ${appliedCoupon.code}`, value: `−${discountAmount.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}` }] : []),
                       ]}
-                      paymentMethod={selectedPaymentMethod === "stripe" ? "card" : "paypal"}
-                      onPaymentMethodChange={(method) => setSelectedPaymentMethod(method === "card" ? "stripe" : "paypal")}
+                      paymentMethod="mollie"
+                      onPaymentMethodChange={() => setSelectedPaymentMethod("mollie")}
                       onPay={handleNextStep}
                       loading={isProcessing}
                       disabled={!agreeTerms || !agreePrivacy}
