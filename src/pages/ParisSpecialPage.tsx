@@ -30,7 +30,7 @@ export default function ParisSpecialPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="dark min-h-screen bg-background text-foreground">
       <SEO title="Silvester Night in Paris · 30.12.2026–01.01.2027" description="Mit METROPOL TOURS zum Jahreswechsel nach Paris: Silvester Night in Paris vom 30. Dezember 2026 bis 1. Januar 2027. Jetzt Reiseinformationen anfragen." path={parisSpecial.path} jsonLd={[breadcrumbJsonLd([{ name: "Startseite", path: "/" }, { name: parisSpecial.name, path: parisSpecial.path }]), faqJsonLd(faqs)]} />
       <Header />
       <main className="pt-16 lg:pt-20">
