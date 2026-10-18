@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { getMolliePayment } from "../_shared/mollie.ts";
+import { confirmTourBookingPaid, escapeHtml } from "../_shared/tour-booking-confirm.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
@@ -59,7 +60,7 @@ serve(async (req) => {
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      return await confirmMollieTourBooking(supabaseAdminM, mBooking.id, mBooking.booking_number, payment.id, corsHeaders);
+      return await confirmTourBookingPaid(supabaseAdminM, mBooking.id, mBooking.booking_number, "mollie", payment.id, corsHeaders);
     }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
