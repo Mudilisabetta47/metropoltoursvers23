@@ -24,7 +24,6 @@ const ServicePage = lazy(() => import("./pages/ServicePage"));
 
 const BusreisenPage = lazy(() => import("./pages/BusreisenPage"));
 const ReisenPage = lazy(() => import("./pages/ReisenPage"));
-const ParisSpecialPage = lazy(() => import("./pages/ParisSpecialPage"));
 
 const BusinessServicesPage = lazy(() => import("./pages/BusinessServicesPage"));
 const GiftVoucherPage = lazy(() => import("./pages/GiftVoucherPage"));
@@ -240,7 +239,6 @@ const App = () => (
               <Route path="/service" element={<ServicePage />} />
               {/* Pauschalreisen-Katalog */}
               <Route path="/reisen" element={<ReisenPage />} />
-              <Route path="/silvester-paris" element={<ParisSpecialPage />} />
 
               <Route path="/pauschalreisen" element={<Navigate to="/reisen" replace />} />
 
@@ -258,7 +256,6 @@ const App = () => (
               <Route path="/widerruf" element={<WiderrufPage />} />
               
               <Route path="/pauschalreisen/:tourId" element={<TourDetailPage />} />
-              <Route path="/reisen/silvester-paris" element={<ParisSpecialPage />} />
               <Route path="/reisen/:tourId" element={<TourDetailPage />} />
               <Route path="/reisen/checkout" element={<TourCheckoutPage />} />
               <Route path="/tour-checkout" element={<TourCheckoutPage />} />
