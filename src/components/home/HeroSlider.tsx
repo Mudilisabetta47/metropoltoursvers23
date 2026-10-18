@@ -10,7 +10,8 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
-import sliderPauschalreisen from "@/assets/metropol-night-highway-slider.png.asset.json";
+import sliderBusreise from "@/assets/slider-busreise-2026.jpg";
+import sliderWochenendtripNeu from "@/assets/slider-wochenendtrip-2026.jpg";
 import sliderWochenendtrips from "@/assets/slider-wochenendtrips.jpg";
 import sliderGruppenreisen from "@/assets/slider-gruppenreisen.jpg";
 import sliderStrandurlaub from "@/assets/slider-strandurlaub.jpg";
@@ -31,15 +32,26 @@ interface Slide {
 
 const slides: Slide[] = [
   {
-    image: sliderPauschalreisen.url,
-    alt: "Grüner METROPOL TOURS Reisebus auf einer nächtlichen Bergstraße",
-    badge: "Gruppenreisen auf Anfrage",
-    title: "Ihre individuelle",
+    image: sliderBusreise,
+    alt: "Grüner METROPOL TOURS Reisebus auf einer Küstenstraße am Mittelmeer bei Sonnenuntergang",
+    badge: "Busreisen 2027",
+    title: "Ihre nächste",
     highlight: "Busreise",
-    subtitle: "Vereine, Firmen, Schulen & Freundeskreise – wir planen Ihre Reise ab Hannover maßgeschneidert. Angebot innerhalb von 24 Stunden.",
-    cta: "Jetzt Angebot anfordern",
-    link: "/business",
+    subtitle: "Komfortabel reisen ab Hannover, Bremen & Hamburg – Pauschalreisen, Gruppenreisen und maßgeschneiderte Touren durch ganz Europa.",
+    cta: "Reisen entdecken",
+    link: "/reisen",
     icon: Bus,
+  },
+  {
+    image: sliderWochenendtripNeu,
+    alt: "Beleuchteter europäischer Altstadtplatz am Abend – Wochenendtrip mit dem Reisebus",
+    badge: "Ab 99 € pro Person",
+    title: "Europa am",
+    highlight: "Wochenende",
+    subtitle: "Paris, Prag, Amsterdam & mehr: 2–3 Tage Kurzurlaub inklusive Fahrt im modernen Reisebus – jedes Wochenende neue Ziele.",
+    cta: "Wochenendtrips entdecken",
+    link: "/wochenendtrips",
+    icon: MapPin,
   },
   {
     image: sliderStrandurlaub,
