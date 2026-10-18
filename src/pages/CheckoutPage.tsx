@@ -159,6 +159,12 @@ const CheckoutPage = () => {
       .invoke('verify-bus-payment', { body: { sessionId: stripeSession } })
       .then(({ data, error }) => {
         if (error || !data?.success) {
+          if (data?.status === 'open' || data?.status === 'pending') {
+            // SEPA/Klarna laufen asynchron – Bestätigung folgt per E-Mail
+            toast.info('Ihre Zahlung wird verarbeitet – die Buchungsbestätigung erhalten Sie per E-Mail.');
+            setCurrentStep('confirmation');
+            return;
+          }
           toast.error('Zahlung konnte nicht bestätigt werden. Bitte kontaktieren Sie uns.');
           return;
         }
