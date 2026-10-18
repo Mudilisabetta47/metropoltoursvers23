@@ -6,6 +6,7 @@ import {
 import { Logo, LogoLight } from "@/components/brand/Logo";
 import footerIllustration from "@/assets/metropol-frankfurt-paris-banner.jpg.asset.json";
 import { openCookieSettings } from "@/components/CookieBanner";
+import { PaymentBrandLogos } from "@/components/checkout/PaymentBrandLogos";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
