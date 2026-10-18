@@ -128,7 +128,7 @@ serve(async (req) => {
       const payment = await createMolliePayment({
         amountEur: totalAmount / 100,
         description: `Metropol Tours – ${tourName} (${booking.booking_number})`,
-        redirectUrl: `${returnBase}&payment=success`,
+        redirectUrl: `${returnBase}&payment=success&mollie_booking=${bookingId}`,
         webhookUrl: mollieWebhookUrl(),
         metadata: { type: "tour", booking_id: bookingId, booking_number: booking.booking_number },
       });
@@ -138,9 +138,8 @@ serve(async (req) => {
         .eq("id", bookingId);
       const checkoutUrl = payment._links?.checkout?.href;
       if (!checkoutUrl) throw new Error("Mollie-Checkout-Link fehlt");
-      // Mollie hängt die Zahlungs-ID nicht an die redirectUrl – wir tun es selbst
       return new Response(
-        JSON.stringify({ url: `${checkoutUrl}`, sessionId: payment.id, redirectUrl: `${returnBase}&payment=success&session_id=${payment.id}` }),
+        JSON.stringify({ url: checkoutUrl, sessionId: payment.id }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );
     }
