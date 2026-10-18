@@ -465,6 +465,8 @@ const CheckoutPage = () => {
       if (payError || !payData?.url) {
         throw new Error(payError?.message || 'Zahlung konnte nicht gestartet werden');
       }
+      // Mollie hängt keine Zahlungs-ID an die Rücksprung-URL – lokal merken
+      if (payData.sessionId) sessionStorage.setItem('mt_mollie_payment', payData.sessionId);
 
       // Release the seat holds only once the payment session exists
       for (const passenger of passengerInfo) {
