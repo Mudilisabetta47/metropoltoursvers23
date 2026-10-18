@@ -1,5 +1,5 @@
 interface PaymentBrandLogosProps {
-  brands: Array<"visa" | "mastercard" | "amex" | "paypal">;
+  brands: Array<"visa" | "mastercard" | "amex" | "paypal" | "klarna" | "sepa">;
   className?: string;
 }
 
@@ -8,6 +8,8 @@ const LOGOS: Record<string, { src: string; alt: string }> = {
   mastercard: { src: "/payment/mastercard.svg", alt: "Mastercard" },
   amex: { src: "/payment/amex.svg", alt: "American Express" },
   paypal: { src: "/payment/paypal.svg", alt: "PayPal" },
+  klarna: { src: "/payment/klarna.svg", alt: "Klarna" },
+  sepa: { src: "/payment/sepa.svg", alt: "SEPA-Lastschrift" },
 };
 
 /** Official payment brand marks – only render for methods that are actually enabled. */
