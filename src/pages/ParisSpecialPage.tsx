@@ -46,7 +46,7 @@ export default function ParisSpecialPage() {
               <p className="mt-6 text-lg leading-relaxed text-muted-foreground">Ein neues Jahr. Eine besondere Stadt. Erleben Sie den Jahreswechsel in Paris mit METROPOL TOURS.</p>
               <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm"><li className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-primary" />{parisSpecial.dateLabel}</li><li className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" />Paris, Frankreich</li></ul>
               <div className="mt-10 flex flex-wrap gap-3">
-                <Button asChild size="lg"><a href="#anfrage">Reise anfragen <ArrowRight /></a></Button>
+                <Button asChild size="lg" className="shadow-lg shadow-primary/30"><a href="#anfrage">Jetzt Reise anfragen <ArrowRight /></a></Button>
                 <Button asChild size="lg" variant="outline"><a href={`tel:${COMPANY.phone.replace(/\s/g, "")}`}><Phone />{COMPANY.phone}</a></Button>
               </div>
               <p className="mt-5 text-xs text-muted-foreground">KI-generiertes Silvestermotiv · keine Zusage für ein bestimmtes Feuerwerk</p>
@@ -90,8 +90,8 @@ export default function ParisSpecialPage() {
             <h2 className="mt-5 text-3xl font-bold md:text-4xl">Silvesterreise nach Paris anfragen</h2>
             <p className="mt-6 text-lg text-muted-foreground">{parisSpecial.dateLabel}</p>
             <p className="mx-auto mt-6 max-w-xl leading-relaxed text-muted-foreground">Fragen Sie jetzt Ihre Reise an. Wir informieren Sie persönlich über Preis, Zustiegsorte und die enthaltenen Leistungen.</p>
-            <p className="mt-7 text-xl font-semibold">Preis auf Anfrage</p>
-            <Button asChild size="lg" className="mt-6"><a href={parisInquiryUrl}>Reise per E-Mail anfragen <Mail /></a></Button>
+<p className="mt-7 text-xl font-semibold">Preis auf Anfrage</p>
+            <Button asChild size="lg" className="mt-6 shadow-lg shadow-primary/30"><a href={parisInquiryUrl}>Jetzt Platz sichern – per E-Mail anfragen <Mail /></a></Button>
             <p className="mt-4 text-xs text-muted-foreground">Unverbindliche Anfrage · keine Buchung oder Zahlung</p>
             <div className="mt-9 flex flex-col items-center justify-center gap-4 text-sm sm:flex-row"><a href={`tel:${COMPANY.phone.replace(/\s/g, "")}`} className="flex items-center gap-2 hover:text-primary"><Phone className="h-4 w-4 text-primary" />{COMPANY.phone}</a><a href={`mailto:${COMPANY.email}`} className="flex items-center gap-2 break-all hover:text-primary"><Mail className="h-4 w-4 text-primary" />{COMPANY.email}</a></div>
           </motion.div>
