@@ -75,6 +75,17 @@ serve(async (req) => {
       }
     }
 
+    // Mollie-Refund (Zahlungen über Mollie: tr_... in stripe_session_id)
+    let mollieRefundId: string | null = null;
+    if (!stripeRefundId && refundAmount > 0 && booking.payment_method === "mollie" && booking.stripe_session_id?.startsWith("tr_")) {
+      try {
+        const r = await createMollieRefund(booking.stripe_session_id, refundAmount);
+        mollieRefundId = r.id;
+      } catch (e) {
+        console.error("Mollie refund failed", e);
+      }
+    }
+
     // Status setzen
     await admin.from("bookings").update({ status: "cancelled" }).eq("id", booking_id);
 

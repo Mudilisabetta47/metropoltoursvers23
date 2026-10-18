@@ -87,6 +87,23 @@ serve(async (req) => {
       }
     }
 
+    // Process Mollie refund if payment was made via Mollie (tr_... in stripe_session_id)
+    if (!refundResult && booking.payment_method === "mollie" && booking.paid_at && booking.stripe_session_id?.startsWith("tr_")) {
+      try {
+        const body = refundType === "partial" ? await req.json().catch(() => ({})) : {};
+        const partialAmount = refundType === "partial" ? (body.refundAmount || 0) : 0;
+        const refund = await createMollieRefund(
+          booking.stripe_session_id,
+          partialAmount > 0 ? partialAmount : undefined,
+        );
+        refundResult = { id: refund.id, status: refund.status, amount: Number(refund.amount.value) * 100 };
+        refundAmount = Number(refund.amount.value);
+      } catch (mollieErr: any) {
+        console.error("Mollie refund error:", mollieErr);
+        refundResult = { error: mollieErr.message };
+      }
+    }
+
     // Update booking status
     await admin
       .from("tour_bookings")
