@@ -43,7 +43,7 @@ export default function ParisSpecialPage() {
             <motion.div {...reveal} className="max-w-2xl">
               <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary"><Sparkles className="h-4 w-4" /> METROPOL TOURS SPECIAL</span>
               <h1 className="mt-6 text-4xl font-bold leading-tight md:text-6xl">{parisSpecial.name}</h1>
-              <p className="mt-6 text-lg leading-relaxed text-muted-foreground">Ein neues Jahr. Eine besondere Stadt. Erleben Sie den Jahreswechsel in Paris mit METROPOL TOURS.</p>
+              <p className="mt-6 text-lg leading-relaxed text-muted-foreground">Silvester mal anders: Lichter, Vibes, Feuerwerk – feiert den Jahreswechsel in der schönsten Stadt Europas. Paris ruft.</p>
               <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm"><li className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-primary" />{parisSpecial.dateLabel}</li><li className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" />Paris, Frankreich</li></ul>
               <div className="mt-10 flex flex-wrap gap-3">
                 <Button asChild size="lg" className="shadow-lg shadow-primary/30"><a href="#anfrage">Jetzt Reise anfragen <ArrowRight /></a></Button>
@@ -58,7 +58,7 @@ export default function ParisSpecialPage() {
           <motion.div {...reveal} className="mx-auto max-w-6xl">
             <p className="text-sm font-semibold text-primary">DER JAHRESWECHSEL. MAL ANDERS.</p>
             <h2 className="mt-5 text-3xl font-bold md:text-4xl">Silvester in Paris erleben</h2>
-            <p className="mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground">Die Stadt der Lichter wird zum Schauplatz Ihres Jahreswechsels. Reisen Sie mit METROPOL TOURS nach Paris und begrüßen Sie 2027 mit einer ganz besonderen Perspektive.</p>
+            <p className="mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground">Kein Couch-Silvester, keine Standardparty: Die Stadt der Lichter wird zur Bühne für euren Jahreswechsel. Mit METROPOL TOURS bequem nach Paris – und 2027 direkt vor Ort begrüßen.</p>
           </motion.div>
           <dl className="mx-auto mt-14 grid max-w-4xl grid-cols-1 gap-7 border-y border-border py-8 text-center sm:grid-cols-3 sm:divide-x sm:divide-border">
             <div><dt className="flex items-center justify-center gap-2 text-sm text-muted-foreground"><CalendarDays className="h-4 w-4" /> Reisezeitraum</dt><dd className="mt-3 text-lg font-semibold">30.12. – 01.01.</dd><p className="mt-1 text-sm text-muted-foreground">2026 / 2027</p></div>
@@ -72,7 +72,7 @@ export default function ParisSpecialPage() {
         <section className="paris-scene relative isolate flex min-h-[520px] items-end overflow-hidden px-6 py-12 text-primary-foreground md:min-h-[650px] md:px-12 md:py-16">
           <img src={parisAvenue} alt="Winterliche Champs-Élysées mit Blick auf den beleuchteten Arc de Triomphe" width={1600} height={1024} loading="lazy" className="absolute inset-0 -z-20 h-full w-full object-cover" />
           <div className="hero-overlay absolute inset-0 -z-10" />
-          <motion.div {...reveal} className="mx-auto w-full max-w-6xl"><p className="mb-4 text-sm font-medium">BONJOUR, PARIS.</p><h2 className="max-w-2xl text-4xl font-semibold leading-tight md:text-6xl">Die Lichter.<br />Die Stadt. Der Moment.</h2><p className="mt-5 max-w-lg text-base leading-relaxed text-secondary-foreground/85">Von der Seine bis zu den großen Boulevards: Paris ist eine Einladung, den Alltag für einen Moment hinter sich zu lassen.</p><p className="mt-6 text-xs text-secondary-foreground/70">Paris-Impressionen · KI-generierte Motive</p></motion.div>
+          <motion.div {...reveal} className="mx-auto w-full max-w-6xl"><p className="mb-4 text-sm font-medium">BONJOUR, PARIS.</p><h2 className="max-w-2xl text-4xl font-semibold leading-tight md:text-6xl">Die Lichter.<br />Die Stadt. Der Moment.</h2><p className="mt-5 max-w-lg text-base leading-relaxed text-secondary-foreground/85">Champs-Élysées bei Nacht, Feuerwerk am Eiffelturm, Mitternacht an der Seine: Dieser Jahreswechsel bleibt im Kopf.</p><p className="mt-6 text-xs text-secondary-foreground/70">Paris-Impressionen · KI-generierte Motive</p></motion.div>
         </section>
 
         <section className="bg-muted/50 px-5 py-20 md:py-28">
@@ -89,7 +89,7 @@ export default function ParisSpecialPage() {
             <p className="text-sm font-semibold text-primary">IHR JAHRESWECHSEL MIT METROPOL TOURS</p>
             <h2 className="mt-5 text-3xl font-bold md:text-4xl">Silvesterreise nach Paris anfragen</h2>
             <p className="mt-6 text-lg text-muted-foreground">{parisSpecial.dateLabel}</p>
-            <p className="mx-auto mt-6 max-w-xl leading-relaxed text-muted-foreground">Fragen Sie jetzt Ihre Reise an. Wir informieren Sie persönlich über Preis, Zustiegsorte und die enthaltenen Leistungen.</p>
+            <p className="mx-auto mt-6 max-w-xl leading-relaxed text-muted-foreground">Sichert euch jetzt euren Platz – die Plätze sind begrenzt. Wir melden uns persönlich mit Preis, Zustiegsorten und allen Details zurück.</p>
 <p className="mt-7 text-xl font-semibold">Preis auf Anfrage</p>
             <Button asChild size="lg" className="mt-6 shadow-lg shadow-primary/30"><a href={parisInquiryUrl}>Jetzt Platz sichern – per E-Mail anfragen <Mail /></a></Button>
             <p className="mt-4 text-xs text-muted-foreground">Unverbindliche Anfrage · keine Buchung oder Zahlung</p>
