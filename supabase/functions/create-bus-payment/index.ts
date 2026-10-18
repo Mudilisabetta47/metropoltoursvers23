@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { createMolliePayment, mollieWebhookUrl } from "../_shared/mollie.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -108,9 +109,27 @@ serve(async (req) => {
       total += amount;
     }
 
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2025-08-27.basil" });
     const origin = req.headers.get("origin") || "https://www.metours.de";
     const safeReturn = typeof returnPath === "string" && /^\/[A-Za-z0-9\-_/?&=.]*$/.test(returnPath) ? returnPath : "/checkout";
+
+    // Mollie-Zahlung (Kreditkarte, SEPA, Klarna u.v.m. – Auswahl auf der Mollie-Seite)
+    if (method === "mollie") {
+      const payment = await createMolliePayment({
+        amountEur: total,
+        description: `Busreise – ${bookings.map((b) => b.ticket_number).join(", ")}`,
+        redirectUrl: `${origin}${safeReturn}${safeReturn.includes("?") ? "&" : "?"}mollie_bus=1`,
+        webhookUrl: mollieWebhookUrl(),
+        metadata: { type: "bus", booking_ids: bookingIds, user_id: user.id },
+      });
+      await admin.from("bookings").update({ stripe_session_id: payment.id, payment_method: "mollie" }).in("id", bookingIds);
+      const checkoutUrl = payment._links?.checkout?.href;
+      if (!checkoutUrl) throw new Error("Mollie-Checkout-Link fehlt");
+      return new Response(JSON.stringify({ url: checkoutUrl, sessionId: payment.id }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2025-08-27.basil" });
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",

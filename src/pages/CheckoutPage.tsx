@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import InteractivePaymentCard from "@/components/checkout/InteractivePaymentCard";
+import InteractivePaymentCard, { type PremiumPaymentMethod } from "@/components/checkout/InteractivePaymentCard";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -107,7 +107,7 @@ const CheckoutPage = () => {
     { id: "insurance", name: "Reiseversicherung", description: "Stornierung & Gepäckschutz", price: 7.99, icon: <Shield className="w-5 h-5" />, selected: false },
   ]);
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal">("card");
+  const [paymentMethod, setPaymentMethod] = useState<PremiumPaymentMethod>("mollie");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [bookingIds, setBookingIds] = useState<string[]>([]);
@@ -146,7 +146,7 @@ const CheckoutPage = () => {
 
   // Rückkehr von Stripe: Zahlung serverseitig verifizieren und Buchung bestätigen
   useEffect(() => {
-    const stripeSession = searchParams.get('session_id');
+    const stripeSession = searchParams.get('session_id') || sessionStorage.getItem('mt_mollie_payment');
     const cancelled = searchParams.get('payment') === 'cancelled';
     if (cancelled) {
       toast.error('Zahlung abgebrochen – Ihre Buchung wurde nicht bestätigt.');
@@ -159,6 +159,12 @@ const CheckoutPage = () => {
       .invoke('verify-bus-payment', { body: { sessionId: stripeSession } })
       .then(({ data, error }) => {
         if (error || !data?.success) {
+          if (data?.status === 'open' || data?.status === 'pending') {
+            // SEPA/Klarna laufen asynchron – Bestätigung folgt per E-Mail
+            toast.info('Ihre Zahlung wird verarbeitet – die Buchungsbestätigung erhalten Sie per E-Mail.');
+            setCurrentStep('confirmation');
+            return;
+          }
           toast.error('Zahlung konnte nicht bestätigt werden. Bitte kontaktieren Sie uns.');
           return;
         }
@@ -459,6 +465,8 @@ const CheckoutPage = () => {
       if (payError || !payData?.url) {
         throw new Error(payError?.message || 'Zahlung konnte nicht gestartet werden');
       }
+      // Mollie hängt keine Zahlungs-ID an die Rücksprung-URL – lokal merken
+      if (payData.sessionId) sessionStorage.setItem('mt_mollie_payment', payData.sessionId);
 
       // Release the seat holds only once the payment session exists
       for (const passenger of passengerInfo) {

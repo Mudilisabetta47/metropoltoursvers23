@@ -35,7 +35,7 @@ import {
 import { isTourBookable, TOUR_NOT_BOOKABLE_TITLE, TOUR_NOT_BOOKABLE_TEXT } from "@/lib/tourAvailability";
 
 
-type PaymentMethod = "paypal" | "stripe";
+type PaymentMethod = "mollie";
 type CheckoutStep = "summary" | "passengers" | "payment" | "confirmation";
 
 interface PassengerInfo {
@@ -113,7 +113,7 @@ const TourCheckoutPage = () => {
   const [billing, setBilling] = useState<BillingAddress>(EMPTY_BILLING);
   const [billingSameAsContact, setBillingSameAsContact] = useState(true);
   const [agreeTerms, setAgreeTerms] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("paypal");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("mollie");
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [agreeTravelInfo, setAgreeTravelInfo] = useState(false);
   const [bookingNumber, setBookingNumber] = useState<string | null>(null);
@@ -129,7 +129,7 @@ const TourCheckoutPage = () => {
   // === Payment return handlers (unchanged logic) ===
   useEffect(() => {
     const paymentStatus = searchParams.get("payment");
-    const sessionId = searchParams.get("session_id");
+    const sessionId = searchParams.get("session_id") || sessionStorage.getItem("mt_mollie_payment");
     if (paymentStatus === "success" && tourId && sessionId) {
       const verifyAndLoadBooking = async () => {
         setIsLoading(true);
@@ -141,6 +141,12 @@ const TourCheckoutPage = () => {
             setBookingNumber(verifyData.bookingNumber || "");
             setCurrentStep("confirmation");
             try { await supabase.functions.invoke('generate-tour-documents', { body: { bookingId: verifyData.bookingId } }); } catch (docErr) { console.error("Document generation failed:", docErr); }
+          } else if (verifyData?.status === "open" || verifyData?.status === "pending") {
+            // SEPA/Klarna laufen asynchron – Bestätigung folgt per E-Mail
+            setBookingId(verifyData.bookingId || null);
+            setBookingNumber(verifyData.bookingNumber || "");
+            setCurrentStep("confirmation");
+            toast.info("Ihre Zahlung wird verarbeitet – die Bestätigung erhalten Sie per E-Mail.");
           } else {
             let query = supabase.from("tour_bookings").select("id, booking_number").eq("tour_id", tourId);
             if (sessionId) query = query.eq("stripe_session_id", sessionId);
@@ -381,15 +387,12 @@ const TourCheckoutPage = () => {
       if (seatsError) console.warn("Seat reservation skipped:", seatsError.message);
       else if (!seatsReserved) console.warn("Seats could not be reserved - may be sold out");
 
-      if (selectedPaymentMethod === "stripe") {
-        const { data: stripeData, error: stripeError } = await supabase.functions.invoke("create-tour-payment", { body: { bookingId: bookingData.id, couponCode: appliedCoupon?.code || null } });
-        if (stripeError || !stripeData?.url) throw new Error(stripeData?.error || "Kreditkarten-Zahlung konnte nicht erstellt werden");
-        window.location.href = stripeData.url; return;
-      }
-      if (selectedPaymentMethod === "paypal") {
-        const { data: paypalData, error: paypalError } = await supabase.functions.invoke("create-paypal-order", { body: { bookingId: bookingData.id, couponCode: appliedCoupon?.code || null } });
-        if (paypalError || !paypalData?.approveUrl) throw new Error(paypalData?.error || "PayPal-Zahlung konnte nicht erstellt werden");
-        window.location.href = paypalData.approveUrl; return;
+      if (selectedPaymentMethod === "mollie") {
+        const { data: mollieData, error: mollieError } = await supabase.functions.invoke("create-tour-payment", { body: { bookingId: bookingData.id, couponCode: appliedCoupon?.code || null, method: "mollie" } });
+        if (mollieError || !mollieData?.url) throw new Error(mollieData?.error || "Zahlung konnte nicht erstellt werden");
+        // Mollie hängt keine Zahlungs-ID an die Rücksprung-URL – lokal merken
+        if (mollieData.sessionId) sessionStorage.setItem("mt_mollie_payment", mollieData.sessionId);
+        window.location.href = mollieData.url; return;
       }
       setBookingNumber(bookingData.booking_number); setBookingId(bookingData.id); setCurrentStep("confirmation");
       toast.success("Buchung erfolgreich erstellt!");
@@ -469,7 +472,7 @@ const TourCheckoutPage = () => {
     );
   }
 
-  const paymentMethodLabel = selectedPaymentMethod === "paypal" ? "PayPal" : "Kreditkarte";
+  const paymentMethodLabel = "Mollie (Kreditkarte, SEPA, Klarna u. a.)";
 
 
   return (
@@ -907,8 +910,8 @@ const TourCheckoutPage = () => {
                         ...(extrasTotal > 0 ? [{ label: "Zusatzleistungen", value: extrasTotal.toLocaleString("de-DE", { style: "currency", currency: "EUR" }) }] : []),
                         ...(appliedCoupon ? [{ label: `Gutschein ${appliedCoupon.code}`, value: `−${discountAmount.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}` }] : []),
                       ]}
-                      paymentMethod={selectedPaymentMethod === "stripe" ? "card" : "paypal"}
-                      onPaymentMethodChange={(method) => setSelectedPaymentMethod(method === "card" ? "stripe" : "paypal")}
+                      paymentMethod="mollie"
+                      onPaymentMethodChange={() => setSelectedPaymentMethod("mollie")}
                       onPay={handleNextStep}
                       loading={isProcessing}
                       disabled={!agreeTerms || !agreePrivacy}

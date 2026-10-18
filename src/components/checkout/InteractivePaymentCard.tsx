@@ -8,7 +8,7 @@ import { PaymentBrandLogos } from "@/components/checkout/PaymentBrandLogos";
 import { cn } from "@/lib/utils";
 import "./InteractivePaymentCard.css";
 
-export type PremiumPaymentMethod = "card" | "paypal";
+export type PremiumPaymentMethod = "mollie" | "card" | "paypal";
 
 export interface PaymentSummaryItem {
   label: string;
@@ -103,7 +103,7 @@ export default function InteractivePaymentCard({
             </div>
           </div>
         </div>
-        <p className="mt-card-safety"><ShieldCheck /> Ihre Kartendaten werden ausschließlich in der geschützten Stripe-Zahlungsmaske eingegeben.</p>
+        <p className="mt-card-safety"><ShieldCheck /> Ihre Zahlungsdaten werden ausschließlich in der geschützten Mollie-Zahlungsmaske eingegeben.</p>
       </div>
 
       <div className="mt-payment-form">
@@ -114,15 +114,14 @@ export default function InteractivePaymentCard({
         </div>
 
         <div className="mt-method-switch" role="radiogroup" aria-label="Zahlungsart">
-          <Button type="button" variant={paymentMethod === "card" ? "default" : "ghost"} onClick={() => onPaymentMethodChange("card")} role="radio" aria-checked={paymentMethod === "card"}>
-            <CreditCard /> Kreditkarte
-          </Button>
-          <Button type="button" variant={paymentMethod === "paypal" ? "default" : "ghost"} onClick={() => onPaymentMethodChange("paypal")} role="radio" aria-checked={paymentMethod === "paypal"}>
-            <WalletCards /> PayPal
+          <Button type="button" variant={paymentMethod === "mollie" ? "default" : "ghost"} onClick={() => onPaymentMethodChange("mollie")} role="radio" aria-checked={paymentMethod === "mollie"}>
+            <CreditCard /> Kreditkarte, SEPA, Klarna & mehr
           </Button>
         </div>
 
-        {paymentMethod === "card" ? (
+        {paymentMethod === "mollie" ? (
+          <div className="mt-paypal-panel"><PaymentBrandLogos brands={["visa", "mastercard", "amex"]} /><div><strong>Sicher bezahlen mit Mollie</strong><span>Sie wählen Ihre Zahlungsart (Kreditkarte, SEPA, Klarna u. a.) im nächsten Schritt auf der geschützten Mollie-Seite.</span></div></div>
+        ) : paymentMethod === "card" ? (
           <div className="mt-card-fields">
             <div className="mt-safe-field">
               <Label htmlFor="premium-card-holder">Karteninhaber</Label>
@@ -151,7 +150,7 @@ export default function InteractivePaymentCard({
         <Button type="button" size="xl" className={cn("mt-payment-button", success && "is-success")} onClick={onPay} disabled={disabled || loading || success}>
           {loading ? <><Loader2 className="animate-spin" />Zahlung wird vorbereitet…</> : success ? <><Check />Zahlung erfolgreich</> : <><Lock />Bezahlen – {money(total, currency)}<ArrowRight className="mt-payment-arrow" /></>}
         </Button>
-        <div className="mt-security-row"><Lock /><span>Sichere Zahlung</span><i />SSL-verschlüsselt<i />PCI-konforme Verarbeitung durch Stripe</div>
+        <div className="mt-security-row"><Lock /><span>Sichere Zahlung</span><i />SSL-verschlüsselt<i />PCI-konforme Verarbeitung durch Mollie</div>
       </div>
     </section>
   );

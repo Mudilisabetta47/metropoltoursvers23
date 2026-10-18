@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { getMolliePayment } from "../_shared/mollie.ts";
+import { confirmTourBookingPaid, escapeHtml } from "../_shared/tour-booking-confirm.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
@@ -8,11 +10,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-
-function escapeHtml(str: string): string {
-  if (!str) return '';
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
 
 function formatShortDate(dateStr: string): string {
   try {
@@ -28,6 +25,38 @@ serve(async (req) => {
   try {
     const { sessionId } = await req.json();
     if (!sessionId) throw new Error("sessionId is required");
+
+    // Mollie-Zahlung: ID beginnt mit tr_
+    if (sessionId.startsWith("tr_")) {
+      const supabaseAdminM = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      );
+      const { data: mBooking } = await supabaseAdminM
+        .from("tour_bookings")
+        .select("id, booking_number, payment_status")
+        .eq("stripe_session_id", sessionId)
+        .maybeSingle();
+      if (!mBooking) throw new Error("Buchung zur Zahlung nicht gefunden");
+
+      // Bereits per Webhook bestätigt?
+      if (mBooking.payment_status === "paid") {
+        return new Response(
+          JSON.stringify({ success: true, bookingId: mBooking.id, bookingNumber: mBooking.booking_number }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const payment = await getMolliePayment(sessionId);
+      if (payment.status !== "paid") {
+        // SEPA/Klarna laufen asynchron – der Webhook bestätigt später
+        return new Response(
+          JSON.stringify({ success: false, status: payment.status, bookingId: mBooking.id, bookingNumber: mBooking.booking_number }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      return await confirmTourBookingPaid(supabaseAdminM, mBooking.id, mBooking.booking_number, "mollie", payment.id, corsHeaders);
+    }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",

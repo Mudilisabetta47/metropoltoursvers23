@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { createMolliePayment, mollieWebhookUrl } from "../_shared/mollie.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,7 +15,7 @@ serve(async (req) => {
   }
 
   try {
-    const { bookingId, couponCode } = await req.json();
+    const { bookingId, couponCode, method } = await req.json();
 
     if (!bookingId) {
       throw new Error("bookingId is required");
@@ -120,6 +121,28 @@ serve(async (req) => {
 
     const tourName = booking.package_tours?.destination || "Pauschalreise";
     const origin = req.headers.get("origin") || "https://app.metours.de";
+
+    // Mollie-Zahlung (Kreditkarte, SEPA, Klarna u.v.m. – Auswahl auf der Mollie-Seite)
+    if (method === "mollie") {
+      const returnBase = `${origin}/tour-checkout?tour=${booking.tour_id}&date=${booking.tour_date_id}&tariff=${booking.tariff_id}&pax=${booking.participants}`;
+      const payment = await createMolliePayment({
+        amountEur: totalAmount / 100,
+        description: `Metropol Tours – ${tourName} (${booking.booking_number})`,
+        redirectUrl: `${returnBase}&payment=success&mollie_booking=${bookingId}`,
+        webhookUrl: mollieWebhookUrl(),
+        metadata: { type: "tour", booking_id: bookingId, booking_number: booking.booking_number },
+      });
+      await supabaseAdmin
+        .from("tour_bookings")
+        .update({ stripe_session_id: payment.id, payment_method: "mollie" })
+        .eq("id", bookingId);
+      const checkoutUrl = payment._links?.checkout?.href;
+      if (!checkoutUrl) throw new Error("Mollie-Checkout-Link fehlt");
+      return new Response(
+        JSON.stringify({ url: checkoutUrl, sessionId: payment.id }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
 
     // Create Stripe Checkout session
     const session = await stripe.checkout.sessions.create({

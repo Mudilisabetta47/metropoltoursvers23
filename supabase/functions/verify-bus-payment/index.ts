@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { getMolliePayment } from "../_shared/mollie.ts";
+import { confirmBusBookingsPaid } from "../_shared/bus-booking-confirm.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,6 +19,34 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Invalid sessionId" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400,
       });
+    }
+
+    // Mollie-Zahlung: ID beginnt mit tr_
+    if (sessionId.startsWith("tr_")) {
+      const adminM = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      );
+      const { data: mBookings } = await adminM
+        .from("bookings")
+        .select("id, ticket_number, payment_status")
+        .eq("stripe_session_id", sessionId);
+      if (!mBookings || mBookings.length === 0) throw new Error("Buchungen zur Zahlung nicht gefunden");
+      if (mBookings.every((b) => b.payment_status === "paid")) {
+        return new Response(JSON.stringify({
+          success: true,
+          bookingIds: mBookings.map((b) => b.id),
+          ticketNumbers: mBookings.map((b) => b.ticket_number),
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const payment = await getMolliePayment(sessionId);
+      if (payment.status !== "paid") {
+        // SEPA/Klarna laufen asynchron – der Webhook bestätigt später
+        return new Response(JSON.stringify({ success: false, status: payment.status }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return await confirmBusBookingsPaid(adminM, mBookings.map((b) => b.id), "mollie", payment.id, corsHeaders);
     }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2025-08-27.basil" });
