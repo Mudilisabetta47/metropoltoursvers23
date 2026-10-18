@@ -4,7 +4,6 @@ import { InfoBanner } from "@/components/home/InfoBanner";
 import HeroSlider from "@/components/home/HeroSlider";
 import FeaturesSection from "@/components/home/FeaturesSection";
 import BrandShowcaseSection from "@/components/home/BrandShowcaseSection";
-import OfferHighlightsSection from "@/components/home/OfferHighlightsSection";
 
 import WeekendTripsSection from "@/components/home/WeekendTripsSection";
 
@@ -32,7 +31,6 @@ const Index = () => {
         <InfoBanner />
         <HeroSlider />
         <FeaturesSection />
-        <OfferHighlightsSection />
         <BrandShowcaseSection />
         {/* Pauschalreisen vorübergehend deaktiviert – Fokus auf Gruppenanfragen */}
         <WeekendTripsSection />
