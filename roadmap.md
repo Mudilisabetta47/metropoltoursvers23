@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Paris-Silvester-Special
-- [x] Eigene Apple-inspirierte Seite für 30.12.2026–01.01.2027 mit Paris-Bildern erstellen
+- [x] Paris-Seite für 30.12.2026–01.01.2027 an bestehende Landingpages angleichen und Feuerwerksmotiv einbauen
 - [x] Startseitenhinweis, SEO und Sitemap anbinden; Anfrage ohne erfundene Preise ermöglichen
 - [x] Seite und E-Mail-Anfragelink auf Desktop und Mobil prüfen (kein Mailversand im Browsertest)
 
