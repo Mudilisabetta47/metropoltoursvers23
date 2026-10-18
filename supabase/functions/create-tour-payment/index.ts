@@ -122,6 +122,29 @@ serve(async (req) => {
     const tourName = booking.package_tours?.destination || "Pauschalreise";
     const origin = req.headers.get("origin") || "https://app.metours.de";
 
+    // Mollie-Zahlung (Kreditkarte, SEPA, Klarna u.v.m. – Auswahl auf der Mollie-Seite)
+    if (method === "mollie") {
+      const returnBase = `${origin}/tour-checkout?tour=${booking.tour_id}&date=${booking.tour_date_id}&tariff=${booking.tariff_id}&pax=${booking.participants}`;
+      const payment = await createMolliePayment({
+        amountEur: totalAmount / 100,
+        description: `Metropol Tours – ${tourName} (${booking.booking_number})`,
+        redirectUrl: `${returnBase}&payment=success`,
+        webhookUrl: mollieWebhookUrl(),
+        metadata: { type: "tour", booking_id: bookingId, booking_number: booking.booking_number },
+      });
+      await supabaseAdmin
+        .from("tour_bookings")
+        .update({ stripe_session_id: payment.id, payment_method: "mollie" })
+        .eq("id", bookingId);
+      const checkoutUrl = payment._links?.checkout?.href;
+      if (!checkoutUrl) throw new Error("Mollie-Checkout-Link fehlt");
+      // Mollie hängt die Zahlungs-ID nicht an die redirectUrl – wir tun es selbst
+      return new Response(
+        JSON.stringify({ url: `${checkoutUrl}`, sessionId: payment.id, redirectUrl: `${returnBase}&payment=success&session_id=${payment.id}` }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
+
     // Create Stripe Checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
