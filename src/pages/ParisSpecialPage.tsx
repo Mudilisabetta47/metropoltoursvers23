@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowDown, ArrowRight, CalendarDays, Mail, MapPin, Phone, Sparkles } from "lucide-react";
+import { ArrowRight, CalendarDays, Mail, MapPin, Phone, Sparkles } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
@@ -77,7 +77,7 @@ export default function ParisSpecialPage() {
 
         <section className="bg-muted/50 px-5 py-20 md:py-28">
           <div className="mx-auto max-w-5xl">
-            <motion.div {...reveal}><p className="text-sm font-semibold text-primary">DREI DATEN. EIN JAHRESWECHSEL.</p><h2 className="mt-4 text-4xl font-semibold md:text-5xl">Ihr Termin für Paris.</h2></motion.div>
+            <motion.div {...reveal}><p className="text-sm font-semibold text-primary">DREI DATEN. EIN JAHRESWECHSEL.</p><h2 className="mt-4 text-3xl font-bold md:text-4xl">Ihr Termin für Paris</h2></motion.div>
             <ol className="mt-12 grid gap-9 md:grid-cols-3 md:gap-10">
               {[{ date: "30.12.", year: "2026", title: "Die Reise beginnt.", text: "Beginn Ihrer Paris-Reise. Die genaue Abfahrtszeit und Ihren Zustiegsort erhalten Sie mit den Reiseinformationen." }, { date: "31.12.", year: "2026", title: "Bonsoir, Silvester.", text: "Der letzte Tag des Jahres – und Ihr Jahreswechsel in Paris. Details zur Gestaltung des Aufenthalts erhalten Sie mit Ihrem Angebot." }, { date: "01.01.", year: "2027", title: "Bonjour, neues Jahr.", text: "Der letzte Tag des Reisezeitraums. Die genauen Rückreisezeiten teilen wir Ihnen mit den Reiseinformationen mit." }].map((day) => <motion.li {...reveal} key={day.date} className="border-t border-border pt-6"><p className="text-5xl font-semibold">{day.date}<span className="ml-2 text-sm font-medium text-muted-foreground">{day.year}</span></p><h3 className="mt-5 text-xl font-semibold">{day.title}</h3><p className="mt-3 text-sm leading-relaxed text-muted-foreground">{day.text}</p></motion.li>)}
             </ol>
@@ -87,18 +87,18 @@ export default function ParisSpecialPage() {
         <section id="anfrage" className="scroll-mt-36 px-5 py-20 md:py-28">
           <motion.div {...reveal} className="mx-auto max-w-3xl text-center">
             <p className="text-sm font-semibold text-primary">IHR JAHRESWECHSEL MIT METROPOL TOURS</p>
-            <h2 className="mt-5 text-4xl font-semibold md:text-6xl">Paris wartet.<br />Sind Sie dabei?</h2>
+            <h2 className="mt-5 text-3xl font-bold md:text-4xl">Silvesterreise nach Paris anfragen</h2>
             <p className="mt-6 text-lg text-muted-foreground">{parisSpecial.dateLabel}</p>
             <p className="mx-auto mt-6 max-w-xl leading-relaxed text-muted-foreground">Fragen Sie jetzt Ihre Reise an. Wir informieren Sie persönlich über Preis, Zustiegsorte und die enthaltenen Leistungen.</p>
             <p className="mt-7 text-xl font-semibold">Preis auf Anfrage</p>
-            <Button asChild size="lg" className="mt-6 rounded-full"><a href={parisInquiryUrl}>Reise per E-Mail anfragen <Mail /></a></Button>
+            <Button asChild size="lg" className="mt-6"><a href={parisInquiryUrl}>Reise per E-Mail anfragen <Mail /></a></Button>
             <p className="mt-4 text-xs text-muted-foreground">Unverbindliche Anfrage · keine Buchung oder Zahlung</p>
             <div className="mt-9 flex flex-col items-center justify-center gap-4 text-sm sm:flex-row"><a href={`tel:${COMPANY.phone.replace(/\s/g, "")}`} className="flex items-center gap-2 hover:text-primary"><Phone className="h-4 w-4 text-primary" />{COMPANY.phone}</a><a href={`mailto:${COMPANY.email}`} className="flex items-center gap-2 break-all hover:text-primary"><Mail className="h-4 w-4 text-primary" />{COMPANY.email}</a></div>
           </motion.div>
         </section>
 
         <section id="fragen" className="scroll-mt-36 border-t border-border px-5 py-16 md:py-24">
-          <div className="mx-auto max-w-3xl"><h2 className="mb-8 text-3xl font-semibold md:text-4xl">Gut zu wissen.</h2><Accordion type="single" collapsible>{faqs.map((faq, index) => <AccordionItem key={faq.q} value={`paris-${index}`}><AccordionTrigger className="text-left text-base">{faq.q}</AccordionTrigger><AccordionContent className="leading-relaxed text-muted-foreground">{faq.a}</AccordionContent></AccordionItem>)}</Accordion><Button asChild variant="link" className="mt-8 px-0"><Link to="/reisen">Alle Reisen entdecken <ArrowRight /></Link></Button></div>
+          <div className="mx-auto max-w-6xl"><h2 className="mb-8 text-3xl font-bold md:text-4xl">Häufige Fragen</h2><Accordion type="single" collapsible className="max-w-3xl">{faqs.map((faq, index) => <AccordionItem key={faq.q} value={`paris-${index}`}><AccordionTrigger className="text-left text-base">{faq.q}</AccordionTrigger><AccordionContent className="leading-relaxed text-muted-foreground">{faq.a}</AccordionContent></AccordionItem>)}</Accordion><Button asChild variant="link" className="mt-8 px-0"><Link to="/reisen">Alle Reisen entdecken <ArrowRight /></Link></Button></div>
         </section>
       </main>
       <Footer />
