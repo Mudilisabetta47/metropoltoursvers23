@@ -129,7 +129,7 @@ const TourCheckoutPage = () => {
   // === Payment return handlers (unchanged logic) ===
   useEffect(() => {
     const paymentStatus = searchParams.get("payment");
-    const sessionId = searchParams.get("session_id");
+    const sessionId = searchParams.get("session_id") || sessionStorage.getItem("mt_mollie_payment");
     if (paymentStatus === "success" && tourId && sessionId) {
       const verifyAndLoadBooking = async () => {
         setIsLoading(true);
@@ -141,6 +141,12 @@ const TourCheckoutPage = () => {
             setBookingNumber(verifyData.bookingNumber || "");
             setCurrentStep("confirmation");
             try { await supabase.functions.invoke('generate-tour-documents', { body: { bookingId: verifyData.bookingId } }); } catch (docErr) { console.error("Document generation failed:", docErr); }
+          } else if (verifyData?.status === "open" || verifyData?.status === "pending") {
+            // SEPA/Klarna laufen asynchron – Bestätigung folgt per E-Mail
+            setBookingId(verifyData.bookingId || null);
+            setBookingNumber(verifyData.bookingNumber || "");
+            setCurrentStep("confirmation");
+            toast.info("Ihre Zahlung wird verarbeitet – die Bestätigung erhalten Sie per E-Mail.");
           } else {
             let query = supabase.from("tour_bookings").select("id, booking_number").eq("tour_id", tourId);
             if (sessionId) query = query.eq("stripe_session_id", sessionId);
