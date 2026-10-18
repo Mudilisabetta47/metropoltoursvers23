@@ -3,12 +3,13 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowDown, ArrowRight, CalendarDays, Mail, MapPin, Phone, Sparkles } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import TestimonialsSection from "@/components/home/TestimonialsSection";
 import SEO from "@/components/seo/SEO";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { COMPANY, breadcrumbJsonLd, faqJsonLd } from "@/lib/seo";
 import { parisSpecial, parisInquiryUrl } from "@/content/parisSpecial";
-import parisHero from "@/assets/paris-silvester-hero.jpg";
+import parisHero from "@/assets/paris-silvester-fireworks.jpg";
 import parisAvenue from "@/assets/paris-silvester-avenue.jpg";
 
 const faqs = [
@@ -29,42 +30,35 @@ export default function ParisSpecialPage() {
   };
 
   return (
-    <div className="paris-special bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <SEO title="Silvester Night in Paris · 30.12.2026–01.01.2027" description="Mit METROPOL TOURS zum Jahreswechsel nach Paris: Silvester Night in Paris vom 30. Dezember 2026 bis 1. Januar 2027. Jetzt Reiseinformationen anfragen." path={parisSpecial.path} jsonLd={[breadcrumbJsonLd([{ name: "Startseite", path: "/" }, { name: parisSpecial.name, path: parisSpecial.path }]), faqJsonLd(faqs)]} />
       <Header />
       <main className="pt-16 lg:pt-20">
-        <nav aria-label="Paris-Special" className="paris-local-nav sticky top-14 z-30 border-b border-border bg-background/90 backdrop-blur-xl lg:top-16">
-          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-5 py-3">
-            <Link to={parisSpecial.path} className="text-sm font-semibold sm:text-lg">Paris. Silvester 2026.</Link>
-            <div className="flex items-center gap-5">
-              <a href="#reise" className="hidden text-sm text-muted-foreground hover:text-foreground sm:block">Die Reise</a>
-              <a href="#fragen" className="hidden text-sm text-muted-foreground hover:text-foreground sm:block">Fragen</a>
-              <Button asChild size="sm" className="rounded-full"><a href="#anfrage">Anfragen <ArrowRight /></a></Button>
-            </div>
+        <section className="relative overflow-hidden">
+          <div className="absolute inset-0">
+            <img src={parisHero} alt="Illustratives Silvestermotiv: Feuerwerk über dem Eiffelturm und der Seine in Paris" width={1920} height={1088} fetchPriority="high" className="h-full w-full object-cover object-right" />
+            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/30" />
           </div>
-        </nav>
-
-        <section className="paris-hero relative isolate overflow-hidden text-secondary-foreground">
-          <img src={parisHero} alt="Der beleuchtete Eiffelturm und die Seine am Abend in Paris" width={1920} height={1088} fetchPriority="high" className="absolute inset-0 -z-20 h-full w-full object-cover" />
-          <div className="paris-hero-shade absolute inset-0 -z-10" />
-          <motion.div {...reveal} className="mx-auto max-w-6xl px-5 pt-14 text-center md:pt-20">
-            <p className="mb-5 flex items-center justify-center gap-2 text-xs font-medium uppercase sm:text-sm"><Sparkles className="h-4 w-4" /> METROPOL TOURS SPECIAL</p>
-            <h1 className="paris-display font-semibold leading-[1.02]">Silvester Night<br />in Paris.</h1>
-            <p className="mt-6 text-lg font-medium md:text-2xl">Ein neues Jahr. Eine besondere Stadt.</p>
-            <p className="mt-3 text-sm text-secondary-foreground/80 sm:text-base">{parisSpecial.dateLabel}</p>
-            <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-              <Button asChild size="lg" className="rounded-full"><a href="#anfrage">Reise anfragen <ArrowRight /></a></Button>
-              <Button asChild size="lg" variant="glass" className="rounded-full"><a href="#reise">Paris entdecken <ArrowDown /></a></Button>
-            </div>
-          </motion.div>
-          <div className="absolute bottom-6 left-0 right-0 flex items-center justify-between px-6 text-xs text-secondary-foreground/80 md:px-12"><span>Paris, Frankreich</span><span>2026 → 2027</span></div>
+          <div className="relative container mx-auto max-w-6xl px-4 py-20 md:py-28">
+            <motion.div {...reveal} className="max-w-2xl">
+              <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary"><Sparkles className="h-4 w-4" /> METROPOL TOURS SPECIAL</span>
+              <h1 className="mt-6 text-4xl font-bold leading-tight md:text-6xl">{parisSpecial.name}</h1>
+              <p className="mt-6 text-lg leading-relaxed text-muted-foreground">Ein neues Jahr. Eine besondere Stadt. Erleben Sie den Jahreswechsel in Paris mit METROPOL TOURS.</p>
+              <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm"><li className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-primary" />{parisSpecial.dateLabel}</li><li className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" />Paris, Frankreich</li></ul>
+              <div className="mt-10 flex flex-wrap gap-3">
+                <Button asChild size="lg"><a href="#anfrage">Reise anfragen <ArrowRight /></a></Button>
+                <Button asChild size="lg" variant="outline"><a href={`tel:${COMPANY.phone.replace(/\s/g, "")}`}><Phone />{COMPANY.phone}</a></Button>
+              </div>
+              <p className="mt-5 text-xs text-muted-foreground">KI-generiertes Silvestermotiv · keine Zusage für ein bestimmtes Feuerwerk</p>
+            </motion.div>
+          </div>
         </section>
 
         <section id="reise" className="scroll-mt-36 px-5 py-20 md:py-28">
-          <motion.div {...reveal} className="mx-auto max-w-4xl text-center">
+          <motion.div {...reveal} className="mx-auto max-w-6xl">
             <p className="text-sm font-semibold text-primary">DER JAHRESWECHSEL. MAL ANDERS.</p>
-            <h2 className="mt-5 text-4xl font-semibold leading-[1.1] md:text-6xl">Nicht einfach Silvester.<br /><span className="text-muted-foreground">Silvester in Paris.</span></h2>
-            <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-muted-foreground">Die Stadt der Lichter wird zum Schauplatz Ihres Jahreswechsels. Reisen Sie mit METROPOL TOURS nach Paris und begrüßen Sie 2027 mit einer ganz besonderen Perspektive.</p>
+            <h2 className="mt-5 text-3xl font-bold md:text-4xl">Silvester in Paris erleben</h2>
+            <p className="mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground">Die Stadt der Lichter wird zum Schauplatz Ihres Jahreswechsels. Reisen Sie mit METROPOL TOURS nach Paris und begrüßen Sie 2027 mit einer ganz besonderen Perspektive.</p>
           </motion.div>
           <dl className="mx-auto mt-14 grid max-w-4xl grid-cols-1 gap-7 border-y border-border py-8 text-center sm:grid-cols-3 sm:divide-x sm:divide-border">
             <div><dt className="flex items-center justify-center gap-2 text-sm text-muted-foreground"><CalendarDays className="h-4 w-4" /> Reisezeitraum</dt><dd className="mt-3 text-lg font-semibold">30.12. – 01.01.</dd><p className="mt-1 text-sm text-muted-foreground">2026 / 2027</p></div>
@@ -73,9 +67,11 @@ export default function ParisSpecialPage() {
           </dl>
         </section>
 
-        <section className="paris-scene relative isolate flex min-h-[520px] items-end overflow-hidden px-6 py-12 text-secondary-foreground md:min-h-[650px] md:px-12 md:py-16">
+        <TestimonialsSection />
+
+        <section className="paris-scene relative isolate flex min-h-[520px] items-end overflow-hidden px-6 py-12 text-primary-foreground md:min-h-[650px] md:px-12 md:py-16">
           <img src={parisAvenue} alt="Winterliche Champs-Élysées mit Blick auf den beleuchteten Arc de Triomphe" width={1600} height={1024} loading="lazy" className="absolute inset-0 -z-20 h-full w-full object-cover" />
-          <div className="paris-scene-shade absolute inset-0 -z-10" />
+          <div className="hero-overlay absolute inset-0 -z-10" />
           <motion.div {...reveal} className="mx-auto w-full max-w-6xl"><p className="mb-4 text-sm font-medium">BONJOUR, PARIS.</p><h2 className="max-w-2xl text-4xl font-semibold leading-tight md:text-6xl">Die Lichter.<br />Die Stadt. Der Moment.</h2><p className="mt-5 max-w-lg text-base leading-relaxed text-secondary-foreground/85">Von der Seine bis zu den großen Boulevards: Paris ist eine Einladung, den Alltag für einen Moment hinter sich zu lassen.</p><p className="mt-6 text-xs text-secondary-foreground/70">Paris-Impressionen · KI-generierte Motive</p></motion.div>
         </section>
 
