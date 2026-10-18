@@ -2,8 +2,8 @@ import { motion } from "framer-motion";
 import { ArrowRight, Bus, CalendarDays, MapPin, ShieldCheck, Wifi, Armchair } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import sliderBusreise from "@/assets/slider-busreise-2026.jpg";
-import sliderWochenendtrip from "@/assets/slider-wochenendtrip-2026.jpg";
+import sliderBusreise from "@/assets/slider-pauschalreisen.jpg";
+import sliderWochenendtrip from "@/assets/slider-wochenendtrips.jpg";
 
 const offers = [
   {
