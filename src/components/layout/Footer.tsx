@@ -7,6 +7,7 @@ import { Logo, LogoLight } from "@/components/brand/Logo";
 import footerIllustration from "@/assets/metropol-frankfurt-paris-banner.jpg.asset.json";
 import { openCookieSettings } from "@/components/CookieBanner";
 import { PaymentBrandLogos } from "@/components/checkout/PaymentBrandLogos";
+import { PaymentBrandLogos } from "@/components/checkout/PaymentBrandLogos";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -288,6 +289,13 @@ const Footer = () => {
             oder Rundreise – bei uns finden Sie das passende Angebot. Buchen Sie jetzt Ihre nächste 
             Busreise mit modernsten Reisebussen, kostenlosem WLAN und erstklassigem Service.
           </p>
+        </div>
+      </div>
+
+        {/* Payment methods */}
+        <div className="mt-6 pt-6 border-t border-muted-foreground/10 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <span className="text-xs font-medium text-muted-foreground">Secure payments via Mollie</span>
+          <PaymentBrandLogos brands={["visa", "mastercard", "amex", "klarna", "sepa", "paypal"]} />
         </div>
       </div>
 
