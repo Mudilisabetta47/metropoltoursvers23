@@ -13,6 +13,7 @@ import parisHero from "@/assets/paris-silvester-fireworks.jpg";
 import parisAvenue from "@/assets/paris-silvester-avenue.jpg";
 
 const faqs = [
+  { q: "Kann ich mit Freunden oder meiner Gruppe mitkommen?", a: "Ja – die Reise eignet sich perfekt für Freundesgruppen, Paare und alle, die Silvester mal anders feiern wollen. Gebt bei eurer Anfrage einfach die Anzahl der Reisenden an." },
   { q: "Wann findet die Paris-Reise statt?", a: "Die Reise findet vom 30. Dezember 2026 bis zum 1. Januar 2027 statt. Den Jahreswechsel verbringen Sie in Paris." },
   { q: "Was kostet die Reise?", a: "Den aktuellen Reisepreis erhalten Sie auf Anfrage bei METROPOL TOURS. Schreiben Sie uns die Anzahl der Reisenden und Ihren gewünschten Zustiegsort." },
   { q: "Wo kann ich zusteigen?", a: "Die Zustiegsorte und genauen Abfahrtszeiten teilen wir Ihnen mit Ihrem Angebot mit. Nennen Sie uns bei Ihrer Anfrage Ihren gewünschten Abfahrtsort." },
