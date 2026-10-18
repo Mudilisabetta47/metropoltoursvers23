@@ -10,12 +10,12 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
-import sliderBusreise from "@/assets/slider-busreise-2026.jpg";
-import sliderWochenendtripNeu from "@/assets/slider-wochenendtrip-2026.jpg";
+import sliderBusreise from "@/assets/slider-pauschalreisen.jpg";
 import sliderWochenendtrips from "@/assets/slider-wochenendtrips.jpg";
 import sliderGruppenreisen from "@/assets/slider-gruppenreisen.jpg";
 import sliderStrandurlaub from "@/assets/slider-strandurlaub.jpg";
 import sliderKulturreisen from "@/assets/slider-kulturreisen.jpg";
+import sliderBusReal from "@/assets/metropol-bus-real.jpg";
 import AiBadge from "@/components/common/AiBadge";
 
 interface Slide {
@@ -43,8 +43,8 @@ const slides: Slide[] = [
     icon: Bus,
   },
   {
-    image: sliderWochenendtripNeu,
-    alt: "Beleuchteter europäischer Altstadtplatz am Abend – Wochenendtrip mit dem Reisebus",
+    image: sliderBusReal,
+    alt: "METROPOL TOURS Reisebus auf einer Europareise – Wochenendtrips mit dem Bus",
     badge: "Ab 99 € pro Person",
     title: "Europa am",
     highlight: "Wochenende",
