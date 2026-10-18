@@ -258,6 +258,7 @@ const App = () => (
               <Route path="/widerruf" element={<WiderrufPage />} />
               
               <Route path="/pauschalreisen/:tourId" element={<TourDetailPage />} />
+              <Route path="/reisen/silvester-paris" element={<Navigate to="/silvester-paris" replace />} />
               <Route path="/reisen/:tourId" element={<TourDetailPage />} />
               <Route path="/reisen/checkout" element={<TourCheckoutPage />} />
               <Route path="/tour-checkout" element={<TourCheckoutPage />} />
