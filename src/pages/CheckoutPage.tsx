@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getSessionId } from "@/hooks/useSessionId";
 import { useTicketDownload } from "@/hooks/useTicketDownload";
+import { busPaymentReturnSession, BUS_PAYMENT_STORAGE_KEY } from "@/lib/busPaymentReturn";
 
 type CheckoutStep = "seats" | "details" | "extras" | "payment" | "confirmation";
 
@@ -146,7 +147,7 @@ const CheckoutPage = () => {
 
   // Rückkehr von Stripe: Zahlung serverseitig verifizieren und Buchung bestätigen
   useEffect(() => {
-    const stripeSession = searchParams.get('session_id') || sessionStorage.getItem('mt_mollie_payment');
+    const stripeSession = busPaymentReturnSession(searchParams, sessionStorage);
     const cancelled = searchParams.get('payment') === 'cancelled';
     if (cancelled) {
       toast.error('Zahlung abgebrochen – Ihre Buchung wurde nicht bestätigt.');
@@ -466,7 +467,7 @@ const CheckoutPage = () => {
         throw new Error(payError?.message || 'Zahlung konnte nicht gestartet werden');
       }
       // Mollie hängt keine Zahlungs-ID an die Rücksprung-URL – lokal merken
-      if (payData.sessionId) sessionStorage.setItem('mt_mollie_payment', payData.sessionId);
+      if (payData.sessionId) sessionStorage.setItem(BUS_PAYMENT_STORAGE_KEY, payData.sessionId);
 
       // Release the seat holds only once the payment session exists
       for (const passenger of passengerInfo) {

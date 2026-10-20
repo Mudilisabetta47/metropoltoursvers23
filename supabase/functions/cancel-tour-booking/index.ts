@@ -2,12 +2,16 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { createMollieRefund } from "../_shared/mollie.ts";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { z } from "npm:zod@3.25.76";
+import { cancellationRefundAmount } from "../_shared/cancellation-refund.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const cancellationSchema = z.object({
+  bookingId: z.string().uuid(),
+  reason: z.string().max(2000).optional(),
+  refundType: z.enum(["none", "full", "partial"]).default("none"),
+  refundAmount: z.number().finite().optional(),
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -15,12 +19,12 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
 
     // Authenticate admin user
-    const supabaseClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
+    const supabaseClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") ?? "");
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Nicht autorisiert");
 
@@ -40,8 +44,7 @@ serve(async (req) => {
 
     if (!roleData) throw new Error("Nur Admins können Buchungen stornieren");
 
-    const { bookingId, reason, refundType } = await req.json();
-    if (!bookingId) throw new Error("bookingId ist erforderlich");
+    const { bookingId, reason, refundType, refundAmount: requestedAmount } = cancellationSchema.parse(await req.json());
 
     // Get booking
     const { data: booking, error: bErr } = await admin
@@ -55,9 +58,11 @@ serve(async (req) => {
 
     let refundResult = null;
     let refundAmount = 0;
+    const requestedRefund = cancellationRefundAmount(refundType, requestedAmount, Number(booking.total_price));
 
     // Process Stripe refund if payment was made via Stripe
-    if (stripeKey && booking.stripe_payment_intent_id && booking.paid_at) {
+    if (requestedRefund > 0 && booking.payment_method !== "mollie" && booking.stripe_payment_intent_id && booking.paid_at) {
+      if (!stripeKey) throw new Error("Stripe-Erstattung ist nicht konfiguriert");
       const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
       try {
@@ -67,41 +72,45 @@ serve(async (req) => {
           });
           refundResult = { id: refund.id, status: refund.status, amount: refund.amount };
           refundAmount = refund.amount / 100;
-        } else if (refundType === "partial" && req.body) {
-          // Partial refund with custom amount
-          const body = await req.json().catch(() => ({}));
-          const partialAmount = body.refundAmount || 0;
-          if (partialAmount > 0) {
+        } else if (refundType === "partial") {
             const refund = await stripe.refunds.create({
               payment_intent: booking.stripe_payment_intent_id,
-              amount: Math.round(partialAmount * 100),
+              amount: Math.round(requestedRefund * 100),
             });
             refundResult = { id: refund.id, status: refund.status, amount: refund.amount };
             refundAmount = refund.amount / 100;
-          }
         }
       } catch (stripeErr: any) {
         console.error("Stripe refund error:", stripeErr);
-        // Continue with cancellation even if refund fails
-        refundResult = { error: stripeErr.message };
+        throw new Error("Stripe-Erstattung fehlgeschlagen; Buchung wurde nicht storniert");
       }
     }
 
     // Process Mollie refund if payment was made via Mollie (tr_... in stripe_session_id)
-    if (!refundResult && booking.payment_method === "mollie" && booking.paid_at && booking.stripe_session_id?.startsWith("tr_")) {
+    if (requestedRefund > 0 && booking.payment_method === "mollie" && booking.paid_at) {
+      if (!booking.stripe_session_id?.startsWith("tr_")) throw new Error("Mollie-Zahlungs-ID fehlt");
       try {
-        const body = refundType === "partial" ? await req.json().catch(() => ({})) : {};
-        const partialAmount = refundType === "partial" ? (body.refundAmount || 0) : 0;
         const refund = await createMollieRefund(
           booking.stripe_session_id,
-          partialAmount > 0 ? partialAmount : undefined,
+          requestedRefund,
         );
+        if (refund.status === "failed") throw new Error("Erstattung abgelehnt");
         refundResult = { id: refund.id, status: refund.status, amount: Number(refund.amount.value) * 100 };
         refundAmount = Number(refund.amount.value);
       } catch (mollieErr: any) {
         console.error("Mollie refund error:", mollieErr);
-        refundResult = { error: mollieErr.message };
+        throw new Error("Mollie-Erstattung fehlgeschlagen; Buchung wurde nicht storniert");
       }
+    }
+
+    // Record exactly the provider-accepted amount once; the frontend must not duplicate it.
+    if (refundResult && refundAmount > 0) {
+      const { error: entryError } = await admin.from("tour_payment_entries").insert({
+        booking_id: bookingId, amount: -refundAmount, method: "refund",
+        reference: refundResult.id, note: `Storno-Erstattung (${booking.payment_method}; ${refundResult.status})`,
+        recorded_by: user.id,
+      });
+      if (entryError) throw new Error(`Erstattung ${refundResult.id} wurde angenommen, aber nicht verbucht. Nicht erneut erstatten; Buchhaltung prüfen.`);
     }
 
     // Update booking status
