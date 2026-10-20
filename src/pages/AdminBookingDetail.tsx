@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import AutomationPanel from "@/components/admin/AutomationPanel";
 import BookingGuestsPanel from "@/components/admin/BookingGuestsPanel";
 import { cn } from "@/lib/utils";
+import { cancellationRefundSelection } from "@/lib/cancellationRefund";
 
 interface TourBooking {
   id: string; booking_number: string; contact_first_name: string; contact_last_name: string;
@@ -195,21 +196,29 @@ const AdminBookingDetail = () => {
     try {
       const reason = cancelForm.reason === "other" ? cancelForm.customReason : cancelForm.reason;
       const hasStripePayment = !!booking.stripe_payment_intent_id && !!booking.paid_at;
+      const hasMolliePayment = booking.payment_method === "mollie" && !!booking.paid_at;
+      const hasProviderPayment = hasStripePayment || hasMolliePayment;
+      const recordedPaid = payments.reduce((s, p) => s + Number(p.amount), 0);
+      const paidForCancellation = hasProviderPayment
+        ? (payments.some(p => Number(p.amount) > 0) ? recordedPaid : booking.total_price + Math.min(0, recordedPaid))
+        : recordedPaid;
+      const refundSelection = cancellationRefundSelection(booking.total_price, Math.max(0, paidForCancellation), cancelForm.applyFee, cancelForm.feePercent);
 
-      // Use edge function for cancellation with automatic Stripe refund
+      // Explicitly pass the fee-adjusted amount; zero means no provider refund.
       const { data, error } = await supabase.functions.invoke("cancel-tour-booking", {
         body: {
           bookingId: booking.id,
           reason,
-          refundType: hasStripePayment ? "full" : undefined,
+          refundType: hasProviderPayment ? refundSelection.refundType : "none",
+          refundAmount: hasProviderPayment ? refundSelection.refundAmount : undefined,
         },
       });
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      // Also record local payment entry for non-Stripe refunds
-      if (!hasStripePayment) {
+      // Provider refunds are recorded by the function, never a second time here.
+      if (!hasProviderPayment) {
         const feeAmount = cancelForm.applyFee ? (booking.total_price * cancelForm.feePercent / 100) : 0;
         const totalPaidNow = payments.reduce((s, p) => s + Number(p.amount), 0);
         if (totalPaidNow > 0) {
@@ -224,7 +233,7 @@ const AdminBookingDetail = () => {
       }
 
       const msg = data?.refundAmount > 0
-        ? `✅ Buchung storniert & ${data.refundAmount.toFixed(2)}€ über Stripe zurückerstattet`
+        ? `✅ Buchung storniert & ${fmt(data.refundAmount)} über ${hasMolliePayment ? "Mollie" : "Stripe"} zur Erstattung angewiesen`
         : "✅ Buchung storniert";
       toast({ title: msg });
       setCancelModal(false);
@@ -290,7 +299,8 @@ const AdminBookingDetail = () => {
 
   const totalPaid = payments.filter(p => Number(p.amount) > 0).reduce((s, p) => s + Number(p.amount), 0);
   const totalRefunded = payments.filter(p => Number(p.amount) < 0).reduce((s, p) => s + Math.abs(Number(p.amount)), 0);
-  const netPaid = totalPaid - totalRefunded;
+  const providerPaid = !!booking.paid_at && (booking.payment_method === "mollie" || !!booking.stripe_payment_intent_id);
+  const netPaid = (totalPaid > 0 ? totalPaid : providerPaid ? booking.total_price : 0) - totalRefunded;
   const openAmount = Math.max(0, booking.total_price - netPaid);
   const paymentStatus = netPaid >= booking.total_price ? "bezahlt" : netPaid > 0 ? "teil" : "offen";
   const passengers: any[] = Array.isArray(booking.passenger_details) ? booking.passenger_details : [];
@@ -1015,7 +1025,7 @@ const AdminBookingDetail = () => {
             </div>
             {cancelForm.applyFee && (
               <div className="grid grid-cols-2 gap-3">
-                <div><Label className="text-zinc-400 text-xs">Gebühr (%)</Label><Input type="number" value={cancelForm.feePercent} onChange={(e) => setCancelForm(f => ({ ...f, feePercent: parseInt(e.target.value) || 0 }))} className="bg-[#1a1f2a] border-[#2a3040] text-white" /></div>
+                <div><Label className="text-zinc-400 text-xs">Gebühr (%)</Label><Input type="number" min={0} max={100} value={cancelForm.feePercent} onChange={(e) => setCancelForm(f => ({ ...f, feePercent: parseInt(e.target.value) || 0 }))} className="bg-[#1a1f2a] border-[#2a3040] text-white" /></div>
                 <div><Label className="text-zinc-400 text-xs">Gebühr (€)</Label><div className="bg-[#1a1f2a] border border-[#2a3040] rounded-md px-3 py-2 text-white mt-1 text-sm">{fmt(booking.total_price * cancelForm.feePercent / 100)}</div></div>
               </div>
             )}
