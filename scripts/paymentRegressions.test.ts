@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { cancellationRefundSelection } from "./cancellationRefund";
-import { busPaymentReturnSession, BUS_PAYMENT_STORAGE_KEY } from "./busPaymentReturn";
-import { cancellationRefundAmount } from "../../supabase/functions/_shared/cancellation-refund";
+import { cancellationRefundSelection } from "../src/lib/cancellationRefund";
+import { busPaymentReturnSession, BUS_PAYMENT_STORAGE_KEY } from "../src/lib/busPaymentReturn";
+import { cancellationRefundAmount } from "../supabase/functions/_shared/cancellation-refund";
 
 describe("tour cancellation refunds", () => {
   test("20% fee on a 100 euro paid booking refunds only 80 euro", () => {
