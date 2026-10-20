@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Zahlungsfehler prüfen und beheben
-- [ ] Mollie-Tourstorno: ausdrückliche Erstattungsauswahl, korrekter Teilbetrag und keine doppelte Buchhaltung
-- [ ] Bus-Checkout: Zahlungsrückkehr begrenzen und gespeicherte Zahlungs-ID entfernen
-- [ ] Regressionstests und Buchungsrückkehr prüfen; Stornofunktion bereitstellen
+- [x] Mollie-Tourstorno: ausdrückliche Erstattungsauswahl, korrekter Teilbetrag und keine doppelte Buchhaltung
+- [x] Bus-Checkout: Zahlungsrückkehr begrenzen und gespeicherte Zahlungs-ID entfernen
+- [x] 14 Regressionstests bestanden; angemeldete Buchungsrückkehr mit kontrollierter Zahlungsantwort und vorhandener Fahrt geprüft; Stornofunktion bereitgestellt (keine echte Geldbewegung getestet)
 
 ## Paris-Silvester-Special
 - [x] Paris-Seite für 30.12.2026–01.01.2027 an bestehende Landingpages angleichen und Feuerwerksmotiv einbauen
