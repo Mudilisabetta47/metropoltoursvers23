@@ -18,6 +18,7 @@ import tourNordmazedonien from "@/assets/tour-nordmazedonien.jpg";
 import tourAlbanien from "@/assets/tour-albanien.jpg";
 import tourKosovo from "@/assets/tour-kosovo.jpg";
 import AiBadge from "@/components/common/AiBadge";
+import { tourServiceIndicators } from "@/lib/tourServiceIndicators";
 
 const imageMap: Record<string, string> = {
   '/tour-croatia.jpg': tourCroatia,
@@ -302,12 +303,12 @@ const PackageToursSection = () => {
                         <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
                           <div className="flex items-center gap-1">
                             <Bus className="w-3.5 h-3.5 text-primary" />
-                            <span>Bus</span>
+                            <span>{tourServiceIndicators(tour.included_services).roundTrip ? "Hin- und Rückfahrt" : "Bus"}</span>
                           </div>
-                          <div className="flex items-center gap-1">
+                          {tourServiceIndicators(tour.included_services).hotel && <div className="flex items-center gap-1">
                             <Hotel className="w-3.5 h-3.5 text-primary" />
                             <span>Hotel</span>
-                          </div>
+                          </div>}
                           <div className="flex items-center gap-0.5">
                             {[...Array(5)].map((_, i) => (
                               <Star key={i} className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
