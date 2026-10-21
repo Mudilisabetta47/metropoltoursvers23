@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
-import { createMollieRefund } from "../_shared/mollie.ts";
+import { createMollieRefund, getMolliePayment } from "../_shared/mollie.ts";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { z } from "npm:zod@3.25.76";
 import { cancellationRefundAmount } from "../_shared/cancellation-refund.ts";
@@ -66,6 +66,13 @@ serve(async (req) => {
       const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
       try {
+        const intent = await stripe.paymentIntents.retrieve(booking.stripe_payment_intent_id, { expand: ["latest_charge"] });
+        const charge = typeof intent.latest_charge === "string"
+          ? await stripe.charges.retrieve(intent.latest_charge)
+          : intent.latest_charge;
+        if (!charge || intent.currency !== "eur") throw new Error("Gezahlter Betrag konnte nicht geprüft werden");
+        const remaining = (charge.amount - charge.amount_refunded) / 100;
+        const providerRefund = cancellationRefundAmount(refundType, requestedAmount, remaining);
         if (refundType === "full") {
           const refund = await stripe.refunds.create({
             payment_intent: booking.stripe_payment_intent_id,
@@ -75,7 +82,7 @@ serve(async (req) => {
         } else if (refundType === "partial") {
             const refund = await stripe.refunds.create({
               payment_intent: booking.stripe_payment_intent_id,
-              amount: Math.round(requestedRefund * 100),
+              amount: Math.round(providerRefund * 100),
             });
             refundResult = { id: refund.id, status: refund.status, amount: refund.amount };
             refundAmount = refund.amount / 100;
@@ -90,9 +97,15 @@ serve(async (req) => {
     if (requestedRefund > 0 && booking.payment_method === "mollie" && booking.paid_at) {
       if (!booking.stripe_session_id?.startsWith("tr_")) throw new Error("Mollie-Zahlungs-ID fehlt");
       try {
+        const payment = await getMolliePayment(booking.stripe_session_id);
+        const refunded = payment.amountRefunded as { value: string } | undefined;
+        const remaining = payment.amountRemaining as { value: string } | undefined;
+        if (payment.status !== "paid" || payment.amount.currency !== "EUR") throw new Error("Gezahlter Betrag konnte nicht geprüft werden");
+        const available = remaining ? Number(remaining.value) : Number(payment.amount.value) - Number(refunded?.value ?? 0);
+        const providerRefund = cancellationRefundAmount(refundType, requestedAmount, available);
         const refund = await createMollieRefund(
           booking.stripe_session_id,
-          requestedRefund,
+          providerRefund,
         );
         if (refund.status === "failed") throw new Error("Erstattung abgelehnt");
         refundResult = { id: refund.id, status: refund.status, amount: Number(refund.amount.value) * 100 };

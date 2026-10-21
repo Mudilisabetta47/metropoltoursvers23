@@ -1,9 +1,21 @@
 import { describe, expect, test } from "bun:test";
-import { cancellationRefundSelection } from "../src/lib/cancellationRefund";
+import { cancellationPaidAmount, cancellationRefundSelection } from "../src/lib/cancellationRefund";
 import { busPaymentReturnSession, BUS_PAYMENT_STORAGE_KEY } from "../src/lib/busPaymentReturn";
 import { cancellationRefundAmount } from "../supabase/functions/_shared/cancellation-refund";
 
 describe("tour cancellation refunds", () => {
+  test("coupon-paid booking without ledger payments refunds only the discounted charge", () => {
+    const paid = cancellationPaidAmount(100, 30, [], true);
+    expect(paid).toBe(70);
+    expect(cancellationRefundSelection(100, paid, false, 0).refundAmount).toBe(70);
+    expect(cancellationRefundSelection(100, paid, true, 20).refundAmount).toBe(50);
+  });
+  test("previous refunds reduce coupon payments and positive ledger payments take precedence", () => {
+    expect(cancellationPaidAmount(100, 30, [{ amount: -10 }], true)).toBe(60);
+    expect(cancellationPaidAmount(100, 30, [{ amount: 70 }, { amount: -10 }], true)).toBe(60);
+    expect(cancellationPaidAmount(100, null, [], true)).toBe(100);
+    expect(cancellationPaidAmount(100, 30, [], false)).toBe(0);
+  });
   test("20% fee on a 100 euro paid booking refunds only 80 euro", () => {
     const selection = cancellationRefundSelection(100, 100, true, 20);
     expect(selection).toEqual({ refundType: "partial", refundAmount: 80 });
