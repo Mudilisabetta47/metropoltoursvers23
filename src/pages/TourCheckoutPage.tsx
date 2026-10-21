@@ -375,13 +375,15 @@ const TourCheckoutPage = () => {
         payment_method: selectedPaymentMethod, status: "pending", booking_type: "direct",
         customer_notes: JSON.stringify({ consent_agb: consentTimestamp, consent_privacy: consentTimestamp, consent_travel_info: agreeTravelInfo ? consentTimestamp : null }),
       };
-      const { data: bookingData, error: bookingError } = await supabase
+      // Guests may insert but not read tour_bookings, so the ID is created here and
+      // the trigger-generated booking_number is fetched via a narrow lookup function.
+      const newBookingId = crypto.randomUUID();
+      const { error: bookingError } = await supabase
         .from("tour_bookings")
-        // booking_number is generated server-side by a DB trigger (MT-YYYY-000000)
-        .insert(bookingPayload as never)
-        .select("id, booking_number")
-        .single();
+        .insert({ ...bookingPayload, id: newBookingId } as never);
       if (bookingError) throw bookingError;
+      const { data: newNumber } = await supabase.rpc("get_new_tour_booking_number" as never, { p_booking_id: newBookingId } as never);
+      const bookingData = { id: newBookingId, booking_number: (newNumber as unknown as string) || "" };
 
       const { data: seatsReserved, error: seatsError } = await supabase.rpc("reserve_tour_seats", { p_tour_date_id: selectedDate!.id, p_seats: participants });
       if (seatsError) console.warn("Seat reservation skipped:", seatsError.message);

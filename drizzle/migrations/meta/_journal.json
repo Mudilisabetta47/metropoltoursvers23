@@ -15,6 +15,13 @@
       "when": 1790760014938,
       "tag": "0001_restrict_trip_registry_public_read",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792587431057,
+      "tag": "0002_tour_booking_number_lookup",
+      "breakpoints": true
     }
   ]
 }

@@ -9067,6 +9067,10 @@ export type Database = {
           severity: string
         }[]
       }
+      get_new_tour_booking_number: {
+        Args: { p_booking_id: string }
+        Returns: string
+      }
       get_passenger_token: {
         Args: { p_token: string }
         Returns: {
