@@ -741,7 +741,7 @@ const ReisenPage = () => {
                                     <span className="text-xs text-muted-foreground">ab</span>
                                     <span className="font-serif text-3xl font-bold text-foreground">{tour.price_from.toLocaleString("de-DE")} €</span>
                                   </div>
-                                  <p className="text-[10px] text-muted-foreground">pro Person · alles inkl.</p>
+                                  <p className="text-[10px] text-muted-foreground">pro Person · {tourServiceIndicators(tour.included_services).roundTrip ? "Hin- und Rückfahrt inkl." : "Leistungen laut Reisebeschreibung"}</p>
                                 </>
                               ) : (
                                 <p className="font-serif text-xl font-bold text-foreground">Preis auf Anfrage</p>
