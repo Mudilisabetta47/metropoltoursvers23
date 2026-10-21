@@ -1,10 +1,10 @@
 # Roadmap
 
 ## Silvesterreisen-Einstieg
-- [ ] Zusätzlichen ersten Startseiten-Slide mit hochgeladenem Amsterdam-Busbild erstellen
-- [ ] Datenbasierte Silvesterreisen-Übersicht mit Buchungslinks, FAQ und Suchmaschinen-Angaben erstellen
-- [ ] Übersicht und veröffentlichte Silvesterreisen in Sitemap und Footer aufnehmen
-- [ ] Auswahlregeln testen und Startseite → Übersicht → eigene Reise auf Desktop/Mobil prüfen
+- [x] Zusätzlichen ersten Startseiten-Slide mit hochgeladenem Amsterdam-Busbild erstellen
+- [x] Datenbasierte Silvesterreisen-Übersicht mit Buchungslinks, FAQ und Suchmaschinen-Angaben erstellen
+- [x] Übersicht und veröffentlichte Silvesterreisen in Sitemap und Footer aufnehmen
+- [x] Auswahlregeln mit 2 Tests prüfen; Startseite → Übersicht → eigene Reise auf Desktop/Mobil geprüft; gehostete Bildadresse liefert PNG (lokaler Browser nutzt Originalbild als CDN-Ersatz)
 
 ## Gutschein-Stornierung
 - [x] Rabattierten Zahlbetrag in Verwaltung und serverseitiger Erstattungsprüfung verwenden
