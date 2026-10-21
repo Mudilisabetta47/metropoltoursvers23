@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDown, ArrowRight, CalendarDays, MapPin, Mail, Phone, Sparkles, Bus, ShieldCheck } from "lucide-react";
+import { ArrowDown, ArrowRight, CalendarDays, MapPin, Mail, Phone, Sparkles, Bus, ShieldCheck, CalendarClock, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { absoluteUrl, breadcrumbJsonLd, faqJsonLd } from "@/lib/seo";
 import { selectSilvesterTours, silvesterFaq } from "@/lib/silvesterTours";
 import hero from "@/assets/silvester-amsterdam-bus.png.asset.json";
+import { PaymentBrandLogos } from "@/components/checkout/PaymentBrandLogos";
 
 const dateLabel = (value: string) => new Date(`${value}T12:00:00`).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
 
@@ -50,6 +51,21 @@ export default function SilvesterreisenPage() {
         <AiBadge className="bottom-3 right-4" />
       </section>
       <div className="border-b border-border"><div className="container grid grid-cols-1 gap-4 px-4 py-6 text-sm sm:grid-cols-3 lg:px-8">{[{ icon: Bus, text: "Mit METROPOL TOURS unterwegs" }, { icon: CalendarDays, text: "Termine direkt aus unserer Reiseplanung" }, { icon: ShieldCheck, text: "Sicher online bezahlen mit Mollie" }].map(({ icon: Icon, text }) => <div className="flex items-center gap-3" key={text}><Icon className="h-5 w-5 shrink-0 text-primary" /><span>{text}</span></div>)}</div></div>
+      <section aria-label="Zahlungsmethoden" className="border-b border-border bg-muted/40">
+        <div className="container flex flex-col gap-6 px-4 py-8 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+          <div className="space-y-3">
+            <p className="text-sm font-semibold">Deine Reise. Deine Zahlungsart.</p>
+            <PaymentBrandLogos brands={["visa", "mastercard", "amex", "klarna", "sepa", "paypal"]} />
+          </div>
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm font-medium">
+              <span className="flex items-center gap-2"><CalendarClock className="h-5 w-5 shrink-0 text-primary" />Mit Klarna in 30 Tagen bezahlen</span>
+              <span className="flex items-center gap-2"><CreditCard className="h-5 w-5 shrink-0 text-primary" />Klarna Ratenzahlung</span>
+            </div>
+            <p className="max-w-xl text-xs leading-relaxed text-muted-foreground">Vorbehaltlich Verfügbarkeit und Bonitätsprüfung durch Klarna. Die verfügbaren Optionen und Bedingungen werden dir beim Bezahlen angezeigt.</p>
+          </div>
+        </div>
+      </section>
       <section id="reisen" className="container scroll-mt-24 px-4 py-16 lg:px-8 lg:py-20">
         <div className="mb-9 flex flex-wrap items-end justify-between gap-5"><div><p className="mb-3 text-sm font-semibold text-primary">DEIN JAHRESWECHSEL</p><h2 className="text-3xl font-bold md:text-4xl">Wohin startet dein neues Jahr?</h2></div><p className="max-w-sm text-sm leading-relaxed text-muted-foreground">Unsere Silvester-Busreisen. Deine Wahl.<br />Alle Details und Tarife findest du bei der jeweiligen Reise.</p></div>
         {isLoading ? <div role="status" className="py-12 text-muted-foreground">Reisen werden geladen …</div> : isError ? <div className="py-10"><p className="mb-4">Die Reisen konnten gerade nicht geladen werden.</p><Button variant="outline" onClick={() => refetch()}>Erneut laden</Button></div> : tours.length === 0 ? <p className="py-12 text-muted-foreground">Aktuell sind keine kommenden Silvestertermine freigegeben. Fragen? <a className="text-primary underline" href="mailto:kundenservice@metours.de">Schreib uns.</a></p> : <div className="grid gap-8 md:grid-cols-2">{tours.map(tour => <article key={tour.id} className="group overflow-hidden rounded-lg border border-border bg-card text-card-foreground">
