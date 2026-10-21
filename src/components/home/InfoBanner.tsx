@@ -4,15 +4,15 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 
-// Wartungshinweis bis einschließlich Sonntag, 11.10.2026 (danach automatisch ausgeblendet)
-const MAINTENANCE_UNTIL = new Date("2026-10-12T00:00:00+02:00");
+// Wartungshinweis 21.10.2026 23:00 bis 22.10.2026 06:00 (danach automatisch ausgeblendet)
+const MAINTENANCE_UNTIL = new Date("2026-10-22T06:00:00+02:00");
 
 export function InfoBanner() {
   if (new Date() < MAINTENANCE_UNTIL) {
     return (
       <section className="relative w-full border-b border-primary/20 bg-primary/10 pt-16 lg:pt-20">
         <div className="container mx-auto px-4 py-3 text-center text-sm sm:text-[15px] leading-snug text-foreground">
-          <span className="font-semibold">Wartungsarbeiten vom 09.10. bis 11.10.2026:</span>{" "}
+          <span className="font-semibold">Wartungsarbeiten vom 21.10.2026, 23:00 Uhr bis 22.10.2026, 06:00 Uhr:</span>{" "}
           Online-Buchungen sind in dieser Zeit leider nicht möglich. Per E-Mail sind wir weiterhin für Sie da:{" "}
           <a href="mailto:kundenservice@metours.de" className="font-semibold text-primary underline underline-offset-2">
             kundenservice@metours.de
