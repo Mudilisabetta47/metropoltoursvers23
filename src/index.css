@@ -5,6 +5,36 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Shared New Year campaign: charcoal, brand green and warm city photography. */
+.silvester-campaign {
+  --background: 240 5% 7%;
+  --foreground: 0 0% 98%;
+  --card: 240 4% 11%;
+  --card-foreground: 0 0% 98%;
+  --muted: 240 4% 16%;
+  --muted-foreground: 240 3% 70%;
+  --border: 240 4% 23%;
+  --silvester-overlay: linear-gradient(90deg, hsl(240 5% 4% / .87), hsl(240 5% 4% / .35) 55%, hsl(240 5% 4% / .06)), linear-gradient(0deg, hsl(240 5% 7%), transparent 55%);
+  letter-spacing: 0;
+}
+.silvester-campaign h1, .silvester-campaign h2, .silvester-campaign h3 { letter-spacing: 0; }
+.silvester-hero { height: min(790px, 83svh); min-height: 620px; }
+.silvester-title { font-size: 76px; letter-spacing: 0; }
+.silvester-shade { background: var(--silvester-overlay); }
+.silvester-image { object-position: 65% center; }
+.silvester-home-copy { padding-top: 100px; }
+.silvester-home-slide { min-height: 620px; }
+@media (max-width: 767px) {
+  .silvester-hero { height: 720px; min-height: 0; max-height: 88svh; }
+  .silvester-title { font-size: 44px; }
+  .silvester-home-copy { padding-top: 80px; }
+  .silvester-home-slide { min-height: 640px; }
+  .silvester-home-slide h1 { font-size: 38px; letter-spacing: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .silvester-campaign *, .silvester-home-slide * { animation: none !important; transition: none !important; }
+}
+
 /* Scoped campaign tokens preserve the existing site and admin themes. */
 .paris-special {
   --background: 0 0% 100%;

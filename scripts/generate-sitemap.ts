@@ -31,6 +31,7 @@ const staticEntries: SitemapEntry[] = [
   { path: "/bewertungen", changefreq: "weekly", priority: "0.7" },
   { path: "/gutscheine", changefreq: "monthly", priority: "0.6" },
   { path: "/reisen", changefreq: "monthly", priority: "0.7" },
+  { path: "/silvesterreisen", changefreq: "weekly", priority: "0.9" },
   { path: "/service", changefreq: "monthly", priority: "0.7" },
   // SEO-Landingpages (Busvermietung / Personenbeförderung)
   { path: "/bus-mieten", changefreq: "monthly", priority: "0.9" },
@@ -107,6 +108,18 @@ async function loadDynamicEntries(): Promise<SitemapEntry[]> {
     .eq("category", "weekend");
   if (packageError) console.warn("sitemap: package_tours weekend:", packageError.message);
   for (const t of packageTrips || []) addTrip(t.slug);
+
+  // Published New Year tours use the existing shared tour detail template.
+  const { data: newYearTours, error: newYearError } = await supabase
+    .from("package_tours").select("slug,destination,seo_noindex,tour_dates(departure_date,is_active,status)")
+    .eq("is_active", true).eq("publish_status", "published");
+  if (newYearError) console.warn("sitemap: silvesterreisen:", newYearError.message);
+  const today = new Date().toISOString().slice(0, 10);
+  for (const tour of newYearTours || []) {
+    if (!tour.slug || tour.seo_noindex || !/silvester/i.test(`${tour.slug} ${tour.destination}`)) continue;
+    if (!tour.tour_dates.some(date => date.is_active && date.departure_date >= today && date.status !== "cancelled")) continue;
+    entries.push({ path: `/reisen/${tour.slug}`, changefreq: "weekly", priority: "0.8" });
+  }
 
   // Blog-Artikel (Reise-Magazin)
   const { data: posts, error: postsError } = await supabase

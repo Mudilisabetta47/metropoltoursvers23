@@ -24,6 +24,7 @@ const ServicePage = lazy(() => import("./pages/ServicePage"));
 
 const BusreisenPage = lazy(() => import("./pages/BusreisenPage"));
 const ReisenPage = lazy(() => import("./pages/ReisenPage"));
+const SilvesterreisenPage = lazy(() => import("./pages/SilvesterreisenPage"));
 
 const BusinessServicesPage = lazy(() => import("./pages/BusinessServicesPage"));
 const GiftVoucherPage = lazy(() => import("./pages/GiftVoucherPage"));
@@ -239,6 +240,7 @@ const App = () => (
               <Route path="/service" element={<ServicePage />} />
               {/* Pauschalreisen-Katalog */}
               <Route path="/reisen" element={<ReisenPage />} />
+              <Route path="/silvesterreisen" element={<SilvesterreisenPage />} />
 
               <Route path="/pauschalreisen" element={<Navigate to="/reisen" replace />} />
 

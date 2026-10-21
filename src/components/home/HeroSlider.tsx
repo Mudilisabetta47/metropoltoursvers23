@@ -16,6 +16,7 @@ import sliderGruppenreisen from "@/assets/slider-gruppenreisen.jpg";
 import sliderStrandurlaub from "@/assets/slider-strandurlaub.jpg";
 import sliderKulturreisen from "@/assets/slider-kulturreisen.jpg";
 import AiBadge from "@/components/common/AiBadge";
+import silvesterBus from "@/assets/silvester-amsterdam-bus.png.asset.json";
 
 interface Slide {
   image: string;
@@ -30,6 +31,17 @@ interface Slide {
 }
 
 const slides: Slide[] = [
+  {
+    image: silvesterBus.url,
+    alt: "METROPOL TOURS Reisebus am Amsterdamer Kanal – Silvesterreisen nach Amsterdam und Paris",
+    badge: "Silvesterreisen · Jetzt entdecken",
+    title: "Silvesterreisen",
+    highlight: "Paris & Amsterdam",
+    subtitle: "Deine Menschen. Ein neuer Anfang. Entdecke unsere Reisen zum Jahreswechsel und finde dein Silvester mit METROPOL TOURS.",
+    cta: "Silvesterreise finden",
+    link: "/silvesterreisen",
+    icon: Calendar,
+  },
   {
     image: sliderPauschalreisen.url,
     alt: "Grüner METROPOL TOURS Reisebus auf einer nächtlichen Bergstraße",
@@ -140,7 +152,7 @@ const HeroSlider = () => {
   const SlideIcon = slide.icon;
 
   return (
-    <section className="relative h-auto min-h-screen lg:h-[95vh] lg:min-h-[700px] overflow-hidden">
+    <section className={cn("relative h-auto min-h-screen lg:h-[95vh] lg:min-h-[700px] overflow-hidden", currentSlide === 0 && "silvester-home-slide")}>
       {/* Background Images */}
       <AnimatePresence mode="popLayout" initial={false}>
         <motion.div
@@ -154,7 +166,7 @@ const HeroSlider = () => {
           <img
             src={slide.image}
             alt={slide.alt}
-            className="w-full h-full object-cover"
+            className={cn("w-full h-full object-cover", currentSlide === 0 && "silvester-image")}
             width={1920}
             height={1080}
             loading={currentSlide === 0 ? "eager" : "lazy"}
@@ -172,7 +184,7 @@ const HeroSlider = () => {
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:gap-12">
             {/* Left: Slide Text */}
-            <div className="max-w-2xl flex-1">
+            <div className={cn("max-w-2xl flex-1", currentSlide === 0 && "silvester-home-copy")}>
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentSlide}
@@ -236,7 +248,7 @@ const HeroSlider = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.5 }}
-              className="mt-6 lg:mt-0 w-full lg:w-[420px] shrink-0"
+              className={cn("mt-6 lg:mt-0 w-full lg:w-[420px] shrink-0", currentSlide === 0 && "hidden")}
             >
               <div className="bg-white/10 backdrop-blur-xl rounded-2xl lg:rounded-3xl p-4 lg:p-6 border border-white/20 shadow-2xl">
                 <h3 className="text-white font-bold text-base lg:text-lg mb-3 lg:mb-5 flex items-center gap-2">
