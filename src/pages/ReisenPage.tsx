@@ -43,6 +43,7 @@ import tourKosovo from "@/assets/tour-kosovo.jpg";
 import AiBadge from "@/components/common/AiBadge";
 import TravelSearchBar from "@/components/reisen/TravelSearchBar";
 import reisenHeroBus from "@/assets/reisen-hero-bus.jpg.asset.json";
+import { tourServiceIndicators } from "@/lib/tourServiceIndicators";
 
 const imageMap: Record<string, string> = {
   '/tour-croatia.jpg': tourCroatia,
@@ -723,9 +724,9 @@ const ReisenPage = () => {
 
                           {/* Inclusion icons */}
                           <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-muted-foreground mb-4">
-                            <span className="flex items-center gap-1"><Hotel className="w-3.5 h-3.5 text-primary" /> Hotel</span>
-                            <span className="flex items-center gap-1"><Coffee className="w-3.5 h-3.5 text-primary" /> Frühstück</span>
-                            <span className="flex items-center gap-1"><Bus className="w-3.5 h-3.5 text-primary" /> Reisebus</span>
+                            {tourServiceIndicators(tour.included_services).hotel && <span className="flex items-center gap-1"><Hotel className="w-3.5 h-3.5 text-primary" /> Hotel</span>}
+                            {tourServiceIndicators(tour.included_services).breakfast && <span className="flex items-center gap-1"><Coffee className="w-3.5 h-3.5 text-primary" /> Frühstück</span>}
+                            {tourServiceIndicators(tour.included_services).bus && <span className="flex items-center gap-1"><Bus className="w-3.5 h-3.5 text-primary" /> {tourServiceIndicators(tour.included_services).roundTrip ? "Hin- und Rückfahrt" : "Reisebus"}</span>}
                           </div>
 
                           {/* Footer: price + cta */}
@@ -740,7 +741,7 @@ const ReisenPage = () => {
                                     <span className="text-xs text-muted-foreground">ab</span>
                                     <span className="font-serif text-3xl font-bold text-foreground">{tour.price_from.toLocaleString("de-DE")} €</span>
                                   </div>
-                                  <p className="text-[10px] text-muted-foreground">pro Person · alles inkl.</p>
+                                  <p className="text-[10px] text-muted-foreground">pro Person · {tourServiceIndicators(tour.included_services).roundTrip ? "Hin- und Rückfahrt inkl." : "Leistungen laut Reisebeschreibung"}</p>
                                 </>
                               ) : (
                                 <p className="font-serif text-xl font-bold text-foreground">Preis auf Anfrage</p>

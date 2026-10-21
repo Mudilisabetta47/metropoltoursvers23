@@ -19,7 +19,7 @@ const iconMap: Record<string, React.ElementType> = {
 const TourInclusionsSection = ({ inclusions, includedServices, tariffs, selectedTariff, onSelectTariff }: TourInclusionsSectionProps) => {
   const includedItems = inclusions.filter(i => i.category === 'included');
   const optionalItems = inclusions.filter(i => i.category === 'optional');
-  const notIncludedItems = inclusions.filter(i => i.category === 'not_included');
+  const notIncludedItems = inclusions.filter(i => ['excluded', 'not_included'].includes(i.category));
 
   return (
     <section id="section-leistungen" className="space-y-6 scroll-mt-36">
