@@ -26,7 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import AutomationPanel from "@/components/admin/AutomationPanel";
 import BookingGuestsPanel from "@/components/admin/BookingGuestsPanel";
 import { cn } from "@/lib/utils";
-import { cancellationRefundSelection } from "@/lib/cancellationRefund";
+import { cancellationPaidAmount, cancellationRefundSelection } from "@/lib/cancellationRefund";
 
 interface TourBooking {
   id: string; booking_number: string; contact_first_name: string; contact_last_name: string;
@@ -198,10 +198,7 @@ const AdminBookingDetail = () => {
       const hasStripePayment = !!booking.stripe_payment_intent_id && !!booking.paid_at;
       const hasMolliePayment = booking.payment_method === "mollie" && !!booking.paid_at;
       const hasProviderPayment = hasStripePayment || hasMolliePayment;
-      const recordedPaid = payments.reduce((s, p) => s + Number(p.amount), 0);
-      const paidForCancellation = hasProviderPayment
-        ? (payments.some(p => Number(p.amount) > 0) ? recordedPaid : booking.total_price + Math.min(0, recordedPaid))
-        : recordedPaid;
+      const paidForCancellation = cancellationPaidAmount(booking.total_price, booking.discount_amount, payments, hasProviderPayment);
       const refundSelection = cancellationRefundSelection(booking.total_price, Math.max(0, paidForCancellation), cancelForm.applyFee, cancelForm.feePercent);
 
       // Explicitly pass the fee-adjusted amount; zero means no provider refund.
@@ -300,7 +297,7 @@ const AdminBookingDetail = () => {
   const totalPaid = payments.filter(p => Number(p.amount) > 0).reduce((s, p) => s + Number(p.amount), 0);
   const totalRefunded = payments.filter(p => Number(p.amount) < 0).reduce((s, p) => s + Math.abs(Number(p.amount)), 0);
   const providerPaid = !!booking.paid_at && (booking.payment_method === "mollie" || !!booking.stripe_payment_intent_id);
-  const netPaid = (totalPaid > 0 ? totalPaid : providerPaid ? booking.total_price : 0) - totalRefunded;
+  const netPaid = cancellationPaidAmount(booking.total_price, booking.discount_amount, payments, providerPaid);
   const openAmount = Math.max(0, booking.total_price - netPaid);
   const paymentStatus = netPaid >= booking.total_price ? "bezahlt" : netPaid > 0 ? "teil" : "offen";
   const passengers: any[] = Array.isArray(booking.passenger_details) ? booking.passenger_details : [];

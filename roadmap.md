@@ -1,5 +1,10 @@
 # Roadmap
 
+## Gutschein-Stornierung
+- [x] Rabattierten Zahlbetrag in Verwaltung und serverseitiger Erstattungsprüfung verwenden
+- [x] 22 Tests bestanden; Stripe/Mollie-Gutschein-Storno mit/ohne Gebühr und vorheriger Erstattung geprüft; Funktion bereitgestellt
+- Browserprüfung einer echten Gutschein-Stornierung nicht möglich: keine zugängliche aktive rabattierte Onlinebuchung gefunden; keine echte Auszahlung ausgelöst
+
 ## Zahlungsfehler prüfen und beheben
 - [x] Mollie-Tourstorno: ausdrückliche Erstattungsauswahl, korrekter Teilbetrag und keine doppelte Buchhaltung
 - [x] Bus-Checkout: Zahlungsrückkehr begrenzen und gespeicherte Zahlungs-ID entfernen
