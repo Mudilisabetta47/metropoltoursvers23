@@ -3,7 +3,7 @@
 ## Admin-Reisebilder
 - [x] Bilderübersicht mit Reisezuordnung, Suche und Bereichsfilter ergänzen
 - [x] Einzelbilder und ZIP-Auswahl mit Zuordnungsliste herunterladen
-- [ ] Tests und angemeldeten Download mit echten Reisebildern prüfen
+- [x] 3 Tests bestanden; mit Adminzugang echtes Amsterdam-Bild und ZIP mit zwei Bildern und Zuordnungsliste heruntergeladen, keine Downloadfehler
 
 ## Silvesterreisen-Einstieg
 - [x] Zusätzlichen ersten Startseiten-Slide mit hochgeladenem Amsterdam-Busbild erstellen

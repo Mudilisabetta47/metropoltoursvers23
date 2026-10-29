@@ -40,12 +40,12 @@ export default function AdminTravelMedia() {
   const filtered = useMemo(() => data.filter(image => (group === "all" || image.group === group) && `${image.name} ${image.usages.join(" ")}`.toLocaleLowerCase("de").includes(search.toLocaleLowerCase("de"))), [data, group, search]);
   const toggle = (id: string) => setSelected(previous => { const next = new Set(previous); if (next.has(id)) next.delete(id); else next.add(id); return next; });
 
-  const prepare = async (images: TravelImage[]) => {
+  const prepare = async (images: TravelImage[], asArchive = false) => {
     setError(null);
     setReady(null);
     setProgress("Bilder werden geladen…");
     try {
-      if (images.length === 1) {
+      if (images.length === 1 && !asArchive) {
         const blob = await fetchImage(images[0].url);
         setReady({ blob, filename: imageFilename(images[0], 0, blob.type) });
       } else {
@@ -90,7 +90,7 @@ export default function AdminTravelMedia() {
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" disabled={!filtered.length || Boolean(progress)} onClick={() => setSelected(new Set(filtered.map(image => image.id)))}>Alle angezeigten auswählen</Button>
           {selected.size > 0 && <Button variant="ghost" disabled={Boolean(progress)} onClick={() => setSelected(new Set())}>Auswahl aufheben</Button>}
-          <Button disabled={!selected.size || Boolean(progress)} onClick={() => void prepare(data.filter(image => selected.has(image.id)))}><Download className="mr-2 h-4 w-4" />Auswahl als ZIP</Button>
+          <Button disabled={!selected.size || Boolean(progress)} onClick={() => void prepare(data.filter(image => selected.has(image.id)), true)}><Download className="mr-2 h-4 w-4" />Auswahl als ZIP</Button>
         </div>
       </div>
       {progress && <p role="status" className="flex items-center gap-2 text-sm"><Loader2 className="h-4 w-4 animate-spin" />{progress}</p>}
