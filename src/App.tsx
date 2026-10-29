@@ -71,6 +71,7 @@ const AdminInquiriesPage = lazy(() => import("./pages/AdminInquiriesPage"));
 const AdminInquiryDetail = lazy(() => import("./pages/AdminInquiryDetail"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminCMS = lazy(() => import("./pages/AdminCMS"));
+const AdminTravelMedia = lazy(() => import("./pages/AdminTravelMedia"));
 const AdminBlog = lazy(() => import("./pages/AdminBlog"));
 const AdminReviews = lazy(() => import("./pages/AdminReviews"));
 const AdminMobileApp = lazy(() => import("./pages/AdminMobileApp"));
@@ -301,6 +302,7 @@ const App = () => (
               <Route path="/admin/templates" element={<AdminTemplates />} />
               <Route path="/admin/legal" element={<AdminLegal />} />
               <Route path="/admin/cms" element={<AdminCMS />} />
+              <Route path="/admin/reisebilder" element={<AdminTravelMedia />} />
               <Route path="/admin/blog" element={<AdminBlog />} />
               <Route path="/admin/bewertungen" element={<AdminReviews />} />
               <Route path="/admin/app" element={<AdminMobileApp />} />

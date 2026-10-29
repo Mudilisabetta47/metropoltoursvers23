@@ -1,5 +1,10 @@
 # Roadmap
 
+## Admin-Reisebilder
+- [x] Bilderübersicht mit Reisezuordnung, Suche und Bereichsfilter ergänzen
+- [x] Einzelbilder und ZIP-Auswahl mit Zuordnungsliste herunterladen
+- [ ] Tests und angemeldeten Download mit echten Reisebildern prüfen
+
 ## Silvesterreisen-Einstieg
 - [x] Zusätzlichen ersten Startseiten-Slide mit hochgeladenem Amsterdam-Busbild erstellen
 - [x] Datenbasierte Silvesterreisen-Übersicht mit Buchungslinks, FAQ und Suchmaschinen-Angaben erstellen
