@@ -96,8 +96,9 @@ export function ContractEditor({ contract, templates, onBack, onSaved }: Props) 
     contractDate: form.contract_date,
     plannedSignDateEmployer: form.planned_sign_date_employer,
     plannedSignDateEmployee: form.planned_sign_date_employee,
-    signedEmployerAt: form.signed_employer_at,
-    signedEmployeeAt: form.signed_employee_at,
+    // Nur den echten Zeitpunkt der gespeicherten Unterschrift zeigen – nicht nach Löschen/Neuzeichnen.
+    signedEmployerAt: form.signature_employer && form.signature_employer === contract.signature_employer ? form.signed_employer_at : null,
+    signedEmployeeAt: form.signature_employee && form.signature_employee === contract.signature_employee ? form.signed_employee_at : null,
   };
 
   const save = async (nextStatus?: string) => {

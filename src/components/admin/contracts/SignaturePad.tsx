@@ -24,7 +24,7 @@ export function SignaturePad({ value, onChange, label, disabled }: SignaturePadP
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.strokeStyle = "#111111";
-  }, []);
+  }, [value]);
 
   const pos = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -56,10 +56,10 @@ export function SignaturePad({ value, onChange, label, disabled }: SignaturePadP
   const end = () => { drawing.current = false; };
 
   const clear = () => {
+    // Eine gespeicherte Unterschrift wird als Bild angezeigt (kein Zeichenfeld) –
+    // trotzdem muss sie entfernt werden können.
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d")!;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvas?.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
     setDirty(false);
     onChange(null);
   };
