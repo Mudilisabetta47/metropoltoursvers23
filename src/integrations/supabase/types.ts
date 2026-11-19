@@ -3680,6 +3680,41 @@ export type Database = {
           },
         ]
       }
+      employment_contract_signature_events: {
+        Row: {
+          actor_id: string | null
+          contract_id: string
+          event: string
+          id: string
+          occurred_at: string
+          party: string
+        }
+        Insert: {
+          actor_id?: string | null
+          contract_id: string
+          event: string
+          id?: string
+          occurred_at?: string
+          party: string
+        }
+        Update: {
+          actor_id?: string | null
+          contract_id?: string
+          event?: string
+          id?: string
+          occurred_at?: string
+          party?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employment_contract_signature_events_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "employment_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employment_contracts: {
         Row: {
           address: string | null
@@ -3689,11 +3724,13 @@ export type Database = {
           bonus: string | null
           code95_expiry: string | null
           company: Json
+          contract_date: string | null
           contract_number: string
           contract_type: string
           created_at: string
           created_by: string | null
           department: string | null
+          document_date: string | null
           driver_card: boolean
           driver_card_expiry: string | null
           driver_qualification_95: boolean
@@ -3716,6 +3753,8 @@ export type Database = {
           other_agreements: string | null
           personnel_number: string | null
           phone: string | null
+          planned_sign_date_employee: string | null
+          planned_sign_date_employer: string | null
           position: string | null
           probation_months: number | null
           rendered_body: string | null
@@ -3747,11 +3786,13 @@ export type Database = {
           bonus?: string | null
           code95_expiry?: string | null
           company?: Json
+          contract_date?: string | null
           contract_number: string
           contract_type?: string
           created_at?: string
           created_by?: string | null
           department?: string | null
+          document_date?: string | null
           driver_card?: boolean
           driver_card_expiry?: string | null
           driver_qualification_95?: boolean
@@ -3774,6 +3815,8 @@ export type Database = {
           other_agreements?: string | null
           personnel_number?: string | null
           phone?: string | null
+          planned_sign_date_employee?: string | null
+          planned_sign_date_employer?: string | null
           position?: string | null
           probation_months?: number | null
           rendered_body?: string | null
@@ -3805,11 +3848,13 @@ export type Database = {
           bonus?: string | null
           code95_expiry?: string | null
           company?: Json
+          contract_date?: string | null
           contract_number?: string
           contract_type?: string
           created_at?: string
           created_by?: string | null
           department?: string | null
+          document_date?: string | null
           driver_card?: boolean
           driver_card_expiry?: string | null
           driver_qualification_95?: boolean
@@ -3832,6 +3877,8 @@ export type Database = {
           other_agreements?: string | null
           personnel_number?: string | null
           phone?: string | null
+          planned_sign_date_employee?: string | null
+          planned_sign_date_employer?: string | null
           position?: string | null
           probation_months?: number | null
           rendered_body?: string | null

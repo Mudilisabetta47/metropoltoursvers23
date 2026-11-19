@@ -14,6 +14,8 @@ import {
   ArrowLeft, Save, Printer, FileDown, FileText, History, Loader2, AlertCircle,
 } from "lucide-react";
 import { SignaturePad } from "./SignaturePad";
+import { ContractDateField } from "./ContractDateField";
+import { formatSignedAtDE } from "@/lib/contracts/signatureDates";
 import {
   CONTRACT_STATUS, CONTRACT_TYPES, CONTRACT_LANGUAGES, EMPTY_COMPANY,
   type CompanyData, type ContractRecord, type ContractTemplate,
@@ -90,6 +92,12 @@ export function ContractEditor({ contract, templates, onBack, onSaved }: Props) 
     employeeName,
     signatureEmployee: form.signature_employee,
     signatureEmployer: form.signature_employer,
+    documentDate: form.document_date,
+    contractDate: form.contract_date,
+    plannedSignDateEmployer: form.planned_sign_date_employer,
+    plannedSignDateEmployee: form.planned_sign_date_employee,
+    signedEmployerAt: form.signed_employer_at,
+    signedEmployeeAt: form.signed_employee_at,
   };
 
   const save = async (nextStatus?: string) => {
@@ -149,8 +157,11 @@ export function ContractEditor({ contract, templates, onBack, onSaved }: Props) 
         company: company as unknown as never,
         signature_employee: form.signature_employee,
         signature_employer: form.signature_employer,
-        signed_employee_at: form.signed_employee_at,
-        signed_employer_at: form.signed_employer_at,
+        // Echte Signaturzeitpunkte setzt ausschließlich der Server.
+        document_date: form.document_date,
+        contract_date: form.contract_date,
+        planned_sign_date_employer: form.planned_sign_date_employer,
+        planned_sign_date_employee: form.planned_sign_date_employee,
         rendered_body: rendered,
         version: form.version + 1,
       };
@@ -310,9 +321,11 @@ export function ContractEditor({ contract, templates, onBack, onSaved }: Props) 
                   </SelectContent>
                 </Select>
               </Field>
+              <Field label="Erstellungsdatum"><ContractDateField ariaLabel="Erstellungsdatum" value={form.document_date} onChange={(v) => set("document_date", v)} /></Field>
+              <Field label="Vertragsdatum"><ContractDateField ariaLabel="Vertragsdatum" value={form.contract_date} onChange={(v) => set("contract_date", v)} placeholder="Wie Erstellungsdatum" /></Field>
               <Field label="Position / Tätigkeit *"><Input className={inputCls} value={form.position ?? ""} onChange={(e) => set("position", e.target.value)} /></Field>
               <Field label="Abteilung"><Input className={inputCls} value={form.department ?? ""} onChange={(e) => set("department", e.target.value)} /></Field>
-              <Field label="Arbeitsbeginn *"><Input type="date" className={inputCls} value={form.start_date ?? ""} onChange={(e) => set("start_date", e.target.value || null)} /></Field>
+              <Field label="Beschäftigungsbeginn *"><ContractDateField ariaLabel="Beschäftigungsbeginn" value={form.start_date} onChange={(v) => set("start_date", v)} /></Field>
               <Field label="Probezeit (Monate)"><Input type="number" min={0} max={6} className={inputCls} value={form.probation_months ?? ""} onChange={(e) => set("probation_months", e.target.value === "" ? null : Number(e.target.value))} /></Field>
               <div className="sm:col-span-2 flex items-center justify-between rounded-lg border border-zinc-700 px-3 py-2">
                 <span className="text-sm text-zinc-200">Befristeter Vertrag</span>
@@ -370,16 +383,28 @@ export function ContractEditor({ contract, templates, onBack, onSaved }: Props) 
             </TabsContent>
 
             <TabsContent value="sign" className="mt-4 space-y-5">
+              <p className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400">
+                Das Unterschriftsdatum ist ein vorgesehenes bzw. manuell erfasstes Datum und erscheint im Dokument neben der Unterschrift.
+                Wird elektronisch unterschrieben, speichert das System zusätzlich den echten Zeitpunkt und weist ihn im Dokument aus.
+              </p>
+              <Field label="Unterschriftsdatum Arbeitgeber (vorgesehen)">
+                <ContractDateField ariaLabel="Unterschriftsdatum Arbeitgeber" value={form.planned_sign_date_employer} onChange={(v) => set("planned_sign_date_employer", v)} />
+              </Field>
               <SignaturePad
                 label="Unterschrift Arbeitgeber"
                 value={form.signature_employer}
-                onChange={(v) => setForm((f) => ({ ...f, signature_employer: v, signed_employer_at: v ? new Date().toISOString() : null }))}
+                onChange={(v) => setForm((f) => ({ ...f, signature_employer: v }))}
               />
+              <SignedAtNote original={contract.signature_employer} current={form.signature_employer} signedAt={form.signed_employer_at} />
+              <Field label="Unterschriftsdatum Arbeitnehmer (vorgesehen)">
+                <ContractDateField ariaLabel="Unterschriftsdatum Arbeitnehmer" value={form.planned_sign_date_employee} onChange={(v) => set("planned_sign_date_employee", v)} />
+              </Field>
               <SignaturePad
                 label="Unterschrift Arbeitnehmer"
                 value={form.signature_employee}
-                onChange={(v) => setForm((f) => ({ ...f, signature_employee: v, signed_employee_at: v ? new Date().toISOString() : null }))}
+                onChange={(v) => setForm((f) => ({ ...f, signature_employee: v }))}
               />
+              <SignedAtNote original={contract.signature_employee} current={form.signature_employee} signedAt={form.signed_employee_at} />
               <div className="rounded-lg border border-zinc-700 p-3">
                 <p className="flex items-center gap-2 text-xs font-medium text-zinc-300 mb-2"><History className="w-3.5 h-3.5" />Versionen</p>
                 {versions.length === 0 ? (
@@ -437,4 +462,15 @@ function Field({ label, children, full }: { label: string; children: React.React
       {children}
     </div>
   );
+}
+
+/** Zeigt den echten, serverseitig protokollierten Signaturzeitpunkt. */
+function SignedAtNote({ original, current, signedAt }: { original: string | null; current: string | null; signedAt: string | null }) {
+  if (current && current !== original) {
+    return <p className="-mt-3 text-[11px] text-amber-300">Neue Unterschrift – der echte Zeitpunkt wird beim Speichern protokolliert.</p>;
+  }
+  if (current && signedAt) {
+    return <p className="-mt-3 text-[11px] text-zinc-400">Elektronisch unterschrieben am {formatSignedAtDE(signedAt)}</p>;
+  }
+  return null;
 }

@@ -29,6 +29,13 @@
       "when": 1795085212316,
       "tag": "0003_tighten_public_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795096766907,
+      "tag": "0004_contract_dates_and_signature_log",
+      "breakpoints": true
     }
   ]
 }

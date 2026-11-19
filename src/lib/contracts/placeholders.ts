@@ -1,11 +1,7 @@
 import { CONTRACT_TYPE_LABEL, type CompanyData, type ContractRecord } from "./types";
+import { contractPlaceDate, describePartySignature, formatDayDE } from "./signatureDates";
 
-export const formatDateDE = (value?: string | null) => {
-  if (!value) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
-};
+export const formatDateDE = (value?: string | null) => formatDayDE(value) ?? "—";
 
 export const formatEUR = (value?: number | null) => {
   if (value == null) return "—";
@@ -66,7 +62,13 @@ export const PLACEHOLDERS: PlaceholderDef[] = [
   { key: "firma_steuernummer", label: "Steuernummer" },
   { key: "firma_ustid", label: "USt-IdNr." },
   { key: "vertragsnummer", label: "Vertragsnummer" },
-  { key: "ort_datum", label: "Ort, Datum" },
+  { key: "ort_datum", label: "Ort, Datum (Vertragsdatum)" },
+  { key: "erstellungsdatum", label: "Erstellungsdatum" },
+  { key: "vertragsdatum", label: "Vertragsdatum" },
+  { key: "unterschriftsdatum_arbeitgeber", label: "Unterschriftsdatum Arbeitgeber (vorgesehen)" },
+  { key: "unterschriftsdatum_arbeitnehmer", label: "Unterschriftsdatum Arbeitnehmer (vorgesehen)" },
+  { key: "ort_datum_arbeitgeber", label: "Ort, Datum Arbeitgeber" },
+  { key: "ort_datum_arbeitnehmer", label: "Ort, Datum Arbeitnehmer" },
 ];
 
 export function buildPlaceholderValues(
@@ -135,7 +137,13 @@ export function buildPlaceholderValues(
     firma_steuernummer: dash(company.tax_number),
     firma_ustid: dash(company.vat_id),
     vertragsnummer: dash(contract.contract_number),
-    ort_datum: `${company.city || "—"}, den ${formatDateDE(new Date().toISOString())}`,
+    ort_datum: contractPlaceDate(company.city, contract.contract_date, contract.document_date),
+    erstellungsdatum: formatDateDE(contract.document_date),
+    vertragsdatum: formatDateDE(contract.contract_date),
+    unterschriftsdatum_arbeitgeber: formatDateDE(contract.planned_sign_date_employer),
+    unterschriftsdatum_arbeitnehmer: formatDateDE(contract.planned_sign_date_employee),
+    ort_datum_arbeitgeber: describePartySignature({ place: company.city, plannedDate: contract.planned_sign_date_employer, signedAt: contract.signed_employer_at }).dateLine,
+    ort_datum_arbeitnehmer: describePartySignature({ place: company.city, plannedDate: contract.planned_sign_date_employee, signedAt: contract.signed_employee_at }).dateLine,
   };
 }
 

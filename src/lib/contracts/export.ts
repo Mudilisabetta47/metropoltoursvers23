@@ -2,6 +2,7 @@ import {
   Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, ImageRun, BorderStyle,
 } from "docx";
 import type { CompanyData } from "./types";
+import { describePartySignature, formatDayDE } from "./signatureDates";
 
 type Block =
   | { type: "h1" | "h2" | "h3" | "p"; text: string }
@@ -46,6 +47,20 @@ export interface ExportPayload {
   employeeName: string;
   signatureEmployee?: string | null;
   signatureEmployer?: string | null;
+  /** Frei gewählte Daten (YYYY-MM-DD) und echte Signaturzeitpunkte (vom Server). */
+  documentDate?: string | null;
+  contractDate?: string | null;
+  plannedSignDateEmployer?: string | null;
+  plannedSignDateEmployee?: string | null;
+  signedEmployerAt?: string | null;
+  signedEmployeeAt?: string | null;
+}
+
+function signatureLines(payload: ExportPayload) {
+  return {
+    employer: describePartySignature({ place: payload.company.city, plannedDate: payload.plannedSignDateEmployer, signedAt: payload.signedEmployerAt }),
+    employee: describePartySignature({ place: payload.company.city, plannedDate: payload.plannedSignDateEmployee, signedAt: payload.signedEmployeeAt }),
+  };
 }
 
 export function contractToHtml(payload: ExportPayload): string {
@@ -69,12 +84,17 @@ export function contractToHtml(payload: ExportPayload): string {
   }
   if (inList) html.push("</ul>");
 
-  const sig = (img: string | null | undefined, caption: string) => `
+  const lines = signatureLines(payload);
+  const sig = (img: string | null | undefined, caption: string, l: { dateLine: string; eSignLine: string | null }) => `
     <div class="sigbox">
+      <div class="sigdate">${escapeHtml(l.dateLine)}</div>
       ${img ? `<img src="${escapeHtml(img)}" alt="Unterschrift ${escapeHtml(caption)}" />` : '<div class="sigempty"></div>'}
       <div class="sigline"></div>
       <div class="sigcaption">${escapeHtml(caption)}</div>
+      ${l.eSignLine ? `<div class="sigproof">${escapeHtml(l.eSignLine)}</div>` : ""}
     </div>`;
+  const contractDay = formatDayDE(payload.contractDate);
+  const documentDay = formatDayDE(payload.documentDate);
 
   return `<!doctype html><html lang="de"><head><meta charset="utf-8" />
 <title>Arbeitsvertrag ${escapeHtml(contractNumber)} – ${escapeHtml(employeeName)}</title>
@@ -98,6 +118,8 @@ export function contractToHtml(payload: ExportPayload): string {
   .sigempty { height: 62px; }
   .sigline { border-top: 1px solid #111; }
   .sigcaption { font-size: 9pt; color: #444; margin-top: 4px; }
+  .sigdate { font-size: 10pt; margin-bottom: 6px; }
+  .sigproof { font-size: 8pt; color: #555; margin-top: 3px; }
   footer.doc { margin-top: 30px; border-top: 1px solid #e2e2e2; padding-top: 8px; font-size: 8.5pt; color: #666; }
   @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 </style></head><body>
@@ -105,14 +127,16 @@ export function contractToHtml(payload: ExportPayload): string {
   <div>${company.logo_url ? `<img class="logo" src="${escapeHtml(company.logo_url)}" alt="${escapeHtml(company.name)} Logo" />` : `<strong>${escapeHtml(company.name)}</strong>`}</div>
   <div class="meta">
     Vertragsnummer: <strong>${escapeHtml(contractNumber)}</strong><br />
+    ${contractDay ? `Vertragsdatum: ${escapeHtml(contractDay)}<br />` : ""}
+    ${documentDay ? `Erstellt am: ${escapeHtml(documentDay)}<br />` : ""}
     ${escapeHtml(company.address || "")}<br />
     ${escapeHtml(company.commercial_register || "")}
   </div>
 </header>
 ${html.join("\n")}
 <div class="signatures">
-  ${sig(payload.signatureEmployer || company.signature_url, `${company.name} – ${company.managing_director || "Arbeitgeber"}`)}
-  ${sig(payload.signatureEmployee, `${employeeName} – Arbeitnehmer`)}
+  ${sig(payload.signatureEmployer || company.signature_url, `${company.name} – ${company.managing_director || "Arbeitgeber"}`, lines.employer)}
+  ${sig(payload.signatureEmployee, `${employeeName} – Arbeitnehmer`, lines.employee)}
 </div>
 <footer class="doc">${escapeHtml(company.name)} · ${escapeHtml(company.address || "")} · ${escapeHtml(company.commercial_register || "")} · Steuernummer ${escapeHtml(company.tax_number || "—")}${company.vat_id ? ` · USt-IdNr. ${escapeHtml(company.vat_id)}` : ""}</footer>
 </body></html>`;
@@ -149,7 +173,14 @@ export async function exportContractDocx(payload: ExportPayload) {
       border: { bottom: { style: BorderStyle.SINGLE, size: 8, color: "00CC36", space: 4 } },
     }),
     new Paragraph({
-      children: [new TextRun({ text: `Vertragsnummer ${contractNumber}`, size: 18, color: "666666" })],
+      children: [new TextRun({
+        text: [
+          `Vertragsnummer ${contractNumber}`,
+          formatDayDE(payload.contractDate) ? `Vertragsdatum ${formatDayDE(payload.contractDate)}` : null,
+          formatDayDE(payload.documentDate) ? `Erstellt am ${formatDayDE(payload.documentDate)}` : null,
+        ].filter(Boolean).join(" · "),
+        size: 18, color: "666666",
+      })],
       spacing: { after: 240 },
     }),
   );
@@ -169,8 +200,10 @@ export async function exportContractDocx(payload: ExportPayload) {
     }
   }
 
-  const addSignature = async (img: string | null | undefined, caption: string) => {
+  const lines = signatureLines(payload);
+  const addSignature = async (img: string | null | undefined, caption: string, l: { dateLine: string; eSignLine: string | null }) => {
     children.push(new Paragraph({ children: [] }));
+    children.push(new Paragraph({ children: [new TextRun({ text: l.dateLine, size: 20 })], spacing: { after: 80 } }));
     if (img && img.startsWith("data:image")) {
       const data = await dataUrlToUint8(img);
       if (data) {
@@ -186,13 +219,16 @@ export async function exportContractDocx(payload: ExportPayload) {
     }
     children.push(
       new Paragraph({ children: [new TextRun({ text: "____________________________________" })] }),
-      new Paragraph({ children: [new TextRun({ text: caption, size: 18, color: "444444" })], spacing: { after: 200 } }),
+      new Paragraph({ children: [new TextRun({ text: caption, size: 18, color: "444444" })], spacing: { after: l.eSignLine ? 40 : 200 } }),
     );
+    if (l.eSignLine) {
+      children.push(new Paragraph({ children: [new TextRun({ text: l.eSignLine, size: 16, color: "555555" })], spacing: { after: 200 } }));
+    }
   };
 
   children.push(new Paragraph({ children: [], spacing: { before: 400 } }));
-  await addSignature(payload.signatureEmployer, `${company.name} – ${company.managing_director || "Arbeitgeber"}`);
-  await addSignature(payload.signatureEmployee, `${employeeName} – Arbeitnehmer`);
+  await addSignature(payload.signatureEmployer, `${company.name} – ${company.managing_director || "Arbeitgeber"}`, lines.employer);
+  await addSignature(payload.signatureEmployee, `${employeeName} – Arbeitnehmer`, lines.employee);
 
   const doc = new Document({
     styles: { default: { document: { run: { font: "Arial", size: 22 } } } },

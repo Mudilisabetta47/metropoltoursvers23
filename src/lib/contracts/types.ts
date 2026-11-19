@@ -69,6 +69,12 @@ export interface ContractRecord {
   signed_employee_at: string | null;
   signed_employer_at: string | null;
 
+  /** Frei wählbare Daten (YYYY-MM-DD); unabhängig vom technischen Anlagedatum. */
+  document_date: string | null;
+  contract_date: string | null;
+  planned_sign_date_employer: string | null;
+  planned_sign_date_employee: string | null;
+
   rendered_body: string | null;
   created_at: string;
   updated_at: string;
